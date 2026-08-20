@@ -379,7 +379,7 @@ create or replace function public.is_admin()
 returns boolean
 language sql
 security definer
-set search_path = ''
+set search_path = public
 stable
 as $$
   select exists (
@@ -546,7 +546,7 @@ create or replace function public.get_user_bet_stats(p_user_id uuid)
 returns jsonb
 language sql
 security definer
-set search_path = ''
+set search_path = public
 stable
 as $$
   select jsonb_build_object(
@@ -579,7 +579,7 @@ returns table (
 )
 language sql
 security definer
-set search_path = ''
+set search_path = public
 stable
 as $$
   select
