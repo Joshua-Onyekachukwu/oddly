@@ -11,7 +11,7 @@ const supabaseAdmin = createClient<Database>(
 
 // Rate limits per tier
 const RATE_LIMITS: Record<string, number> = {
-  free: 3,
+  free: -1, // unlimited during testing
   premium: -1, // unlimited
   elite: -1, // unlimited
 };
