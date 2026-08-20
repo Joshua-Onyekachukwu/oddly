@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import { useScrollReveal, getScrollRevealClasses } from "@/hooks/useScrollReveal";
 
 const testimonialsData = [
@@ -11,6 +12,7 @@ const testimonialsData = [
     user: {
       name: "Daniel K.",
       position: "Premium Member",
+      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Daniel&backgroundColor=b6e3f4",
     },
     stars: 5,
   },
@@ -21,6 +23,7 @@ const testimonialsData = [
     user: {
       name: "Sarah M.",
       position: "Elite Member",
+      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah&backgroundColor=ffdfbf",
     },
     stars: 5,
   },
@@ -31,6 +34,7 @@ const testimonialsData = [
     user: {
       name: "Marcus T.",
       position: "Premium Member",
+      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Marcus&backgroundColor=c0aede",
     },
     stars: 5,
   },
@@ -81,8 +85,14 @@ const Testimonials: React.FC = () => {
 
                 {/* User */}
                 <div className="flex items-center gap-[12px] pt-[16px] border-t border-gray-50">
-                  <div className="w-[36px] h-[36px] bg-[#1B2A4A] rounded-full flex items-center justify-center text-white font-semibold text-[13px] font-display">
-                    {testimonial.user.name.charAt(0)}
+                  <div className="w-[40px] h-[40px] rounded-full overflow-hidden bg-gray-100 flex-none">
+                    <Image
+                      src={testimonial.user.avatar}
+                      alt={testimonial.user.name}
+                      width={40}
+                      height={40}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                   <div>
                     <span className="text-[13px] font-semibold text-[#0A0F1C] block">

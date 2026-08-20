@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import { useScrollReveal, getScrollRevealClasses } from "@/hooks/useScrollReveal";
 
 const aboutCards = [
@@ -17,50 +18,37 @@ const About: React.FC = () => {
     <div className="py-[80px] md:py-[100px] lg:py-[120px]" ref={ref}>
       <div className="container sm:max-w-[540px] md:max-w-[720px] lg:max-w-[960px] xl:max-w-[1200px] mx-auto px-[16px]">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-[48px] items-center">
-          {/* Left — CSS-based prediction chart visual */}
+          {/* Left — Real football analytics image */}
           <div {...getScrollRevealClasses(isVisible, 0)} className="relative">
-            {/* Prediction accuracy card */}
-            <div className="bg-[#0A0F1C] rounded-[1.5rem] p-[32px] relative overflow-hidden">
-              {/* Grid pattern */}
-              <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)", backgroundSize: "30px 30px" }} />
+            <div className="relative rounded-[1.5rem] overflow-hidden aspect-[4/3]">
+              <Image
+                src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&q=80"
+                alt="Football analytics dashboard"
+                fill
+                className="object-cover"
+                sizes="(max-width: 1024px) 100vw, 50vw"
+              />
+              {/* Dark overlay with gradient */}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0A0F1C]/90 via-[#0A0F1C]/40 to-transparent" />
 
-              <div className="relative z-[1]">
-                <div className="flex items-center justify-between mb-[24px]">
-                  <div>
-                    <span className="text-[11px] text-white/40 uppercase tracking-wider font-display">Model Accuracy</span>
-                    <h3 className="font-display text-[32px] font-bold text-white font-mono-data">94.4%</h3>
+              {/* Overlay content */}
+              <div className="absolute bottom-0 left-0 right-0 p-[24px] md:p-[32px]">
+                <div className="flex items-center gap-[12px] mb-[12px]">
+                  <div className="w-[36px] h-[36px] bg-[#BFFF00]/20 rounded-[8px] flex items-center justify-center backdrop-blur-sm">
+                    <i className="ri-brain-line text-[#BFFF00] text-[16px]"></i>
                   </div>
-                  <div className="w-[40px] h-[40px] bg-[#BFFF00]/10 rounded-[10px] flex items-center justify-center">
-                    <i className="ri-arrow-up-double-line text-[#BFFF00] text-[18px]"></i>
-                  </div>
+                  <span className="text-[11px] text-white/60 uppercase tracking-wider font-display">AI-Powered</span>
                 </div>
-
-                {/* Bar chart */}
-                <div className="flex items-end gap-[6px] h-[120px] mb-[16px]">
-                  {[65, 72, 68, 81, 76, 89, 84, 91, 88, 94, 90, 94].map((h, i) => (
-                    <div key={i} className="flex-1 bg-white/5 rounded-t-[4px] relative group">
-                      <div
-                        className="absolute bottom-0 left-0 right-0 rounded-t-[4px] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]"
-                        style={{
-                          height: `${h}%`,
-                          background: i >= 10 ? "#BFFF00" : i >= 8 ? "rgba(191,255,0,0.4)" : "rgba(255,255,255,0.15)",
-                        }}
-                      />
-                    </div>
-                  ))}
-                </div>
-
-                <div className="flex items-center justify-between text-[10px] text-white/30">
-                  <span>Jan</span>
-                  <span>Mar</span>
-                  <span>Jun</span>
-                  <span>Sep</span>
-                  <span>Dec</span>
-                </div>
+                <h3 className="font-display text-[24px] md:text-[28px] font-bold text-white !leading-[1.1] !tracking-[-0.02em] !mb-[8px]">
+                  7 Models Working Together
+                </h3>
+                <p className="text-[13px] text-white/60 leading-[1.5]">
+                  Dixon-Coles, XGBoost, Elo, and 4 more — all analyzed by NVIDIA AI to find the sharpest edge.
+                </p>
               </div>
             </div>
 
-            {/* Floating edge card */}
+            {/* Floating accuracy card */}
             <div className="absolute -bottom-[16px] -right-[16px] bg-white rounded-[12px] p-[14px] shadow-[0_8px_30px_-8px_rgba(0,0,0,0.12)] border border-gray-100 z-[2]">
               <div className="flex items-center gap-[8px]">
                 <div className="w-[28px] h-[28px] bg-[#22c55e]/10 rounded-full flex items-center justify-center">
@@ -69,6 +57,19 @@ const About: React.FC = () => {
                 <div>
                   <span className="text-[10px] text-gray-400 block">Avg Edge</span>
                   <span className="text-[14px] font-bold text-[#0A0F1C] font-mono-data">+12.3%</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Floating model count card */}
+            <div className="absolute -top-[12px] -left-[12px] bg-white rounded-[12px] p-[12px] shadow-[0_8px_30px_-8px_rgba(0,0,0,0.12)] border border-gray-100 z-[2]">
+              <div className="flex items-center gap-[8px]">
+                <div className="w-[28px] h-[28px] bg-[#8B5CF6]/10 rounded-full flex items-center justify-center">
+                  <i className="ri-robot-2-line text-[#8B5CF6] text-[12px]"></i>
+                </div>
+                <div>
+                  <span className="text-[10px] text-gray-400 block">Active Models</span>
+                  <span className="text-[14px] font-bold text-[#0A0F1C] font-mono-data">7</span>
                 </div>
               </div>
             </div>
