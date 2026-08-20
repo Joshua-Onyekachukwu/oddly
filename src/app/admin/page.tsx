@@ -115,9 +115,9 @@ export default function AdminDashboardPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-[8px] mb-[24px]">
         {[
           { label: "User Management", href: "/admin/users", icon: "ri-user-settings-line" },
-          { label: "League Management", href: "/admin/announcements", icon: "ri-trophy-line" },
+          { label: "Data Pipeline", href: "/admin/pipeline", icon: "ri-plug-line" },
           { label: "Model Health", href: "/admin/model-health", icon: "ri-heart-pulse-line" },
-          { label: "Scoring Config", href: "/admin/scoring", icon: "ri-settings-3-line" },
+          { label: "Announcements", href: "/admin/announcements", icon: "ri-megaphone-line" },
         ].map((link) => (
           <a
             key={link.href}
