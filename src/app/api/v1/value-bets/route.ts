@@ -12,7 +12,7 @@
  *   - riskTier: filter by risk_tier
  */
 
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import {
@@ -23,16 +23,32 @@ import {
   addRateLimitHeaders,
   checkRateLimit,
 } from "@/lib/api/utils";
+import { z } from "zod";
+import { validateQuery } from "@/lib/api/validation";
+
+const valueBetsQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+  minEdge: z.coerce.number().min(0).max(1).default(0.05),
+  league: z.string().uuid().optional(),
+  recommended: z.coerce.boolean().optional(),
+  riskTier: z.enum(["low", "medium", "high"]).optional(),
+});
 
 export async function GET(request: NextRequest) {
   const rl = checkRateLimit("value-bets", 60, 60000);
   const { searchParams } = new URL(request.url);
-  const { page, pageSize, offset } = parsePagination(searchParams);
 
-  const minEdge = parseFloat(searchParams.get("minEdge") || "0.05");
-  const league = searchParams.get("league");
-  const recommended = searchParams.get("recommended");
-  const riskTier = searchParams.get("riskTier");
+  const validation = validateQuery(valueBetsQuerySchema, searchParams);
+  if (!validation.success) {
+    return NextResponse.json(
+      { error: "Invalid query parameters", details: validation.error },
+      { status: 400 }
+    );
+  }
+
+  const { page, pageSize, minEdge, recommended, riskTier } = validation.data;
+  const offset = (page - 1) * pageSize;
 
   try {
     const supabase = createClient<Database>(
@@ -46,7 +62,7 @@ export async function GET(request: NextRequest) {
       .gte("edge", minEdge)
       .order("edge", { ascending: false });
 
-    if (recommended === "true") {
+    if (recommended) {
       query = query.eq("is_recommended", true);
     }
     if (riskTier) {
