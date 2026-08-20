@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { MatchesList } from "@/components/matches/MatchesList";
 import { MatchesSkeleton } from "@/components/matches/MatchesSkeleton";
+import { PageHeader } from "@/components/ui";
 
 export const metadata: Metadata = {
   title: "Today's Matches",
@@ -56,14 +57,10 @@ async function MatchesContent() {
 export default async function MatchesPage() {
   return (
     <div>
-      <div className="mb-[24px]">
-        <h1 className="font-display text-[24px] md:text-[28px] font-bold text-[#0A0F1C] mb-[4px]">
-          Today&apos;s Matches
-        </h1>
-        <p className="text-[14px] text-gray-500">
-          AI-powered predictions for today&apos;s fixtures across 100+ leagues.
-        </p>
-      </div>
+      <PageHeader
+        title="Today's Matches"
+        description="AI-powered predictions for today's fixtures across 100+ leagues."
+      />
 
       <Suspense fallback={<MatchesSkeleton />}>
         <MatchesContent />

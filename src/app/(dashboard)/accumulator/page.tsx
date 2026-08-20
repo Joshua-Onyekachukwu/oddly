@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/providers/AuthProvider";
 import { createClient } from "@/lib/supabase/client";
+import { PageHeader, Card, EmptyState, Button, Badge } from "@/components/ui";
 
 interface Recommendation {
   id: string;
@@ -67,12 +68,7 @@ export default function AccumulatorPage() {
   };
 
   const combinedOdds = selectedLegs.reduce((acc, leg) => acc * leg.recommendation.bookmaker_odds, 1);
-
-  const combinedProbability = selectedLegs.reduce(
-    (acc, leg) => acc * leg.recommendation.model_probability,
-    1
-  );
-
+  const combinedProbability = selectedLegs.reduce((acc, leg) => acc * leg.recommendation.model_probability, 1);
   const potentialReturn = totalStake * combinedOdds;
 
   const handleSave = async () => {
@@ -115,94 +111,75 @@ export default function AccumulatorPage() {
 
   return (
     <div>
-      <div className="mb-[24px]">
-        <h1 className="font-display text-[24px] md:text-[28px] font-bold text-[#0A0F1C] mb-[4px]">
-          Accumulator Builder
-        </h1>
-        <p className="text-[14px] text-gray-500">
-          Combine {selectedLegs.length} leg{selectedLegs.length !== 1 ? "s" : ""} for higher returns. Max 10 legs.
-        </p>
-      </div>
+      <PageHeader
+        title="Accumulator Builder"
+        description={`Combine ${selectedLegs.length} leg${selectedLegs.length !== 1 ? "s" : ""} for higher returns. Max 10 legs.`}
+      />
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-[24px]">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-[20px]">
         {/* Available Picks */}
         <div>
-          <h2 className="text-[14px] font-semibold text-[#0A0F1C] mb-[12px]">
+          <h2 className="text-[13px] font-semibold text-gray-500 uppercase tracking-wider mb-[10px]">
             Available Value Bets
           </h2>
           {loading ? (
-            <div className="space-y-[8px]">
+            <div className="space-y-[6px]">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="bg-white rounded-[14px] p-[16px] border border-gray-100 animate-pulse">
-                  <div className="h-[14px] w-[140px] bg-gray-100 rounded-full mb-[8px]"></div>
-                  <div className="h-[12px] w-[200px] bg-gray-100 rounded-full"></div>
-                </div>
+                <Card key={i} padding="sm" className="animate-pulse">
+                  <div className="h-[12px] w-[120px] bg-gray-100 rounded-full mb-[8px]" />
+                  <div className="h-[11px] w-[180px] bg-gray-100 rounded-full" />
+                </Card>
               ))}
             </div>
           ) : recommendations.length === 0 ? (
-            <div className="text-center py-[48px] bg-white rounded-[16px] border border-gray-100">
-              <div className="inline-flex items-center justify-center w-[48px] h-[48px] rounded-[12px] bg-gray-50 mb-[12px]">
-                <i className="ri-inbox-line text-[22px] text-gray-300"></i>
-              </div>
-              <h3 className="font-display text-[15px] font-semibold text-[#0A0F1C] mb-[4px]">
-                No value bets available
-              </h3>
-              <p className="text-[13px] text-gray-400">
-                Check back when matches are closer to kickoff.
-              </p>
-            </div>
+            <EmptyState
+              icon="ri-inbox-line"
+              title="No value bets available"
+              description="Check back when matches are closer to kickoff."
+            />
           ) : (
-            <div className="space-y-[6px]">
+            <div className="space-y-[4px]">
               {recommendations.map((rec) => {
                 const isSelected = selectedLegs.some((l) => l.recommendation.id === rec.id);
-
                 return (
                   <div
                     key={rec.id}
                     onClick={() => toggleLeg(rec)}
-                    className={`bg-white rounded-[14px] p-[14px] border transition-all duration-300 cursor-pointer ${
-                      isSelected
-                        ? "border-[#BFFF00] shadow-[0_0_0_1px_#BFFF00]"
+                    className={`
+                      bg-white rounded-[10px] p-[14px] border transition-all duration-200 cursor-pointer
+                      ${isSelected
+                        ? "border-[#1B2A4A] shadow-[0_0_0_1px_#1B2A4A]"
                         : "border-gray-100 hover:border-gray-200"
-                    }`}
+                      }
+                    `}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-[8px] mb-[4px]">
+                        <div className="flex items-center gap-[8px] mb-[2px]">
                           <span className="text-[13px] font-semibold text-[#0A0F1C] truncate">
                             {rec.selection}
                           </span>
-                          <span className="text-[10px] text-gray-400 whitespace-nowrap">
-                            {rec.market}
-                          </span>
+                          <span className="text-[10px] text-gray-400">{rec.market}</span>
                         </div>
-                        <div className="flex items-center gap-[12px]">
-                          <span className="text-[12px] text-gray-500">
-                            {rec.selection} ({rec.market})
-                          </span>
-                          <span className="text-[12px] font-mono-data font-medium text-[#0A0F1C]">
-                            @{rec.bookmaker_odds.toFixed(2)}
-                          </span>
-                        </div>
+                        <span className="text-[12px] font-mono-data font-medium text-[#0A0F1C]">
+                          @{rec.bookmaker_odds.toFixed(2)}
+                        </span>
                       </div>
 
-                      <div className="flex items-center gap-[12px] ml-[12px]">
+                      <div className="flex items-center gap-[10px] ml-[12px]">
                         <div className="text-right">
-                          <div className="text-[12px] font-mono-data font-semibold text-[#BFFF00]">
+                          <div className="text-[12px] font-mono-data font-semibold text-green-600">
                             +{(rec.edge * 100).toFixed(1)}%
                           </div>
                           <div className="text-[10px] text-gray-400">edge</div>
                         </div>
                         <div
-                          className={`w-[24px] h-[24px] rounded-full border-2 flex items-center justify-center transition-all ${
-                            isSelected
-                              ? "bg-[#BFFF00] border-[#BFFF00]"
-                              : "border-gray-200"
-                          }`}
+                          className={`
+                            w-[20px] h-[20px] rounded-full border-2 flex items-center justify-center transition-all
+                            ${isSelected ? "bg-[#1B2A4A] border-[#1B2A4A]" : "border-gray-200"}
+                          `}
                         >
-                          {isSelected && (
-                            <i className="ri-check-line text-[12px] text-[#1B2A4A]"></i>
-                          )}
+                          {isSelected && <i className="ri-check-line text-[10px] text-white" />}
                         </div>
                       </div>
                     </div>
@@ -214,10 +191,10 @@ export default function AccumulatorPage() {
         </div>
 
         {/* Accumulator Slip */}
-        <div className="lg:sticky lg:top-[80px] lg:self-start">
-          <div className="bg-white rounded-[16px] border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.03)] overflow-hidden">
-            <div className="p-[20px] border-b border-gray-50">
-              <h3 className="font-display text-[15px] font-semibold text-[#0A0F1C] mb-[12px]">
+        <div className="lg:sticky lg:top-[76px] lg:self-start">
+          <Card padding="none" className="overflow-hidden">
+            <div className="p-[16px] border-b border-gray-100">
+              <h3 className="text-[14px] font-semibold text-[#0A0F1C] mb-[10px]">
                 Your Accumulator
               </h3>
               <input
@@ -225,22 +202,22 @@ export default function AccumulatorPage() {
                 value={accName}
                 onChange={(e) => setAccName(e.target.value)}
                 placeholder="Name (optional)"
-                className="w-full h-[36px] rounded-[10px] border border-gray-200 bg-gray-50 px-[12px] text-[13px] text-[#0A0F1C] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1B2A4A]/20 transition-all"
+                className="w-full h-[34px] rounded-[8px] border border-gray-200 bg-gray-50 px-[10px] text-[12px] text-[#0A0F1C] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1B2A4A]/20 transition-all"
               />
             </div>
 
             {/* Selected legs */}
-            <div className="p-[20px] max-h-[300px] overflow-y-auto">
+            <div className="p-[16px] max-h-[280px] overflow-y-auto">
               {selectedLegs.length === 0 ? (
-                <p className="text-[13px] text-gray-400 text-center py-[20px]">
+                <p className="text-[12px] text-gray-400 text-center py-[16px]">
                   Click on value bets to add them
                 </p>
               ) : (
-                <div className="space-y-[6px]">
+                <div className="space-y-[4px]">
                   {selectedLegs.map((leg, idx) => (
                     <div
                       key={leg.recommendation.id}
-                      className="flex items-center justify-between p-[10px] bg-gray-50 rounded-[10px]"
+                      className="flex items-center justify-between p-[8px] bg-gray-50 rounded-[8px]"
                     >
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-[6px]">
@@ -260,7 +237,7 @@ export default function AccumulatorPage() {
                         }}
                         className="text-gray-300 hover:text-red-500 transition-colors p-[4px]"
                       >
-                        <i className="ri-close-line text-[14px]"></i>
+                        <i className="ri-close-line text-[14px]" />
                       </button>
                     </div>
                   ))}
@@ -270,7 +247,7 @@ export default function AccumulatorPage() {
 
             {/* Stats */}
             {selectedLegs.length >= 2 && (
-              <div className="p-[20px] border-t border-gray-50 space-y-[12px]">
+              <div className="p-[16px] border-t border-gray-100 space-y-[10px]">
                 <div className="flex items-center justify-between">
                   <span className="text-[12px] text-gray-400">Combined Odds</span>
                   <span className="text-[14px] font-mono-data font-bold text-[#0A0F1C]">
@@ -286,17 +263,19 @@ export default function AccumulatorPage() {
 
                 {/* Strategy selector */}
                 <div>
-                  <span className="text-[12px] text-gray-400 block mb-[6px]">Strategy</span>
-                  <div className="grid grid-cols-2 gap-[6px]">
+                  <span className="text-[11px] text-gray-400 block mb-[6px]">Strategy</span>
+                  <div className="grid grid-cols-2 gap-[4px]">
                     {(["conservative", "balanced", "aggressive", "longshot"] as const).map((s) => (
                       <button
                         key={s}
                         onClick={() => setStrategy(s)}
-                        className={`py-[6px] px-[8px] rounded-[8px] text-[11px] font-medium transition-all ${
-                          strategy === s
+                        className={`
+                          py-[6px] px-[8px] rounded-[6px] text-[11px] font-medium transition-all
+                          ${strategy === s
                             ? "bg-[#1B2A4A] text-white"
                             : "bg-gray-50 text-gray-500 hover:bg-gray-100"
-                        }`}
+                          }
+                        `}
                       >
                         {s.charAt(0).toUpperCase() + s.slice(1)}
                       </button>
@@ -306,17 +285,19 @@ export default function AccumulatorPage() {
 
                 {/* Stake */}
                 <div>
-                  <span className="text-[12px] text-gray-400 block mb-[6px]">Stake</span>
-                  <div className="flex items-center gap-[8px]">
+                  <span className="text-[11px] text-gray-400 block mb-[6px]">Stake</span>
+                  <div className="flex items-center gap-[4px]">
                     {[5, 10, 25, 50].map((s) => (
                       <button
                         key={s}
                         onClick={() => setTotalStake(s)}
-                        className={`flex-1 py-[6px] rounded-[8px] text-[12px] font-mono-data font-medium transition-all ${
-                          totalStake === s
+                        className={`
+                          flex-1 py-[6px] rounded-[6px] text-[12px] font-mono-data font-medium transition-all
+                          ${totalStake === s
                             ? "bg-[#1B2A4A] text-white"
                             : "bg-gray-50 text-gray-500 hover:bg-gray-100"
-                        }`}
+                          }
+                        `}
                       >
                         ${s}
                       </button>
@@ -324,36 +305,31 @@ export default function AccumulatorPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between pt-[8px] border-t border-gray-50">
+                <div className="flex items-center justify-between pt-[8px] border-t border-gray-100">
                   <span className="text-[12px] text-gray-400">Potential Return</span>
-                  <span className="text-[16px] font-mono-data font-bold text-[#BFFF00]">
+                  <span className="text-[16px] font-mono-data font-bold text-green-600">
                     ${potentialReturn.toFixed(2)}
                   </span>
                 </div>
 
                 {savedMsg && (
-                  <div className="text-center text-[13px] font-medium text-green-600 bg-green-50 rounded-[10px] py-[8px]">
+                  <div className="text-center text-[13px] font-medium text-green-600 bg-green-50 rounded-[8px] py-[8px]">
                     {savedMsg}
                   </div>
                 )}
 
-                <button
+                <Button
                   onClick={handleSave}
                   disabled={saving || selectedLegs.length < 2}
-                  className="w-full h-[40px] rounded-[10px] bg-[#1B2A4A] text-white text-[13px] font-semibold transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[#243B53] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-[6px]"
+                  loading={saving}
+                  icon="ri-save-line"
+                  className="w-full"
                 >
-                  {saving ? (
-                    <div className="w-[16px] h-[16px] border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  ) : (
-                    <>
-                      <i className="ri-save-line text-[14px]"></i>
-                      Save Accumulator
-                    </>
-                  )}
-                </button>
+                  Save Accumulator
+                </Button>
               </div>
             )}
-          </div>
+          </Card>
         </div>
       </div>
     </div>
