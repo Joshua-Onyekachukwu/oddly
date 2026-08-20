@@ -150,15 +150,17 @@ export async function getTodayFixtures(
   leagueId: number,
   season?: number
 ): Promise<FootballFixture[]> {
-  // Free plan only supports 2022-2024 seasons
-  // Use current year but fall back to 2024 if free plan rejects
+  // Free plan supports 2022-2024 seasons; try current year, fall back to 2024
   const currentSeason = season || Math.min(new Date().getFullYear(), 2024);
   const today = new Date().toISOString().split("T")[0];
+
+  // Try date range (today + 3 days) to get upcoming fixtures
+  const toDate = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
 
   const data = await fetchWithFallback(
     async () => {
       const result = await apiFootballFetch(
-        `/fixtures?league=${leagueId}&date=${today}&season=${currentSeason}`
+        `/fixtures?league=${leagueId}&from=${today}&to=${toDate}&season=${currentSeason}`
       ) as { response: FootballFixture[] };
       return result.response;
     },
