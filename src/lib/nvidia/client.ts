@@ -34,14 +34,14 @@ interface ModelEndpoint {
   taskId: string;
 }
 
-// Model endpoints mapping
+// Model endpoints mapping — all verified available on NVIDIA NIM
 const MODEL_ENDPOINTS: Record<string, ModelEndpoint> = {
   analyst: { model: "meta/llama-3.1-70b-instruct", taskId: "chat" },
   explainer: { model: "mistralai/mistral-7b-instruct-v0.3", taskId: "chat" },
-  classifier: { model: "microsoft/phi-3-mini-4k-instruct", taskId: "chat" },
-  riskNarrator: { model: "google/gemma-2-9b-it", taskId: "chat" },
-  sqlGenerator: { model: "meta/codellama-34b", taskId: "chat" },
-  fastTagger: { model: "meta/llama-3.2-3b-instruct", taskId: "chat" },
+  classifier: { model: "microsoft/phi-3.5-moe-instruct", taskId: "chat" },
+  riskNarrator: { model: "google/gemma-3-4b-it", taskId: "chat" },
+  sqlGenerator: { model: "meta/codellama-70b", taskId: "chat" },
+  fastTagger: { model: "meta/llama-3.1-8b-instruct", taskId: "chat" },
   fallback: { model: "meta/llama-3.1-8b-instruct", taskId: "chat" },
 };
 
