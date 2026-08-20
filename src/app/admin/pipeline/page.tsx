@@ -61,8 +61,9 @@ export default function AdminPipelinePage() {
   const [stages, setStages] = useState<PipelineStage[]>([
     { name: "Fixture Sync", status: "idle", icon: "ri-calendar-check-line", desc: "Fetches matches from API-Football", lastRun: null, duration: null },
     { name: "Odds Fetch", status: "idle", icon: "ri-bar-chart-box-line", desc: "Pulls live odds from bookmakers", lastRun: null, duration: null },
-    { name: "Prediction Engine", status: "idle", icon: "ri-brain-line", desc: "Generates model predictions", lastRun: null, duration: null },
+    { name: "Prediction Engine", status: "idle", icon: "ri-brain-line", desc: "NVIDIA AI generates predictions for fixtures", lastRun: null, duration: null },
     { name: "Value Detection", status: "idle", icon: "ri-search-eye-line", desc: "Scans for edges between model and market", lastRun: null, duration: null },
+    { name: "Crown Jewel Selection", status: "idle", icon: "ri-star-line", desc: "Picks the single best bet of the day", lastRun: null, duration: null },
     { name: "Notification Dispatch", status: "idle", icon: "ri-notification-3-line", desc: "Sends alerts for value bets and milestones", lastRun: null, duration: null },
   ]);
 
@@ -112,6 +113,70 @@ export default function AdminPipelinePage() {
     fetchStatus();
     fetchApiUsage();
   }, [fetchStatus, fetchApiUsage]);
+
+  // Manual prediction trigger
+  const triggerPredictions = async () => {
+    setSyncing("predict");
+    const now = new Date().toISOString();
+
+    setStages((prev) =>
+      prev.map((s) => ({
+        ...s,
+        status: s.name === "Prediction Engine" || s.name === "Crown Jewel Selection" || s.name === "Value Detection"
+          ? "running" as const
+          : s.status,
+      }))
+    );
+
+    try {
+      const res = await fetch("/api/v1/cron/predict", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await res.json();
+
+      setStages((prev) =>
+        prev.map((s) => {
+          if (s.name === "Prediction Engine") {
+            return {
+              ...s,
+              status: data.results?.predictions?.failed > 0 ? "warning" : "success",
+              lastRun: now,
+              duration: data.duration,
+            };
+          }
+          if (s.name === "Crown Jewel Selection") {
+            return {
+              ...s,
+              status: data.results?.crownJewel?.success ? "success" : "idle",
+              lastRun: now,
+              duration: null,
+            };
+          }
+          if (s.name === "Value Detection") {
+            return {
+              ...s,
+              status: data.results?.predictions?.success > 0 ? "success" : "idle",
+              lastRun: now,
+              duration: null,
+            };
+          }
+          return s;
+        })
+      );
+
+      await fetchStatus();
+    } catch (error) {
+      setStages((prev) =>
+        prev.map((s) => ({
+          ...s,
+          status: s.status === "running" ? "error" : s.status,
+        }))
+      );
+    }
+
+    setSyncing(null);
+  };
 
   // Manual sync triggers
   const triggerSync = async (type: "fixtures" | "odds" | "all") => {
@@ -235,6 +300,18 @@ export default function AdminPipelinePage() {
           >
             <i className="ri-bar-chart-box-line text-[14px]"></i>
             Sync Odds
+          </button>
+          <button
+            onClick={triggerPredictions}
+            disabled={syncing !== null}
+            className="h-[36px] px-[14px] rounded-[10px] bg-[#8B5CF6] text-white text-[13px] font-semibold transition-all hover:bg-[#7C3AED] active:scale-[0.98] disabled:opacity-50 flex items-center gap-[6px]"
+          >
+            {syncing === "predict" ? (
+              <div className="w-[14px] h-[14px] border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+            ) : (
+              <i className="ri-brain-line text-[14px]"></i>
+            )}
+            {syncing === "predict" ? "Predicting..." : "Run Predictions"}
           </button>
           <button
             onClick={() => triggerSync("all")}
@@ -433,17 +510,17 @@ export default function AdminPipelinePage() {
             <div className="space-y-[10px]">
               <div className="flex items-center justify-between p-[10px] bg-gray-50 rounded-[10px]">
                 <div className="flex items-center gap-[8px]">
-                  <i className="ri-time-line text-[14px] text-gray-400"></i>
-                  <span className="text-[12px] font-medium text-[#0A0F1C]">Full Sync</span>
+                  <i className="ri-refresh-line text-[14px] text-gray-400"></i>
+                  <span className="text-[12px] font-medium text-[#0A0F1C]">Odds Sync</span>
                 </div>
-                <span className="text-[11px] font-mono-data text-gray-500">0 */6 * * *</span>
+                <span className="text-[11px] font-mono-data text-gray-500">Every 6h</span>
               </div>
               <div className="flex items-center justify-between p-[10px] bg-gray-50 rounded-[10px]">
                 <div className="flex items-center gap-[8px]">
-                  <i className="ri-calendar-line text-[14px] text-gray-400"></i>
-                  <span className="text-[12px] font-medium text-[#0A0F1C]">Frequency</span>
+                  <i className="ri-brain-line text-[14px] text-purple-400"></i>
+                  <span className="text-[12px] font-medium text-[#0A0F1C]">Predictions</span>
                 </div>
-                <span className="text-[11px] font-mono-data text-gray-500">Every 6 hours</span>
+                <span className="text-[11px] font-mono-data text-gray-500">Daily 08:00</span>
               </div>
               <div className="flex items-center justify-between p-[10px] bg-gray-50 rounded-[10px]">
                 <div className="flex items-center gap-[8px]">
