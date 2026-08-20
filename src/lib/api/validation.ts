@@ -13,6 +13,27 @@ export const sortSchema = z.object({
   sortOrder: z.enum(["asc", "desc"]).default("desc"),
 });
 
+export const uuidParamsSchema = z.object({
+  id: z.string().uuid("Invalid UUID"),
+});
+
+// ── Auth Schemas ────────────────────────────────────────────────────
+
+export const loginSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(1, "Password is required"),
+});
+
+export const signupSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  fullName: z.string().min(1, "Name is required").max(100),
+});
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().email("Invalid email address"),
+});
+
 // ── Fixture Schemas ─────────────────────────────────────────────────
 
 export const fixtureQuerySchema = paginationSchema.merge(sortSchema).extend({
@@ -22,22 +43,16 @@ export const fixtureQuerySchema = paginationSchema.merge(sortSchema).extend({
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .optional(),
   status: z
-    .enum(["NS", "1H", "HT", "2H", "FT", "PST", "TBD"])
+    .enum(["scheduled", "live", "halftime", "finished", "postponed", "cancelled"])
     .optional(),
   search: z.string().max(100).optional(),
-});
-
-export const fixtureParamsSchema = z.object({
-  id: z.string().uuid("Invalid fixture ID"),
 });
 
 // ── Odds Schemas ────────────────────────────────────────────────────
 
 export const oddsQuerySchema = z.object({
   fixture_id: z.string().uuid().optional(),
-  market: z
-    .enum(["h2h", "spreads", "totals"])
-    .optional(),
+  market: z.enum(["h2h", "spreads", "totals"]).optional(),
   bookmaker: z.string().max(50).optional(),
 });
 
@@ -48,6 +63,11 @@ export const predictionQuerySchema = paginationSchema.extend({
   market: z.string().max(50).optional(),
   min_confidence: z.coerce.number().min(0).max(1).optional(),
   recommended_only: z.coerce.boolean().optional(),
+});
+
+export const predictionCreateSchema = z.object({
+  fixtureId: z.string().uuid("Invalid fixture ID"),
+  forceRegenerate: z.boolean().default(false),
 });
 
 // ── AI Chat Schemas ─────────────────────────────────────────────────
@@ -112,7 +132,14 @@ export const accumulatorCreateSchema = z.object({
   stake: z.number().positive().optional(),
 });
 
-// ── Bet Tracking Schemas ────────────────────────────────────────────
+export const accumulatorUpdateSchema = z.object({
+  name: z.string().min(1).max(100).trim().optional(),
+  status: z.enum(["active", "won", "lost", "void"]).optional(),
+  stake: z.number().positive().optional(),
+  strategy: z.enum(["conservative", "balanced", "aggressive", "longshot"]).optional(),
+});
+
+// ── User Bet Schemas ────────────────────────────────────────────────
 
 export const userBetQuerySchema = paginationSchema.extend({
   status: z.enum(["pending", "won", "lost", "void"]).optional(),
@@ -121,13 +148,16 @@ export const userBetQuerySchema = paginationSchema.extend({
 });
 
 export const userBetCreateSchema = z.object({
-  fixture_id: z.string().uuid(),
-  market: z.string().min(1).max(50),
-  selection: z.string().min(1).max(50),
-  odds: z.number().positive(),
-  stake: z.number().positive(),
-  confidence: z.number().min(0).max(1).optional(),
-  notes: z.string().max(500).optional(),
+  recommendationId: z.string().uuid("Invalid recommendation ID"),
+  market: z.string().min(1).max(50).trim(),
+  selection: z.string().min(1).max(50).trim(),
+  stake: z.number().positive("Stake must be positive"),
+  odds: z.number().min(1, "Odds must be at least 1.0"),
+  bookmaker: z.string().max(50).trim().optional(),
+});
+
+export const userBetUpdateSchema = z.object({
+  status: z.enum(["won", "lost", "void"]),
 });
 
 // ── Admin Schemas ───────────────────────────────────────────────────
@@ -145,9 +175,15 @@ export const announcementCreateSchema = z.object({
   is_active: z.boolean().default(true),
 });
 
+export const leagueCreateSchema = z.object({
+  name: z.string().min(1).max(100).trim(),
+  country: z.string().min(1).max(100).trim().optional(),
+  active: z.boolean().default(true),
+});
+
 export const leagueUpdateSchema = z.object({
-  name: z.string().min(1).max(100).optional(),
-  country: z.string().min(1).max(100).optional(),
+  name: z.string().min(1).max(100).trim().optional(),
+  country: z.string().min(1).max(100).trim().optional(),
   is_active: z.boolean().optional(),
   api_id: z.number().int().positive().optional(),
 });
@@ -171,6 +207,14 @@ export const predictionAccuracySchema = z.object({
   confidence_tier: z.enum(["very_high", "high", "medium", "low"]),
   edge_at_capture: z.number(),
   odds_at_capture: z.number().positive(),
+});
+
+// ── Rollover Schemas ────────────────────────────────────────────────
+
+export const rolloverCreateSchema = z.object({
+  name: z.string().min(1).max(100).trim().optional(),
+  starting_stake: z.number().positive().default(10),
+  target_days: z.number().int().min(7).max(365).default(30),
 });
 
 // ── Helper: Validate and return friendly errors ─────────────────────

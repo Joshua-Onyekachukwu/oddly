@@ -22,7 +22,7 @@
  *   - bookmaker: string (optional)
  */
 
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import {
@@ -37,6 +37,7 @@ import {
   addRateLimitHeaders,
   checkRateLimit,
 } from "@/lib/api/utils";
+import { userBetCreateSchema, validateBody } from "@/lib/api/validation";
 
 export async function GET(request: NextRequest) {
   try {
@@ -83,14 +84,22 @@ export async function POST(request: NextRequest) {
   try {
     const { user, supabase } = await requireAuth(request);
 
-    const body = await request.json();
-    const { recommendationId, market, selection, stake, odds, bookmaker } = body;
+    let rawBody: unknown;
+    try {
+      rawBody = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
 
-    if (!recommendationId) return badRequest("recommendationId is required");
-    if (!market) return badRequest("market is required");
-    if (!selection) return badRequest("selection is required");
-    if (!stake || stake <= 0) return badRequest("stake must be a positive number");
-    if (!odds || odds < 1) return badRequest("odds must be >= 1.0");
+    const validation = validateBody(userBetCreateSchema, rawBody);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Invalid bet data", details: validation.error },
+        { status: 400 }
+      );
+    }
+
+    const { recommendationId, market, selection, stake, odds, bookmaker } = validation.data;
 
     // Verify recommendation exists
     const { data: rec, error: recError } = await supabase

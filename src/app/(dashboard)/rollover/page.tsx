@@ -303,6 +303,43 @@ export default function RolloverPage() {
         </div>
       )}
 
+      {/* Bankroll Chart (CSS-based) */}
+      {activeChain && activeChain.rollover_picks && activeChain.rollover_picks.length > 1 && (
+        <div className="bg-white rounded-[16px] p-[20px] border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.03)] mb-[24px]">
+          <h3 className="text-[14px] font-semibold text-[#0A0F1C] mb-[16px]">Bankroll History</h3>
+          <div className="flex items-end gap-[4px] h-[100px]">
+            {activeChain.rollover_picks
+              .sort((a, b) => a.day_number - b.day_number)
+              .map((pick, i) => {
+                const return_pct = pick.result === "won"
+                  ? ((activeChain.rollover_percentage || 100) / 100)
+                  : pick.result === "lost"
+                  ? 0
+                  : 0.5;
+                return (
+                  <div key={pick.id} className="flex-1 flex flex-col items-center gap-[2px]">
+                    <div
+                      className={`w-full rounded-[3px] transition-all ${
+                        pick.result === "won" ? "bg-[#22c55e]" : pick.result === "lost" ? "bg-[#EF4444]" : "bg-gray-200"
+                      }`}
+                      style={{ height: `${Math.max(return_pct * 80, 4)}px` }}
+                    />
+                    <span className="text-[7px] text-gray-300 font-mono-data">D{pick.day_number}</span>
+                  </div>
+                );
+              })}
+          </div>
+          <div className="flex items-center gap-[16px] mt-[8px]">
+            <span className="flex items-center gap-[4px] text-[10px] text-gray-400">
+              <span className="w-[8px] h-[8px] rounded-[2px] bg-[#22c55e]"></span> Won
+            </span>
+            <span className="flex items-center gap-[4px] text-[10px] text-gray-400">
+              <span className="w-[8px] h-[8px] rounded-[2px] bg-[#EF4444]"></span> Lost
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Past chains */}
       {chains.length > 0 && (
         <div>

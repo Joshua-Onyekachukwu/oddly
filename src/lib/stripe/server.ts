@@ -1,16 +1,22 @@
 import Stripe from "stripe";
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error("STRIPE_SECRET_KEY is not set in environment variables");
-}
+let _stripe: Stripe | null = null;
 
 /**
- * Server-side Stripe client
- * Only import this in API routes, server actions, or cron jobs
+ * Server-side Stripe client (lazy-loaded)
+ * Only throws when actually called, not at import time.
  */
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  typescript: true,
-});
+export function getStripe(): Stripe {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error("STRIPE_SECRET_KEY is not set in environment variables. Stripe is not configured.");
+  }
+  if (!_stripe) {
+    _stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+      typescript: true,
+    });
+  }
+  return _stripe;
+}
 
 /**
  * Get or create a Stripe customer for a Supabase user
@@ -38,7 +44,7 @@ export async function getOrCreateCustomer(
   }
 
   // Create new Stripe customer
-  const customer = await stripe.customers.create({
+  const customer = await getStripe().customers.create({
     email,
     name: name || email,
     metadata: {
@@ -72,7 +78,7 @@ export async function createCheckoutSession(params: {
     params.name
   );
 
-  const session = await stripe.checkout.sessions.create({
+  const session = await getStripe().checkout.sessions.create({
     customer: customerId,
     mode: "subscription",
     payment_method_types: ["card"],
@@ -104,7 +110,7 @@ export async function createPortalSession(
   customerId: string,
   returnUrl: string
 ): Promise<Stripe.BillingPortal.Session> {
-  return stripe.billingPortal.sessions.create({
+  return getStripe().billingPortal.sessions.create({
     customer: customerId,
     return_url: returnUrl,
   });
@@ -122,5 +128,5 @@ export async function handleWebhook(
     throw new Error("STRIPE_WEBHOOK_SECRET is not set");
   }
 
-  return stripe.webhooks.constructEvent(body, signature, webhookSecret);
+  return getStripe().webhooks.constructEvent(body, signature, webhookSecret);
 }

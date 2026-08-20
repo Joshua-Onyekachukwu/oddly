@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { stripe, handleWebhook } from "@/lib/stripe/server";
+import { getStripe, handleWebhook } from "@/lib/stripe/server";
 import type Stripe from "stripe";
 import type { Database } from "@/lib/supabase/database.types";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -116,7 +116,8 @@ async function handleCheckoutComplete(
   }
 
   if (session.subscription) {
-    const subscription = await stripe.subscriptions.retrieve(
+    const stripeClient = getStripe();
+    const subscription = await stripeClient.subscriptions.retrieve(
       session.subscription as string
     );
 
@@ -234,7 +235,8 @@ async function handlePaymentSucceeded(
     : invoiceObj.subscription?.id;
   if (!subscriptionId) return;
 
-  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  const stripeClient = getStripe();
+  const subscription = await stripeClient.subscriptions.retrieve(subscriptionId);
   const userId = subscription.metadata?.supabase_user_id;
   if (!userId) return;
 
@@ -268,7 +270,8 @@ async function handlePaymentFailed(
     : invoiceObj.subscription?.id;
   if (!subscriptionId) return;
 
-  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  const stripeClient2 = getStripe();
+  const subscription = await stripeClient2.subscriptions.retrieve(subscriptionId);
   const userId = subscription.metadata?.supabase_user_id;
   if (!userId) return;
 
