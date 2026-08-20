@@ -85,11 +85,11 @@ const HeroBanner: React.FC<HeroBannerProps> = ({ crownJewel, stats }) => {
         <div className="container sm:max-w-[540px] md:max-w-[720px] lg:max-w-[960px] xl:max-w-[1200px] mx-auto relative">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-[48px] lg:gap-[80px] items-center">
             {/* Left: Copy */}
-            <div className="xl:max-w-[580px]">
+            <div className="xl:max-w-[580px] text-center md:text-left">
               {/* Eyebrow */}
               <div
                 {...getScrollRevealClasses(isVisible, 0)}
-                className="inline-flex items-center gap-[8px] mb-[24px] md:mb-[32px]"
+                className="inline-flex items-center gap-[8px] mb-[24px] md:mb-[32px] justify-center md:justify-start"
               >
                 <span className="w-[6px] h-[6px] rounded-full bg-[#BFFF00] animate-pulse"></span>
                 <span className="text-[#BFFF00]/80 text-[11px] font-semibold tracking-[0.15em] uppercase font-display">
@@ -112,7 +112,7 @@ const HeroBanner: React.FC<HeroBannerProps> = ({ crownJewel, stats }) => {
               {/* Subhead */}
               <p
                 {...getScrollRevealClasses(isVisible, 160)}
-                className="text-[15px] md:text-[17px] !leading-[1.75] !mb-0 text-gray-400/80 max-w-[460px]"
+                className="text-[15px] md:text-[17px] !leading-[1.75] !mb-0 text-gray-400/80 max-w-[460px] mx-auto md:mx-0"
               >
                 The Crown Jewel is our single highest-conviction selection each
                 day — where all {models} AI models agree, confidence exceeds 90%, and
@@ -122,7 +122,7 @@ const HeroBanner: React.FC<HeroBannerProps> = ({ crownJewel, stats }) => {
               {/* CTAs */}
               <div
                 {...getScrollRevealClasses(isVisible, 240)}
-                className="mt-[32px] md:mt-[40px] flex flex-wrap items-center gap-[12px]"
+                className="mt-[32px] md:mt-[40px] flex flex-wrap items-center gap-[12px] justify-center md:justify-start"
               >
                 <Link
                   href="/signup"
@@ -147,7 +147,7 @@ const HeroBanner: React.FC<HeroBannerProps> = ({ crownJewel, stats }) => {
               {/* Trust strip — live stats */}
               <div
                 {...getScrollRevealClasses(isVisible, 320)}
-                className="mt-[48px] md:mt-[64px] flex items-center gap-[20px] flex-wrap"
+                className="mt-[48px] md:mt-[64px] flex items-center gap-[20px] flex-wrap justify-center md:justify-start"
               >
                 {[
                   { value: stats.avgAccuracy > 0 ? `${stats.avgAccuracy}%` : "94.4%", label: "accuracy" },
@@ -170,7 +170,7 @@ const HeroBanner: React.FC<HeroBannerProps> = ({ crownJewel, stats }) => {
             </div>
 
             {/* Right: Dashboard + Crown Jewel Card */}
-            <div ref={cardRef} className="relative">
+            <div ref={cardRef} className="relative hidden lg:block">
               {/* Dashboard preview — Double-Bezel */}
               <div
                 {...getScrollRevealClasses(cardVisible, 100)}

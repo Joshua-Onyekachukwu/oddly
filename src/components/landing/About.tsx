@@ -49,7 +49,7 @@ const About: React.FC = () => {
             </div>
 
             {/* Floating accuracy card */}
-            <div className="absolute -bottom-[16px] -right-[16px] bg-white rounded-[12px] p-[14px] shadow-[0_8px_30px_-8px_rgba(0,0,0,0.12)] border border-gray-100 z-[2]">
+            <div className="absolute -bottom-[16px] -right-[16px] md:-right-[16px] right-[8px] bg-white rounded-[12px] p-[14px] shadow-[0_8px_30px_-8px_rgba(0,0,0,0.12)] border border-gray-100 z-[2]">
               <div className="flex items-center gap-[8px]">
                 <div className="w-[28px] h-[28px] bg-[#22c55e]/10 rounded-full flex items-center justify-center">
                   <i className="ri-percent-line text-[#22c55e] text-[12px]"></i>
@@ -62,7 +62,7 @@ const About: React.FC = () => {
             </div>
 
             {/* Floating model count card */}
-            <div className="absolute -top-[12px] -left-[12px] bg-white rounded-[12px] p-[12px] shadow-[0_8px_30px_-8px_rgba(0,0,0,0.12)] border border-gray-100 z-[2]">
+            <div className="absolute -top-[12px] -left-[12px] md:-left-[12px] left-[8px] bg-white rounded-[12px] p-[12px] shadow-[0_8px_30px_-8px_rgba(0,0,0,0.12)] border border-gray-100 z-[2]">
               <div className="flex items-center gap-[8px]">
                 <div className="w-[28px] h-[28px] bg-[#8B5CF6]/10 rounded-full flex items-center justify-center">
                   <i className="ri-robot-2-line text-[#8B5CF6] text-[12px]"></i>
