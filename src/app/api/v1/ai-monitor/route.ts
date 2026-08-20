@@ -10,12 +10,14 @@ const supabaseAdmin = createClient<Database>(
 
 /**
  * GET /api/v1/ai-monitor
- * 
+ *
  * Admin-only endpoint for monitoring AI usage:
  * - NVIDIA API key usage stats
- * - Cache hit rate
- * - Total API calls
- * - Response times
+ * - Per-model breakdown
+ * - Cache hit/miss rates
+ * - Recent cache entries
+ * - Prediction pipeline stats
+ * - 7-day trend data
  */
 export async function GET(request: NextRequest) {
   try {
@@ -29,7 +31,9 @@ export async function GET(request: NextRequest) {
 
     if (authHeader?.startsWith("Bearer ")) {
       const token = authHeader.slice(7);
-      const { data: { user } } = await supabaseAdmin.auth.getUser(token);
+      const {
+        data: { user },
+      } = await supabaseAdmin.auth.getUser(token);
 
       if (!user) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -42,32 +46,139 @@ export async function GET(request: NextRequest) {
         .single();
 
       if (profile?.role !== "admin") {
-        return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+        return NextResponse.json(
+          { error: "Admin access required" },
+          { status: 403 }
+        );
       }
     }
 
-    // Get NVIDIA client usage stats
+    // 1. NVIDIA client usage stats
     const client = getNVIDIAClient();
     const keyUsage = client.getUsage();
     const activeKeys = client.getActiveKeysCount();
 
-    // Get cache stats from Supabase
+    // 2. Cache stats from Supabase
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const todayISO = today.toISOString();
 
-    const [totalCache, todayCache, chatCache] = await Promise.all([
+    const [totalCache, todayCache, chatCache, predictCache] =
+      await Promise.all([
+        supabaseAdmin
+          .from("ai_cache")
+          .select("id", { count: "exact", head: true }),
+        supabaseAdmin
+          .from("ai_cache")
+          .select("id", { count: "exact", head: true })
+          .gte("created_at", todayISO),
+        supabaseAdmin
+          .from("ai_cache")
+          .select("id", { count: "exact", head: true })
+          .like("model_used", "chat:%")
+          .gte("created_at", todayISO),
+        supabaseAdmin
+          .from("ai_cache")
+          .select("id", { count: "exact", head: true })
+          .like("model_used", "predict:%")
+          .gte("created_at", todayISO),
+      ]);
+
+    // 3. Per-model cache breakdown
+    const { data: cacheByModel } = await supabaseAdmin
+      .from("ai_cache")
+      .select("model_used")
+      .gte("created_at", todayISO);
+
+    const modelCounts: Record<string, number> = {};
+    if (cacheByModel) {
+      for (const entry of cacheByModel) {
+        const model = entry.model_used || "unknown";
+        // Strip user ID prefix from chat entries
+        const cleanModel = model.startsWith("chat:")
+          ? "chat"
+          : model.startsWith("predict:")
+          ? "predict"
+          : model;
+        modelCounts[cleanModel] = (modelCounts[cleanModel] || 0) + 1;
+      }
+    }
+
+    // 4. Recent cache entries (last 20)
+    const { data: recentCache } = await supabaseAdmin
+      .from("ai_cache")
+      .select("cache_key, model_used, created_at")
+      .order("created_at", { ascending: false })
+      .limit(20);
+
+    // 5. Prediction stats
+    const [totalPredictions, todayPredictions, correctPredictions, wrongPredictions] =
+      await Promise.all([
+        supabaseAdmin
+          .from("predictions")
+          .select("id", { count: "exact", head: true }),
+        supabaseAdmin
+          .from("predictions")
+          .select("id", { count: "exact", head: true })
+          .gte("created_at", todayISO),
+        supabaseAdmin
+          .from("predictions")
+          .select("id", { count: "exact", head: true })
+          .eq("result", "correct"),
+        supabaseAdmin
+          .from("predictions")
+          .select("id", { count: "exact", head: true })
+          .eq("result", "wrong"),
+      ]);
+
+    // 6. Model performance records
+    const { data: modelPerf } = await supabaseAdmin
+      .from("model_performance")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(10);
+
+    // 7. 7-day cache trend
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    sevenDaysAgo.setHours(0, 0, 0, 0);
+
+    const { data: weeklyCache } = await supabaseAdmin
+      .from("ai_cache")
+      .select("created_at, model_used")
+      .gte("created_at", sevenDaysAgo.toISOString())
+      .order("created_at", { ascending: true });
+
+    // Aggregate by day
+    const dailyTrend: Record<string, { total: number; chat: number; predict: number }> = {};
+    if (weeklyCache) {
+      for (const entry of weeklyCache) {
+        const day = entry.created_at.substring(0, 10);
+        if (!dailyTrend[day]) {
+          dailyTrend[day] = { total: 0, chat: 0, predict: 0 };
+        }
+        dailyTrend[day].total++;
+        const model = entry.model_used || "";
+        if (model.startsWith("chat:")) dailyTrend[day].chat++;
+        else if (model.startsWith("predict:")) dailyTrend[day].predict++;
+      }
+    }
+
+    // 8. Recommendation stats
+    const [totalRecs, recommended, topEdge] = await Promise.all([
       supabaseAdmin
-        .from("ai_cache")
+        .from("recommendations")
         .select("id", { count: "exact", head: true }),
       supabaseAdmin
-        .from("ai_cache")
+        .from("recommendations")
         .select("id", { count: "exact", head: true })
-        .gte("created_at", today.toISOString()),
+        .eq("is_recommended", true),
       supabaseAdmin
-        .from("ai_cache")
-        .select("id", { count: "exact", head: true })
-        .like("model_used", "chat:%")
-        .gte("created_at", today.toISOString()),
+        .from("recommendations")
+        .select("edge, market, selection")
+        .eq("is_recommended", true)
+        .order("edge", { ascending: false })
+        .limit(5),
     ]);
 
     return NextResponse.json({
@@ -83,7 +194,39 @@ export async function GET(request: NextRequest) {
         totalEntries: totalCache.count || 0,
         todayEntries: todayCache.count || 0,
         todayChatCalls: chatCache.count || 0,
+        todayPredictCalls: predictCache.count || 0,
+        hitRate:
+          todayCache.count && todayPredictions.count
+            ? Math.round(
+                ((todayCache.count - (chatCache.count || 0)) /
+                  Math.max(todayCache.count, 1)) *
+                  100
+              )
+            : 0,
+        byModel: modelCounts,
+        recentEntries: recentCache || [],
       },
+      predictions: {
+        total: totalPredictions.count || 0,
+        today: todayPredictions.count || 0,
+        correct: correctPredictions.count || 0,
+        wrong: wrongPredictions.count || 0,
+        accuracy:
+          correctPredictions.count && wrongPredictions.count
+            ? Math.round(
+                (correctPredictions.count /
+                  (correctPredictions.count + wrongPredictions.count)) *
+                  100
+              )
+            : 0,
+        modelPerformance: modelPerf || [],
+      },
+      recommendations: {
+        total: totalRecs.count || 0,
+        recommended: recommended.count || 0,
+        topEdge: topEdge || [],
+      },
+      trend: dailyTrend,
       models: {
         analyst: "meta/llama-3.1-70b-instruct",
         explainer: "mistralai/mistral-7b-instruct-v0.3",
