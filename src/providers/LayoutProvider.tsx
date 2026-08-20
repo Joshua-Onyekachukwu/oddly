@@ -1,57 +1,35 @@
 "use client";
 
 import React, { useState, ReactNode } from "react";
-import { usePathname } from "next/navigation";
 import SidebarMenu from "@/components/layout/SidebarMenu";
 import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
 
 interface LayoutProviderProps {
   children: ReactNode;
 }
 
 const LayoutProvider: React.FC<LayoutProviderProps> = ({ children }) => {
-  const pathname = usePathname();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const [active, setActive] = useState<boolean>(false);
-
-  const toggleActive = () => {
-    setActive(!active);
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
   };
 
-  const isAuthPage = [
-    "/login",
-    "/signup",
-    "/forgot-password",
-    "/",
-    "/features",
-    "/pricing",
-    "/#pricing",
-    "/#faq",
-    "/#features",
-    "/#how-it-works",
-  ].includes(pathname);
-
   return (
-    <>
-      <div
-        className={`main-content-wrap transition-all ${active ? "active" : ""}`}
-      >
-        {!isAuthPage && (
-          <>
-            <SidebarMenu toggleActive={toggleActive} />
+    <div className="min-h-screen bg-[#FAFBFC]">
+      {/* Sidebar */}
+      <SidebarMenu toggleActive={toggleSidebar} />
 
-            <Header toggleActive={toggleActive} />
-          </>
-        )}
+      {/* Header */}
+      <Header toggleActive={toggleSidebar} />
 
-        <div className="main-content transition-all flex flex-col overflow-hidden min-h-screen">
+      {/* Main content */}
+      <main className="pt-[56px] xl:pl-[260px] min-h-screen">
+        <div className="p-[16px] xl:p-[24px]">
           {children}
-
-          {!isAuthPage && <Footer />}
         </div>
-      </div>
-    </>
+      </main>
+    </div>
   );
 };
 

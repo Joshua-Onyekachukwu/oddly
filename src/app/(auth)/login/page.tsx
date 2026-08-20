@@ -11,6 +11,9 @@ function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resent, setResent] = useState(false);
+  const [needsConfirmation, setNeedsConfirmation] = useState(false);
 
   const { signIn } = useAuth();
   const router = useRouter();
@@ -20,6 +23,7 @@ function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setNeedsConfirmation(false);
     setLoading(true);
 
     if (!email || !password) {
@@ -31,13 +35,52 @@ function LoginForm() {
     const result = await signIn(email, password);
 
     if (result.error) {
-      setError(result.error);
+      // Check if it's an email confirmation error
+      if (
+        result.error.toLowerCase().includes("email not confirmed") ||
+        result.error.toLowerCase().includes("confirm") ||
+        result.error.toLowerCase().includes("verify")
+      ) {
+        setNeedsConfirmation(true);
+        setError("");
+      } else {
+        setError(result.error);
+      }
       setLoading(false);
       return;
     }
 
     router.push(redirect);
     router.refresh();
+  };
+
+  const handleResendConfirmation = async () => {
+    if (!email) {
+      setError("Please enter your email address first");
+      return;
+    }
+
+    setResending(true);
+    setError("");
+
+    try {
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabase = createClient();
+      const { error: resendError } = await supabase.auth.resend({
+        type: "signup",
+        email,
+      });
+
+      if (resendError) {
+        setError(resendError.message);
+      } else {
+        setResent(true);
+      }
+    } catch {
+      setError("Failed to resend confirmation email");
+    } finally {
+      setResending(false);
+    }
   };
 
   return (
@@ -61,6 +104,34 @@ function LoginForm() {
           <div className="bg-red-50 border border-red-200 rounded-[12px] p-[12px] flex items-center gap-[8px]">
             <i className="ri-error-warning-line text-[16px] text-red-500"></i>
             <span className="text-[13px] text-red-600">{error}</span>
+          </div>
+        )}
+
+        {needsConfirmation && (
+          <div className="bg-amber-50 border border-amber-200 rounded-[12px] p-[14px]">
+            <div className="flex items-center gap-[8px] mb-[8px]">
+              <i className="ri-mail-check-line text-[16px] text-amber-600"></i>
+              <span className="text-[13px] font-semibold text-amber-800">
+                Email not confirmed
+              </span>
+            </div>
+            <p className="text-[12px] text-amber-700 mb-[10px]">
+              Please check your inbox and click the confirmation link to activate your account.
+            </p>
+            {resent ? (
+              <p className="text-[12px] text-green-700 font-medium">
+                ✓ Confirmation email sent! Check your inbox.
+              </p>
+            ) : (
+              <button
+                type="button"
+                onClick={handleResendConfirmation}
+                disabled={resending}
+                className="text-[12px] font-semibold text-amber-800 hover:text-amber-900 underline transition-colors disabled:opacity-50"
+              >
+                {resending ? "Sending..." : "Resend confirmation email"}
+              </button>
+            )}
           </div>
         )}
 
