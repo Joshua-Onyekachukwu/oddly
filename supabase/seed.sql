@@ -118,42 +118,42 @@ ON CONFLICT (canonical_name, alias) DO NOTHING;
 -- Today's matches (use CURRENT_DATE)
 INSERT INTO fixtures (id, home_team_id, away_team_id, league_id, kickoff_time, status, is_featured) VALUES
   -- Premier League — today
-  ('c1b2c3d4-e5f6-7890-abcd-333333333301', 'b1b2c3d4-e5f6-7890-abcd-222222222201', 'b1b2c3d4-e5f6-7890-abcd-222222222204', 'a1b2c3d4-e5f6-7890-abcd-111111111101', (CURRENT_DATE + INTERVAL '14 hours 30 minutes')::text, 'scheduled', true),
-  ('c1b2c3d4-e5f6-7890-abcd-333333333302', 'b1b2c3d4-e5f6-7890-abcd-222222222202', 'b1b2c3d4-e5f6-7890-abcd-222222222207', 'a1b2c3d4-e5f6-7890-abcd-111111111101', (CURRENT_DATE + INTERVAL '17 hours')::text, 'scheduled', true),
-  ('c1b2c3d4-e5f6-7890-abcd-333333333303', 'b1b2c3d4-e5f6-7890-abcd-222222222203', 'b1b2c3d4-e5f6-7890-abcd-222222222205', 'a1b2c3d4-e5f6-7890-abcd-111111111101', (CURRENT_DATE + INTERVAL '19 hours 45 minutes')::text, 'scheduled', true),
+  ('c1b2c3d4-e5f6-7890-abcd-333333333301', 'b1b2c3d4-e5f6-7890-abcd-222222222201', 'b1b2c3d4-e5f6-7890-abcd-222222222204', 'a1b2c3d4-e5f6-7890-abcd-111111111101', (CURRENT_DATE + INTERVAL '14 hours 30 minutes')::timestamptz, 'scheduled', true),
+  ('c1b2c3d4-e5f6-7890-abcd-333333333302', 'b1b2c3d4-e5f6-7890-abcd-222222222202', 'b1b2c3d4-e5f6-7890-abcd-222222222207', 'a1b2c3d4-e5f6-7890-abcd-111111111101', (CURRENT_DATE + INTERVAL '17 hours')::timestamptz, 'scheduled', true),
+  ('c1b2c3d4-e5f6-7890-abcd-333333333303', 'b1b2c3d4-e5f6-7890-abcd-222222222203', 'b1b2c3d4-e5f6-7890-abcd-222222222205', 'a1b2c3d4-e5f6-7890-abcd-111111111101', (CURRENT_DATE + INTERVAL '19 hours 45 minutes')::timestamptz, 'scheduled', true),
 
   -- La Liga — today
-  ('c1b2c3d4-e5f6-7890-abcd-333333333304', 'b1b2c3d4-e5f6-7890-abcd-222222222213', 'b1b2c3d4-e5f6-7890-abcd-222222222215', 'a1b2c3d4-e5f6-7890-abcd-111111111102', (CURRENT_DATE + INTERVAL '21 hours')::text, 'scheduled', true),
-  ('c1b2c3d4-e5f6-7890-abcd-333333333305', 'b1b2c3d4-e5f6-7890-abcd-222222222214', 'b1b2c3d4-e5f6-7890-abcd-222222222216', 'a1b2c3d4-e5f6-7890-abcd-111111111102', (CURRENT_DATE + INTERVAL '16 hours')::text, 'scheduled', true),
+  ('c1b2c3d4-e5f6-7890-abcd-333333333304', 'b1b2c3d4-e5f6-7890-abcd-222222222213', 'b1b2c3d4-e5f6-7890-abcd-222222222215', 'a1b2c3d4-e5f6-7890-abcd-111111111102', (CURRENT_DATE + INTERVAL '21 hours')::timestamptz, 'scheduled', true),
+  ('c1b2c3d4-e5f6-7890-abcd-333333333305', 'b1b2c3d4-e5f6-7890-abcd-222222222214', 'b1b2c3d4-e5f6-7890-abcd-222222222216', 'a1b2c3d4-e5f6-7890-abcd-111111111102', (CURRENT_DATE + INTERVAL '16 hours')::timestamptz, 'scheduled', true),
 
   -- Serie A — today
-  ('c1b2c3d4-e5f6-7890-abcd-333333333306', 'b1b2c3d4-e5f6-7890-abcd-222222222219', 'b1b2c3d4-e5f6-7890-abcd-222222222222', 'a1b2c3d4-e5f6-7890-abcd-111111111103', (CURRENT_DATE + INTERVAL '17 hours 45 minutes')::text, 'scheduled', true),
+  ('c1b2c3d4-e5f6-7890-abcd-333333333306', 'b1b2c3d4-e5f6-7890-abcd-222222222219', 'b1b2c3d4-e5f6-7890-abcd-222222222222', 'a1b2c3d4-e5f6-7890-abcd-111111111103', (CURRENT_DATE + INTERVAL '17 hours 45 minutes')::timestamptz, 'scheduled', true),
 
   -- Bundesliga — today
-  ('c1b2c3d4-e5f6-7890-abcd-333333333307', 'b1b2c3d4-e5f6-7890-abcd-222222222225', 'b1b2c3d4-e5f6-7890-abcd-222222222227', 'a1b2c3d4-e5f6-7890-abcd-111111111104', (CURRENT_DATE + INTERVAL '15 hours')::text, 'scheduled', true),
+  ('c1b2c3d4-e5f6-7890-abcd-333333333307', 'b1b2c3d4-e5f6-7890-abcd-222222222225', 'b1b2c3d4-e5f6-7890-abcd-222222222227', 'a1b2c3d4-e5f6-7890-abcd-111111111104', (CURRENT_DATE + INTERVAL '15 hours')::timestamptz, 'scheduled', true),
 
   -- Ligue 1 — today
-  ('c1b2c3d4-e5f6-7890-abcd-333333333308', 'b1b2c3d4-e5f6-7890-abcd-222222222231', 'b1b2c3d4-e5f6-7890-abcd-222222222234', 'a1b2c3d4-e5f6-7890-abcd-111111111105', (CURRENT_DATE + INTERVAL '20 hours')::text, 'scheduled', false)
+  ('c1b2c3d4-e5f6-7890-abcd-333333333308', 'b1b2c3d4-e5f6-7890-abcd-222222222231', 'b1b2c3d4-e5f6-7890-abcd-222222222234', 'a1b2c3d4-e5f6-7890-abcd-111111111105', (CURRENT_DATE + INTERVAL '20 hours')::timestamptz, 'scheduled', false)
 
 ON CONFLICT (id) DO NOTHING;
 
 -- Tomorrow's matches
 INSERT INTO fixtures (id, home_team_id, away_team_id, league_id, kickoff_time, status, is_featured) VALUES
-  ('c1b2c3d4-e5f6-7890-abcd-333333333309', 'b1b2c3d4-e5f6-7890-abcd-222222222206', 'b1b2c3d4-e5f6-7890-abcd-222222222208', 'a1b2c3d4-e5f6-7890-abcd-111111111101', (CURRENT_DATE + INTERVAL '1 day 14 hours 30 minutes')::text, 'scheduled', true),
-  ('c1b2c3d4-e5f6-7890-abcd-333333333310', 'b1b2c3d4-e5f6-7890-abcd-222222222210', 'b1b2c3d4-e5f6-7890-abcd-222222222211', 'a1b2c3d4-e5f6-7890-abcd-111111111101', (CURRENT_DATE + INTERVAL '1 day 17 hours')::text, 'scheduled', false),
-  ('c1b2c3d4-e5f6-7890-abcd-333333333311', 'b1b2c3d4-e5f6-7890-abcd-222222222226', 'b1b2c3d4-e5f6-7890-abcd-222222222229', 'a1b2c3d4-e5f6-7890-abcd-111111111104', (CURRENT_DATE + INTERVAL '1 day 15 hours')::text, 'scheduled', true),
-  ('c1b2c3d4-e5f6-7890-abcd-333333333312', 'b1b2c3d4-e5f6-7890-abcd-222222222228', 'b1b2c3d4-e5f6-7890-abcd-222222222230', 'a1b2c3d4-e5f6-7890-abcd-111111111104', (CURRENT_DATE + INTERVAL '1 day 18 hours 30 minutes')::text, 'scheduled', true),
-  ('c1b2c3d4-e5f6-7890-abcd-333333333313', 'b1b2c3d4-e5f6-7890-abcd-222222222221', 'b1b2c3d4-e5f6-7890-abcd-222222222223', 'a1b2c3d4-e5f6-7890-abcd-111111111103', (CURRENT_DATE + INTERVAL '1 day 17 hours 45 minutes')::text, 'scheduled', false),
-  ('c1b2c3d4-e5f6-7890-abcd-333333333314', 'b1b2c3d4-e5f6-7890-abcd-222222222220', 'b1b2c3d4-e5f6-7890-abcd-222222222224', 'a1b2c3d4-e5f6-7890-abcd-111111111103', (CURRENT_DATE + INTERVAL '1 day 20 hours')::text, 'scheduled', false),
-  ('c1b2c3d4-e5f6-7890-abcd-333333333315', 'b1b2c3d4-e5f6-7890-abcd-222222222232', 'b1b2c3d4-e5f6-7890-abcd-222222222233', 'a1b2c3d4-e5f6-7890-abcd-111111111105', (CURRENT_DATE + INTERVAL '1 day 21 hours')::text, 'scheduled', true)
+  ('c1b2c3d4-e5f6-7890-abcd-333333333309', 'b1b2c3d4-e5f6-7890-abcd-222222222206', 'b1b2c3d4-e5f6-7890-abcd-222222222208', 'a1b2c3d4-e5f6-7890-abcd-111111111101', (CURRENT_DATE + INTERVAL '1 day 14 hours 30 minutes')::timestamptz, 'scheduled', true),
+  ('c1b2c3d4-e5f6-7890-abcd-333333333310', 'b1b2c3d4-e5f6-7890-abcd-222222222210', 'b1b2c3d4-e5f6-7890-abcd-222222222211', 'a1b2c3d4-e5f6-7890-abcd-111111111101', (CURRENT_DATE + INTERVAL '1 day 17 hours')::timestamptz, 'scheduled', false),
+  ('c1b2c3d4-e5f6-7890-abcd-333333333311', 'b1b2c3d4-e5f6-7890-abcd-222222222226', 'b1b2c3d4-e5f6-7890-abcd-222222222229', 'a1b2c3d4-e5f6-7890-abcd-111111111104', (CURRENT_DATE + INTERVAL '1 day 15 hours')::timestamptz, 'scheduled', true),
+  ('c1b2c3d4-e5f6-7890-abcd-333333333312', 'b1b2c3d4-e5f6-7890-abcd-222222222228', 'b1b2c3d4-e5f6-7890-abcd-222222222230', 'a1b2c3d4-e5f6-7890-abcd-111111111104', (CURRENT_DATE + INTERVAL '1 day 18 hours 30 minutes')::timestamptz, 'scheduled', true),
+  ('c1b2c3d4-e5f6-7890-abcd-333333333313', 'b1b2c3d4-e5f6-7890-abcd-222222222221', 'b1b2c3d4-e5f6-7890-abcd-222222222223', 'a1b2c3d4-e5f6-7890-abcd-111111111103', (CURRENT_DATE + INTERVAL '1 day 17 hours 45 minutes')::timestamptz, 'scheduled', false),
+  ('c1b2c3d4-e5f6-7890-abcd-333333333314', 'b1b2c3d4-e5f6-7890-abcd-222222222220', 'b1b2c3d4-e5f6-7890-abcd-222222222224', 'a1b2c3d4-e5f6-7890-abcd-111111111103', (CURRENT_DATE + INTERVAL '1 day 20 hours')::timestamptz, 'scheduled', false),
+  ('c1b2c3d4-e5f6-7890-abcd-333333333315', 'b1b2c3d4-e5f6-7890-abcd-222222222232', 'b1b2c3d4-e5f6-7890-abcd-222222222233', 'a1b2c3d4-e5f6-7890-abcd-111111111105', (CURRENT_DATE + INTERVAL '1 day 21 hours')::timestamptz, 'scheduled', true)
 
 ON CONFLICT (id) DO NOTHING;
 
 -- Day after tomorrow
 INSERT INTO fixtures (id, home_team_id, away_team_id, league_id, kickoff_time, status, is_featured) VALUES
-  ('c1b2c3d4-e5f6-7890-abcd-333333333316', 'b1b2c3d4-e5f6-7890-abcd-222222222205', 'b1b2c3d4-e5f6-7890-abcd-222222222209', 'a1b2c3d4-e5f6-7890-abcd-111111111101', (CURRENT_DATE + INTERVAL '2 days 14 hours')::text, 'scheduled', false),
-  ('c1b2c3d4-e5f6-7890-abcd-333333333317', 'b1b2c3d4-e5f6-7890-abcd-222222222217', 'b1b2c3d4-e5f6-7890-abcd-222222222218', 'a1b2c3d4-e5f6-7890-abcd-111111111102', (CURRENT_DATE + INTERVAL '2 days 16 hours 30 minutes')::text, 'scheduled', false),
-  ('c1b2c3d4-e5f6-7890-abcd-333333333318', 'b1b2c3d4-e5f6-7890-abcd-222222222235', 'b1b2c3d4-e5f6-7890-abcd-222222222231', 'a1b2c3d4-e5f6-7890-abcd-111111111105', (CURRENT_DATE + INTERVAL '2 days 20 hours')::text, 'scheduled', false)
+  ('c1b2c3d4-e5f6-7890-abcd-333333333316', 'b1b2c3d4-e5f6-7890-abcd-222222222205', 'b1b2c3d4-e5f6-7890-abcd-222222222209', 'a1b2c3d4-e5f6-7890-abcd-111111111101', (CURRENT_DATE + INTERVAL '2 days 14 hours')::timestamptz, 'scheduled', false),
+  ('c1b2c3d4-e5f6-7890-abcd-333333333317', 'b1b2c3d4-e5f6-7890-abcd-222222222217', 'b1b2c3d4-e5f6-7890-abcd-222222222218', 'a1b2c3d4-e5f6-7890-abcd-111111111102', (CURRENT_DATE + INTERVAL '2 days 16 hours 30 minutes')::timestamptz, 'scheduled', false),
+  ('c1b2c3d4-e5f6-7890-abcd-333333333318', 'b1b2c3d4-e5f6-7890-abcd-222222222235', 'b1b2c3d4-e5f6-7890-abcd-222222222231', 'a1b2c3d4-e5f6-7890-abcd-111111111105', (CURRENT_DATE + INTERVAL '2 days 20 hours')::timestamptz, 'scheduled', false)
 
 ON CONFLICT (id) DO NOTHING;
 
@@ -285,25 +285,25 @@ INSERT INTO predictions (fixture_id, market, selection, model_probability, model
 -- Get prediction IDs for value bets
 -- Arsenal vs Chelsea — Home Win (high edge)
 INSERT INTO recommendations (fixture_id, market, selection, bookmaker_odds, raw_implied_probability, model_probability, edge, opportunity_score, risk_tier, confidence_tier, kelly_fraction, is_recommended, explanation) VALUES
-  ('c1b2c3d4-e5f6-7890-abcd-333333333301', '1X2', 'Home', 1.85, 0.5405, 0.58, 0.0395, 0.78, 'low', 'high', 0.028, true, '{"reason":"Arsenal strong home form, model shows 58% win probability vs 54.1% implied from odds. Positive edge of 3.95%.","factors":["Home advantage","Recent form","Model agreement across 5/7 sub-models"]}'::json),
+  ('c1b2c3d4-e5f6-7890-abcd-333333333301', '1X2', 'Home', 1.85, 0.5405, 0.58, 0.0395, 78, 'low', 'high', 0.028, true, '{"reason":"Arsenal strong home form, model shows 58% win probability vs 54.1% implied from odds. Positive edge of 3.95%.","factors":["Home advantage","Recent form","Model agreement across 5/7 sub-models"]}'::json),
 
   -- Man City vs Newcastle — Over 2.5 (value detected)
-  ('c1b2c3d4-e5f6-7890-abcd-333333333302', 'Over/Under 2.5', 'Over', 1.55, 0.6452, 0.71, 0.0648, 0.85, 'low', 'high', 0.052, true, '{"reason":"Man City home matches average 3.4 goals. Model shows 71% chance of 3+ goals vs 64.5% implied. Strong value.","factors":["City home goal average","Newcastle defensive weakness","Over hit in 7/10 last meetings"]}'::json),
+  ('c1b2c3d4-e5f6-7890-abcd-333333333302', 'Over/Under 2.5', 'Over', 1.55, 0.6452, 0.71, 0.0648, 85, 'low', 'high', 0.052, true, '{"reason":"Man City home matches average 3.4 goals. Model shows 71% chance of 3+ goals vs 64.5% implied. Strong value.","factors":["City home goal average","Newcastle defensive weakness","Over hit in 7/10 last meetings"]}'::json),
 
   -- Liverpool vs Man United — BTTS Yes (solid edge)
-  ('c1b2c3d4-e5f6-7890-abcd-333333333303', 'BTTS', 'Yes', 1.75, 0.5714, 0.60, 0.0286, 0.72, 'medium', 'medium', 0.022, true, '{"reason":"Both teams scored in 8/10 of their last meetings. Model shows 60% vs 57.1% implied. Moderate edge.","factors":["Historical BTTS record","Both teams attacking intent","Leaky defenses"]}'::json),
+  ('c1b2c3d4-e5f6-7890-abcd-333333333303', 'BTTS', 'Yes', 1.75, 0.5714, 0.60, 0.0286, 72, 'medium', 'medium', 0.022, true, '{"reason":"Both teams scored in 8/10 of their last meetings. Model shows 60% vs 57.1% implied. Moderate edge.","factors":["Historical BTTS record","Both teams attacking intent","Leaky defenses"]}'::json),
 
   -- Real Madrid vs Atletico — Away Win (high value, higher risk)
-  ('c1b2c3d4-e5f6-7890-abcd-333333333304', '1X2', 'Away', 4.80, 0.2083, 0.23, 0.0217, 0.65, 'high', 'low', 0.009, false, '{"reason":"Atletico away win at 4.80 has value (model 23% vs 20.8% implied). But high risk due to Real Madrid home strength.","factors":["Atletico defensive setup","Derby unpredictability","Odds inflated by Real Madrid brand"]}'::json),
+  ('c1b2c3d4-e5f6-7890-abcd-333333333304', '1X2', 'Away', 4.80, 0.2083, 0.23, 0.0217, 65, 'high', 'low', 0.009, false, '{"reason":"Atletico away win at 4.80 has value (model 23% vs 20.8% implied). But high risk due to Real Madrid home strength.","factors":["Atletico defensive setup","Derby unpredictability","Odds inflated by Real Madrid brand"]}'::json),
 
   -- Bayern vs Dortmund — Home Win
-  ('c1b2c3d4-e5f6-7890-abcd-333333333307', '1X2', 'Home', 1.50, 0.6667, 0.65, -0.0167, 0.45, 'medium', 'medium', -0.012, false, '{"reason":"Bayern slight negative edge (-1.67%). Model and odds roughly aligned. No value detected.","factors":["Odds accurately priced","No significant edge","Dortmund improving form"]}'::json),
+  ('c1b2c3d4-e5f6-7890-abcd-333333333307', '1X2', 'Home', 1.50, 0.6667, 0.65, -0.0167, 45, 'medium', 'medium', -0.012, false, '{"reason":"Bayern slight negative edge (-1.67%). Model and odds roughly aligned. No value detected.","factors":["Odds accurately priced","No significant edge","Dortmund improving form"]}'::json),
 
   -- Inter vs Napoli — Draw (value)
-  ('c1b2c3d4-e5f6-7890-abcd-333333333306', '1X2', 'Draw', 3.40, 0.2941, 0.26, -0.0341, 0.38, 'medium', 'low', -0.022, false, '{"reason":"Draw probability lower than implied. Model shows 26% vs 29.4% implied. Negative edge.","factors":["Tight match expected","Historical low-scoring trend","Both teams cautious approach"]}'::json),
+  ('c1b2c3d4-e5f6-7890-abcd-333333333306', '1X2', 'Draw', 3.40, 0.2941, 0.26, -0.0341, 38, 'medium', 'low', -0.022, false, '{"reason":"Draw probability lower than implied. Model shows 26% vs 29.4% implied. Negative edge.","factors":["Tight match expected","Historical low-scoring trend","Both teams cautious approach"]}'::json),
 
   -- PSG vs Lyon — Home Win (solid)
-  ('c1b2c3d4-e5f6-7890-abcd-333333333308', '1X2', 'Home', 1.35, 0.7407, 0.70, -0.0407, 0.35, 'low', 'high', -0.055, false, '{"reason":"PSG heavily favored but odds too short. Model shows 70% vs 74.1% implied. No value at these odds.","factors":["PSG dominant at home","But odds too short for value","Lyon capable of upsets"]}'::json),
+  ('c1b2c3d4-e5f6-7890-abcd-333333333308', '1X2', 'Home', 1.35, 0.7407, 0.70, -0.0407, 35, 'low', 'high', -0.055, false, '{"reason":"PSG heavily favored but odds too short. Model shows 70% vs 74.1% implied. No value at these odds.","factors":["PSG dominant at home","But odds too short for value","Lyon capable of upsets"]}'::json),
 
   -- Barcelona vs Bilbao — Over 2.5
-  ('c1b2c3d4-e5f6-7890-abcd-333333333305', 'Over/Under 2.5', 'Over', 1.50, 0.6667, 0.68, 0.0133, 0.62, 'medium', 'medium', 0.010, true, '{"reason":"Barcelona home matches average 3.1 goals. Small but positive edge at 1.33%.","factors":["Barcelona attacking style","Bilbao away record","Camp Nou factor"]}'::json);
+  ('c1b2c3d4-e5f6-7890-abcd-333333333305', 'Over/Under 2.5', 'Over', 1.50, 0.6667, 0.68, 0.0133, 62, 'medium', 'medium', 0.010, true, '{"reason":"Barcelona home matches average 3.1 goals. Small but positive edge at 1.33%.","factors":["Barcelona attacking style","Bilbao away record","Camp Nou factor"]}'::json);
