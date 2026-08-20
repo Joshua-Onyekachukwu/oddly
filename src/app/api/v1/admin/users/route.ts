@@ -47,10 +47,10 @@ export async function GET(request: NextRequest) {
       query = query.or(`email.ilike.%${search}%,full_name.ilike.%${search}%`);
     }
     if (role) {
-      query = query.eq("role", role);
+      query = query.eq("role", role as "user" | "admin");
     }
     if (subscription) {
-      query = query.eq("subscription_tier", subscription);
+      query = query.eq("subscription_tier", subscription as "free" | "premium" | "elite");
     }
 
     // Map sortBy to actual column

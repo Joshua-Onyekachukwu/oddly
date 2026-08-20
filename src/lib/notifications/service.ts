@@ -46,7 +46,7 @@ export async function createNotification(opts: CreateNotificationOpts): Promise<
     type: opts.type,
     title: opts.title,
     body: opts.body,
-    data: opts.data || {},
+    data: (opts.data || {}) as any,
   });
 
   if (error) {
@@ -64,7 +64,7 @@ export async function broadcastNotification(
   let query = supabaseAdmin.from("profiles").select("id");
 
   if (opts.tier && opts.tier !== "all") {
-    query = query.eq("subscription_tier", opts.tier);
+    query = query.eq("subscription_tier", opts.tier as "free" | "premium" | "elite");
   }
 
   const { data: users, error: userError } = await query;
@@ -80,10 +80,10 @@ export async function broadcastNotification(
     type: opts.type,
     title: opts.title,
     body: opts.body,
-    data: opts.data || {},
+    data: (opts.data || {}) as any,
   }));
 
-  const { error } = await supabaseAdmin.from("notifications").insert(notifications);
+  const { error } = await supabaseAdmin.from("notifications").insert(notifications as any);
 
   if (error) {
     console.error("Failed to broadcast notifications:", error);

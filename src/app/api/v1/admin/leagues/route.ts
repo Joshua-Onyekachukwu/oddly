@@ -83,16 +83,11 @@ export async function POST(request: NextRequest) {
 
     const { data, error } = await supabase
       .from("leagues")
-      .upsert(
-        {
-          name,
-          country: country || null,
-          external_id: externalId || null,
-          active,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "external_id" }
-      )
+      .insert({
+        name,
+        country: country || null,
+        is_active: active,
+      })
       .select()
       .single();
 

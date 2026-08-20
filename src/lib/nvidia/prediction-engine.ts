@@ -194,7 +194,7 @@ async function generateRecommendations(
     confidence_tier: string;
     kelly_fraction: number;
     is_recommended: boolean;
-    explanation: Record<string, unknown>;
+    explanation: any;
   }> = [];
 
   // Get prediction IDs
@@ -266,7 +266,7 @@ async function generateRecommendations(
       .eq("fixture_id", fixtureId);
 
     // Insert new recommendations
-    await supabaseAdmin.from("recommendations").insert(recommendations);
+    await supabaseAdmin.from("recommendations").insert(recommendations as any);
   }
 }
 

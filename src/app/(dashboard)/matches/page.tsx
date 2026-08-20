@@ -25,6 +25,8 @@ async function getTodayFixtures() {
       `
       *,
       leagues (name, country),
+      home_team:teams!fixtures_home_team_id_fkey(canonical_name),
+      away_team:teams!fixtures_away_team_id_fkey(canonical_name),
       predictions (id, market, selection, model_probability, confidence_lower, confidence_upper)
     `
     )
@@ -37,7 +39,12 @@ async function getTodayFixtures() {
     return [];
   }
 
-  return fixtures || [];
+  // Transform to match the expected Fixture interface
+  return (fixtures || []).map((f: any) => ({
+    ...f,
+    home_team_name: (f.home_team as any)?.canonical_name || "TBD",
+    away_team_name: (f.away_team as any)?.canonical_name || "TBD",
+  }));
 }
 
 async function MatchesContent() {

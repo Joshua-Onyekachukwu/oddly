@@ -32,12 +32,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 async function MatchContent({ id }: { id: string }) {
   const supabase = await createClient();
 
-  const { data: fixture, error } = await supabase
+  const { data: rawFixture, error } = await supabase
     .from("fixtures")
     .select(
       `
       *,
       leagues (id, name, country),
+      home_team:teams!fixtures_home_team_id_fkey(canonical_name),
+      away_team:teams!fixtures_away_team_id_fkey(canonical_name),
       predictions (
         id, market, selection, model_probability, confidence_lower, confidence_upper,
         model_version, features_used, sub_model_probabilities, model_disagreement,
@@ -53,9 +55,16 @@ async function MatchContent({ id }: { id: string }) {
     .eq("id", id)
     .single();
 
-  if (error || !fixture) {
+  if (error || !rawFixture) {
     notFound();
   }
+
+  // Transform to match MatchDetail expected interface
+  const fixture = {
+    ...rawFixture,
+    home_team_name: (rawFixture.home_team as any)?.canonical_name || "TBD",
+    away_team_name: (rawFixture.away_team as any)?.canonical_name || "TBD",
+  } as any;
 
   // Fetch odds for this fixture
   const { data: odds } = await supabase

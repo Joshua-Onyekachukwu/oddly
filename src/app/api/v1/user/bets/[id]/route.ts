@@ -65,7 +65,7 @@ export async function PATCH(
       return badRequest("Status must be 'won', 'lost', or 'void'");
     }
 
-    const updateData: Record<string, unknown> = {
+    const updateData: Record<string, any> = {
       status,
       settled_at: new Date().toISOString(),
     };
@@ -79,7 +79,7 @@ export async function PATCH(
         .single();
 
       if (bet) {
-        updateData.profit = bet.stake * (bet.odds_at_placement - 1);
+        updateData.profit = (bet.stake || 0) * ((bet.odds_at_placement || 1) - 1);
       }
     } else {
       updateData.profit = 0;
@@ -87,7 +87,7 @@ export async function PATCH(
 
     const { data, error } = await supabase
       .from("user_bets")
-      .update(updateData)
+      .update(updateData as any)
       .eq("id", id)
       .eq("user_id", user.id)
       .select()

@@ -2,9 +2,9 @@
 
 import React, { useState, ReactNode } from "react";
 import { usePathname } from "next/navigation";
-import SidebarMenu from "@/components/Layout/SidebarMenu";
-import Header from "@/components/Layout/Header";
-import Footer from "@/components/Layout/Footer";
+import SidebarMenu from "@/components/layout/SidebarMenu";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 
 interface LayoutProviderProps {
   children: ReactNode;

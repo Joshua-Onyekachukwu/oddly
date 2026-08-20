@@ -28,7 +28,7 @@ function normalizeTeamName(name: string): string {
  */
 async function getOrCreateTeam(
   name: string,
-  leagueId: number,
+  leagueId: string,
   country: string
 ): Promise<string> {
   const normalized = normalizeTeamName(name);
@@ -140,8 +140,8 @@ async function getOrCreateLeague(
 /**
  * Map API-Football status to our status enum
  */
-function mapStatus(apiStatus: string): string {
-  const statusMap: Record<string, string> = {
+function mapStatus(apiStatus: string): "scheduled" | "live" | "halftime" | "finished" | "postponed" | "cancelled" {
+  const statusMap: Record<string, "scheduled" | "live" | "halftime" | "finished" | "postponed" | "cancelled"> = {
     NS: "scheduled",
     "1H": "live",
     HT: "halftime",
@@ -185,14 +185,15 @@ export async function syncTodayFixtures(): Promise<{
     for (const fixture of batch) {
       try {
         // Get or create teams
+        const leagueIdStr = String(fixture.league.id);
         const homeTeamId = await getOrCreateTeam(
           fixture.teams.home.name,
-          fixture.league.id,
+          leagueIdStr,
           fixture.league.country
         );
         const awayTeamId = await getOrCreateTeam(
           fixture.teams.away.name,
-          fixture.league.id,
+          leagueIdStr,
           fixture.league.country
         );
 

@@ -6,11 +6,11 @@ import { createClient } from "@/lib/supabase/client";
 interface ModelPerf {
   id: string;
   model_version: string;
-  market: string;
-  total_predictions: number;
-  correct_predictions: number;
-  brier_score: number;
-  roi: number;
+  market: string | null;
+  total_predictions: number | null;
+  correct_predictions: number | null;
+  brier_score: number | null;
+  roi: number | null;
   calibration_data: any;
   created_at: string;
 }

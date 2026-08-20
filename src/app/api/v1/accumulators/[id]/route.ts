@@ -62,7 +62,7 @@ export async function PATCH(
     const { user, supabase } = await requireAuth(request);
     const body = await request.json();
 
-    const updates: Record<string, unknown> = {};
+    const updates: Record<string, any> = {};
     if (body.name) updates.name = body.name;
     if (body.status) updates.status = body.status;
     if (body.stake) updates.stake = body.stake;
@@ -74,7 +74,7 @@ export async function PATCH(
 
     const { data, error } = await supabase
       .from("accumulators")
-      .update(updates)
+      .update(updates as any)
       .eq("id", id)
       .eq("user_id", user.id)
       .select()

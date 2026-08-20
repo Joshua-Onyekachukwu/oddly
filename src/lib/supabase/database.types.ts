@@ -57,6 +57,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       leagues: {
         Row: {
@@ -86,6 +87,7 @@ export interface Database {
           priority?: number;
           created_at?: string;
         };
+        Relationships: [];
       };
       teams: {
         Row: {
@@ -109,6 +111,7 @@ export interface Database {
           league_id?: string | null;
           created_at?: string;
         };
+        Relationships: [];
       };
       team_aliases: {
         Row: {
@@ -126,6 +129,7 @@ export interface Database {
           alias?: string;
           source?: string | null;
         };
+        Relationships: [];
       };
       fixtures: {
         Row: {
@@ -170,6 +174,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [{"foreignKeyName":"fixtures_league_id_fkey","columns":["league_id"],"isOneToOne":false,"referencedRelation":"leagues","referencedColumns":["id"]},{"foreignKeyName":"fixtures_home_team_id_fkey","columns":["home_team_id"],"isOneToOne":false,"referencedRelation":"teams","referencedColumns":["id"]},{"foreignKeyName":"fixtures_away_team_id_fkey","columns":["away_team_id"],"isOneToOne":false,"referencedRelation":"teams","referencedColumns":["id"]}];
       };
       odds_snapshots: {
         Row: {
@@ -199,6 +204,7 @@ export interface Database {
           odds?: number;
           snapshot_time?: string;
         };
+        Relationships: [{"foreignKeyName":"odds_snapshots_fixture_id_fkey","columns":["fixture_id"],"isOneToOne":false,"referencedRelation":"fixtures","referencedColumns":["id"]}];
       };
       predictions: {
         Row: {
@@ -258,6 +264,7 @@ export interface Database {
           created_at?: string;
           settled_at?: string | null;
         };
+        Relationships: [{"foreignKeyName":"predictions_fixture_id_fkey","columns":["fixture_id"],"isOneToOne":false,"referencedRelation":"fixtures","referencedColumns":["id"]}];
       };
       recommendations: {
         Row: {
@@ -323,6 +330,7 @@ export interface Database {
           explanation?: Json | null;
           created_at?: string;
         };
+        Relationships: [{"foreignKeyName":"recommendations_fixture_id_fkey","columns":["fixture_id"],"isOneToOne":false,"referencedRelation":"fixtures","referencedColumns":["id"]},{"foreignKeyName":"recommendations_prediction_id_fkey","columns":["prediction_id"],"isOneToOne":false,"referencedRelation":"predictions","referencedColumns":["id"]}];
       };
       user_bets: {
         Row: {
@@ -370,6 +378,7 @@ export interface Database {
           placed_at?: string;
           settled_at?: string | null;
         };
+        Relationships: [{"foreignKeyName":"user_bets_recommendation_id_fkey","columns":["recommendation_id"],"isOneToOne":false,"referencedRelation":"recommendations","referencedColumns":["id"]},{"foreignKeyName":"user_bets_fixture_id_fkey","columns":["fixture_id"],"isOneToOne":false,"referencedRelation":"fixtures","referencedColumns":["id"]}];
       };
       accumulators: {
         Row: {
@@ -423,6 +432,7 @@ export interface Database {
           created_at?: string;
           settled_at?: string | null;
         };
+        Relationships: [];
       };
       rollover_chains: {
         Row: {
@@ -476,6 +486,7 @@ export interface Database {
           started_at?: string;
           ended_at?: string | null;
         };
+        Relationships: [];
       };
       rollover_picks: {
         Row: {
@@ -532,6 +543,7 @@ export interface Database {
           user_marked?: boolean;
           settled_at?: string | null;
         };
+        Relationships: [{"foreignKeyName":"rollover_picks_chain_id_fkey","columns":["chain_id"],"isOneToOne":false,"referencedRelation":"rollover_chains","referencedColumns":["id"]},{"foreignKeyName":"rollover_picks_fixture_id_fkey","columns":["fixture_id"],"isOneToOne":false,"referencedRelation":"fixtures","referencedColumns":["id"]},{"foreignKeyName":"rollover_picks_prediction_id_fkey","columns":["prediction_id"],"isOneToOne":false,"referencedRelation":"predictions","referencedColumns":["id"]}];
       };
       model_performance: {
         Row: {
@@ -576,6 +588,7 @@ export interface Database {
           roi?: number | null;
           created_at?: string;
         };
+        Relationships: [{"foreignKeyName":"model_performance_league_id_fkey","columns":["league_id"],"isOneToOne":false,"referencedRelation":"leagues","referencedColumns":["id"]}];
       };
       ai_cache: {
         Row: {
@@ -596,6 +609,7 @@ export interface Database {
           model_used?: string | null;
           created_at?: string;
         };
+        Relationships: [];
       };
       notifications: {
         Row: {
@@ -628,6 +642,7 @@ export interface Database {
           is_read?: boolean;
           created_at?: string;
         };
+        Relationships: [];
       };
       scoring_config: {
         Row: {
@@ -651,6 +666,7 @@ export interface Database {
           updated_by?: string | null;
           updated_at?: string;
         };
+        Relationships: [];
       };
       announcements: {
         Row: {
@@ -686,6 +702,7 @@ export interface Database {
           created_by?: string | null;
           created_at?: string;
         };
+        Relationships: [{"foreignKeyName":"announcements_updated_by_fkey","columns":["updated_by"],"isOneToOne":false,"referencedRelation":"profiles","referencedColumns":["id"]},{"foreignKeyName":"announcements_created_by_fkey","columns":["created_by"],"isOneToOne":false,"referencedRelation":"profiles","referencedColumns":["id"]}];
       };
       admin_activity_log: {
         Row: {
@@ -715,8 +732,10 @@ export interface Database {
           details?: Json | null;
           created_at?: string;
         };
+        Relationships: [{"foreignKeyName":"admin_activity_log_admin_id_fkey","columns":["admin_id"],"isOneToOne":false,"referencedRelation":"profiles","referencedColumns":["id"]}];
       };
     };
+    Views: Record<string, never>;
     Functions: {
       update_updated_at: {
         Args: Record<string, never>;

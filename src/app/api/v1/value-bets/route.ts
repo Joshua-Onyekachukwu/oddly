@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
       query = query.eq("is_recommended", true);
     }
     if (riskTier) {
-      query = query.eq("risk_tier", riskTier);
+      query = query.eq("risk_tier", riskTier as "low" | "medium" | "high");
     }
 
     query = query.range(offset, offset + pageSize - 1);

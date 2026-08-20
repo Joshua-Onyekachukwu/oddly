@@ -22,7 +22,7 @@ export default function AdminAnnouncementsPage() {
 
   const [formTitle, setFormTitle] = useState("");
   const [formBody, setFormBody] = useState("");
-  const [formTarget, setFormTarget] = useState("all");
+  const [formTarget, setFormTarget] = useState<"all" | "free" | "premium" | "elite">("all");
 
   const fetchAnnouncements = useCallback(async () => {
     const supabase = createClient();
@@ -49,7 +49,7 @@ export default function AdminAnnouncementsPage() {
     const payload = {
       title: formTitle,
       body: formBody,
-      target: formTarget,
+      target: formTarget as "all" | "free" | "premium" | "elite",
       is_active: true,
     };
 
@@ -137,7 +137,7 @@ export default function AdminAnnouncementsPage() {
               <label className="block text-[12px] font-medium text-gray-500 mb-[4px]">Target</label>
               <select
                 value={formTarget}
-                onChange={(e) => setFormTarget(e.target.value)}
+                onChange={(e) => setFormTarget(e.target.value as "all" | "free" | "premium" | "elite")}
                 className="w-full h-[38px] rounded-[10px] border border-gray-200 bg-white px-[12px] text-[13px] focus:outline-none transition-all"
               >
                 <option value="all">All Users</option>
@@ -224,7 +224,7 @@ export default function AdminAnnouncementsPage() {
                       setEditingId(ann.id);
                       setFormTitle(ann.title);
                       setFormBody(ann.body);
-                      setFormTarget(ann.target);
+                      setFormTarget(ann.target as "all" | "free" | "premium" | "elite");
                       setShowForm(true);
                     }}
                     className="text-gray-400 hover:text-[#1B2A4A] transition-colors p-[4px]"
