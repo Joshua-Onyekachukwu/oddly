@@ -35,6 +35,7 @@ export interface Database {
           subscription_tier: "free" | "premium" | "elite";
           subscription_expires_at: string | null;
           stripe_customer_id: string | null;
+          notification_preferences: Json | null;
           created_at: string;
           updated_at: string;
         };
@@ -57,6 +58,7 @@ export interface Database {
           subscription_tier?: "free" | "premium" | "elite";
           subscription_expires_at?: string | null;
           stripe_customer_id?: string | null;
+          notification_preferences?: Json | null;
           created_at?: string;
           updated_at?: string;
         };
