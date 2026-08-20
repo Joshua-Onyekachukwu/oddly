@@ -1,13 +1,10 @@
 /**
  * Odds API Integration
  * 
- * Combines two odds providers for redundancy and coverage:
- * 1. The Odds API (the-odds-api.com) — primary, US/EU focus
- * 2. Odds-Api.io — secondary, wider coverage
+ * Uses The Odds API (the-odds-api.com) for live bookmaker odds.
  */
 
 const THE_ODDS_API_KEY = process.env.THE_ODDS_API_KEY || "";
-const ODDS_API_IO_KEY = process.env.ODDS_API_IO_KEY || "";
 
 // Supported bookmakers
 export const BOOKMAKERS = [
@@ -90,29 +87,6 @@ export async function fetchOddsApiFixtures(
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(`The Odds API error ${response.status}: ${errorText}`);
-  }
-
-  return response.json();
-}
-
-/**
- * Fetch fixtures from Odds-Api.io (secondary provider).
- */
-export async function fetchOddsIoFixtures(
-  sport: string = "soccer",
-  bookmakers: string = "bet365,pinnacle,betway"
-): Promise<unknown[]> {
-  if (!ODDS_API_IO_KEY) {
-    throw new Error("ODDS_API_IO_KEY not configured");
-  }
-
-  const url = `https://api.odds-api.io/v1/odds?sport=${sport}&bookmakers=${bookmakers}&apiKey=${ODDS_API_IO_KEY}`;
-
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Odds-Api.io error ${response.status}: ${errorText}`);
   }
 
   return response.json();

@@ -32,7 +32,6 @@ export {
 // Odds
 export {
   fetchOddsApiFixtures,
-  fetchOddsIoFixtures,
   getAvailableSports,
   findBestOdds,
   oddsToImpliedProbability,

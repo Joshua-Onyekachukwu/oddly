@@ -1,18 +1,11 @@
 /**
  * Football Data API Integration
  * 
- * Uses two football data providers for redundancy:
- * 1. API-Football (api-football.com via RapidAPI) — primary
- * 2. APISports (apifootball.com) — secondary/fallback
+ * Uses API-Football (api-sports.io) for fixtures, scores, and standings.
  */
 
 const API_FOOTBALL_KEY = process.env.API_FOOTBALL_KEY || "";
-const APISPORTS_KEY = process.env.APISPORTS_KEY || "";
-
-// API-Football uses RapidAPI format
 const API_FOOTBALL_BASE = "https://v3.football.api-sports.io";
-// APISports uses apifootball.com
-const APISPORTS_BASE = "https://api-football-v1.p.rapidapi.com/v3";
 
 // League IDs for popular leagues
 export const LEAGUE_IDS: Record<string, number> = {
@@ -127,28 +120,6 @@ async function apiFootballFetch(endpoint: string): Promise<unknown> {
 }
 
 // ==========================================
-// APISports (fallback)
-// ==========================================
-
-async function apisportsFetch(endpoint: string): Promise<unknown> {
-  if (!APISPORTS_KEY) {
-    throw new Error("APISPORTS_KEY not configured");
-  }
-
-  const response = await fetch(`${APISPORTS_BASE}${endpoint}`, {
-    headers: {
-      "x-rapidapi-key": APISPORTS_KEY,
-      "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`APISports error: ${response.status}`);
-  }
-
-  return response.json();
-}
-
 // ==========================================
 // Combined API with fallback
 // ==========================================
@@ -192,7 +163,7 @@ export async function getTodayFixtures(
       return result.response;
     },
     async () => {
-      const result = await apisportsFetch(
+      const result = await apiFootballFetch(
         `/fixtures?league=${leagueId}&date=${today}&season=${currentSeason}`
       ) as { response: FootballFixture[] };
       return result.response;
@@ -221,7 +192,7 @@ export async function getFixturesByDate(
       return result.response;
     },
     async () => {
-      const result = await apisportsFetch(
+      const result = await apiFootballFetch(
         `/fixtures?league=${leagueId}&from=${from}&to=${to}&season=${currentSeason}`
       ) as { response: FootballFixture[] };
       return result.response;
@@ -248,7 +219,7 @@ export async function getStandings(
       return result.response[0]?.league?.standings[0] || [];
     },
     async () => {
-      const result = (await apisportsFetch(
+      const result = (await apiFootballFetch(
         `/standings?league=${leagueId}&season=${currentSeason}`
       )) as StandingsApiResponse;
       return result.response[0]?.league?.standings[0] || [];
@@ -268,7 +239,7 @@ export async function getTeamForm(teamId: number): Promise<TeamForm> {
       return result.response;
     },
     async () => {
-      const result = (await apisportsFetch(`/teams/statistics?team=${teamId}&league=39&season=2024`)) as { response: TeamForm };
+      const result = (await apiFootballFetch(`/teams/statistics?team=${teamId}&league=39&season=2024`)) as { response: TeamForm };
       return result.response;
     }
   );
@@ -290,7 +261,7 @@ export async function searchTeam(
       return result.response.map((r) => r.team);
     },
     async () => {
-      const result = await apisportsFetch(`/teams?search=${encodeURIComponent(name)}`) as {
+      const result = await apiFootballFetch(`/teams?search=${encodeURIComponent(name)}`) as {
         response: Array<{ team: { id: number; name: string; country: string; logo: string } }>;
       };
       return result.response.map((r) => r.team);
@@ -315,7 +286,7 @@ export async function getHeadToHead(
       return result.response;
     },
     async () => {
-      const result = await apisportsFetch(
+      const result = await apiFootballFetch(
         `/fixtures?h2h=${team1Id}-${team2Id}`
       ) as { response: FootballFixture[] };
       return result.response;
