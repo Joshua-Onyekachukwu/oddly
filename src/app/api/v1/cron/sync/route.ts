@@ -6,21 +6,172 @@ import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 
 /**
- * GET /api/v1/cron/sync
- * 
- * Returns sync status and API usage stats.
+ * Verify the request is from Vercel Cron or an authorized caller.
+ * Vercel Cron sends: Authorization: Bearer <VERCEL_CRON_SECRET>
  */
-export async function GET() {
-  try {
-    const usage = await getOddsApiUsage();
+function isAuthorizedCron(request: NextRequest): boolean {
+  const authHeader = request.headers.get("authorization");
+  const cronSecret = process.env.VERCEL_CRON_SECRET;
 
+  // If no cron secret configured, allow all (dev mode)
+  if (!cronSecret) return true;
+
+  // Verify Vercel cron secret
+  if (authHeader === `Bearer ${cronSecret}`) return true;
+
+  return false;
+}
+
+/**
+ * Run the full sync pipeline: fixtures → odds → notifications.
+ */
+async function runSync(type: string = "all") {
+  const results: Record<string, unknown> = {};
+  const startTime = Date.now();
+
+  // Sync fixtures
+  if (type === "fixtures" || type === "all") {
+    try {
+      const fixtureResult = await syncTodayFixtures();
+      results.fixtures = fixtureResult;
+    } catch (error) {
+      results.fixtures = {
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  }
+
+  // Sync odds (depends on fixtures existing)
+  if (type === "odds" || type === "all") {
+    try {
+      const oddsResult = await syncAllOdds();
+      results.odds = oddsResult;
+    } catch (error) {
+      results.odds = {
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  }
+
+  // After sync, check for new value bets and Crown Jewel
+  if (type === "all" || type === "odds") {
+    try {
+      const supabase = createClient<Database>(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      );
+
+      // Check for value bets
+      const { data: valueBets } = await supabase
+        .from("recommendations")
+        .select(`
+          id, market, selection, bookmaker_odds, edge,
+          fixture:fixtures(id, home_team:teams!fixtures_home_team_id_fkey(canonical_name), away_team:teams!fixtures_away_team_id_fkey(canonical_name))
+        `)
+        .eq("is_recommended", true)
+        .order("edge", { ascending: false })
+        .limit(5);
+
+      if (valueBets?.length) {
+        const formatted = valueBets.map((vb) => {
+          const fixture = vb.fixture as unknown as {
+            home_team: { canonical_name: string };
+            away_team: { canonical_name: string };
+          };
+          return {
+            fixture: `${fixture?.home_team?.canonical_name || "?"} vs ${fixture?.away_team?.canonical_name || "?"}`,
+            market: vb.market,
+            selection: vb.selection,
+            edge: Number(vb.edge),
+            odds: Number(vb.bookmaker_odds),
+          };
+        });
+        const notified = await notifyValueBets(formatted);
+        results.notifications = { valueBets: notified };
+      }
+
+      // Check for Crown Jewel
+      const { data: crownJewel } = await supabase
+        .from("recommendations")
+        .select(`
+          id, market, selection, edge, model_probability,
+          fixture:fixtures(home_team:teams!fixtures_home_team_id_fkey(canonical_name), away_team:teams!fixtures_away_team_id_fkey(canonical_name), league:leagues(name))
+        `)
+        .eq("is_recommended", true)
+        .order("edge", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (crownJewel) {
+        const fixture = crownJewel.fixture as unknown as {
+          home_team: { canonical_name: string };
+          away_team: { canonical_name: string };
+          league: { name: string };
+        };
+        await notifyCrownJewel(
+          {
+            homeTeam: fixture?.home_team?.canonical_name || "?",
+            awayTeam: fixture?.away_team?.canonical_name || "?",
+            league: fixture?.league?.name || "?",
+          },
+          {
+            market: crownJewel.market,
+            selection: crownJewel.selection,
+            edge: Number(crownJewel.edge),
+            confidence: Number(crownJewel.model_probability),
+          }
+        );
+      }
+    } catch (err) {
+      console.error("Notification trigger error:", err);
+    }
+  }
+
+  const duration = Date.now() - startTime;
+
+  return {
+    success: true,
+    type,
+    duration: `${duration}ms`,
+    results,
+    timestamp: new Date().toISOString(),
+  };
+}
+
+/**
+ * GET /api/v1/cron/sync
+ *
+ * Called by Vercel Cron Jobs (every 6 hours).
+ * Runs full sync: fixtures → odds → value bet notifications.
+ * Returns sync status and API usage stats if called without cron auth.
+ */
+export async function GET(request: NextRequest) {
+  try {
+    // If this is a Vercel cron request, run the sync
+    if (isAuthorizedCron(request)) {
+      // Check if this is a cron call (has auth header) or a status check (no auth)
+      const authHeader = request.headers.get("authorization");
+      const cronSecret = process.env.VERCEL_CRON_SECRET;
+
+      if (cronSecret && authHeader === `Bearer ${cronSecret}`) {
+        console.log("[CRON] Starting scheduled sync...");
+        const result = await runSync("all");
+        console.log(`[CRON] Sync completed in ${result.duration}`);
+        return NextResponse.json(result);
+      }
+    }
+
+    // Status check (no auth or dev mode)
+    const usage = await getOddsApiUsage();
     return NextResponse.json({
       status: "ready",
       usage,
+      schedule: "Every 6 hours (0 */6 * * *)",
       endpoints: {
         POST_fixtures: "Sync fixtures from API-Football",
         POST_odds: "Sync odds from The Odds API",
         POST_all: "Sync everything (fixtures + odds)",
+        GET_cron: "Vercel cron trigger (auto-sync all)",
       },
     });
   } catch (error) {
@@ -34,132 +185,23 @@ export async function GET() {
 
 /**
  * POST /api/v1/cron/sync
- * 
- * Trigger fixture and/or odds sync.
- * 
+ *
+ * Manual trigger for fixture and/or odds sync.
+ * Can be called by admin dashboard or manual trigger.
+ *
  * Body:
  *   { type: "fixtures" | "odds" | "all" }
- * 
- * Can be called by:
- * - Vercel Cron Jobs
- * - Admin dashboard
- * - Manual trigger
  */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => ({ type: "all" }));
     const type = body.type || "all";
 
-    const results: Record<string, unknown> = {};
-    const startTime = Date.now();
+    console.log(`[MANUAL] Sync triggered: ${type}`);
+    const result = await runSync(type);
+    console.log(`[MANUAL] Sync completed in ${result.duration}`);
 
-    // Sync fixtures
-    if (type === "fixtures" || type === "all") {
-      try {
-        const fixtureResult = await syncTodayFixtures();
-        results.fixtures = fixtureResult;
-      } catch (error) {
-        results.fixtures = {
-          error: error instanceof Error ? error.message : "Unknown error",
-        };
-      }
-    }
-
-    // Sync odds (depends on fixtures existing)
-    if (type === "odds" || type === "all") {
-      try {
-        const oddsResult = await syncAllOdds();
-        results.odds = oddsResult;
-      } catch (error) {
-        results.odds = {
-          error: error instanceof Error ? error.message : "Unknown error",
-        };
-      }
-    }
-
-    // After sync, check for new value bets and Crown Jewel
-    if (type === "all" || type === "odds") {
-      try {
-        const supabase = createClient<Database>(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.SUPABASE_SERVICE_ROLE_KEY!
-        );
-
-        // Check for value bets
-        const { data: valueBets } = await supabase
-          .from("recommendations")
-          .select(`
-            id, market, selection, bookmaker_odds, edge,
-            fixture:fixtures(id, home_team:teams!fixtures_home_team_id_fkey(canonical_name), away_team:teams!fixtures_away_team_id_fkey(canonical_name))
-          `)
-          .eq("is_recommended", true)
-          .order("edge", { ascending: false })
-          .limit(5);
-
-        if (valueBets?.length) {
-          const formatted = valueBets.map((vb) => {
-            const fixture = vb.fixture as unknown as {
-              home_team: { canonical_name: string };
-              away_team: { canonical_name: string };
-            };
-            return {
-              fixture: `${fixture?.home_team?.canonical_name || "?"} vs ${fixture?.away_team?.canonical_name || "?"}`,
-              market: vb.market,
-              selection: vb.selection,
-              edge: Number(vb.edge),
-              odds: Number(vb.bookmaker_odds),
-            };
-          });
-          const notified = await notifyValueBets(formatted);
-          results.notifications = { valueBets: notified };
-        }
-
-        // Check for Crown Jewel
-        const { data: crownJewel } = await supabase
-          .from("recommendations")
-          .select(`
-            id, market, selection, edge, model_probability,
-            fixture:fixtures(home_team:teams!fixtures_home_team_id_fkey(canonical_name), away_team:teams!fixtures_away_team_id_fkey(canonical_name), league:leagues(name))
-          `)
-          .eq("is_recommended", true)
-          .order("edge", { ascending: false })
-          .limit(1)
-          .single();
-
-        if (crownJewel) {
-          const fixture = crownJewel.fixture as unknown as {
-            home_team: { canonical_name: string };
-            away_team: { canonical_name: string };
-            league: { name: string };
-          };
-          await notifyCrownJewel(
-            {
-              homeTeam: fixture?.home_team?.canonical_name || "?",
-              awayTeam: fixture?.away_team?.canonical_name || "?",
-              league: fixture?.league?.name || "?",
-            },
-            {
-              market: crownJewel.market,
-              selection: crownJewel.selection,
-              edge: Number(crownJewel.edge),
-              confidence: Number(crownJewel.model_probability),
-            }
-          );
-        }
-      } catch (err) {
-        console.error("Notification trigger error:", err);
-      }
-    }
-
-    const duration = Date.now() - startTime;
-
-    return NextResponse.json({
-      success: true,
-      type,
-      duration: `${duration}ms`,
-      results,
-      timestamp: new Date().toISOString(),
-    });
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Sync error:", error);
     return NextResponse.json(
