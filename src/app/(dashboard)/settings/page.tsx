@@ -3,13 +3,16 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/providers/AuthProvider";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { formatPrice } from "@/lib/stripe/config";
 
 export default function SettingsPage() {
   const { user, profile, refreshProfile, signOut } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
+  const [portalLoading, setPortalLoading] = useState(false);
 
   // Profile form
   const [fullName, setFullName] = useState("");
@@ -142,23 +145,80 @@ export default function SettingsPage() {
         <h3 className="font-display text-[15px] font-semibold text-[#0A0F1C] mb-[16px]">
           Subscription
         </h3>
-        <div className="flex items-center justify-between p-[14px] bg-gray-50 rounded-[12px]">
-          <div>
-            <span className="block text-[13px] font-semibold text-[#0A0F1C] capitalize">
-              {profile?.subscription_tier || "free"} Plan
-            </span>
-            <span className="text-[11px] text-gray-400">
-              {profile?.subscription_tier === "free"
-                ? "3 AI questions/day · 10 accumulator legs"
-                : profile?.subscription_tier === "premium"
-                ? "Unlimited AI · Unlimited accumulators"
-                : "Everything + Rollover + Priority alerts"}
-            </span>
+
+        {/* Upgrade success banner */}
+        {searchParams.get("upgraded") && (
+          <div className="bg-green-50 border border-green-200 rounded-[12px] p-[12px] text-[13px] text-green-600 mb-[12px] flex items-center gap-[8px]">
+            <i className="ri-check-line text-[14px]"></i>
+            Welcome to ODDLY {searchParams.get("upgraded")}! Your subscription is now active.
           </div>
-          {profile?.subscription_tier === "free" && (
-            <button className="h-[32px] px-[14px] rounded-[8px] bg-[#BFFF00] text-[#1B2A4A] text-[12px] font-semibold transition-all hover:bg-[#a8e600] active:scale-[0.97]">
-              Upgrade
-            </button>
+        )}
+
+        <div className="p-[14px] bg-gray-50 rounded-[12px]">
+          <div className="flex items-center justify-between mb-[10px]">
+            <div>
+              <span className="block text-[13px] font-semibold text-[#0A0F1C] capitalize">
+                {profile?.subscription_tier || "free"} Plan
+              </span>
+              <span className="text-[11px] text-gray-400">
+                {profile?.subscription_tier === "free"
+                  ? "3 AI questions/day · 10 accumulator legs"
+                  : profile?.subscription_tier === "premium"
+                  ? "Unlimited AI · Unlimited accumulators"
+                  : "Everything + Rollover + Priority alerts"}
+              </span>
+            </div>
+            {profile?.subscription_tier === "free" ? (
+              <button
+                onClick={() => router.push("/pricing")}
+                className="h-[32px] px-[14px] rounded-[8px] bg-oddly-orange text-white text-[12px] font-semibold transition-all hover:bg-oddly-orange/90 active:scale-[0.97]"
+              >
+                Upgrade
+              </button>
+            ) : (
+              <button
+                onClick={async () => {
+                  setPortalLoading(true);
+                  try {
+                    const supabase = createClient();
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (!session) return;
+                    const res = await fetch("/api/v1/stripe/portal", {
+                      method: "POST",
+                      headers: {
+                        Authorization: `Bearer ${session.access_token}`,
+                      },
+                    });
+                    const data = await res.json();
+                    if (data.portalUrl) {
+                      window.location.href = data.portalUrl;
+                    }
+                  } catch {
+                    // ignore
+                  } finally {
+                    setPortalLoading(false);
+                  }
+                }}
+                disabled={portalLoading}
+                className="h-[32px] px-[14px] rounded-[8px] bg-[#1B2A4A] text-white text-[12px] font-semibold transition-all hover:bg-[#243B53] active:scale-[0.97] disabled:opacity-50 flex items-center gap-[6px]"
+              >
+                {portalLoading ? (
+                  <div className="w-[12px] h-[12px] border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                ) : (
+                  "Manage Billing"
+                )}
+              </button>
+            )}
+          </div>
+
+          {profile?.subscription_tier !== "free" && profile?.subscription_expires_at && (
+            <div className="text-[11px] text-gray-400">
+              Renews: {new Date(profile.subscription_expires_at).toLocaleDateString("en-NG", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
+            </div>
           )}
         </div>
       </div>

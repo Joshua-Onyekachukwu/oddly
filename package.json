@@ -33,6 +33,7 @@
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.85.0",
     "remixicon": "^4.6.0",
+    "stripe": "^22.5.0",
     "tailwind-merge": "^2.6.1",
     "tailwind-scrollbar": "^4.0.2",
     "zod": "^3.25.76"

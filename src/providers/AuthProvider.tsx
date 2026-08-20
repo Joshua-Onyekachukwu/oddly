@@ -10,6 +10,7 @@ interface UserProfile {
   role: "user" | "admin";
   display_name: string | null;
   subscription_tier: "free" | "premium" | "elite";
+  subscription_expires_at: string | null;
   bankroll: number;
 }
 
@@ -52,6 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       role: data.role || "user",
       display_name: data.display_name || null,
       subscription_tier: data.subscription_tier || "free",
+      subscription_expires_at: data.subscription_expires_at || null,
       bankroll: Number(data.bankroll) || 0,
     };
   }, [supabase, user?.email]);

@@ -18,6 +18,7 @@ create table if not exists profiles (
   bankroll decimal(12,2) default 0,
   subscription_tier text default 'free' check (subscription_tier in ('free', 'premium', 'elite')),
   subscription_expires_at timestamptz,
+  stripe_customer_id text,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
