@@ -3,209 +3,204 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/providers/AuthProvider";
 
 interface SidebarMenuProps {
   toggleActive: () => void;
 }
 
+interface NavItem {
+  label: string;
+  href: string;
+  icon: string;
+  badge?: string;
+  badgeColor?: string;
+}
+
+interface NavGroup {
+  label: string;
+  items: NavItem[];
+}
+
+const NAV_GROUPS: NavGroup[] = [
+  {
+    label: "Matches",
+    items: [
+      { label: "Today's Matches", href: "/matches", icon: "ri-football-line" },
+      { label: "Upcoming", href: "/matches/upcoming", icon: "ri-calendar-schedule-line" },
+      { label: "Results", href: "/matches/results", icon: "ri-trophy-line" },
+    ],
+  },
+  {
+    label: "Intelligence",
+    items: [
+      { label: "Accumulator", href: "/accumulator", icon: "ri-stack-line" },
+      { label: "AI Analyst", href: "/ai-chat", icon: "ri-robot-2-line", badge: "AI", badgeColor: "bg-blue-50 text-blue-600" },
+      { label: "Performance", href: "/performance", icon: "ri-line-chart-line" },
+    ],
+  },
+  {
+    label: "Challenges",
+    items: [
+      { label: "Rollover", href: "/rollover", icon: "ri-fire-line", badge: "Elite", badgeColor: "bg-amber-50 text-amber-600" },
+      { label: "Tracking", href: "/tracking", icon: "ri-bookmark-line" },
+    ],
+  },
+  {
+    label: "Account",
+    items: [
+      { label: "Notifications", href: "/notifications", icon: "ri-notification-3-line" },
+      { label: "Settings", href: "/settings", icon: "ri-settings-3-line" },
+    ],
+  },
+];
+
 const SidebarMenu: React.FC<SidebarMenuProps> = ({ toggleActive }) => {
   const pathname = usePathname();
+  const { profile } = useAuth();
+  const [expandedGroups, setExpandedGroups] = React.useState<Set<number>>(
+    new Set([0, 1, 2, 3])
+  );
 
-  const [openIndex, setOpenIndex] = React.useState<number | null>(0);
+  const toggleGroup = (index: number) => {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) {
+        next.delete(index);
+      } else {
+        next.add(index);
+      }
+      return next;
+    });
+  };
 
-  const toggleAccordion = (index: number) => {
-    setOpenIndex((prevIndex) => (prevIndex === index ? null : index));
+  const isActive = (href: string) => {
+    if (href === "/matches") return pathname === "/matches";
+    return pathname.startsWith(href);
   };
 
   return (
     <>
-      <div className="sidebar-area bg-white dark:bg-[#0c1427] fixed z-[7] top-0 h-screen transition-all rounded-r-md">
-        <div className="logo bg-white dark:bg-[#0c1427] border-b border-gray-100 dark:border-[#172036] px-[25px] pt-[19px] pb-[15px] absolute z-[2] right-0 top-0 left-0">
-          <Link
-            href="/"
-            className="transition-none relative flex items-center outline-none"
-          >
-            <span className="text-[28px] font-extrabold tracking-tight">
-              <span className="text-primary-500">ODD</span>
-              <span className="text-orange-500">LY</span>
+      {/* Mobile overlay */}
+      <div
+        className="fixed inset-0 bg-black/40 z-[6] xl:hidden transition-opacity duration-300"
+        onClick={toggleActive}
+      />
+
+      {/* Sidebar */}
+      <aside className="fixed top-0 left-0 h-screen w-[260px] bg-white border-r border-gray-100 z-[7] flex flex-col transition-transform duration-300 xl:translate-x-0 -translate-x-full">
+        {/* Logo */}
+        <div className="h-[60px] flex items-center justify-between px-[20px] border-b border-gray-100 flex-none">
+          <Link href="/" className="flex items-center gap-[2px]">
+            <span className="text-[22px] font-display font-bold tracking-tight text-[#0A0F1C]">
+              ODD
+            </span>
+            <span className="text-[22px] font-display font-bold tracking-tight text-[#D97706]">
+              LY
             </span>
           </Link>
-
           <button
             type="button"
-            className="burger-menu inline-block absolute z-[3] top-[24px] ltr:right-[25px] rtl:left-[25px] transition-all hover:text-primary-500"
             onClick={toggleActive}
+            className="w-[32px] h-[32px] rounded-[8px] flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors xl:hidden"
           >
-            <i className="material-symbols-outlined">close</i>
+            <i className="ri-close-line text-[18px]" />
           </button>
         </div>
 
-        <div className="pt-[89px] px-[22px] pb-[20px] h-screen overflow-y-scroll sidebar-custom-scrollbar">
-          <div className="accordion">
-            <span className="block relative font-medium uppercase text-gray-400 mb-[8px] text-xs">
-              Main
-            </span>
-
-            <div className="accordion-item rounded-md text-black dark:text-white mb-[5px] whitespace-nowrap">
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto py-[12px] px-[12px]">
+          {NAV_GROUPS.map((group, groupIdx) => (
+            <div key={groupIdx} className="mb-[8px]">
+              {/* Group header */}
               <button
-                className={`accordion-button toggle flex items-center transition-all py-[9px] ltr:pl-[14px] ltr:pr-[30px] rtl:pr-[14px] rtl:pl-[30px] rounded-md font-medium w-full relative hover:bg-gray-50 text-left dark:hover:bg-[#15203c] ${
-                  openIndex === 0 ? "open" : ""
-                }`}
-                type="button"
-                onClick={() => toggleAccordion(0)}
+                onClick={() => toggleGroup(groupIdx)}
+                className="w-full flex items-center justify-between px-[8px] py-[6px] text-[10px] font-semibold text-gray-400 uppercase tracking-wider hover:text-gray-500 transition-colors"
               >
-                <i className="material-symbols-outlined transition-all text-gray-500 dark:text-gray-400 ltr:mr-[7px] rtl:ml-[7px] !text-[22px] leading-none relative -top-px">
-                  sports_soccer
-                </i>
-                <span className="title leading-none">Matches</span>
+                {group.label}
+                <i
+                  className={`ri-arrow-down-s-line text-[12px] transition-transform duration-200 ${
+                    expandedGroups.has(groupIdx) ? "rotate-0" : "-rotate-90"
+                  }`}
+                />
               </button>
 
-              <div
-                className={`accordion-collapse ${
-                  openIndex === 0 ? "open" : "hidden"
-                }`}
-              >
-                <div className="pt-[4px]">
-                  <ul className="sidebar-sub-menu">
-                    <li className="sidemenu-item mb-[4px] last:mb-0">
+              {/* Group items */}
+              {expandedGroups.has(groupIdx) && (
+                <div className="mt-[2px]">
+                  {group.items.map((item) => {
+                    const active = isActive(item.href);
+                    return (
                       <Link
-                        href="/matches"
-                        className={`sidemenu-link rounded-md flex items-center relative transition-all font-medium text-gray-500 dark:text-gray-400 py-[9px] ltr:pl-[38px] ltr:pr-[30px] rtl:pr-[38px] rtl:pl-[30px] hover:text-primary-500 hover:bg-primary-50 w-full text-left dark:hover:bg-[#15203c] ${
-                          pathname === "/matches" ? "active" : ""
-                        }`}
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => {
+                          // Close mobile menu on navigation
+                          if (window.innerWidth < 1280) {
+                            toggleActive();
+                          }
+                        }}
+                        className={`
+                          flex items-center gap-[10px] px-[10px] py-[8px] rounded-[8px] text-[13px] font-medium transition-all duration-150
+                          ${
+                            active
+                              ? "bg-[#1B2A4A] text-white"
+                              : "text-gray-600 hover:bg-gray-50 hover:text-[#0A0F1C]"
+                          }
+                        `}
                       >
-                        Today&apos;s Matches
+                        <i
+                          className={`${item.icon} text-[16px] ${
+                            active ? "text-white" : "text-gray-400"
+                          }`}
+                        />
+                        <span className="flex-1">{item.label}</span>
+                        {item.badge && (
+                          <span
+                            className={`text-[9px] font-bold px-[6px] py-[2px] rounded-full ${
+                              active ? "bg-white/20 text-white" : item.badgeColor
+                            }`}
+                          >
+                            {item.badge}
+                          </span>
+                        )}
                       </Link>
-                    </li>
-                    <li className="sidemenu-item mb-[4px] last:mb-0">
-                      <Link
-                        href="/matches/upcoming"
-                        className={`sidemenu-link rounded-md flex items-center relative transition-all font-medium text-gray-500 dark:text-gray-400 py-[9px] ltr:pl-[38px] ltr:pr-[30px] rtl:pr-[38px] rtl:pl-[30px] hover:text-primary-500 hover:bg-primary-50 w-full text-left dark:hover:bg-[#15203c] ${
-                          pathname === "/matches/upcoming" ? "active" : ""
-                        }`}
-                      >
-                        Upcoming
-                      </Link>
-                    </li>
-                    <li className="sidemenu-item mb-[4px] last:mb-0">
-                      <Link
-                        href="/matches/results"
-                        className={`sidemenu-link rounded-md flex items-center relative transition-all font-medium text-gray-500 dark:text-gray-400 py-[9px] ltr:pl-[38px] ltr:pr-[30px] rtl:pr-[38px] rtl:pl-[30px] hover:text-primary-500 hover:bg-primary-50 w-full text-left dark:hover:bg-[#15203c] ${
-                          pathname === "/matches/results" ? "active" : ""
-                        }`}
-                      >
-                        Results
-                      </Link>
-                    </li>
-                  </ul>
+                    );
+                  })}
                 </div>
+              )}
+            </div>
+          ))}
+        </nav>
+
+        {/* Bottom section — user info */}
+        <div className="border-t border-gray-100 p-[12px] flex-none">
+          <div className="flex items-center gap-[10px] px-[8px] py-[8px] rounded-[8px] bg-gray-50">
+            <div className="w-[32px] h-[32px] rounded-full bg-[#1B2A4A] flex items-center justify-center flex-none">
+              <span className="text-[12px] font-bold text-white">
+                {profile?.display_name?.[0] || profile?.email?.[0]?.toUpperCase() || "U"}
+              </span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[12px] font-semibold text-[#0A0F1C] truncate">
+                {profile?.display_name || "User"}
+              </div>
+              <div className="text-[10px] text-gray-400 truncate capitalize">
+                {profile?.subscription_tier || "free"} plan
               </div>
             </div>
-
-            <div className="accordion-item rounded-md text-black dark:text-white mb-[5px] whitespace-nowrap">
+            {profile?.role === "admin" && (
               <Link
-                href="/accumulator"
-                className={`accordion-button flex items-center transition-all py-[9px] ltr:pl-[14px] ltr:pr-[30px] rtl:pr-[14px] rtl:pl-[30px] rounded-md font-medium w-full relative hover:bg-gray-50 text-left dark:hover:bg-[#15203c] ${
-                  pathname === "/accumulator" ? "active" : ""
-                }`}
+                href="/admin"
+                className="w-[28px] h-[28px] rounded-[6px] bg-[#1B2A4A] flex items-center justify-center hover:bg-[#243B53] transition-colors"
+                title="Admin Dashboard"
               >
-                <i className="material-symbols-outlined transition-all text-gray-500 dark:text-gray-400 ltr:mr-[7px] rtl:ml-[7px] !text-[22px] leading-none relative -top-px">
-                  receipt_long
-                </i>
-                <span className="title leading-none">Accumulator</span>
+                <i className="ri-admin-line text-[12px] text-white" />
               </Link>
-            </div>
-
-            <span className="block relative font-medium uppercase text-gray-400 mb-[8px] text-xs [&:not(:first-child)]:mt-[22px]">
-              Intelligence
-            </span>
-
-            <div className="accordion-item rounded-md text-black dark:text-white mb-[5px] whitespace-nowrap">
-              <Link
-                href="/ai-chat"
-                className={`accordion-button flex items-center transition-all py-[9px] ltr:pl-[14px] ltr:pr-[30px] rtl:pr-[14px] rtl:pl-[30px] rounded-md font-medium w-full relative hover:bg-gray-50 text-left dark:hover:bg-[#15203c] ${
-                  pathname === "/ai-chat" ? "active" : ""
-                }`}
-              >
-                <i className="material-symbols-outlined transition-all text-gray-500 dark:text-gray-400 ltr:mr-[7px] rtl:ml-[7px] !text-[22px] leading-none relative -top-px">
-                  chat
-                </i>
-                <span className="title leading-none">AI Analyst</span>
-                <span className="text-[10px] font-medium py-[1px] px-[8px] ltr:ml-[8px] rtl:mr-[8px] text-primary-500 bg-primary-50 dark:bg-[#ffffff14] inline-block rounded-sm">
-                  AI
-                </span>
-              </Link>
-            </div>
-
-            <div className="accordion-item rounded-md text-black dark:text-white mb-[5px] whitespace-nowrap">
-              <Link
-                href="/performance"
-                className={`accordion-button flex items-center transition-all py-[9px] ltr:pl-[14px] ltr:pr-[30px] rtl:pr-[14px] rtl:pl-[30px] rounded-md font-medium w-full relative hover:bg-gray-50 text-left dark:hover:bg-[#15203c] ${
-                  pathname === "/performance" ? "active" : ""
-                }`}
-              >
-                <i className="material-symbols-outlined transition-all text-gray-500 dark:text-gray-400 ltr:mr-[7px] rtl:ml-[7px] !text-[22px] leading-none relative -top-px">
-                  analytics
-                </i>
-                <span className="title leading-none">Performance</span>
-              </Link>
-            </div>
-
-            <span className="block relative font-medium uppercase text-gray-400 mb-[8px] text-xs [&:not(:first-child)]:mt-[22px]">
-              Challenges
-            </span>
-
-            <div className="accordion-item rounded-md text-black dark:text-white mb-[5px] whitespace-nowrap">
-              <Link
-                href="/rollover"
-                className={`accordion-button flex items-center transition-all py-[9px] ltr:pl-[14px] ltr:pr-[30px] rtl:pr-[14px] rtl:pl-[30px] rounded-md font-medium w-full relative hover:bg-gray-50 text-left dark:hover:bg-[#15203c] ${
-                  pathname === "/rollover" ? "active" : ""
-                }`}
-              >
-                <i className="material-symbols-outlined transition-all text-gray-500 dark:text-gray-400 ltr:mr-[7px] rtl:ml-[7px] !text-[22px] leading-none relative -top-px">
-                  emoji_events
-                </i>
-                <span className="title leading-none">Rollover</span>
-                <span className="text-[10px] font-medium py-[1px] px-[8px] ltr:ml-[8px] rtl:mr-[8px] text-orange-500 bg-orange-50 dark:bg-[#ffffff14] inline-block rounded-sm">
-                  Elite
-                </span>
-              </Link>
-            </div>
-
-            <div className="accordion-item rounded-md text-black dark:text-white mb-[5px] whitespace-nowrap">
-              <Link
-                href="/tracking"
-                className={`accordion-button flex items-center transition-all py-[9px] ltr:pl-[14px] ltr:pr-[30px] rtl:pr-[14px] rtl:pl-[30px] rounded-md font-medium w-full relative hover:bg-gray-50 text-left dark:hover:bg-[#15203c] ${
-                  pathname === "/tracking" ? "active" : ""
-                }`}
-              >
-                <i className="material-symbols-outlined transition-all text-gray-500 dark:text-gray-400 ltr:mr-[7px] rtl:ml-[7px] !text-[22px] leading-none relative -top-px">
-                  bookmark_border
-                </i>
-                <span className="title leading-none">Tracking</span>
-              </Link>
-            </div>
-
-            <span className="block relative font-medium uppercase text-gray-400 mb-[8px] text-xs [&:not(:first-child)]:mt-[22px]">
-              Account
-            </span>
-
-            <div className="accordion-item rounded-md text-black dark:text-white mb-[5px] whitespace-nowrap">
-              <Link
-                href="/settings"
-                className={`accordion-button flex items-center transition-all py-[9px] ltr:pl-[14px] ltr:pr-[30px] rtl:pr-[14px] rtl:pl-[30px] rounded-md font-medium w-full relative hover:bg-gray-50 text-left dark:hover:bg-[#15203c] ${
-                  pathname === "/settings" ? "active" : ""
-                }`}
-              >
-                <i className="material-symbols-outlined transition-all text-gray-500 dark:text-gray-400 ltr:mr-[7px] rtl:ml-[7px] !text-[22px] leading-none relative -top-px">
-                  settings
-                </i>
-                <span className="title leading-none">Settings</span>
-              </Link>
-            </div>
+            )}
           </div>
         </div>
-      </div>
+      </aside>
     </>
   );
 };

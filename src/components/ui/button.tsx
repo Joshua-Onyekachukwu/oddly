@@ -1,66 +1,64 @@
-import * as React from "react";
-import { cva, type VariantProps } from "class-variance-authority";
-import { cn } from "@/lib/utils";
+import React from "react";
 
-const buttonVariants = cva(
-  // Base styles
-  "inline-flex items-center justify-center whitespace-nowrap rounded-full text-sm font-medium transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.97]",
-  {
-    variants: {
-      variant: {
-        // Primary — Navy background, white text
-        default:
-          "bg-primary text-primary-foreground hover:bg-primary-800 shadow-ambient hover:shadow-ambient-lg",
-        // Accent — Lime background, dark text
-        accent:
-          "bg-accent text-accent-foreground hover:bg-accent-400 shadow-[0_0_24px_rgba(191,255,0,0.2)] hover:shadow-[0_0_40px_rgba(191,255,0,0.3)]",
-        // Secondary — Amber
-        secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary-700",
-        // Outline — Border only
-        outline:
-          "border border-border bg-transparent hover:bg-muted text-foreground",
-        // Ghost — No background
-        ghost:
-          "hover:bg-muted hover:text-foreground text-muted-foreground",
-        // Link — Underline on hover
-        link:
-          "text-primary underline-offset-4 hover:underline",
-        // Danger — Red
-        danger:
-          "bg-danger text-danger-foreground hover:bg-danger/90",
-      },
-      size: {
-        sm: "h-9 px-4 text-xs",
-        default: "h-11 px-6 text-sm",
-        lg: "h-13 px-8 text-base",
-        icon: "size-10",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-      size: "default",
-    },
-  }
-);
+type ButtonVariant = "primary" | "secondary" | "ghost" | "danger" | "success";
+type ButtonSize = "sm" | "md" | "lg";
 
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
-  asChild?: boolean;
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  loading?: boolean;
+  icon?: string;
+  iconPosition?: "left" | "right";
 }
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, ...props }, ref) => {
-    return (
-      <button
-        className={cn(buttonVariants({ variant, size, className }))}
-        ref={ref}
-        {...props}
-      />
-    );
-  }
-);
-Button.displayName = "Button";
+const variantStyles: Record<ButtonVariant, string> = {
+  primary: "bg-[#1B2A4A] text-white hover:bg-[#243B53] active:bg-[#102A43]",
+  secondary: "bg-gray-100 text-gray-700 hover:bg-gray-200 active:bg-gray-300",
+  ghost: "bg-transparent text-gray-600 hover:bg-gray-50 active:bg-gray-100",
+  danger: "bg-red-50 text-red-600 hover:bg-red-100 active:bg-red-200",
+  success: "bg-green-50 text-green-600 hover:bg-green-100 active:bg-green-200",
+};
 
-export { Button, buttonVariants };
+const sizeStyles: Record<ButtonSize, string> = {
+  sm: "h-[32px] px-[12px] text-[12px] rounded-[8px] gap-[6px]",
+  md: "h-[36px] px-[16px] text-[13px] rounded-[10px] gap-[8px]",
+  lg: "h-[44px] px-[20px] text-[14px] rounded-[12px] gap-[8px]",
+};
+
+export function Button({
+  variant = "primary",
+  size = "md",
+  loading = false,
+  icon,
+  iconPosition = "left",
+  children,
+  className = "",
+  disabled,
+  ...props
+}: ButtonProps) {
+  return (
+    <button
+      className={`
+        inline-flex items-center justify-center font-semibold
+        transition-all duration-200
+        active:scale-[0.98]
+        disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100
+        ${variantStyles[variant]}
+        ${sizeStyles[size]}
+        ${className}
+      `}
+      disabled={disabled || loading}
+      {...props}
+    >
+      {loading ? (
+        <div className="w-[14px] h-[14px] border-2 border-current/30 border-t-current rounded-full animate-spin" />
+      ) : (
+        <>
+          {icon && iconPosition === "left" && <i className={`${icon} text-[14px]`} />}
+          {children}
+          {icon && iconPosition === "right" && <i className={`${icon} text-[14px]`} />}
+        </>
+      )}
+    </button>
+  );
+}

@@ -1,35 +1,59 @@
-import * as React from "react";
-import { cva, type VariantProps } from "class-variance-authority";
-import { cn } from "@/lib/utils";
+import React from "react";
 
-const badgeVariants = cva(
-  "inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors",
-  {
-    variants: {
-      variant: {
-        default: "bg-primary/10 text-primary",
-        accent: "bg-accent/10 text-accent-foreground",
-        secondary: "bg-secondary/10 text-secondary",
-        success: "bg-success/10 text-success",
-        danger: "bg-danger/10 text-danger",
-        warning: "bg-warning/10 text-warning",
-        outline: "border border-border text-muted-foreground",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-    },
-  }
-);
+type BadgeVariant = "default" | "success" | "warning" | "danger" | "info" | "accent";
+type BadgeSize = "sm" | "md";
 
-export interface BadgeProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof badgeVariants> {}
-
-function Badge({ className, variant, ...props }: BadgeProps) {
-  return (
-    <div className={cn(badgeVariants({ variant }), className)} {...props} />
-  );
+interface BadgeProps {
+  children: React.ReactNode;
+  variant?: BadgeVariant;
+  size?: BadgeSize;
+  dot?: boolean;
+  className?: string;
 }
 
-export { Badge, badgeVariants };
+const variantStyles: Record<BadgeVariant, string> = {
+  default: "bg-gray-100 text-gray-600",
+  success: "bg-green-50 text-green-600",
+  warning: "bg-amber-50 text-amber-600",
+  danger: "bg-red-50 text-red-600",
+  info: "bg-blue-50 text-blue-600",
+  accent: "bg-[#BFFF00]/10 text-[#1B2A4A]",
+};
+
+const dotColors: Record<BadgeVariant, string> = {
+  default: "bg-gray-400",
+  success: "bg-green-500",
+  warning: "bg-amber-500",
+  danger: "bg-red-500",
+  info: "bg-blue-500",
+  accent: "bg-[#BFFF00]",
+};
+
+const sizeStyles: Record<BadgeSize, string> = {
+  sm: "text-[10px] px-[6px] py-[2px]",
+  md: "text-[11px] px-[8px] py-[3px]",
+};
+
+export function Badge({
+  children,
+  variant = "default",
+  size = "md",
+  dot = false,
+  className = "",
+}: BadgeProps) {
+  return (
+    <span
+      className={`
+        inline-flex items-center gap-[4px] font-semibold rounded-full
+        ${variantStyles[variant]}
+        ${sizeStyles[size]}
+        ${className}
+      `}
+    >
+      {dot && (
+        <span className={`w-[4px] h-[4px] rounded-full ${dotColors[variant]}`} />
+      )}
+      {children}
+    </span>
+  );
+}
