@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 714 380" fill="none">
+  <rect width="714" height="380" rx="12" fill="#f8fafc"/>
+  <rect x="20" y="20" width="330" height="170" rx="8" fill="white" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="36" y="48" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="600" fill="#1e293b">Today's Predictions</text>
+  <rect x="36" y="60" width="298" height="38" rx="6" fill="#f0f9ff" stroke="#e0f2fe" stroke-width="1"/>
+  <text x="52" y="78" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#334155">Arsenal vs Chelsea</text>
+  <text x="52" y="92" font-family="Inter, system-ui, sans-serif" font-size="10" fill="#275b96">Over 2.5 Goals · 93% · +22% Edge</text>
+  <circle cx="306" cy="79" r="10" fill="#22c55e"/>
+  <text x="302" y="83" font-family="Inter, system-ui, sans-serif" font-size="10" fill="white" font-weight="bold">✓</text>
+  <rect x="36" y="108" width="298" height="38" rx="6" fill="#f0f9ff" stroke="#e0f2fe" stroke-width="1"/>
+  <text x="52" y="126" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#334155">Barcelona vs Real Madrid</text>
+  <text x="52" y="140" font-family="Inter, system-ui, sans-serif" font-size="10" fill="#275b96">BTTS Yes · 87% · +15% Edge</text>
+  <circle cx="306" cy="127" r="10" fill="#22c55e"/>
+  <text x="302" y="131" font-family="Inter, system-ui, sans-serif" font-size="10" fill="white" font-weight="bold">✓</text>
+  <rect x="36" y="156" width="298" height="24" rx="6" fill="#f0f9ff" stroke="#e0f2fe" stroke-width="1"/>
+  <text x="52" y="172" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#334155">Bayern vs Dortmund</text>
+  <rect x="20" y="200" width="330" height="160" rx="8" fill="white" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="36" y="228" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="600" fill="#1e293b">Model Confidence</text>
+  <rect x="36" y="248" width="80" height="8" rx="4" fill="#e2e8f0"/>
+  <rect x="36" y="248" width="68" height="8" rx="4" fill="#275b96"/>
+  <text x="124" y="256" font-family="Inter, system-ui, sans-serif" font-size="10" fill="#64748b">Dixon-Coles: 85%</text>
+  <rect x="36" y="268" width="80" height="8" rx="4" fill="#e2e8f0"/>
+  <rect x="36" y="268" width="72" height="8" rx="4" fill="#E36925"/>
+  <text x="124" y="276" font-family="Inter, system-ui, sans-serif" font-size="10" fill="#64748b">XGBoost: 90%</text>
+  <rect x="36" y="288" width="80" height="8" rx="4" fill="#e2e8f0"/>
+  <rect x="36" y="288" width="60" height="8" rx="4" fill="#22c55e"/>
+  <text x="124" y="296" font-family="Inter, system-ui, sans-serif" font-size="10" fill="#64748b">Elo Rating: 75%</text>
+  <rect x="36" y="308" width="80" height="8" rx="4" fill="#e2e8f0"/>
+  <rect x="36" y="308" width="76" height="8" rx="4" fill="#8b5cf6"/>
+  <text x="124" y="316" font-family="Inter, system-ui, sans-serif" font-size="10" fill="#64748b">Ensemble: 94%</text>
+  <text x="36" y="348" font-family="Inter, system-ui, sans-serif" font-size="10" fill="#94a3b8">7 Models · Last updated: 2 min ago</text>
+  <rect x="370" y="20" width="324" height="340" rx="8" fill="white" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="386" y="48" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="600" fill="#1e293b">Crown Jewel Pick</text>
+  <rect x="386" y="62" width="292" height="90" rx="8" fill="#275b96"/>
+  <text x="402" y="86" font-family="Inter, system-ui, sans-serif" font-size="11" fill="rgba(255,255,255,0.7)">Daily Best Selection</text>
+  <text x="402" y="108" font-family="Inter, system-ui, sans-serif" font-size="16" fill="white" font-weight="bold">Arsenal vs Chelsea</text>
+  <text x="402" y="126" font-family="Inter, system-ui, sans-serif" font-size="12" fill="rgba(255,255,255,0.9)">Over 2.5 Goals · Odds: 1.85</text>
+  <text x="402" y="142" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#4ade80">93% Confidence · +22% Edge</text>
+  <text x="386" y="182" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600" fill="#1e293b">Accumulator Builder</text>
+  <rect x="386" y="194" width="292" height="56" rx="6" fill="#f0f9ff" stroke="#e0f2fe" stroke-width="1"/>
+  <text x="402" y="214" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#334155">3-leg acca · Combined odds: 4.82</text>
+  <text x="402" y="234" font-family="Inter, system-ui, sans-serif" font-size="10" fill="#22c55e">82% combined confidence</text>
+  <text x="386" y="278" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="600" fill="#1e293b">Value Bets Detected</text>
+  <rect x="386" y="290" width="140" height="50" rx="6" fill="#f0fdf4" stroke="#dcfce7" stroke-width="1"/>
+  <text x="402" y="312" font-family="Inter, system-ui, sans-serif" font-size="20" font-weight="bold" fill="#22c55e">12</text>
+  <text x="402" y="328" font-family="Inter, system-ui, sans-serif" font-size="10" fill="#64748b">Value bets found</text>
+  <rect x="538" y="290" width="140" height="50" rx="6" fill="#fff7ed" stroke="#fed7aa" stroke-width="1"/>
+  <text x="554" y="312" font-family="Inter, system-ui, sans-serif" font-size="20" font-weight="bold" fill="#E36925">+18%</text>
+  <text x="554" y="328" font-family="Inter, system-ui, sans-serif" font-size="10" fill="#64748b">Average edge</text>
+</svg>
