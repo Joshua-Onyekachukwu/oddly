@@ -59,7 +59,7 @@ const GetStarted: React.FC = () => {
               </Link>
             </div>
 
-            <div className="flex items-center justify-center gap-[20px] mt-[32px]">
+            <div className="flex flex-wrap items-center justify-center gap-[12px] md:gap-[20px] mt-[32px]">
               {["No credit card required", "Cancel anytime", "94.4% accuracy"].map((t, i) => (
                 <span key={i} className="flex items-center gap-[6px] text-[12px] text-white/30">
                   <i className="ri-check-line text-[#BFFF00] text-[12px]"></i>
