@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     // Fetch user profile with role
     const { data: profile } = await supabase
       .from("profiles")
-      .select("role, full_name, avatar_url")
+      .select("role, display_name, bankroll")
       .eq("id", data.user.id)
       .single();
 
@@ -60,8 +60,8 @@ export async function POST(request: NextRequest) {
         id: data.user.id,
         email: data.user.email,
         role: profile?.role || "user",
-        full_name: profile?.full_name || null,
-        avatar_url: profile?.avatar_url || null,
+        display_name: profile?.display_name || null,
+        bankroll: profile?.bankroll || 0,
       },
     });
   } catch (error) {

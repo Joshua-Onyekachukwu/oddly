@@ -8,8 +8,7 @@ interface UserProfile {
   id: string;
   email: string;
   role: "user" | "admin";
-  full_name: string | null;
-  avatar_url: string | null;
+  display_name: string | null;
   subscription_tier: "free" | "premium" | "elite";
   bankroll: number;
 }
@@ -51,10 +50,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       id: data.id,
       email: user?.email || "",
       role: data.role || "user",
-      full_name: data.full_name || data.display_name || null,
-      avatar_url: data.avatar_url || null,
+      display_name: data.display_name || null,
       subscription_tier: data.subscription_tier || "free",
-      bankroll: data.bankroll || 0,
+      bankroll: Number(data.bankroll) || 0,
     };
   }, [supabase, user?.email]);
 
@@ -115,7 +113,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       email,
       password,
       options: {
-        data: { full_name: fullName },
+        data: { display_name: fullName },
       },
     });
 
