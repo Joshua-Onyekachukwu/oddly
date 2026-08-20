@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Space_Grotesk, DM_Sans, JetBrains_Mono } from "next/font/google";
 import { AuthProvider } from "@/providers/AuthProvider";
+import { ToastContainer } from "@/components/notifications/Toast";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -71,7 +72,10 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="font-body antialiased bg-[#FAFBFC] text-[#0A0F1C]">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          {children}
+          <ToastContainer />
+        </AuthProvider>
       </body>
     </html>
   );
