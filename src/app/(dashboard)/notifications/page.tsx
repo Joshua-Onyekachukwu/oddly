@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/providers/AuthProvider";
 import { createClient } from "@/lib/supabase/client";
+import { PageHeader, Button, Badge, EmptyState } from "@/components/ui";
 
 interface Notification {
   id: string;
@@ -35,21 +36,21 @@ function timeAgo(dateStr: string): string {
 function getNotificationIcon(type: string): { icon: string; color: string; bg: string } {
   switch (type) {
     case "new_picks":
-      return { icon: "ri-percent-line", color: "text-[#22c55e]", bg: "bg-[#22c55e]/10" };
+      return { icon: "ri-percent-line", color: "text-green-600", bg: "bg-green-50" };
     case "result_settled":
-      return { icon: "ri-check-double-line", color: "text-[#2563EB]", bg: "bg-[#2563EB]/10" };
+      return { icon: "ri-check-double-line", color: "text-blue-600", bg: "bg-blue-50" };
     case "chain_milestone":
-      return { icon: "ri-fire-line", color: "text-[#D97706]", bg: "bg-[#D97706]/10" };
+      return { icon: "ri-fire-line", color: "text-amber-600", bg: "bg-amber-50" };
     case "chain_broken":
-      return { icon: "ri-close-circle-line", color: "text-[#EF4444]", bg: "bg-[#EF4444]/10" };
+      return { icon: "ri-close-circle-line", color: "text-red-600", bg: "bg-red-50" };
     case "accumulator_settled":
-      return { icon: "ri-stack-line", color: "text-[#8B5CF6]", bg: "bg-[#8B5CF6]/10" };
+      return { icon: "ri-stack-line", color: "text-purple-600", bg: "bg-purple-50" };
     case "model_alert":
-      return { icon: "ri-robot-2-line", color: "text-[#1B2A4A]", bg: "bg-[#1B2A4A]/10" };
+      return { icon: "ri-robot-2-line", color: "text-gray-600", bg: "bg-gray-100" };
     case "announcement":
-      return { icon: "ri-megaphone-line", color: "text-[#D97706]", bg: "bg-[#D97706]/10" };
+      return { icon: "ri-megaphone-line", color: "text-amber-600", bg: "bg-amber-50" };
     case "drawdown_warning":
-      return { icon: "ri-alert-line", color: "text-[#EF4444]", bg: "bg-[#EF4444]/10" };
+      return { icon: "ri-alert-line", color: "text-red-600", bg: "bg-red-50" };
     default:
       return { icon: "ri-notification-3-line", color: "text-gray-500", bg: "bg-gray-100" };
   }
@@ -66,6 +67,20 @@ function getTypeLabel(type: string): string {
     case "announcement": return "Announcement";
     case "drawdown_warning": return "Warning";
     default: return type;
+  }
+}
+
+function getBadgeVariant(type: string): "success" | "info" | "warning" | "danger" | "default" {
+  switch (type) {
+    case "new_picks": return "success";
+    case "result_settled": return "info";
+    case "chain_milestone": return "warning";
+    case "chain_broken": return "danger";
+    case "accumulator_settled": return "default";
+    case "model_alert": return "default";
+    case "announcement": return "warning";
+    case "drawdown_warning": return "danger";
+    default: return "default";
   }
 }
 
@@ -135,7 +150,6 @@ export default function NotificationsPage() {
     [session?.access_token, filter]
   );
 
-  // Reset and fetch when filter changes
   useEffect(() => {
     setPage(0);
     setNotifications([]);
@@ -143,7 +157,7 @@ export default function NotificationsPage() {
     fetchNotifications(0, false);
   }, [fetchNotifications]);
 
-  // Realtime subscription for live updates
+  // Realtime subscription
   useEffect(() => {
     if (!user?.id) return;
 
@@ -177,7 +191,6 @@ export default function NotificationsPage() {
           setNotifications((prev) =>
             prev.map((n) => (n.id === updated.id ? { ...n, ...updated } : n))
           );
-          // Recount unread
           setNotifications((prev) => {
             setUnreadCount(prev.filter((n) => !n.is_read).length);
             return prev;
@@ -242,7 +255,6 @@ export default function NotificationsPage() {
     fetchNotifications(nextPage, true);
   }
 
-  // Group notifications by date
   function groupByDate(notifs: Notification[]) {
     const groups: { label: string; items: Notification[] }[] = [];
     let currentLabel = "";
@@ -287,44 +299,40 @@ export default function NotificationsPage() {
   const groupedNotifications = groupByDate(notifications);
 
   return (
-    <div className="max-w-[720px] mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-[24px]">
-        <div>
-          <h1 className="font-display text-[24px] md:text-[28px] font-bold text-[#0A0F1C] mb-[4px]">
-            Notifications
-          </h1>
-          <p className="text-[14px] text-gray-500">
-            {unreadCount > 0 ? `${unreadCount} unread notification${unreadCount > 1 ? "s" : ""}` : "All caught up"}
-          </p>
-        </div>
-        {unreadCount > 0 && (
-          <button
-            onClick={markAllRead}
-            disabled={markingRead}
-            className="h-[36px] px-[14px] rounded-[10px] bg-white border border-gray-200 text-[13px] font-semibold text-[#0A0F1C] transition-all hover:bg-gray-50 active:scale-[0.98] disabled:opacity-50 flex items-center gap-[6px]"
-          >
-            {markingRead ? (
-              <div className="w-[14px] h-[14px] border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
-            ) : (
-              <i className="ri-check-double-line text-[14px]" />
-            )}
-            Mark all read
-          </button>
-        )}
-      </div>
+    <div className="max-w-[700px] mx-auto">
+      <PageHeader
+        title="Notifications"
+        description={
+          unreadCount > 0 ? `${unreadCount} unread notification${unreadCount > 1 ? "s" : ""}` : "All caught up"
+        }
+        action={
+          unreadCount > 0 ? (
+            <Button
+              onClick={markAllRead}
+              loading={markingRead}
+              variant="secondary"
+              size="sm"
+              icon="ri-check-double-line"
+            >
+              Mark all read
+            </Button>
+          ) : undefined
+        }
+      />
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-[4px] mb-[20px] overflow-x-auto pb-[4px]">
+      <div className="flex items-center gap-[4px] mb-[16px] overflow-x-auto pb-[4px]">
         {FILTER_OPTIONS.map((opt) => (
           <button
             key={opt.value}
             onClick={() => setFilter(opt.value)}
-            className={`px-[12px] py-[6px] rounded-full text-[12px] font-semibold whitespace-nowrap transition-all ${
-              filter === opt.value
+            className={`
+              px-[10px] py-[5px] rounded-full text-[11px] font-semibold whitespace-nowrap transition-all
+              ${filter === opt.value
                 ? "bg-[#1B2A4A] text-white"
                 : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-            }`}
+              }
+            `}
           >
             {opt.label}
           </button>
@@ -334,89 +342,76 @@ export default function NotificationsPage() {
       {/* Notifications List */}
       {loading ? (
         <div className="space-y-[4px]">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="bg-white rounded-[14px] p-[16px] border border-gray-100 animate-pulse">
-              <div className="flex items-start gap-[12px]">
-                <div className="w-[36px] h-[36px] bg-gray-100 rounded-[10px]" />
-                <div className="flex-1 space-y-[8px]">
-                  <div className="h-[13px] bg-gray-100 rounded w-[60%]" />
-                  <div className="h-[12px] bg-gray-50 rounded w-[80%]" />
-                  <div className="h-[10px] bg-gray-50 rounded w-[30%]" />
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="bg-white rounded-[10px] p-[14px] border border-gray-100 animate-pulse">
+              <div className="flex items-start gap-[10px]">
+                <div className="w-[32px] h-[32px] bg-gray-100 rounded-[8px]" />
+                <div className="flex-1 space-y-[6px]">
+                  <div className="h-[12px] bg-gray-100 rounded w-[55%]" />
+                  <div className="h-[11px] bg-gray-50 rounded w-[75%]" />
+                  <div className="h-[10px] bg-gray-50 rounded w-[25%]" />
                 </div>
               </div>
             </div>
           ))}
         </div>
       ) : notifications.length === 0 ? (
-        <div className="text-center py-[80px]">
-          <div className="w-[64px] h-[64px] bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-[16px]">
-            <i className="ri-notification-off-line text-[28px] text-gray-300" />
-          </div>
-          <h3 className="text-[16px] font-semibold text-gray-400 mb-[4px]">
-            No notifications
-          </h3>
-          <p className="text-[13px] text-gray-300 max-w-[280px] mx-auto">
-            {filter === "unread"
+        <EmptyState
+          icon="ri-notification-off-line"
+          title="No notifications"
+          description={
+            filter === "unread"
               ? "You're all caught up! No unread notifications."
-              : "You'll be notified when value bets are found and matches update."}
-          </p>
-        </div>
+              : "You'll be notified when value bets are found and matches update."
+          }
+        />
       ) : (
-        <div className="space-y-[20px]">
+        <div className="space-y-[16px]">
           {groupedNotifications.map((group) => (
             <div key={group.label}>
-              <h3 className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-[8px] px-[4px]">
+              <h3 className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-[6px] px-[4px]">
                 {group.label}
               </h3>
-              <div className="space-y-[4px]">
+              <div className="space-y-[3px]">
                 {group.items.map((n) => {
                   const { icon, color, bg } = getNotificationIcon(n.type);
                   return (
                     <div
                       key={n.id}
                       onClick={() => !n.is_read && markAsRead(n.id)}
-                      className={`bg-white rounded-[14px] p-[16px] border transition-all cursor-pointer hover:shadow-[0_2px_12px_rgba(0,0,0,0.04)] ${
-                        !n.is_read
-                          ? "border-[#BFFF00]/20 bg-[#BFFF00]/[0.02]"
-                          : "border-gray-100"
-                      }`}
+                      className={`
+                        bg-white rounded-[10px] p-[12px] border transition-all cursor-pointer hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)]
+                        ${!n.is_read ? "border-gray-200" : "border-gray-100"}
+                      `}
                     >
-                      <div className="flex items-start gap-[12px]">
-                        <div
-                          className={`w-[36px] h-[36px] ${bg} rounded-[10px] flex items-center justify-center flex-none`}
-                        >
-                          <i className={`${icon} text-[16px] ${color}`} />
+                      <div className="flex items-start gap-[10px]">
+                        <div className={`w-[32px] h-[32px] ${bg} rounded-[8px] flex items-center justify-center flex-none`}>
+                          <i className={`${icon} text-[14px] ${color}`} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-[8px]">
-                            <div className="flex items-center gap-[8px]">
-                              <h4
-                                className={`text-[13px] font-semibold leading-[1.4] ${
-                                  !n.is_read ? "text-[#0A0F1C]" : "text-gray-600"
-                                }`}
-                              >
+                          <div className="flex items-start justify-between gap-[6px]">
+                            <div className="flex items-center gap-[6px]">
+                              <h4 className={`text-[12px] font-semibold leading-[1.4] ${!n.is_read ? "text-[#0A0F1C]" : "text-gray-600"}`}>
                                 {n.title}
                               </h4>
-                              <span
-                                className={`text-[9px] font-semibold px-[6px] py-[2px] rounded-full ${bg} ${color}`}
-                              >
+                              <Badge variant={getBadgeVariant(n.type)} size="sm">
                                 {getTypeLabel(n.type)}
-                              </span>
+                              </Badge>
                             </div>
                             {!n.is_read && (
-                              <span className="w-[7px] h-[7px] bg-[#22c55e] rounded-full flex-none mt-[5px]" />
+                              <span className="w-[6px] h-[6px] bg-green-500 rounded-full flex-none mt-[4px]" />
                             )}
                           </div>
-                          <p className="text-[13px] text-gray-400 mt-[4px] leading-[1.5]">
+                          <p className="text-[12px] text-gray-400 mt-[3px] leading-[1.5]">
                             {n.body}
                           </p>
-                          <div className="flex items-center gap-[12px] mt-[8px]">
-                            <span className="text-[11px] text-gray-300">
+                          <div className="flex items-center gap-[10px] mt-[6px]">
+                            <span className="text-[10px] text-gray-300">
                               {timeAgo(n.created_at)}
                             </span>
                             {n.data && typeof n.data === "object" && "match" in (n.data as Record<string, unknown>) && (
-                              <span className="text-[11px] text-gray-300 flex items-center gap-[4px]">
-                                <i className="ri-football-line text-[11px]" />
+                              <span className="text-[10px] text-gray-300 flex items-center gap-[3px]">
+                                <i className="ri-football-line text-[10px]" />
                                 {(n.data as Record<string, unknown>).match as string}
                               </span>
                             )}
@@ -432,21 +427,15 @@ export default function NotificationsPage() {
 
           {/* Load More */}
           {hasMore && (
-            <div className="text-center pt-[8px]">
-              <button
+            <div className="text-center pt-[4px]">
+              <Button
                 onClick={loadMore}
-                disabled={loadingMore}
-                className="h-[36px] px-[16px] rounded-[10px] bg-gray-50 text-[13px] font-semibold text-gray-500 transition-all hover:bg-gray-100 disabled:opacity-50 flex items-center gap-[6px] mx-auto"
+                loading={loadingMore}
+                variant="ghost"
+                size="sm"
               >
-                {loadingMore ? (
-                  <>
-                    <div className="w-[14px] h-[14px] border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
-                    Loading...
-                  </>
-                ) : (
-                  "Load more"
-                )}
-              </button>
+                Load more
+              </Button>
             </div>
           )}
         </div>

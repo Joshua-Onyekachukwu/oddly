@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useAuth } from "@/providers/AuthProvider";
+import { PageHeader, Badge } from "@/components/ui";
 
 interface Message {
   id: string;
@@ -49,7 +50,6 @@ export default function AiChatPage() {
     setStreamingContent("");
 
     try {
-      // Use streaming fetch
       const response = await fetch("/api/v1/ai-chat", {
         method: "POST",
         headers: {
@@ -92,13 +92,8 @@ export default function AiChatPage() {
             const data = line.slice(6);
             try {
               const parsed = JSON.parse(data);
-
-              if (parsed.error) {
-                throw new Error(parsed.error);
-              }
-
+              if (parsed.error) throw new Error(parsed.error);
               if (parsed.done) break;
-
               if (parsed.chunk) {
                 fullContent += parsed.chunk;
                 setStreamingContent(fullContent);
@@ -110,7 +105,6 @@ export default function AiChatPage() {
         }
       }
 
-      // Finalize the message
       if (fullContent) {
         const assistantMsg: Message = {
           id: crypto.randomUUID(),
@@ -150,49 +144,38 @@ export default function AiChatPage() {
 
   const suggestedQs = messages.length === 0 ? SUGGESTED_QUESTIONS : [];
 
-  // All users have unlimited access during testing phase
-  const userQuestionsCount = messages.filter((m) => m.role === "user").length;
-  const isUnlimited = true;
-  const dailyLimit = -1;
-  const remaining = -1;
-
   return (
-    <div className="flex flex-col h-[calc(100vh-120px)]">
-      <div className="mb-[16px]">
-        <div className="flex items-center gap-[10px] mb-[4px]">
-          <h1 className="font-display text-[24px] md:text-[28px] font-bold text-[#0A0F1C]">
-            AI Analyst
-          </h1>
-          <span className="inline-flex items-center gap-[4px] px-[8px] py-[2px] bg-[#BFFF00]/10 rounded-full text-[10px] font-semibold text-[#1B2A4A] uppercase tracking-wider">
-            <span className="w-[5px] h-[5px] bg-green-500 rounded-full animate-pulse"></span>
+    <div className="flex flex-col h-[calc(100vh-100px)]">
+      <PageHeader
+        title="AI Analyst"
+        description="Ask about predictions, value bets, match analysis, or model insights."
+        action={
+          <Badge variant="success" dot>
             Live
-          </span>
-        </div>
-        <p className="text-[14px] text-gray-500">
-          Ask about predictions, value bets, match analysis, or model insights.
-        </p>
-      </div>
+          </Badge>
+        }
+      />
 
       {/* Messages area */}
-      <div className="flex-1 overflow-y-auto space-y-[16px] mb-[16px] pr-[4px]">
+      <div className="flex-1 overflow-y-auto space-y-[12px] mb-[12px] pr-[4px]">
         {messages.length === 0 && !streamingContent && (
-          <div className="text-center py-[40px]">
-            <div className="inline-flex items-center justify-center w-[56px] h-[56px] rounded-[14px] bg-[#BFFF00]/8 mb-[16px]">
-              <i className="ri-robot-2-line text-[24px] text-[#1B2A4A]"></i>
+          <div className="text-center py-[32px]">
+            <div className="inline-flex items-center justify-center w-[48px] h-[48px] rounded-[12px] bg-gray-50 mb-[12px]">
+              <i className="ri-robot-2-line text-[20px] text-gray-400" />
             </div>
-            <h3 className="font-display text-[16px] font-semibold text-[#0A0F1C] mb-[4px]">
+            <h3 className="text-[15px] font-semibold text-[#0A0F1C] mb-[4px]">
               How can I help?
             </h3>
-            <p className="text-[13px] text-gray-400 mb-[24px]">
+            <p className="text-[12px] text-gray-400 mb-[20px]">
               Ask me about today&apos;s picks, match analysis, or betting strategy.
             </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-[8px] max-w-[500px] mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-[6px] max-w-[480px] mx-auto">
               {suggestedQs.map((q, i) => (
                 <button
                   key={i}
                   onClick={() => sendMessage(q)}
-                  className="text-left p-[12px] bg-white rounded-[12px] border border-gray-100 text-[13px] text-gray-600 hover:border-[#1B2A4A]/20 hover:bg-gray-50 transition-all duration-300"
+                  className="text-left p-[10px] bg-white rounded-[10px] border border-gray-100 text-[12px] text-gray-600 hover:border-gray-200 hover:bg-gray-50 transition-all duration-200"
                 >
                   {q}
                 </button>
@@ -207,23 +190,23 @@ export default function AiChatPage() {
             className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
           >
             <div
-              className={`max-w-[80%] rounded-[14px] p-[14px] ${
+              className={`max-w-[80%] rounded-[12px] p-[12px] ${
                 msg.role === "user"
                   ? "bg-[#1B2A4A] text-white"
                   : "bg-white border border-gray-100 text-[#0A0F1C]"
               }`}
             >
               {msg.role === "assistant" && (
-                <div className="flex items-center gap-[6px] mb-[6px]">
-                  <span className="w-[18px] h-[18px] bg-[#BFFF00]/10 rounded-full flex items-center justify-center">
-                    <i className="ri-robot-2-line text-[10px] text-[#1B2A4A]"></i>
+                <div className="flex items-center gap-[6px] mb-[4px]">
+                  <span className="w-[16px] h-[16px] bg-gray-100 rounded-full flex items-center justify-center">
+                    <i className="ri-robot-2-line text-[9px] text-gray-500" />
                   </span>
-                  <span className="text-[11px] font-semibold text-gray-400">ODDLY AI</span>
+                  <span className="text-[10px] font-semibold text-gray-400">ODDLY AI</span>
                 </div>
               )}
               <div className="text-[13px] leading-[1.6] whitespace-pre-wrap">{msg.content}</div>
               <div
-                className={`text-[10px] mt-[6px] ${
+                className={`text-[10px] mt-[4px] ${
                   msg.role === "user" ? "text-white/40" : "text-gray-300"
                 }`}
               >
@@ -239,13 +222,13 @@ export default function AiChatPage() {
         {/* Streaming response */}
         {streamingContent && (
           <div className="flex justify-start">
-            <div className="max-w-[80%] bg-white border border-gray-100 rounded-[14px] p-[14px] text-[#0A0F1C]">
-              <div className="flex items-center gap-[6px] mb-[6px]">
-                <span className="w-[18px] h-[18px] bg-[#BFFF00]/10 rounded-full flex items-center justify-center">
-                  <i className="ri-robot-2-line text-[10px] text-[#1B2A4A]"></i>
+            <div className="max-w-[80%] bg-white border border-gray-100 rounded-[12px] p-[12px] text-[#0A0F1C]">
+              <div className="flex items-center gap-[6px] mb-[4px]">
+                <span className="w-[16px] h-[16px] bg-gray-100 rounded-full flex items-center justify-center">
+                  <i className="ri-robot-2-line text-[9px] text-gray-500" />
                 </span>
-                <span className="text-[11px] font-semibold text-gray-400">ODDLY AI</span>
-                <span className="w-[4px] h-[4px] bg-[#BFFF00] rounded-full animate-pulse ml-[2px]"></span>
+                <span className="text-[10px] font-semibold text-gray-400">ODDLY AI</span>
+                <span className="w-[4px] h-[4px] bg-green-500 rounded-full animate-pulse ml-[2px]" />
               </div>
               <div className="text-[13px] leading-[1.6] whitespace-pre-wrap">{streamingContent}</div>
             </div>
@@ -254,17 +237,17 @@ export default function AiChatPage() {
 
         {loading && !streamingContent && (
           <div className="flex justify-start">
-            <div className="bg-white border border-gray-100 rounded-[14px] p-[14px]">
-              <div className="flex items-center gap-[6px] mb-[6px]">
-                <span className="w-[18px] h-[18px] bg-[#BFFF00]/10 rounded-full flex items-center justify-center">
-                  <i className="ri-robot-2-line text-[10px] text-[#1B2A4A]"></i>
+            <div className="bg-white border border-gray-100 rounded-[12px] p-[12px]">
+              <div className="flex items-center gap-[6px] mb-[4px]">
+                <span className="w-[16px] h-[16px] bg-gray-100 rounded-full flex items-center justify-center">
+                  <i className="ri-robot-2-line text-[9px] text-gray-500" />
                 </span>
-                <span className="text-[11px] font-semibold text-gray-400">ODDLY AI</span>
+                <span className="text-[10px] font-semibold text-gray-400">ODDLY AI</span>
               </div>
-              <div className="flex gap-[4px]">
-                <span className="w-[6px] h-[6px] bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
-                <span className="w-[6px] h-[6px] bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
-                <span className="w-[6px] h-[6px] bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
+              <div className="flex gap-[3px]">
+                <span className="w-[5px] h-[5px] bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                <span className="w-[5px] h-[5px] bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                <span className="w-[5px] h-[5px] bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
               </div>
             </div>
           </div>
@@ -274,7 +257,7 @@ export default function AiChatPage() {
       </div>
 
       {/* Input */}
-      <div className="bg-white rounded-[14px] border border-gray-100 shadow-[0_1px_8px_rgba(0,0,0,0.04)] p-[12px]">
+      <div className="bg-white rounded-[12px] border border-gray-100 shadow-[0_1px_8px_rgba(0,0,0,0.04)] p-[10px]">
         <div className="flex items-end gap-[8px]">
           <textarea
             ref={inputRef}
@@ -283,20 +266,18 @@ export default function AiChatPage() {
             onKeyDown={handleKeyDown}
             placeholder="Ask about today's picks, match analysis, or strategy..."
             rows={1}
-            className="flex-1 resize-none text-[13px] text-[#0A0F1C] placeholder:text-gray-400 focus:outline-none min-h-[36px] max-h-[120px] py-[6px] px-[8px]"
+            className="flex-1 resize-none text-[13px] text-[#0A0F1C] placeholder:text-gray-400 focus:outline-none min-h-[34px] max-h-[100px] py-[4px] px-[6px]"
           />
           <button
             onClick={() => sendMessage()}
             disabled={!input.trim() || loading}
-            className="w-[36px] h-[36px] rounded-[10px] bg-[#1B2A4A] text-white flex items-center justify-center transition-all duration-300 hover:bg-[#243B53] active:scale-[0.95] disabled:opacity-30 disabled:cursor-not-allowed flex-none"
+            className="w-[34px] h-[34px] rounded-[8px] bg-[#1B2A4A] text-white flex items-center justify-center transition-all duration-200 hover:bg-[#243B53] active:scale-[0.95] disabled:opacity-30 disabled:cursor-not-allowed flex-none"
           >
-            <i className="ri-send-plane-fill text-[14px]"></i>
+            <i className="ri-send-plane-fill text-[13px]" />
           </button>
         </div>
-        <p className="text-[10px] text-gray-300 mt-[6px]">
-          {isUnlimited
-            ? "Unlimited questions"
-            : `${remaining} questions remaining today (${profile?.subscription_tier || "free"} tier: ${dailyLimit}/day)`}
+        <p className="text-[10px] text-gray-300 mt-[4px]">
+          Unlimited questions
         </p>
       </div>
     </div>
