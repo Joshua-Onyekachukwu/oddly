@@ -11,7 +11,7 @@
  *   - market: filter by market type
  */
 
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import {
@@ -25,16 +25,37 @@ import {
   addRateLimitHeaders,
   checkRateLimit,
 } from "@/lib/api/utils";
+import { z } from "zod";
+import { validateQuery, validateBody } from "@/lib/api/validation";
+
+const predictionQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+  fixtureId: z.string().uuid().optional(),
+  league: z.string().uuid().optional(),
+  minProbability: z.coerce.number().min(0).max(1).optional(),
+  market: z.string().max(50).optional(),
+});
+
+const predictionCreateSchema = z.object({
+  fixtureId: z.string().uuid("Invalid fixture ID"),
+  forceRegenerate: z.boolean().default(false),
+});
 
 export async function GET(request: NextRequest) {
   const rl = checkRateLimit("predictions", 120, 60000);
   const { searchParams } = new URL(request.url);
-  const { page, pageSize, offset } = parsePagination(searchParams);
 
-  const fixtureId = searchParams.get("fixtureId");
-  const league = searchParams.get("league");
-  const minProbability = searchParams.get("minProbability");
-  const market = searchParams.get("market");
+  const validation = validateQuery(predictionQuerySchema, searchParams);
+  if (!validation.success) {
+    return NextResponse.json(
+      { error: "Invalid query parameters", details: validation.error },
+      { status: 400 }
+    );
+  }
+
+  const { page, pageSize, fixtureId, minProbability, market } = validation.data;
+  const offset = (page - 1) * pageSize;
 
   try {
     const supabase = createClient<Database>(
@@ -49,8 +70,8 @@ export async function GET(request: NextRequest) {
     if (fixtureId) {
       query = query.eq("fixture_id", fixtureId);
     }
-    if (minProbability) {
-      query = query.gte("model_probability", parseFloat(minProbability));
+    if (minProbability !== undefined) {
+      query = query.gte("model_probability", minProbability);
     }
     if (market) {
       query = query.eq("market", market);
@@ -80,12 +101,22 @@ export async function POST(request: NextRequest) {
   try {
     const { user, supabase } = await requireAuth(request);
 
-    const body = await request.json();
-    const { fixtureId, forceRegenerate = false } = body;
-
-    if (!fixtureId) {
-      return unprocessable("fixtureId is required");
+    let rawBody: unknown;
+    try {
+      rawBody = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
     }
+
+    const validation = validateBody(predictionCreateSchema, rawBody);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Invalid request", details: validation.error },
+        { status: 400 }
+      );
+    }
+
+    const { fixtureId, forceRegenerate } = validation.data;
 
     // Check if predictions already exist
     if (!forceRegenerate) {

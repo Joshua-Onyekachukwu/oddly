@@ -6,6 +6,7 @@ import {
   markAllAsRead,
   createNotification,
 } from "@/lib/notifications";
+import { notificationQuerySchema, notificationPostSchema, validateQuery, validateBody } from "@/lib/api/validation";
 
 /**
  * GET /api/v1/notifications
@@ -33,10 +34,16 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const limit = parseInt(searchParams.get("limit") || "20");
-    const unreadOnly = searchParams.get("unreadOnly") === "true";
-    const offset = parseInt(searchParams.get("offset") || "0");
 
+    const validation = validateQuery(notificationQuerySchema, searchParams);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Invalid query parameters", details: validation.error },
+        { status: 400 }
+      );
+    }
+
+    const { limit, unreadOnly, offset } = validation.data;
     const result = await getUserNotifications(user.id, { limit, unreadOnly, offset });
 
     return NextResponse.json({
@@ -77,17 +84,39 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
 
-    // Mark all as read
-    if (body.action === "mark_all_read") {
+    const validation = validateBody(notificationPostSchema, body);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Invalid request body", details: validation.error },
+        { status: 400 }
+      );
+    }
+
+    const data = validation.data;
+
+    if (data.action === "mark_all_read") {
       await markAllAsRead(user.id);
       return NextResponse.json({ success: true });
     }
 
-    // Create notification (admin only)
-    if (body.type && body.title && body.body) {
-      // Check admin role
+    if (data.action === "mark_read") {
+      // Mark single notification as read
+      await supabase
+        .from("notifications")
+        .update({ is_read: true })
+        .eq("id", data.id)
+        .eq("user_id", user.id);
+      return NextResponse.json({ success: true });
+    }
+
+    if (data.action === "create") {
       const { data: profile } = await supabase
         .from("profiles")
         .select("role")
@@ -99,17 +128,17 @@ export async function POST(request: NextRequest) {
       }
 
       await createNotification({
-        userId: body.userId || user.id,
-        type: body.type,
-        title: body.title,
-        body: body.body,
-        data: body.data,
+        userId: data.userId,
+        type: data.type as "new_picks" | "rollover_pick" | "result_settled" | "chain_milestone" | "chain_broken" | "accumulator_settled" | "model_alert" | "announcement" | "drawdown_warning",
+        title: data.title,
+        body: data.body,
+        data: data.data,
       });
 
       return NextResponse.json({ success: true });
     }
 
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   } catch (error) {
     console.error("POST /api/v1/notifications error:", error);
     return NextResponse.json(

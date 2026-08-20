@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { getNVIDIAClient } from "@/lib/nvidia/client";
 import { buildChatMessages } from "@/lib/nvidia/prompts";
+import { aiChatSchema, validateBody } from "@/lib/api/validation";
 
 const supabaseAdmin = createClient<Database>(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -24,15 +25,22 @@ const RATE_LIMITS: Record<string, number> = {
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { message, history = [] } = body;
+    let rawBody: unknown;
+    try {
+      rawBody = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
 
-    if (!message || typeof message !== "string") {
+    const validation = validateBody(aiChatSchema, rawBody);
+    if (!validation.success) {
       return NextResponse.json(
-        { error: "Message is required" },
+        { error: "Invalid request", details: validation.error },
         { status: 400 }
       );
     }
+
+    const { message, history } = validation.data;
 
     // Authenticate user
     const authHeader = request.headers.get("authorization");

@@ -14,7 +14,7 @@
  *   - sortOrder: asc | desc
  */
 
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import {
@@ -27,6 +27,7 @@ import {
   checkRateLimit,
   type ApiSuccessResponse,
 } from "@/lib/api/utils";
+import { fixtureQuerySchema, validateQuery } from "@/lib/api/validation";
 
 interface FixtureRow {
   id: string;
@@ -46,8 +47,18 @@ export async function GET(request: NextRequest) {
   const rl = checkRateLimit("fixtures", 120, 60000);
 
   const { searchParams } = new URL(request.url);
-  const { page, pageSize, offset } = parsePagination(searchParams);
-  const { search, league, status, date, sortBy, sortOrder } = parseFilters(searchParams);
+
+  // Validate query params with Zod
+  const validation = validateQuery(fixtureQuerySchema, searchParams);
+  if (!validation.success) {
+    return NextResponse.json(
+      { error: "Invalid query parameters", details: validation.error },
+      { status: 400 }
+    );
+  }
+
+  const { page, pageSize, league, status, date, search, sortBy, sortOrder } = validation.data;
+  const offset = validation.data.offset ?? (page - 1) * pageSize;
 
   try {
     const supabase = createClient<Database>(

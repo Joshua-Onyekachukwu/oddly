@@ -20,7 +20,7 @@
  *   - strategy: string (optional: conservative, balanced, aggressive, longshot)
  */
 
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import {
@@ -35,6 +35,7 @@ import {
   addRateLimitHeaders,
   checkRateLimit,
 } from "@/lib/api/utils";
+import { accumulatorQuerySchema, accumulatorCreateSchema, validateQuery, validateBody } from "@/lib/api/validation";
 
 export async function GET(request: NextRequest) {
   try {
@@ -42,8 +43,15 @@ export async function GET(request: NextRequest) {
     const rl = checkRateLimit(`acc:${user.id}`, 60, 60000);
 
     const { searchParams } = new URL(request.url);
-    const { page, pageSize, offset } = parsePagination(searchParams);
-    const status = searchParams.get("status");
+    const validation = validateQuery(accumulatorQuerySchema, searchParams);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Invalid query parameters", details: validation.error },
+        { status: 400 }
+      );
+    }
+    const { page, pageSize, status } = validation.data;
+    const offset = validation.data.offset ?? (page - 1) * pageSize;
 
     let query = supabase
       .from("accumulators")
@@ -81,29 +89,27 @@ export async function POST(request: NextRequest) {
   try {
     const { user, supabase } = await requireAuth(request);
 
-    const body = await request.json();
-    const { name, selections, stake = 1000, strategy = "balanced" } = body;
-    const validStrategy = ["conservative", "balanced", "aggressive", "longshot"].includes(strategy) ? strategy : "balanced";
-
-    if (!selections || !Array.isArray(selections) || selections.length < 2) {
-      return badRequest("Accumulator requires at least 2 selections");
+    let rawBody: unknown;
+    try {
+      rawBody = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
     }
 
-    if (selections.length > 10) {
-      return badRequest("Accumulator cannot have more than 10 selections");
+    const validation = validateBody(accumulatorCreateSchema, rawBody);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Invalid accumulator data", details: validation.error },
+        { status: 400 }
+      );
     }
+
+    const { name, picks: selections, stake } = validation.data;
 
     // Calculate combined odds and probability
     let combinedOdds = 1;
-    let estimatedProbability = 1;
     for (const sel of selections) {
-      if (!sel.odds || sel.odds < 1) {
-        return badRequest(`Invalid odds for selection: ${sel.selection}`);
-      }
       combinedOdds *= sel.odds;
-      if (sel.modelProbability) {
-        estimatedProbability *= sel.modelProbability;
-      }
     }
 
     // Create accumulator
@@ -112,10 +118,9 @@ export async function POST(request: NextRequest) {
       .insert({
         user_id: user.id,
         name: name || `${selections.length}-leg accumulator`,
-        selections,
+        selections: selections as any,
         combined_odds: combinedOdds,
-        estimated_probability: estimatedProbability,
-        strategy: validStrategy as "conservative" | "balanced" | "aggressive" | "longshot",
+        estimated_probability: 0,
         stake,
         status: "pending",
       })

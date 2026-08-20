@@ -9,7 +9,7 @@
  *   - model: filter by specific model version
  */
 
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import {
@@ -19,6 +19,14 @@ import {
   addRateLimitHeaders,
   checkRateLimit,
 } from "@/lib/api/utils";
+import { z } from "zod";
+import { validateQuery } from "@/lib/api/validation";
+import { trackPredictionAccuracy, getModelPerformanceStats } from "@/lib/prediction/tracking";
+
+const querySchema = z.object({
+  days: z.coerce.number().int().min(1).max(365).default(30),
+  model: z.string().max(100).optional(),
+});
 
 export async function GET(request: NextRequest) {
   try {
@@ -26,8 +34,15 @@ export async function GET(request: NextRequest) {
     const rl = checkRateLimit(`admin:model-perf:${user.id}`, 30, 60000);
 
     const { searchParams } = new URL(request.url);
-    const days = parseInt(searchParams.get("days") || "30", 10);
-    const modelName = searchParams.get("model");
+    const validation = validateQuery(querySchema, searchParams);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Invalid query parameters", details: validation.error },
+        { status: 400 }
+      );
+    }
+
+    const { days, model: modelName } = validation.data;
 
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
@@ -120,6 +135,63 @@ export async function GET(request: NextRequest) {
       }
     }
     console.error("GET /api/v1/admin/model-performance error:", error);
+    return internalError();
+  }
+}
+
+/**
+ * POST /api/v1/admin/model-performance
+ * 
+ * Trigger prediction accuracy tracking for finished matches.
+ * Admin only.
+ * 
+ * Body:
+ *   - fixtureId: optional UUID to track a specific fixture
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const { user } = await requireAdmin(request);
+    const rl = checkRateLimit(`admin:model-track:${user.id}`, 5, 60000);
+
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: "Rate limit exceeded. Try again later." },
+        { status: 429 }
+      );
+    }
+
+    let fixtureId: string | undefined;
+    try {
+      const body = await request.json();
+      if (body.fixtureId) {
+        const idValidation = z.string().uuid().safeParse(body.fixtureId);
+        if (!idValidation.success) {
+          return NextResponse.json(
+            { error: "Invalid fixture ID format" },
+            { status: 400 }
+          );
+        }
+        fixtureId = idValidation.data;
+      }
+    } catch {
+      // No body provided, track all finished matches
+    }
+
+    const result = await trackPredictionAccuracy(fixtureId);
+
+    return NextResponse.json({
+      success: true,
+      data: result,
+    });
+  } catch (error: unknown) {
+    if (error && typeof error === "object" && "code" in error) {
+      const authErr = error as { code: string; message: string; status: number };
+      if (authErr.code === "FORBIDDEN") {
+        const { errorResponse } = await import("@/lib/api/utils");
+        return errorResponse("FORBIDDEN", authErr.message, 403);
+      }
+    }
+    console.error("POST /api/v1/admin/model-performance error:", error);
     return internalError();
   }
 }
