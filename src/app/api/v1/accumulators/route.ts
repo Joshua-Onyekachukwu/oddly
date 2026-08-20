@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
       .order("created_at", { ascending: false });
 
     if (status) {
-      query = query.eq("status", status);
+      query = query.eq("status", status as "pending" | "won" | "lost" | "partial");
     }
 
     query = query.range(offset, offset + pageSize - 1);
@@ -83,6 +83,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const { name, selections, stake = 1000, strategy = "balanced" } = body;
+    const validStrategy = ["conservative", "balanced", "aggressive", "longshot"].includes(strategy) ? strategy : "balanced";
 
     if (!selections || !Array.isArray(selections) || selections.length < 2) {
       return badRequest("Accumulator requires at least 2 selections");
@@ -114,7 +115,7 @@ export async function POST(request: NextRequest) {
         selections,
         combined_odds: combinedOdds,
         estimated_probability: estimatedProbability,
-        strategy,
+        strategy: validStrategy as "conservative" | "balanced" | "aggressive" | "longshot",
         stake,
         status: "pending",
       })

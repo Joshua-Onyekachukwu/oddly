@@ -23,8 +23,8 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (profile) {
-      setFullName(profile.full_name || "");
-      setDisplayName(profile.full_name || "");
+      setFullName(profile.display_name || "");
+      setDisplayName(profile.display_name || "");
     }
     // Load notification prefs
     if (typeof window !== "undefined") {

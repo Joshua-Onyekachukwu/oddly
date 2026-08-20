@@ -6,16 +6,18 @@ import { createClient } from "@/lib/supabase/client";
 
 interface RolloverChain {
   id: string;
-  name: string;
+  user_id: string | null;
+  name: string | null;
   starting_stake: number;
   current_balance: number;
   banked_amount: number;
-  target_days: number;
+  target_days: number | null;
   current_day: number;
-  odds_range_min: number;
-  odds_range_max: number;
-  min_probability: number;
-  status: "active" | "completed" | "broken" | "paused";
+  odds_range_min: number | null;
+  odds_range_max: number | null;
+  min_probability: number | null;
+  rollover_percentage: number;
+  status: string;
   started_at: string;
   ended_at: string | null;
   rollover_picks?: RolloverPick[];
@@ -23,15 +25,21 @@ interface RolloverChain {
 
 interface RolloverPick {
   id: string;
+  chain_id: string | null;
   day_number: number;
-  market: string;
-  selection: string;
-  odds: number;
-  model_probability: number;
-  stake: number;
-  potential_return: number;
-  result: "pending" | "won" | "lost" | "skipped";
+  fixture_id: string | null;
+  prediction_id: string | null;
+  market: string | null;
+  selection: string | null;
+  odds: number | null;
+  model_probability: number | null;
+  opportunity_score: number | null;
+  stake: number | null;
+  potential_return: number | null;
+  result: string;
   actual_return: number | null;
+  user_marked: boolean;
+  settled_at: string | null;
 }
 
 export default function RolloverPage() {
@@ -100,7 +108,7 @@ export default function RolloverPage() {
   const brokenChains = chains.filter((c) => c.status === "broken");
 
   const progressPercent = activeChain
-    ? Math.round((activeChain.current_day / activeChain.target_days) * 100)
+    ? Math.round((activeChain.current_day / (activeChain.target_days || 30)) * 100)
     : 0;
 
   return (

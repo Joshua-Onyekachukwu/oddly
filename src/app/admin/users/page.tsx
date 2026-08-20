@@ -46,7 +46,7 @@ export default function AdminUsersPage() {
   const updateRole = async (userId: string, newRole: string) => {
     setUpdating(userId);
     const supabase = createClient();
-    await supabase.from("profiles").update({ role: newRole }).eq("id", userId);
+    await supabase.from("profiles").update({ role: newRole as "user" | "admin" }).eq("id", userId);
     await fetchUsers();
     setUpdating(null);
   };
@@ -54,7 +54,7 @@ export default function AdminUsersPage() {
   const updateTier = async (userId: string, newTier: string) => {
     setUpdating(userId);
     const supabase = createClient();
-    await supabase.from("profiles").update({ subscription_tier: newTier }).eq("id", userId);
+    await supabase.from("profiles").update({ subscription_tier: newTier as "free" | "premium" | "elite" }).eq("id", userId);
     await fetchUsers();
     setUpdating(null);
   };

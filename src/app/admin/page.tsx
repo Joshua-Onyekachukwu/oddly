@@ -17,8 +17,9 @@ interface RecentActivity {
   action: string;
   target_type: string;
   details: any;
+  [key: string]: any;
   created_at: string;
-  profiles?: { display_name: string };
+  profiles?: { display_name: string | null } | null;
 }
 
 export default function AdminDashboardPage() {
@@ -61,7 +62,7 @@ export default function AdminDashboardPage() {
       .order("created_at", { ascending: false })
       .limit(10);
 
-    if (recent) setActivities(recent);
+    if (recent) setActivities(recent as any);
 
     setLoading(false);
   }, []);

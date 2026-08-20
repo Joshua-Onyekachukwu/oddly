@@ -30,11 +30,9 @@ import {
 
 interface FixtureRow {
   id: string;
-  league_id: number;
-  home_team_id: string;
-  away_team_id: string;
-  home_team_name: string;
-  away_team_name: string;
+  league_id: string | null;
+  home_team_id: string | null;
+  away_team_id: string | null;
   kickoff_time: string;
   status: string;
   home_score: number | null;
@@ -63,10 +61,10 @@ export async function GET(request: NextRequest) {
 
     // Filters
     if (league) {
-      query = query.eq("league_id", parseInt(league, 10));
+      query = query.eq("league_id", league);
     }
     if (status) {
-      query = query.eq("status", status);
+      query = query.eq("status", status as any);
     }
     if (date) {
       const startOfDay = `${date}T00:00:00Z`;
@@ -92,7 +90,7 @@ export async function GET(request: NextRequest) {
     const total = count || 0;
     const meta = buildPaginationMeta(page, pageSize, total);
 
-    const response = successResponse<FixtureRow[]>(data || [], meta, rl.allowed ? 200 : 429);
+    const response = successResponse(data || [], meta, rl.allowed ? 200 : 429);
     addRateLimitHeaders(response, rl.remaining, rl.resetAt);
 
     return response;

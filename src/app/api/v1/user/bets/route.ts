@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
       .order("placed_at", { ascending: false });
 
     if (status) {
-      query = query.eq("status", status);
+      query = query.eq("status", status as "pending" | "won" | "lost" | "void");
     }
 
     query = query.range(offset, offset + pageSize - 1);

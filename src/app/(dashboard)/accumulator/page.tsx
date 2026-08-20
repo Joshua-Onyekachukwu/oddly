@@ -14,12 +14,6 @@ interface Recommendation {
   edge: number;
   risk_tier: string;
   confidence_tier: string;
-  fixtures?: {
-    home_team_name: string;
-    away_team_name: string;
-    kickoff_time: string;
-    leagues?: { name: string };
-  };
 }
 
 interface AccumulatorLeg {
@@ -42,7 +36,7 @@ export default function AccumulatorPage() {
     const supabase = createClient();
     const { data, error } = await supabase
       .from("recommendations")
-      .select("*, fixtures(home_team_name, away_team_name, kickoff_time, leagues(name))")
+      .select("*")
       .eq("is_recommended", true)
       .order("edge", { ascending: false })
       .limit(20);
@@ -161,7 +155,6 @@ export default function AccumulatorPage() {
             <div className="space-y-[6px]">
               {recommendations.map((rec) => {
                 const isSelected = selectedLegs.some((l) => l.recommendation.id === rec.id);
-                const fixture = rec.fixtures;
 
                 return (
                   <div
@@ -177,13 +170,11 @@ export default function AccumulatorPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-[8px] mb-[4px]">
                           <span className="text-[13px] font-semibold text-[#0A0F1C] truncate">
-                            {fixture?.home_team_name} vs {fixture?.away_team_name}
+                            {rec.selection}
                           </span>
-                          {fixture?.leagues?.name && (
-                            <span className="text-[10px] text-gray-400 whitespace-nowrap">
-                              {fixture.leagues.name}
-                            </span>
-                          )}
+                          <span className="text-[10px] text-gray-400 whitespace-nowrap">
+                            {rec.market}
+                          </span>
                         </div>
                         <div className="flex items-center gap-[12px]">
                           <span className="text-[12px] text-gray-500">

@@ -8,18 +8,13 @@ interface Bet {
   id: string;
   market: string;
   selection: string;
-  bookmaker: string;
-  odds_at_placement: number;
-  stake: number;
+  bookmaker: string | null;
+  odds_at_placement: number | null;
+  stake: number | null;
   status: "pending" | "won" | "lost" | "void";
   profit: number | null;
   placed_at: string;
   settled_at: string | null;
-  fixtures?: {
-    home_team_name: string;
-    away_team_name: string;
-    kickoff_time: string;
-  };
 }
 
 export default function TrackingPage() {
@@ -43,7 +38,7 @@ export default function TrackingPage() {
     const supabase = createClient();
     const { data, error } = await supabase
       .from("user_bets")
-      .select("*, fixtures(home_team_name, away_team_name, kickoff_time)")
+      .select("*")
       .eq("user_id", user.id)
       .order("placed_at", { ascending: false })
       .limit(50);

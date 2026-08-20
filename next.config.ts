@@ -3,11 +3,6 @@ import path from "path";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  typescript: {
-    // Skip type checking during build — @supabase/ssr v0.6.1 doesn't forward Database generic.
-    // Runtime types are correct; fix by upgrading @supabase/ssr to v0.7+ when available.
-    ignoreBuildErrors: true,
-  },
   images: {
     remotePatterns: [
       {

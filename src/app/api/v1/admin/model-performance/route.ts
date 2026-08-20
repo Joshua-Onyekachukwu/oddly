@@ -6,7 +6,7 @@
  * 
  * Query Params:
  *   - days: number of days to look back (default: 30)
- *   - model: filter by specific model name
+ *   - model: filter by specific model version
  */
 
 import { NextRequest } from "next/server";
@@ -37,11 +37,11 @@ export async function GET(request: NextRequest) {
     let perfQuery = supabase
       .from("model_performance")
       .select("*")
-      .gte("recorded_at", startStr)
-      .order("recorded_at", { ascending: false });
+      .gte("created_at", startStr)
+      .order("created_at", { ascending: false });
 
     if (modelName) {
-      perfQuery = perfQuery.eq("model_name", modelName);
+      perfQuery = perfQuery.eq("model_version", modelName);
     }
 
     const { data: performance, error: perfError } = await perfQuery;
@@ -50,64 +50,46 @@ export async function GET(request: NextRequest) {
       return internalError(`Performance query failed: ${perfError.message}`);
     }
 
-    // Aggregate by model
+    // Aggregate by model_version
     const modelStats: Record<string, {
       model: string;
       totalPredictions: number;
       correctPredictions: number;
       accuracy: number;
-      avgConfidence: number;
-      avgEdge: number;
-      profitLoss: number;
+      avgBrierScore: number;
+      avgRoi: number;
     }> = {};
 
     for (const record of performance || []) {
-      const model = record.model_name;
+      const model = record.model_version;
       if (!modelStats[model]) {
         modelStats[model] = {
           model,
           totalPredictions: 0,
           correctPredictions: 0,
           accuracy: 0,
-          avgConfidence: 0,
-          avgEdge: 0,
-          profitLoss: 0,
+          avgBrierScore: 0,
+          avgRoi: 0,
         };
       }
       const stats = modelStats[model];
       stats.totalPredictions += record.total_predictions || 0;
       stats.correctPredictions += record.correct_predictions || 0;
-      stats.avgConfidence += record.avg_confidence || 0;
-      stats.avgEdge += record.avg_edge || 0;
-      stats.profitLoss += record.profit_loss || 0;
+      stats.avgBrierScore += record.brier_score || 0;
+      stats.avgRoi += record.roi || 0;
     }
 
     // Calculate averages
     for (const stats of Object.values(modelStats)) {
       const count = (performance || []).filter(
-        (r) => r.model_name === stats.model
+        (r) => r.model_version === stats.model
       ).length;
       stats.accuracy = stats.totalPredictions > 0
         ? stats.correctPredictions / stats.totalPredictions
         : 0;
-      stats.avgConfidence = count > 0 ? stats.avgConfidence / count : 0;
-      stats.avgEdge = count > 0 ? stats.avgEdge / count : 0;
+      stats.avgBrierScore = count > 0 ? stats.avgBrierScore / count : 0;
+      stats.avgRoi = count > 0 ? stats.avgRoi / count : 0;
     }
-
-    // Fetch training log for learning history
-    const { data: trainingLog } = await supabase
-      .from("training_log")
-      .select("*")
-      .gte("created_at", startStr)
-      .order("created_at", { ascending: false })
-      .limit(50);
-
-    // Fetch feature importance
-    const { data: featureImportance } = await supabase
-      .from("feature_importance")
-      .select("*")
-      .order("importance_score", { ascending: false })
-      .limit(20);
 
     // Overall summary
     const totalPredictions = (performance || []).reduce(
@@ -125,8 +107,6 @@ export async function GET(request: NextRequest) {
         modelsTracked: Object.keys(modelStats).length,
       },
       models: Object.values(modelStats),
-      trainingLog: trainingLog || [],
-      featureImportance: featureImportance || [],
     });
 
     addRateLimitHeaders(response, rl.remaining, rl.resetAt);

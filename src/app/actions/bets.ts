@@ -151,7 +151,7 @@ export async function createAccumulator(
       selections,
       combined_odds: combinedOdds,
       estimated_probability: estimatedProbability,
-      strategy,
+      strategy: strategy as "conservative" | "balanced" | "aggressive" | "longshot" | null,
       stake,
       status: "pending",
     })
@@ -216,20 +216,20 @@ export async function settleBet(
     return { error: "Bet not found" };
   }
 
-  const updateData: Record<string, unknown> = {
-    status,
+  const updateData: Record<string, any> = {
+    status: status as "won" | "lost" | "void",
     settled_at: new Date().toISOString(),
   };
 
   if (status === "won") {
-    updateData.profit = bet.stake * (bet.odds_at_placement - 1);
+    updateData.profit = (bet.stake || 0) * ((bet.odds_at_placement || 1) - 1);
   } else {
     updateData.profit = 0;
   }
 
   const { error: updateError } = await supabase
     .from("user_bets")
-    .update(updateData)
+    .update(updateData as any)
     .eq("id", betId);
 
   if (updateError) {
