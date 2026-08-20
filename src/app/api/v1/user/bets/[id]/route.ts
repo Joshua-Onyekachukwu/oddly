@@ -6,7 +6,7 @@
  * Update bet status (for admin settlement).
  */
 
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import {
@@ -17,6 +17,7 @@ import {
   unprocessable,
   internalError,
 } from "@/lib/api/utils";
+import { userBetUpdateSchema, validateBody } from "@/lib/api/validation";
 
 export async function GET(
   request: NextRequest,
@@ -57,13 +58,23 @@ export async function PATCH(
 
   try {
     const { user, supabase } = await requireAuth(request);
-    const body = await request.json();
 
-    const { status } = body;
-
-    if (!status || !["won", "lost", "void"].includes(status)) {
-      return badRequest("Status must be 'won', 'lost', or 'void'");
+    let rawBody: unknown;
+    try {
+      rawBody = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
     }
+
+    const validation = validateBody(userBetUpdateSchema, rawBody);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Invalid update data", details: validation.error },
+        { status: 400 }
+      );
+    }
+
+    const { status } = validation.data;
 
     const updateData: Record<string, any> = {
       status,

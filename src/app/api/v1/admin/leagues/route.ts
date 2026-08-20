@@ -10,7 +10,7 @@
  * Admin only.
  */
 
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import {
@@ -24,6 +24,7 @@ import {
   addRateLimitHeaders,
   checkRateLimit,
 } from "@/lib/api/utils";
+import { leagueCreateSchema, validateBody } from "@/lib/api/validation";
 
 export async function GET(request: NextRequest) {
   try {
@@ -76,10 +77,22 @@ export async function POST(request: NextRequest) {
   try {
     const { user, supabase } = await requireAdmin(request);
 
-    const body = await request.json();
-    const { name, country, externalId, active = true } = body;
+    let rawBody: unknown;
+    try {
+      rawBody = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
 
-    if (!name) return badRequest("League name is required");
+    const validation = validateBody(leagueCreateSchema, rawBody);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Invalid league data", details: validation.error },
+        { status: 400 }
+      );
+    }
+
+    const { name, country, active } = validation.data;
 
     const { data, error } = await supabase
       .from("leagues")

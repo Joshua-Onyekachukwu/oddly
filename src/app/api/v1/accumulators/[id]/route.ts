@@ -9,7 +9,7 @@
  * Delete a pending accumulator.
  */
 
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import {
@@ -20,6 +20,7 @@ import {
   unprocessable,
   internalError,
 } from "@/lib/api/utils";
+import { accumulatorUpdateSchema, validateBody } from "@/lib/api/validation";
 
 export async function GET(
   request: NextRequest,
@@ -60,17 +61,23 @@ export async function PATCH(
 
   try {
     const { user, supabase } = await requireAuth(request);
-    const body = await request.json();
 
-    const updates: Record<string, any> = {};
-    if (body.name) updates.name = body.name;
-    if (body.status) updates.status = body.status;
-    if (body.stake) updates.stake = body.stake;
-    if (body.strategy) updates.strategy = body.strategy;
-
-    if (Object.keys(updates).length === 0) {
-      return unprocessable("No valid fields to update");
+    let rawBody: unknown;
+    try {
+      rawBody = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
     }
+
+    const validation = validateBody(accumulatorUpdateSchema, rawBody);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Invalid update data", details: validation.error },
+        { status: 400 }
+      );
+    }
+
+    const updates = validation.data;
 
     const { data, error } = await supabase
       .from("accumulators")

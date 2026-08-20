@@ -8,7 +8,7 @@
  *   - email: string (required)
  */
 
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import {
@@ -16,15 +16,26 @@ import {
   badRequest,
   internalError,
 } from "@/lib/api/utils";
+import { forgotPasswordSchema, validateBody } from "@/lib/api/validation";
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { email } = body;
-
-    if (!email) {
-      return badRequest("Email is required");
+    let rawBody: unknown;
+    try {
+      rawBody = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
     }
+
+    const validation = validateBody(forgotPasswordSchema, rawBody);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Invalid request", details: validation.error },
+        { status: 400 }
+      );
+    }
+
+    const { email } = validation.data;
 
     const supabase = createClient<Database>(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
