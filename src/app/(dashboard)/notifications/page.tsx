@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/providers/AuthProvider";
 import { createClient } from "@/lib/supabase/client";
+import Link from "next/link";
 import { PageHeader, Button, Badge, EmptyState } from "@/components/ui";
 
 interface Notification {
@@ -306,17 +307,26 @@ export default function NotificationsPage() {
           unreadCount > 0 ? `${unreadCount} unread notification${unreadCount > 1 ? "s" : ""}` : "All caught up"
         }
         action={
-          unreadCount > 0 ? (
-            <Button
-              onClick={markAllRead}
-              loading={markingRead}
-              variant="secondary"
-              size="sm"
-              icon="ri-check-double-line"
+          <div className="flex items-center gap-[8px]">
+            <Link
+              href="/notifications/preferences"
+              className="inline-flex items-center gap-[6px] px-[10px] py-[5px] rounded-full text-[11px] font-semibold bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors"
             >
-              Mark all read
-            </Button>
-          ) : undefined
+              <i className="ri-notification-settings-line text-[12px]" />
+              Preferences
+            </Link>
+            {unreadCount > 0 && (
+              <Button
+                onClick={markAllRead}
+                loading={markingRead}
+                variant="secondary"
+                size="sm"
+                icon="ri-check-double-line"
+              >
+                Mark all read
+              </Button>
+            )}
+          </div>
         }
       />
 

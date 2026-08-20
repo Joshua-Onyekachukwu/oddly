@@ -41,6 +41,21 @@ interface CreateNotificationOpts {
  * Create a notification for a single user.
  */
 export async function createNotification(opts: CreateNotificationOpts): Promise<void> {
+  // Check user's notification preferences before creating
+  const { data: profile } = await supabaseAdmin
+    .from("profiles")
+    .select("notification_preferences")
+    .eq("id", opts.userId)
+    .single();
+
+  const prefs = (profile?.notification_preferences as Record<string, boolean>) || {};
+  const prefKey = getPreferenceKey(opts.type, opts.title);
+
+  // Skip if user has disabled this notification type
+  if (prefs[prefKey] === false) {
+    return;
+  }
+
   const { error } = await supabaseAdmin.from("notifications").insert({
     user_id: opts.userId,
     type: opts.type,
@@ -57,11 +72,21 @@ export async function createNotification(opts: CreateNotificationOpts): Promise<
 /**
  * Create a notification for all users (or users of a specific tier).
  */
+/**
+ * Map notification service types to preference keys.
+ * Some service types map to different preference keys (e.g. new_picks -> crown_jewel for Crown Jewel).
+ */
+function getPreferenceKey(type: string, title: string): string {
+  if (type === "new_picks" && title.includes("Crown Jewel")) return "crown_jewel";
+  if (type === "new_picks" && title.includes("Match Started")) return "match_started";
+  return type;
+}
+
 export async function broadcastNotification(
   opts: Omit<CreateNotificationOpts, "userId"> & { tier?: string }
 ): Promise<number> {
-  // Get target users
-  let query = supabaseAdmin.from("profiles").select("id");
+  // Get target users with their notification preferences
+  let query = supabaseAdmin.from("profiles").select("id, notification_preferences");
 
   if (opts.tier && opts.tier !== "all") {
     query = query.eq("subscription_tier", opts.tier as "free" | "premium" | "elite");
@@ -74,8 +99,20 @@ export async function broadcastNotification(
     return 0;
   }
 
+  // Filter users based on their notification preferences
+  const prefKey = getPreferenceKey(opts.type, opts.title);
+  const eligibleUsers = users.filter((u) => {
+    const prefs = (u.notification_preferences as Record<string, boolean>) || {};
+    // Default to true if preference not set (opt-in by default)
+    return prefs[prefKey] !== false;
+  });
+
+  if (!eligibleUsers.length) {
+    return 0;
+  }
+
   // Create notifications in batch
-  const notifications = users.map((u) => ({
+  const notifications = eligibleUsers.map((u) => ({
     user_id: u.id,
     type: opts.type,
     title: opts.title,
@@ -90,7 +127,7 @@ export async function broadcastNotification(
     return 0;
   }
 
-  return users.length;
+  return eligibleUsers.length;
 }
 
 /**
@@ -268,7 +305,22 @@ export async function notifyMatchStarted(
 ): Promise<number> {
   if (!userIds.length) return 0;
 
-  const notifications = userIds.map((userId) => ({
+  // Check preferences for each user
+  const { data: profiles } = await supabaseAdmin
+    .from("profiles")
+    .select("id, notification_preferences")
+    .in("id", userIds);
+
+  const eligibleUserIds = (profiles || [])
+    .filter((p) => {
+      const prefs = (p.notification_preferences as Record<string, boolean>) || {};
+      return prefs["match_started"] !== false;
+    })
+    .map((p) => p.id);
+
+  if (!eligibleUserIds.length) return 0;
+
+  const notifications = eligibleUserIds.map((userId) => ({
     user_id: userId,
     type: "new_picks" as const,
     title: `⚽ Match Started`,
@@ -286,7 +338,7 @@ export async function notifyMatchStarted(
     return 0;
   }
 
-  return userIds.length;
+  return eligibleUserIds.length;
 }
 
 /**

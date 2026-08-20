@@ -50,6 +50,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Account",
     items: [
       { label: "Notifications", href: "/notifications", icon: "ri-notification-3-line" },
+      { label: "Preferences", href: "/notifications/preferences", icon: "ri-notification-settings-line" },
       { label: "Settings", href: "/settings", icon: "ri-settings-3-line" },
     ],
   },
