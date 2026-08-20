@@ -1,16 +1,8 @@
 {
   "crons": [
     {
-      "path": "/api/v1/cron/sync",
-      "schedule": "0 */6 * * *"
-    },
-    {
-      "path": "/api/v1/cron/predict",
-      "schedule": "0 8 * * *"
-    },
-    {
-      "path": "/api/v1/cron/cleanup",
-      "schedule": "0 3 * * *"
+      "path": "/api/v1/cron/daily",
+      "schedule": "0 6 * * *"
     }
   ]
 }

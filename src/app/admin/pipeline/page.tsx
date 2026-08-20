@@ -73,9 +73,9 @@ export default function AdminPipelinePage() {
     unreadNotifications: 0,
   });
   const [cronHealth, setCronHealth] = useState<CronHealth>({
-    sync: { lastRun: null, status: "unknown", schedule: "Every 6h" },
-    predict: { lastRun: null, status: "unknown", schedule: "Daily 08:00" },
-    cleanup: { lastRun: null, status: "unknown", schedule: "Daily 03:00" },
+    sync: { lastRun: null, status: "unknown", schedule: "Daily 06:00 UTC" },
+    predict: { lastRun: null, status: "unknown", schedule: "Included in daily" },
+    cleanup: { lastRun: null, status: "unknown", schedule: "Included in daily" },
   });
   const [apiUsage, setApiUsage] = useState<ApiUsage>({
     oddsApi: null,
@@ -164,17 +164,17 @@ export default function AdminPipelinePage() {
         sync: {
           lastRun: syncData.usage?.lastSync || null,
           status: syncRes.ok ? "healthy" : "error",
-          schedule: syncData.schedule || "Every 6h",
+          schedule: syncData.schedule || "Daily 06:00 UTC",
         },
         predict: {
           lastRun: null,
           status: "healthy",
-          schedule: "Daily 08:00",
+          schedule: "Included in daily",
         },
         cleanup: {
           lastRun: null,
           status: cleanupRes.ok ? "healthy" : "error",
-          schedule: cleanupData.schedule || "Daily 03:00",
+          schedule: cleanupData.schedule || "Included in daily",
         },
       });
     } catch {
@@ -531,9 +531,9 @@ export default function AdminPipelinePage() {
         </div>
         <div className="grid grid-cols-3 gap-[12px]">
           {[
-            { key: "sync" as const, name: "Odds Sync", icon: "ri-refresh-line", cron: cronHealth.sync },
-            { key: "predict" as const, name: "Predictions", icon: "ri-brain-line", cron: cronHealth.predict },
-            { key: "cleanup" as const, name: "Cleanup", icon: "ri-delete-bin-line", cron: cronHealth.cleanup },
+            { key: "sync" as const, name: "Sync + Predict + Cleanup", icon: "ri-refresh-line", cron: cronHealth.sync },
+            { key: "predict" as const, name: "Individual Sync", icon: "ri-calendar-check-line", cron: cronHealth.predict },
+            { key: "cleanup" as const, name: "Individual Predict", icon: "ri-brain-line", cron: cronHealth.cleanup },
           ].map((item) => (
             <div key={item.key} className="p-[12px] bg-gray-50 rounded-[10px]">
               <div className="flex items-center justify-between mb-[6px]">
@@ -754,21 +754,21 @@ export default function AdminPipelinePage() {
                   <i className="ri-refresh-line text-[14px] text-gray-400"></i>
                   <span className="text-[12px] font-medium text-[#0A0F1C]">Odds Sync</span>
                 </div>
-                <span className="text-[11px] font-mono-data text-gray-500">Every 6h</span>
+                <span className="text-[11px] font-mono-data text-gray-500">Daily 06:00 UTC</span>
               </div>
               <div className="flex items-center justify-between p-[10px] bg-gray-50 rounded-[10px]">
                 <div className="flex items-center gap-[8px]">
                   <i className="ri-brain-line text-[14px] text-purple-400"></i>
                   <span className="text-[12px] font-medium text-[#0A0F1C]">Predictions</span>
                 </div>
-                <span className="text-[11px] font-mono-data text-gray-500">Daily 08:00</span>
+                <span className="text-[11px] font-mono-data text-gray-500">Included in daily</span>
               </div>
               <div className="flex items-center justify-between p-[10px] bg-gray-50 rounded-[10px]">
                 <div className="flex items-center gap-[8px]">
                   <i className="ri-delete-bin-line text-[14px] text-gray-400"></i>
                   <span className="text-[12px] font-medium text-[#0A0F1C]">Data Cleanup</span>
                 </div>
-                <span className="text-[11px] font-mono-data text-gray-500">Daily 03:00</span>
+                <span className="text-[11px] font-mono-data text-gray-500">Included in daily</span>
               </div>
               <div className="flex items-center justify-between p-[10px] bg-gray-50 rounded-[10px]">
                 <div className="flex items-center gap-[8px]">
