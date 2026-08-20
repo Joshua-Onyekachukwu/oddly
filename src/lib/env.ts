@@ -11,9 +11,7 @@ const requiredServerVars = [
 
 const optionalServerVars = [
   "THE_ODDS_API_KEY",
-  "ODDS_API_IO_KEY",
   "API_FOOTBALL_KEY",
-  "APISPORTS_KEY",
   "VERCEL_CRON_SECRET",
   "INTERNAL_API_KEY",
   "NEXT_PUBLIC_APP_URL",
@@ -50,8 +48,8 @@ export function validateEnv(): EnvResult {
     warnings.push("THE_ODDS_API_KEY not configured — odds sync will not work");
   }
 
-  if (!process.env.API_FOOTBALL_KEY && !process.env.APISPORTS_KEY) {
-    warnings.push("No football API keys configured — fixture sync will not work");
+  if (!process.env.API_FOOTBALL_KEY) {
+    warnings.push("API_FOOTBALL_KEY not configured — fixture sync will not work");
   }
 
   if (missing.length > 0) {
@@ -88,6 +86,6 @@ export function isFeatureAvailable(feature: "ai" | "odds" | "fixtures"): boolean
     case "odds":
       return !!process.env.THE_ODDS_API_KEY;
     case "fixtures":
-      return !!(process.env.API_FOOTBALL_KEY || process.env.APISPORTS_KEY);
+      return !!process.env.API_FOOTBALL_KEY;
   }
 }
