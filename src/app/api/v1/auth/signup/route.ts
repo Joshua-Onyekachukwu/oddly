@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
       password,
       options: {
         data: {
-          full_name: fullName,
+          display_name: fullName,
         },
       },
     });
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
         id: data.user.id,
         email: data.user.email,
         role: profile?.role || "user",
-        full_name: fullName,
+        display_name: fullName,
       },
     });
   } catch (error) {

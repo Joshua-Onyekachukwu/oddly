@@ -50,9 +50,9 @@ export async function GET(request: NextRequest) {
       id: user.id,
       email: user.email,
       role: profile?.role || "user",
-      full_name: profile?.full_name || null,
-      avatar_url: profile?.avatar_url || null,
+      display_name: profile?.display_name || null,
       subscription_tier: profile?.subscription_tier || "free",
+      bankroll: profile?.bankroll || 0,
       created_at: profile?.created_at || user.created_at,
     });
   } catch (error) {

@@ -5,6 +5,20 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/providers/AuthProvider";
 
+function checkPasswordStrength(pw: string): { score: number; label: string; color: string } {
+  let score = 0;
+  if (pw.length >= 8) score++;
+  if (pw.length >= 12) score++;
+  if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
+  if (/\d/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+
+  if (score <= 1) return { score, label: "Weak", color: "bg-[#EF4444]" };
+  if (score <= 2) return { score, label: "Fair", color: "bg-[#D97706]" };
+  if (score <= 3) return { score, label: "Good", color: "bg-[#2563EB]" };
+  return { score, label: "Strong", color: "bg-[#22c55e]" };
+}
+
 export default function SignupPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -14,6 +28,7 @@ export default function SignupPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [needsVerification, setNeedsVerification] = useState(false);
+  const [passwordStrength, setPasswordStrength] = useState({ score: 0, label: "", color: "" });
 
   const { signUp } = useAuth();
   const router = useRouter();
@@ -31,6 +46,12 @@ export default function SignupPage() {
 
     if (password.length < 8) {
       setError("Password must be at least 8 characters");
+      setLoading(false);
+      return;
+    }
+
+    if (passwordStrength.score < 2) {
+      setError("Please choose a stronger password");
       setLoading(false);
       return;
     }
@@ -86,7 +107,7 @@ export default function SignupPage() {
     <div className="w-full max-w-[400px] px-[16px]">
       <div className="text-center mb-[32px]">
         <Link href="/" className="inline-flex items-center gap-[8px] mb-[24px]">
-          <span className="font-display font-bold text-[24px] tracking-[-0.02em] text-[#0A0F1C]">
+          <span className="font-display font-bold text-[24px] tracking-[-0.02em] text-[#0A0F1C] lg:hidden">
             ODDLY
           </span>
         </Link>
@@ -147,7 +168,10 @@ export default function SignupPage() {
               id="password"
               type={showPassword ? "text" : "password"}
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setPasswordStrength(checkPasswordStrength(e.target.value));
+              }}
               placeholder="At least 8 characters"
               className="w-full h-[44px] rounded-[12px] border border-gray-200 bg-white px-[14px] pr-[44px] text-[14px] text-[#0A0F1C] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1B2A4A] focus:ring-offset-2 transition-all"
               autoComplete="new-password"
@@ -162,6 +186,31 @@ export default function SignupPage() {
               <i className={`${showPassword ? "ri-eye-off-line" : "ri-eye-line"} text-[18px]`}></i>
             </button>
           </div>
+          {password.length > 0 && (
+            <div className="mt-[8px]">
+              <div className="flex gap-[4px] mb-[4px]">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div
+                    key={i}
+                    className={`h-[3px] flex-1 rounded-full transition-all duration-300 ${
+                      i <= passwordStrength.score ? passwordStrength.color : "bg-gray-200"
+                    }`}
+                  />
+                ))}
+              </div>
+              <span
+                className={`text-[11px] font-medium ${
+                  passwordStrength.score <= 1
+                    ? "text-[#EF4444]"
+                    : passwordStrength.score <= 2
+                    ? "text-[#D97706]"
+                    : "text-[#22c55e]"
+                }`}
+              >
+                {passwordStrength.label}
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="flex items-start gap-[8px]">
@@ -173,9 +222,13 @@ export default function SignupPage() {
           />
           <span className="text-[12px] text-gray-500 leading-[1.5]">
             I agree to the{" "}
-            <Link href="#" className="text-[#1B2A4A] hover:underline">Terms of Service</Link>
-            {" "}and{" "}
-            <Link href="#" className="text-[#1B2A4A] hover:underline">Privacy Policy</Link>
+            <Link href="#" className="text-[#1B2A4A] hover:underline">
+              Terms of Service
+            </Link>{" "}
+            and{" "}
+            <Link href="#" className="text-[#1B2A4A] hover:underline">
+              Privacy Policy
+            </Link>
           </span>
         </div>
 
