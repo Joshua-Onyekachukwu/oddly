@@ -627,5 +627,17 @@ insert into leagues (name, country, sport, priority) values
 on conflict do nothing;
 
 -- ============================================
+-- 8. REALTIME
+-- ============================================
+
+-- Enable Realtime on fixtures (live scores)
+alter publication supabase_realtime add table fixtures;
+alter table fixtures replica identity full;
+
+-- Enable Realtime on notifications (live notifications)
+alter publication supabase_realtime add table notifications;
+alter table notifications replica identity full;
+
+-- ============================================
 -- DONE — Safe to re-run at any time
 -- ============================================
