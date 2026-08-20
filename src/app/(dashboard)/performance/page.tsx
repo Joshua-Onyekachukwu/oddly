@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/providers/AuthProvider";
+import { PageHeader, Card, EmptyState, StatCard, Button, Badge } from "@/components/ui";
 
 interface MarketPerformance {
   market: string;
@@ -72,7 +73,6 @@ export default function PerformancePage() {
       const data = await res.json();
 
       if (data.success) {
-        // Refresh stats
         await fetchStats();
       }
     } catch (error) {
@@ -103,237 +103,130 @@ export default function PerformancePage() {
   }
 
   function getAccuracyColor(accuracy: number): string {
-    if (accuracy >= 70) return "text-[#22c55e]";
-    if (accuracy >= 55) return "text-[#D97706]";
-    return "text-[#EF4444]";
+    if (accuracy >= 70) return "text-green-600";
+    if (accuracy >= 55) return "text-amber-600";
+    return "text-red-500";
   }
 
   function getAccuracyBg(accuracy: number): string {
-    if (accuracy >= 70) return "bg-[#22c55e]/10";
-    if (accuracy >= 55) return "bg-[#D97706]/10";
-    return "bg-[#EF4444]/10";
+    if (accuracy >= 70) return "bg-green-50 text-green-600";
+    if (accuracy >= 55) return "bg-amber-50 text-amber-600";
+    return "bg-red-50 text-red-500";
   }
 
-  function getTierColor(tier: string): string {
+  function getTierVariant(tier: string): "success" | "info" | "warning" | "default" {
     switch (tier) {
-      case "very_high": return "bg-[#22c55e]/10 text-[#22c55e]";
-      case "high": return "bg-[#2563EB]/10 text-[#2563EB]";
-      case "medium": return "bg-[#D97706]/10 text-[#D97706]";
-      default: return "bg-gray-100 text-gray-500";
+      case "very_high": return "success";
+      case "high": return "info";
+      case "medium": return "warning";
+      default: return "default";
     }
   }
 
   return (
     <div className="max-w-[900px] mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-[24px]">
-        <div>
-          <h1 className="font-display text-[24px] md:text-[28px] font-bold text-[#0A0F1C] mb-[4px]">
-            Model Performance
-          </h1>
-          <p className="text-[14px] text-gray-500">
-            Track prediction accuracy and calibration metrics
-          </p>
-        </div>
-        <button
-          onClick={trackAccuracy}
-          disabled={tracking}
-          className="h-[36px] px-[14px] rounded-[10px] bg-[#1B2A4A] text-white text-[13px] font-semibold transition-all hover:bg-[#243B53] active:scale-[0.98] disabled:opacity-50 flex items-center gap-[6px]"
-        >
-          {tracking ? (
-            <div className="w-[14px] h-[14px] border-2 border-white/30 border-t-white rounded-full animate-spin" />
-          ) : (
-            <i className="ri-refresh-line text-[14px]" />
-          )}
-          {tracking ? "Tracking..." : "Track Accuracy"}
-        </button>
-      </div>
+      <PageHeader
+        title="Model Performance"
+        description="Track prediction accuracy and calibration metrics"
+        action={
+          <Button onClick={trackAccuracy} loading={tracking} icon="ri-refresh-line" size="sm" variant="secondary">
+            {tracking ? "Tracking..." : "Track Accuracy"}
+          </Button>
+        }
+      />
 
       {loading ? (
-        <div className="space-y-[16px]">
-          <div className="grid grid-cols-4 gap-[12px]">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="bg-white rounded-[14px] p-[16px] border border-gray-100 animate-pulse">
-                <div className="h-[12px] w-[80px] bg-gray-100 rounded mb-[8px]" />
-                <div className="h-[28px] w-[60px] bg-gray-100 rounded" />
-              </div>
-            ))}
-          </div>
+        <div className="grid grid-cols-4 gap-[10px]">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <div className="h-[11px] w-[70px] bg-gray-100 rounded mb-[8px]" />
+              <div className="h-[24px] w-[50px] bg-gray-100 rounded" />
+            </Card>
+          ))}
         </div>
       ) : !stats || stats.totalPredictions === 0 ? (
-        <div className="text-center py-[80px]">
-          <div className="w-[64px] h-[64px] bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-[16px]">
-            <i className="ri-line-chart-line text-[28px] text-gray-300" />
-          </div>
-          <h3 className="text-[16px] font-semibold text-gray-400 mb-[4px]">
-            No predictions tracked yet
-          </h3>
-          <p className="text-[13px] text-gray-300 max-w-[320px] mx-auto">
-            Accuracy data will appear here once matches finish and predictions are evaluated.
-          </p>
-          <button
-            onClick={trackAccuracy}
-            disabled={tracking}
-            className="mt-[20px] h-[36px] px-[16px] rounded-[10px] bg-[#1B2A4A] text-white text-[13px] font-semibold transition-all hover:bg-[#243B53] active:scale-[0.98] disabled:opacity-50"
-          >
-            {tracking ? "Tracking..." : "Track Now"}
-          </button>
-        </div>
+        <EmptyState
+          icon="ri-line-chart-line"
+          title="No predictions tracked yet"
+          description="Accuracy data will appear here once matches finish and predictions are evaluated."
+          action={
+            <Button onClick={trackAccuracy} loading={tracking} size="sm">
+              {tracking ? "Tracking..." : "Track Now"}
+            </Button>
+          }
+        />
       ) : (
         <>
           {/* Summary Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-[12px] mb-[24px]">
-            {[
-              {
-                label: "Total Predictions",
-                value: stats.totalPredictions.toLocaleString(),
-                icon: "ri-brain-line",
-                color: "bg-purple-50 text-purple-600",
-              },
-              {
-                label: "Accuracy",
-                value: `${stats.accuracy}%`,
-                icon: "ri-check-double-line",
-                color: getAccuracyBg(stats.accuracy),
-                valueColor: getAccuracyColor(stats.accuracy),
-              },
-              {
-                label: "Avg Log Loss",
-                value: stats.avgLogLoss.toFixed(3),
-                icon: "ri-line-chart-line",
-                color: "bg-[#2563EB]/10 text-[#2563EB]",
-              },
-              {
-                label: "Brier Score",
-                value: stats.avgBrier.toFixed(3),
-                icon: "ri-target-line",
-                color: "bg-[#D97706]/10 text-[#D97706]",
-              },
-            ].map((stat) => (
-              <div
-                key={stat.label}
-                className="bg-white rounded-[14px] p-[16px] border border-gray-100 shadow-[0_1px_6px_rgba(0,0,0,0.02)]"
-              >
-                <div className="flex items-center gap-[10px] mb-[8px]">
-                  <span
-                    className={`w-[32px] h-[32px] rounded-[8px] flex items-center justify-center ${stat.color}`}
-                  >
-                    <i className={`${stat.icon} text-[16px]`} />
-                  </span>
-                  <span className="text-[11px] text-gray-400">{stat.label}</span>
-                </div>
-                <span
-                  className={`text-[22px] font-mono-data font-bold ${stat.valueColor || "text-[#0A0F1C]"}`}
-                >
-                  {stat.value}
-                </span>
-              </div>
-            ))}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-[10px] mb-[20px]">
+            <StatCard label="Total Predictions" value={stats.totalPredictions.toLocaleString()} icon="ri-brain-line" color="bg-purple-50 text-purple-600" />
+            <StatCard label="Accuracy" value={`${stats.accuracy}%`} icon="ri-check-double-line" color={getAccuracyBg(stats.accuracy)} />
+            <StatCard label="Avg Log Loss" value={stats.avgLogLoss.toFixed(3)} icon="ri-line-chart-line" color="bg-blue-50 text-blue-600" />
+            <StatCard label="Brier Score" value={stats.avgBrier.toFixed(3)} icon="ri-target-line" color="bg-amber-50 text-amber-600" />
           </div>
 
           {/* Per-Market Breakdown */}
           {stats.byMarket.length > 0 && (
-            <div className="bg-white rounded-[14px] p-[20px] border border-gray-100 shadow-[0_1px_6px_rgba(0,0,0,0.02)] mb-[24px]">
-              <h2 className="text-[16px] font-semibold text-[#0A0F1C] mb-[16px]">
+            <Card className="mb-[20px]">
+              <h2 className="text-[14px] font-semibold text-[#0A0F1C] mb-[12px]">
                 Performance by Market
               </h2>
-              <div className="space-y-[12px]">
+              <div className="space-y-[8px]">
                 {stats.byMarket.map((market) => (
-                  <div
-                    key={market.market}
-                    className="flex items-center gap-[16px] p-[12px] bg-gray-50 rounded-[10px]"
-                  >
-                    <div className="w-[36px] h-[36px] bg-white rounded-[10px] flex items-center justify-center border border-gray-100">
-                      <i
-                        className={`${getMarketIcon(market.market)} text-[16px] text-gray-400`}
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-[4px]">
-                        <span className="text-[13px] font-semibold text-[#0A0F1C]">
+                  <div key={market.market} className="flex items-center justify-between p-[12px] bg-gray-50 rounded-[8px]">
+                    <div className="flex items-center gap-[10px]">
+                      <div className="w-[28px] h-[28px] rounded-[6px] bg-white flex items-center justify-center">
+                        <i className={`${getMarketIcon(market.market)} text-[14px] text-gray-500`} />
+                      </div>
+                      <div>
+                        <span className="text-[13px] font-medium text-[#0A0F1C]">
                           {getMarketLabel(market.market)}
                         </span>
-                        <span
-                          className={`text-[13px] font-bold font-mono-data ${getAccuracyColor(market.accuracy)}`}
-                        >
-                          {market.accuracy}%
-                        </span>
-                      </div>
-                      <div className="w-full h-[4px] bg-gray-200 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-[#22c55e] rounded-full transition-all duration-500"
-                          style={{ width: `${Math.min(100, market.accuracy)}%` }}
-                        />
-                      </div>
-                      <div className="flex items-center gap-[16px] mt-[6px]">
-                        <span className="text-[11px] text-gray-400">
+                        <span className="text-[11px] text-gray-400 ml-[8px]">
                           {market.correct}/{market.total} correct
                         </span>
-                        <span className="text-[11px] text-gray-400">
-                          Log Loss: {market.avgLogLoss.toFixed(3)}
-                        </span>
-                        <span className="text-[11px] text-gray-400">
-                          Brier: {market.avgBrier.toFixed(3)}
-                        </span>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Confidence Tier Breakdown */}
-          {stats.byTier.length > 0 && (
-            <div className="bg-white rounded-[14px] p-[20px] border border-gray-100 shadow-[0_1px_6px_rgba(0,0,0,0.02)]">
-              <h2 className="text-[16px] font-semibold text-[#0A0F1C] mb-[16px]">
-                Accuracy by Confidence Tier
-              </h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-[12px]">
-                {stats.byTier.map((tier) => (
-                  <div
-                    key={tier.tier}
-                    className="p-[12px] bg-gray-50 rounded-[10px] text-center"
-                  >
-                    <span
-                      className={`text-[10px] font-semibold px-[6px] py-[2px] rounded-full ${getTierColor(tier.tier)}`}
-                    >
-                      {tier.tier.replace("_", " ").toUpperCase()}
-                    </span>
-                    <div className="mt-[8px]">
-                      <span
-                        className={`text-[20px] font-bold font-mono-data ${getAccuracyColor(tier.accuracy)}`}
-                      >
-                        {tier.accuracy}%
+                    <div className="flex items-center gap-[12px]">
+                      <div className="w-[80px] bg-gray-200 rounded-full h-[3px]">
+                        <div
+                          className="bg-[#1B2A4A] h-[3px] rounded-full transition-all"
+                          style={{ width: `${market.accuracy}%` }}
+                        />
+                      </div>
+                      <span className={`text-[13px] font-mono-data font-bold ${getAccuracyColor(market.accuracy)}`}>
+                        {market.accuracy.toFixed(1)}%
                       </span>
                     </div>
-                    <span className="text-[11px] text-gray-400 block mt-[2px]">
-                      {tier.correct}/{tier.total} correct
-                    </span>
                   </div>
                 ))}
               </div>
-            </div>
+            </Card>
           )}
 
-          {/* Info Note */}
-          <div className="mt-[24px] p-[16px] bg-[#BFFF00]/5 rounded-[14px] border border-[#BFFF00]/20">
-            <div className="flex items-start gap-[10px]">
-              <i className="ri-information-line text-[16px] text-[#1B2A4A] mt-[1px]" />
-              <div>
-                <p className="text-[13px] text-[#1B2A4A] font-medium">
-                  How accuracy tracking works
-                </p>
-                <p className="text-[12px] text-gray-500 mt-[4px] leading-[1.5]">
-                  After matches finish (status=FT), click &quot;Track Accuracy&quot; to evaluate
-                  how accurate each prediction was. The system compares the predicted
-                  probability against the actual outcome and logs accuracy, log loss,
-                  and Brier scores. Low log loss and Brier scores indicate well-calibrated
-                  predictions.
-                </p>
+          {/* Confidence Tier Performance */}
+          {stats.byTier.length > 0 && (
+            <Card>
+              <h2 className="text-[14px] font-semibold text-[#0A0F1C] mb-[12px]">
+                Performance by Confidence Tier
+              </h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-[8px]">
+                {stats.byTier.map((tier) => (
+                  <div key={tier.tier} className="p-[12px] bg-gray-50 rounded-[8px] text-center">
+                    <Badge variant={getTierVariant(tier.tier)} size="sm" className="mb-[6px]">
+                      {tier.tier.replace("_", " ")}
+                    </Badge>
+                    <div className="text-[18px] font-mono-data font-bold text-[#0A0F1C]">
+                      {tier.accuracy.toFixed(1)}%
+                    </div>
+                    <div className="text-[10px] text-gray-400">
+                      {tier.correct}/{tier.total}
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
-          </div>
+            </Card>
+          )}
         </>
       )}
     </div>

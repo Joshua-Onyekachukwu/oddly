@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "@/providers/AuthProvider";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
-import { formatPrice } from "@/lib/stripe/config";
+import { PageHeader, Card, CardHeader, Button, Badge } from "@/components/ui";
 
 export default function SettingsPage() {
   const { user, profile, refreshProfile, signOut } = useAuth();
@@ -16,7 +16,6 @@ export default function SettingsPage() {
 
   // Profile form
   const [fullName, setFullName] = useState("");
-  const [displayName, setDisplayName] = useState("");
 
   // Notification prefs (stored in localStorage for now)
   const [notifyNewPicks, setNotifyNewPicks] = useState(true);
@@ -27,7 +26,6 @@ export default function SettingsPage() {
   useEffect(() => {
     if (profile) {
       setFullName(profile.display_name || "");
-      setDisplayName(profile.display_name || "");
     }
     // Load notification prefs
     if (typeof window !== "undefined") {
@@ -77,28 +75,30 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="max-w-[600px]">
-      <div className="mb-[24px]">
-        <h1 className="font-display text-[24px] md:text-[28px] font-bold text-[#0A0F1C] mb-[4px]">
-          Settings
-        </h1>
-        <p className="text-[14px] text-gray-500">
-          Manage your profile, preferences, and subscription.
-        </p>
-      </div>
+    <div className="max-w-[640px]">
+      <PageHeader
+        title="Settings"
+        description="Manage your profile, preferences, and subscription."
+      />
 
       {msg && (
-        <div className="bg-green-50 border border-green-200 rounded-[12px] p-[12px] text-[13px] text-green-600 mb-[16px] flex items-center gap-[8px]">
-          <i className="ri-check-line text-[14px]"></i>
+        <div className="bg-green-50 border border-green-200 rounded-[10px] p-[12px] text-[13px] text-green-600 mb-[16px] flex items-center gap-[8px]">
+          <i className="ri-check-line text-[14px]" />
           {msg}
         </div>
       )}
 
+      {/* Upgrade success banner */}
+      {searchParams.get("upgraded") && (
+        <div className="bg-green-50 border border-green-200 rounded-[10px] p-[12px] text-[13px] text-green-600 mb-[16px] flex items-center gap-[8px]">
+          <i className="ri-check-line text-[14px]" />
+          Welcome to ODDLY {searchParams.get("upgraded")}! Your subscription is now active.
+        </div>
+      )}
+
       {/* Profile Section */}
-      <div className="bg-white rounded-[16px] p-[20px] border border-gray-100 shadow-[0_1px_6px_rgba(0,0,0,0.02)] mb-[16px]">
-        <h3 className="font-display text-[15px] font-semibold text-[#0A0F1C] mb-[16px]">
-          Profile
-        </h3>
+      <Card className="mb-[16px]">
+        <CardHeader title="Profile" icon="ri-user-settings-line" />
         <form onSubmit={saveProfile} className="space-y-[12px]">
           <div>
             <label className="block text-[12px] font-medium text-gray-500 mb-[4px]">
@@ -108,7 +108,7 @@ export default function SettingsPage() {
               type="email"
               value={user?.email || ""}
               disabled
-              className="w-full h-[38px] rounded-[10px] border border-gray-200 bg-gray-50 px-[12px] text-[13px] text-gray-400 cursor-not-allowed"
+              className="w-full h-[38px] rounded-[8px] border border-gray-200 bg-gray-50 px-[12px] text-[13px] text-gray-400 cursor-not-allowed"
             />
           </div>
           <div>
@@ -120,46 +120,41 @@ export default function SettingsPage() {
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               placeholder="Your name"
-              className="w-full h-[38px] rounded-[10px] border border-gray-200 bg-white px-[12px] text-[13px] text-[#0A0F1C] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1B2A4A]/20 transition-all"
+              className="w-full h-[38px] rounded-[8px] border border-gray-200 bg-white px-[12px] text-[13px] text-[#0A0F1C] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1B2A4A]/20 transition-all"
             />
           </div>
 
           <div className="flex justify-end">
-            <button
-              type="submit"
-              disabled={saving}
-              className="h-[36px] px-[16px] rounded-[10px] bg-[#1B2A4A] text-white text-[13px] font-semibold transition-all hover:bg-[#243B53] active:scale-[0.98] disabled:opacity-50 flex items-center gap-[6px]"
-            >
-              {saving ? (
-                <div className="w-[14px] h-[14px] border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-              ) : (
-                "Save Profile"
-              )}
-            </button>
+            <Button type="submit" loading={saving} size="sm">
+              Save Profile
+            </Button>
           </div>
         </form>
-      </div>
+      </Card>
 
       {/* Subscription */}
-      <div className="bg-white rounded-[16px] p-[20px] border border-gray-100 shadow-[0_1px_6px_rgba(0,0,0,0.02)] mb-[16px]">
-        <h3 className="font-display text-[15px] font-semibold text-[#0A0F1C] mb-[16px]">
-          Subscription
-        </h3>
-
-        {/* Upgrade success banner */}
-        {searchParams.get("upgraded") && (
-          <div className="bg-green-50 border border-green-200 rounded-[12px] p-[12px] text-[13px] text-green-600 mb-[12px] flex items-center gap-[8px]">
-            <i className="ri-check-line text-[14px]"></i>
-            Welcome to ODDLY {searchParams.get("upgraded")}! Your subscription is now active.
-          </div>
-        )}
-
-        <div className="p-[14px] bg-gray-50 rounded-[12px]">
+      <Card className="mb-[16px]">
+        <CardHeader title="Subscription" icon="ri-vip-crown-line" />
+        <div className="p-[14px] bg-gray-50 rounded-[10px]">
           <div className="flex items-center justify-between mb-[10px]">
             <div>
-              <span className="block text-[13px] font-semibold text-[#0A0F1C] capitalize">
-                {profile?.subscription_tier || "free"} Plan
-              </span>
+              <div className="flex items-center gap-[8px]">
+                <span className="text-[13px] font-semibold text-[#0A0F1C] capitalize">
+                  {profile?.subscription_tier || "free"} Plan
+                </span>
+                <Badge
+                  variant={
+                    profile?.subscription_tier === "free"
+                      ? "default"
+                      : profile?.subscription_tier === "premium"
+                      ? "info"
+                      : "accent"
+                  }
+                  size="sm"
+                >
+                  {profile?.subscription_tier || "free"}
+                </Badge>
+              </div>
               <span className="text-[11px] text-gray-400">
                 {profile?.subscription_tier === "free"
                   ? "3 AI questions/day · 10 accumulator legs"
@@ -169,14 +164,15 @@ export default function SettingsPage() {
               </span>
             </div>
             {profile?.subscription_tier === "free" ? (
-              <button
+              <Button
                 onClick={() => router.push("/pricing")}
-                className="h-[32px] px-[14px] rounded-[8px] bg-oddly-orange text-white text-[12px] font-semibold transition-all hover:bg-oddly-orange/90 active:scale-[0.97]"
+                size="sm"
+                variant="primary"
               >
                 Upgrade
-              </button>
+              </Button>
             ) : (
-              <button
+              <Button
                 onClick={async () => {
                   setPortalLoading(true);
                   try {
@@ -199,15 +195,12 @@ export default function SettingsPage() {
                     setPortalLoading(false);
                   }
                 }}
-                disabled={portalLoading}
-                className="h-[32px] px-[14px] rounded-[8px] bg-[#1B2A4A] text-white text-[12px] font-semibold transition-all hover:bg-[#243B53] active:scale-[0.97] disabled:opacity-50 flex items-center gap-[6px]"
+                loading={portalLoading}
+                size="sm"
+                variant="secondary"
               >
-                {portalLoading ? (
-                  <div className="w-[12px] h-[12px] border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                ) : (
-                  "Manage Billing"
-                )}
-              </button>
+                Manage Billing
+              </Button>
             )}
           </div>
 
@@ -221,47 +214,41 @@ export default function SettingsPage() {
             </div>
           )}
         </div>
-      </div>
+      </Card>
 
       {/* Notifications */}
-      <div className="bg-white rounded-[16px] p-[20px] border border-gray-100 shadow-[0_1px_6px_rgba(0,0,0,0.02)] mb-[16px]">
-        <h3 className="font-display text-[15px] font-semibold text-[#0A0F1C] mb-[16px]">
-          Notifications
-        </h3>
-        <div className="space-y-[12px]">
+      <Card className="mb-[16px]">
+        <CardHeader title="Notifications" icon="ri-notification-3-line" />
+        <div className="space-y-[10px]">
           {[
             {
               label: "New value bets",
               desc: "When the model finds a new edge",
               checked: notifyNewPicks,
               onChange: setNotifyNewPicks,
-              key: "new_picks",
             },
             {
               label: "Bet results",
               desc: "When a tracked bet is settled",
               checked: notifyResults,
               onChange: setNotifyResults,
-              key: "results",
             },
             {
               label: "Rollover picks",
               desc: "Daily Crown Jewel pick for your chain",
               checked: notifyRollover,
               onChange: setNotifyRollover,
-              key: "rollover",
             },
             {
               label: "Accumulator results",
               desc: "When your accumulator is settled",
               checked: notifyAccumulator,
               onChange: setNotifyAccumulator,
-              key: "accumulator",
             },
           ].map((item) => (
             <div
-              key={item.key}
-              className="flex items-center justify-between p-[12px] bg-gray-50 rounded-[10px]"
+              key={item.label}
+              className="flex items-center justify-between p-[12px] bg-gray-50 rounded-[8px]"
             >
               <div>
                 <span className="block text-[13px] font-medium text-[#0A0F1C]">
@@ -271,44 +258,36 @@ export default function SettingsPage() {
               </div>
               <button
                 onClick={() => item.onChange(!item.checked)}
-                className={`w-[40px] h-[22px] rounded-full transition-all duration-300 ${
+                className={`w-[36px] h-[20px] rounded-full transition-all duration-200 ${
                   item.checked ? "bg-[#1B2A4A]" : "bg-gray-200"
                 }`}
               >
                 <span
-                  className={`block w-[18px] h-[18px] bg-white rounded-full transition-all duration-300 ${
-                    item.checked ? "translate-x-[20px]" : "translate-x-[2px]"
+                  className={`block w-[16px] h-[16px] bg-white rounded-full transition-all duration-200 mt-[2px] ${
+                    item.checked ? "translate-x-[18px]" : "translate-x-[2px]"
                   }`}
-                ></span>
+                />
               </button>
             </div>
           ))}
         </div>
         <div className="flex justify-end mt-[12px]">
-          <button
-            onClick={saveNotifications}
-            className="h-[36px] px-[16px] rounded-[10px] bg-[#1B2A4A] text-white text-[13px] font-semibold transition-all hover:bg-[#243B53] active:scale-[0.98]"
-          >
+          <Button onClick={saveNotifications} size="sm">
             Save Preferences
-          </button>
+          </Button>
         </div>
-      </div>
+      </Card>
 
-      {/* Danger Zone */}
-      <div className="bg-white rounded-[16px] p-[20px] border border-red-100 shadow-[0_1px_6px_rgba(0,0,0,0.02)]">
-        <h3 className="font-display text-[15px] font-semibold text-red-600 mb-[8px]">
-          Account
-        </h3>
+      {/* Account */}
+      <Card className="border-red-100">
+        <CardHeader title="Account" icon="ri-shield-keyhole-line" />
         <p className="text-[13px] text-gray-500 mb-[12px]">
           Sign out of your account on this device.
         </p>
-        <button
-          onClick={handleSignOut}
-          className="h-[36px] px-[16px] rounded-[10px] bg-red-50 text-red-600 text-[13px] font-semibold transition-all hover:bg-red-100 active:scale-[0.98]"
-        >
+        <Button onClick={handleSignOut} variant="danger" size="sm">
           Sign Out
-        </button>
-      </div>
+        </Button>
+      </Card>
     </div>
   );
 }
