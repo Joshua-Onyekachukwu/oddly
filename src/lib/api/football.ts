@@ -109,8 +109,7 @@ async function apiFootballFetch(endpoint: string): Promise<unknown> {
 
   const response = await fetch(`${API_FOOTBALL_BASE}${endpoint}`, {
     headers: {
-      "x-rapidapi-key": API_FOOTBALL_KEY,
-      "x-rapidapi-host": "v3.football.api-sports.io",
+      "x-apisports-key": API_FOOTBALL_KEY,
     },
   });
 

@@ -1,18 +1,15 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
-import { STRIPE_PLANS, formatPrice, type PlanTier } from "@/lib/stripe/config";
 
 const plans = [
   {
-    tier: "free" as PlanTier | "free",
+    tier: "free" as const,
     name: "Free",
     price: 0,
     period: "forever",
     popular: false,
-    cta: "Get Started",
+    cta: "Get Started Free",
     ctaStyle: "btn-secondary",
     features: [
       "Daily predictions (5 matches)",
@@ -29,12 +26,12 @@ const plans = [
     ],
   },
   {
-    tier: "premium" as PlanTier,
+    tier: "premium" as const,
     name: "Premium",
     price: 7500,
     period: "per month",
     popular: true,
-    cta: "Upgrade to Premium",
+    cta: "Coming Soon",
     ctaStyle: "btn-primary",
     features: [
       "Everything in Free",
@@ -51,12 +48,12 @@ const plans = [
     limitations: [],
   },
   {
-    tier: "elite" as PlanTier,
+    tier: "elite" as const,
     name: "Elite",
     price: 20000,
     period: "per month",
     popular: false,
-    cta: "Upgrade to Elite",
+    cta: "Coming Soon",
     ctaStyle: "elite-btn",
     features: [
       "Everything in Premium",
@@ -74,60 +71,9 @@ const plans = [
 
 export default function PricingPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState<PlanTier | "free" | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleSubscribe = async (tier: PlanTier) => {
-    setError(null);
-    setLoading(tier);
-
-    try {
-      const supabase = createClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (!session) {
-        // Redirect to login with return to pricing
-        router.push("/login?redirect=/pricing");
-        return;
-      }
-
-      const response = await fetch("/api/v1/stripe/checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ tier }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to create checkout session");
-      }
-
-      if (data.checkoutUrl) {
-        window.location.href = data.checkoutUrl;
-      }
-    } catch (err) {
-      console.error("Checkout error:", err);
-      setError(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
-      setLoading(null);
-    }
-  };
 
   const handleGetStarted = () => {
-    const supabase = createClient();
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        router.push("/matches");
-      } else {
-        router.push("/signup");
-      }
-    });
+    router.push("/signup");
   };
 
   return (
@@ -181,7 +127,7 @@ export default function PricingPage() {
                 <h3 className="text-xl font-bold text-oddly-navy">{plan.name}</h3>
                 <div className="mt-4">
                   <span className="text-4xl font-bold text-oddly-navy">
-                    {plan.price === 0 ? "₦0" : formatPrice(plan.price)}
+                    {plan.price === 0 ? "₦0" : `₦${plan.price.toLocaleString()}`}
                   </span>
                   <span className="text-neutral-500 ml-2">{plan.period}</span>
                 </div>
@@ -234,51 +180,38 @@ export default function PricingPage() {
                 </button>
               ) : (
                 <button
-                  onClick={() => handleSubscribe(plan.tier as PlanTier)}
-                  disabled={loading === plan.tier}
-                  className={`w-full py-3 rounded-xl font-semibold text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+                  disabled
+                  className={`w-full py-3 rounded-xl font-semibold text-sm transition-all duration-200 opacity-60 cursor-not-allowed ${
                     plan.tier === "elite"
-                      ? "bg-oddly-navy text-white hover:bg-oddly-navy-light"
-                      : plan.ctaStyle
+                      ? "bg-oddly-navy text-white"
+                      : plan.ctaStyle === "btn-primary"
+                      ? "bg-oddly-orange text-white"
+                      : ""
                   }`}
                 >
-                  {loading === plan.tier ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <svg
-                        className="animate-spin h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        />
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                        />
-                      </svg>
-                      Processing...
-                    </span>
-                  ) : (
-                    plan.cta
-                  )}
+                  {plan.cta}
                 </button>
               )}
             </div>
           ))}
         </div>
 
-        {error && (
-          <div className="max-w-md mx-auto mt-8 p-4 bg-red-50 border border-red-200 rounded-xl text-center">
-            <p className="text-sm text-red-600">{error}</p>
+        {/* Coming Soon Banner */}
+        <div className="max-w-2xl mx-auto mt-16 text-center">
+          <div className="bg-oddly-navy/5 border border-oddly-navy/10 rounded-2xl p-8">
+            <h3 className="text-xl font-bold text-oddly-navy mb-3">
+              Premium Plans Coming Soon
+            </h3>
+            <p className="text-neutral-600 text-sm leading-relaxed mb-4">
+              We&apos;re currently in our testing phase, perfecting the prediction engine and building
+              enough data to prove our edge. Premium and Elite tiers will launch once we&apos;re ready
+              to scale.
+            </p>
+            <p className="text-neutral-500 text-xs">
+              In the meantime, enjoy full access to all features for free.
+            </p>
           </div>
-        )}
+        </div>
       </section>
 
       {/* FAQ */}
@@ -290,24 +223,24 @@ export default function PricingPage() {
           <div className="space-y-6">
             {[
               {
-                q: "Can I cancel anytime?",
-                a: "Yes. Cancel from your dashboard settings or through Stripe's billing portal. Your access continues until the end of your billing period.",
+                q: "Is ODDLY really free right now?",
+                a: "Yes! We're in our testing phase and offering full access to all features at no cost. This gives us the data we need to fine-tune our prediction models.",
               },
               {
-                q: "What payment methods do you accept?",
-                a: "We accept all major credit and debit cards (Visa, Mastercard, Verve) processed securely through Stripe.",
+                q: "Will I lose access when paid plans launch?",
+                a: "No. Early users who signed up during the free period will receive a special discount when paid plans launch.",
               },
               {
-                q: "What happens after I upgrade?",
-                a: "You get instant access to your new tier's features. No waiting period — the AI models start generating predictions for all your tracked leagues immediately.",
+                q: "How accurate are the predictions?",
+                a: "Our AI models combine Dixon-Coles, XGBoost, and Elo ratings with real-time odds analysis. We're continuously training on live data to improve accuracy.",
               },
               {
-                q: "Is there a refund policy?",
-                a: "We offer a 7-day money-back guarantee. If you're not satisfied within the first week, contact us for a full refund.",
+                q: "What data sources do you use?",
+                a: "We pull live odds from 21+ bookmakers (bet365, Pinnacle, Betfair, etc.), fixture data from API-Football, and run predictions through NVIDIA AI models.",
               },
               {
-                q: "Can I switch plans?",
-                a: "You can upgrade from Free to Premium or Elite at any time. Contact support to switch between Premium and Elite.",
+                q: "Can I track my bets?",
+                a: "Yes. The tracking dashboard shows your ROI, win rate, streak, and performance breakdown by league and market type.",
               },
             ].map((faq) => (
               <details

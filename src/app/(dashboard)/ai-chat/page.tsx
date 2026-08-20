@@ -150,13 +150,11 @@ export default function AiChatPage() {
 
   const suggestedQs = messages.length === 0 ? SUGGESTED_QUESTIONS : [];
 
-  // Calculate remaining questions
+  // All users have unlimited access during testing phase
   const userQuestionsCount = messages.filter((m) => m.role === "user").length;
-  const isUnlimited =
-    profile?.subscription_tier === "premium" ||
-    profile?.subscription_tier === "elite";
-  const dailyLimit = isUnlimited ? -1 : 3;
-  const remaining = isUnlimited ? -1 : Math.max(0, dailyLimit - (userQuestionsCount % (dailyLimit + 1)));
+  const isUnlimited = true;
+  const dailyLimit = -1;
+  const remaining = -1;
 
   return (
     <div className="flex flex-col h-[calc(100vh-120px)]">
