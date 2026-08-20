@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/providers/AuthProvider";
+import { useLiveFixture } from "@/hooks/useLiveScores";
 
 interface Prediction {
   id: string;
@@ -70,9 +71,15 @@ export function MatchDetail({
   const [activeTab, setActiveTab] = useState<"predictions" | "odds" | "analysis">("predictions");
   const { profile } = useAuth();
   const router = useRouter();
+  const { fixture: liveData, connected } = useLiveFixture(fixture.id);
 
-  const isLive = ["live", "1H", "2H", "HT"].includes(fixture.status);
-  const isFinished = ["finished", "FT"].includes(fixture.status);
+  // Use live data if available
+  const displayStatus = liveData?.status || fixture.status;
+  const displayHomeScore = liveData?.home_score ?? fixture.home_score;
+  const displayAwayScore = liveData?.away_score ?? fixture.away_score;
+
+  const isLive = ["live", "1H", "2H", "HT"].includes(displayStatus);
+  const isFinished = ["finished", "FT"].includes(displayStatus);
 
   function formatKickoff(time: string) {
     const date = new Date(time);
@@ -131,6 +138,12 @@ export function MatchDetail({
                 </span>
               </>
             )}
+            {connected && isLive && (
+              <span className="text-[10px] text-[#22c55e] flex items-center gap-[4px] ml-[8px]">
+                <span className="w-[4px] h-[4px] rounded-full bg-[#22c55e] animate-pulse"></span>
+                Realtime
+              </span>
+            )}
           </div>
           {isLive ? (
             <span className="flex items-center gap-[4px] text-[10px] font-semibold text-[#22c55e] bg-[#22c55e]/8 px-[10px] py-[4px] rounded-full">
@@ -164,8 +177,10 @@ export function MatchDetail({
 
             <div className="text-center px-[20px]">
               {isFinished || isLive ? (
-                <span className="font-display text-[24px] md:text-[28px] font-bold text-[#0A0F1C] font-mono-data">
-                  {fixture.home_score ?? 0} - {fixture.away_score ?? 0}
+                <span className={`font-display text-[24px] md:text-[28px] font-bold font-mono-data transition-colors duration-300 ${
+                  isLive && liveData ? "text-[#22c55e]" : "text-[#0A0F1C]"
+                }`}>
+                  {displayHomeScore ?? 0} - {displayAwayScore ?? 0}
                 </span>
               ) : (
                 <span className="text-[14px] font-medium text-gray-300">VS</span>
