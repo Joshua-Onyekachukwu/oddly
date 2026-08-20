@@ -65,6 +65,7 @@ export default function AdminPipelinePage() {
     { name: "Value Detection", status: "idle", icon: "ri-search-eye-line", desc: "Scans for edges between model and market", lastRun: null, duration: null },
     { name: "Crown Jewel Selection", status: "idle", icon: "ri-star-line", desc: "Picks the single best bet of the day", lastRun: null, duration: null },
     { name: "Notification Dispatch", status: "idle", icon: "ri-notification-3-line", desc: "Sends alerts for value bets and milestones", lastRun: null, duration: null },
+    { name: "Data Cleanup", status: "idle", icon: "ri-delete-bin-line", desc: "Purges old notifications, stale odds, and expired data", lastRun: null, duration: null },
   ]);
 
   const fetchStatus = useCallback(async () => {
@@ -171,6 +172,52 @@ export default function AdminPipelinePage() {
         prev.map((s) => ({
           ...s,
           status: s.status === "running" ? "error" : s.status,
+        }))
+      );
+    }
+
+    setSyncing(null);
+  };
+
+  // Manual cleanup trigger
+  const triggerCleanup = async () => {
+    setSyncing("cleanup");
+    const now = new Date().toISOString();
+
+    setStages((prev) =>
+      prev.map((s) => ({
+        ...s,
+        status: s.name === "Data Cleanup" ? "running" as const : s.status,
+      }))
+    );
+
+    try {
+      const res = await fetch("/api/v1/cron/cleanup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await res.json();
+
+      setStages((prev) =>
+        prev.map((s) => {
+          if (s.name === "Data Cleanup") {
+            return {
+              ...s,
+              status: data.totalDeleted > 0 ? "success" : "idle",
+              lastRun: now,
+              duration: data.duration,
+            };
+          }
+          return s;
+        })
+      );
+
+      await fetchStatus();
+    } catch {
+      setStages((prev) =>
+        prev.map((s) => ({
+          ...s,
+          status: s.name === "Data Cleanup" ? "error" : s.status,
         }))
       );
     }
@@ -312,6 +359,18 @@ export default function AdminPipelinePage() {
               <i className="ri-brain-line text-[14px]"></i>
             )}
             {syncing === "predict" ? "Predicting..." : "Run Predictions"}
+          </button>
+          <button
+            onClick={triggerCleanup}
+            disabled={syncing !== null}
+            className="h-[36px] px-[14px] rounded-[10px] bg-white border border-gray-200 text-[13px] font-semibold text-[#0A0F1C] transition-all hover:bg-gray-50 active:scale-[0.98] disabled:opacity-50 flex items-center gap-[6px]"
+          >
+            {syncing === "cleanup" ? (
+              <div className="w-[14px] h-[14px] border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
+            ) : (
+              <i className="ri-delete-bin-line text-[14px]"></i>
+            )}
+            {syncing === "cleanup" ? "Cleaning..." : "Clean Data"}
           </button>
           <button
             onClick={() => triggerSync("all")}
@@ -521,6 +580,13 @@ export default function AdminPipelinePage() {
                   <span className="text-[12px] font-medium text-[#0A0F1C]">Predictions</span>
                 </div>
                 <span className="text-[11px] font-mono-data text-gray-500">Daily 08:00</span>
+              </div>
+              <div className="flex items-center justify-between p-[10px] bg-gray-50 rounded-[10px]">
+                <div className="flex items-center gap-[8px]">
+                  <i className="ri-delete-bin-line text-[14px] text-gray-400"></i>
+                  <span className="text-[12px] font-medium text-[#0A0F1C]">Data Cleanup</span>
+                </div>
+                <span className="text-[11px] font-mono-data text-gray-500">Daily 03:00</span>
               </div>
               <div className="flex items-center justify-between p-[10px] bg-gray-50 rounded-[10px]">
                 <div className="flex items-center gap-[8px]">

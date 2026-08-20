@@ -7,6 +7,10 @@
     {
       "path": "/api/v1/cron/predict",
       "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/v1/cron/cleanup",
+      "schedule": "0 3 * * *"
     }
   ]
 }
