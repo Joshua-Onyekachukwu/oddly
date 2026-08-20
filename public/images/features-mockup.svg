@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 714 380" fill="none">
+  <rect width="714" height="380" rx="12" fill="#f8fafc"/>
+  <rect x="20" y="20" width="674" height="340" rx="8" fill="white" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="40" y="52" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="600" fill="#1e293b">Value Bet Scanner — 15th Aug 2026</text>
+  <text x="40" y="70" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#94a3b8">Scanning 100+ leagues · 2,847 matches analyzed · 12 value bets found</text>
+  <line x1="40" y1="82" x2="674" y2="82" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="40" y="106" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="600" fill="#64748b" text-transform="uppercase">League</text>
+  <text x="160" y="106" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="600" fill="#64748b">Match</text>
+  <text x="340" y="106" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="600" fill="#64748b">Market</text>
+  <text x="440" y="106" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="600" fill="#64748b">Model %</text>
+  <text x="520" y="106" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="600" fill="#64748b">Odds</text>
+  <text x="590" y="106" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="600" fill="#64748b">Edge</text>
+  <line x1="40" y1="116" x2="674" y2="116" stroke="#f1f5f9" stroke-width="1"/>
+  <rect x="40" y="126" width="36" height="18" rx="4" fill="#275b96"/>
+  <text x="50" y="138" font-family="Inter, system-ui, sans-serif" font-size="9" fill="white" font-weight="bold">EPL</text>
+  <text x="160" y="139" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#334155">Arsenal vs Chelsea</text>
+  <text x="340" y="139" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#334155">Over 2.5</text>
+  <text x="440" y="139" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#275b96" font-weight="600">93%</text>
+  <text x="520" y="139" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#334155">1.85</text>
+  <rect x="590" y="126" width="52" height="18" rx="4" fill="#22c55e"/>
+  <text x="600" y="138" font-family="Inter, system-ui, sans-serif" font-size="10" fill="white" font-weight="600">+22%</text>
+  <line x1="40" y1="154" x2="674" y2="154" stroke="#f1f5f9" stroke-width="1"/>
+  <rect x="40" y="162" width="50" height="18" rx="4" fill="#E36925"/>
+  <text x="48" y="174" font-family="Inter, system-ui, sans-serif" font-size="9" fill="white" font-weight="bold">LaLiga</text>
+  <text x="160" y="177" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#334155">Barca vs Real Madrid</text>
+  <text x="340" y="177" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#334155">BTTS Yes</text>
+  <text x="440" y="177" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#275b96" font-weight="600">87%</text>
+  <text x="520" y="177" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#334155">1.72</text>
+  <rect x="590" y="162" width="52" height="18" rx="4" fill="#22c55e"/>
+  <text x="600" y="174" font-family="Inter, system-ui, sans-serif" font-size="10" fill="white" font-weight="600">+15%</text>
+  <line x1="40" y1="192" x2="674" y2="192" stroke="#f1f5f9" stroke-width="1"/>
+  <rect x="40" y="200" width="76" height="18" rx="4" fill="#8b5cf6"/>
+  <text x="48" y="212" font-family="Inter, system-ui, sans-serif" font-size="9" fill="white" font-weight="bold">Bundesliga</text>
+  <text x="160" y="215" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#334155">Bayern vs Dortmund</text>
+  <text x="340" y="215" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#334155">Home -1.5</text>
+  <text x="440" y="215" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#275b96" font-weight="600">81%</text>
+  <text x="520" y="215" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#334155">2.10</text>
+  <rect x="590" y="200" width="52" height="18" rx="4" fill="#22c55e"/>
+  <text x="600" y="212" font-family="Inter, system-ui, sans-serif" font-size="10" fill="white" font-weight="600">+12%</text>
+  <line x1="40" y1="230" x2="674" y2="230" stroke="#f1f5f9" stroke-width="1"/>
+  <rect x="40" y="238" width="36" height="18" rx="4" fill="#275b96"/>
+  <text x="50" y="250" font-family="Inter, system-ui, sans-serif" font-size="9" fill="white" font-weight="bold">EPL</text>
+  <text x="160" y="253" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#334155">Liverpool vs Man City</text>
+  <text x="340" y="253" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#334155">Under 3.5</text>
+  <text x="440" y="253" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#275b96" font-weight="600">78%</text>
+  <text x="520" y="253" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#334155">1.65</text>
+  <rect x="590" y="238" width="52" height="18" rx="4" fill="#22c55e"/>
+  <text x="600" y="250" font-family="Inter, system-ui, sans-serif" font-size="10" fill="white" font-weight="600">+10%</text>
+  <line x1="40" y1="268" x2="674" y2="268" stroke="#f1f5f9" stroke-width="1"/>
+  <rect x="40" y="276" width="30" height="18" rx="4" fill="#E36925"/>
+  <text x="48" y="288" font-family="Inter, system-ui, sans-serif" font-size="9" fill="white" font-weight="bold">Serie</text>
+  <text x="160" y="291" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#334155">Juventus vs AC Milan</text>
+  <text x="340" y="291" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#334155">Double Chance</text>
+  <text x="440" y="291" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#275b96" font-weight="600">84%</text>
+  <text x="520" y="291" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#334155">1.40</text>
+  <rect x="590" y="276" width="52" height="18" rx="4" fill="#22c55e"/>
+  <text x="600" y="288" font-family="Inter, system-ui, sans-serif" font-size="10" fill="white" font-weight="600">+16%</text>
+  <line x1="40" y1="306" x2="674" y2="306" stroke="#f1f5f9" stroke-width="1"/>
+  <rect x="40" y="320" width="60" height="22" rx="6" fill="#275b96"/>
+  <text x="48" y="335" font-family="Inter, system-ui, sans-serif" font-size="10" fill="white" font-weight="600">Analyze All</text>
+  <rect x="120" y="320" width="120" height="22" rx="6" fill="#f0f9ff" stroke="#275b96" stroke-width="1"/>
+  <text x="130" y="335" font-family="Inter, system-ui, sans-serif" font-size="10" fill="#275b96">Export to Betslip</text>
+  <text x="40" y="352" font-family="Inter, system-ui, sans-serif" font-size="10" fill="#94a3b8">Powered by 7 AI Models · Updated every 5 minutes</text>
+</svg>
