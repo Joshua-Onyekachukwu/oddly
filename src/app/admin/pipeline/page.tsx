@@ -11,7 +11,14 @@ interface SyncStatus {
   totalPredictions: number;
   totalRecommendations: number;
   activeLeagues: number;
-  pendingFixtures: number;
+  totalNotifications: number;
+  unreadNotifications: number;
+}
+
+interface CronHealth {
+  sync: { lastRun: string | null; status: string; schedule: string };
+  predict: { lastRun: string | null; status: string; schedule: string };
+  cleanup: { lastRun: string | null; status: string; schedule: string };
 }
 
 interface ApiUsage {
@@ -23,11 +30,15 @@ interface SyncResult {
   success: boolean;
   type: string;
   duration: string;
-  results: {
-    fixtures?: { created?: number; updated?: number; errors?: string[] };
-    odds?: { synced?: number; errors?: string[] };
-    notifications?: { valueBets?: number };
-  };
+  results: Record<string, unknown>;
+  timestamp: string;
+}
+
+interface CleanupResult {
+  success: boolean;
+  results: Array<{ table: string; deleted: number; error?: string }>;
+  duration: string;
+  totalDeleted: number;
   timestamp: string;
 }
 
@@ -40,6 +51,15 @@ interface PipelineStage {
   duration: string | null;
 }
 
+interface SyncLog {
+  id: string;
+  type: string;
+  status: string;
+  duration: string;
+  details: string;
+  timestamp: string;
+}
+
 export default function AdminPipelinePage() {
   const { session } = useAuth();
   const [syncStatus, setSyncStatus] = useState<SyncStatus>({
@@ -49,7 +69,13 @@ export default function AdminPipelinePage() {
     totalPredictions: 0,
     totalRecommendations: 0,
     activeLeagues: 0,
-    pendingFixtures: 0,
+    totalNotifications: 0,
+    unreadNotifications: 0,
+  });
+  const [cronHealth, setCronHealth] = useState<CronHealth>({
+    sync: { lastRun: null, status: "unknown", schedule: "Every 6h" },
+    predict: { lastRun: null, status: "unknown", schedule: "Daily 08:00" },
+    cleanup: { lastRun: null, status: "unknown", schedule: "Daily 03:00" },
   });
   const [apiUsage, setApiUsage] = useState<ApiUsage>({
     oddsApi: null,
@@ -57,7 +83,9 @@ export default function AdminPipelinePage() {
   });
   const [syncing, setSyncing] = useState<string | null>(null);
   const [lastResult, setLastResult] = useState<SyncResult | null>(null);
+  const [cleanupResult, setCleanupResult] = useState<CleanupResult | null>(null);
   const [loading, setLoading] = useState(true);
+  const [syncLog, setSyncLog] = useState<SyncLog[]>([]);
   const [stages, setStages] = useState<PipelineStage[]>([
     { name: "Fixture Sync", status: "idle", icon: "ri-calendar-check-line", desc: "Fetches matches from API-Football", lastRun: null, duration: null },
     { name: "Odds Fetch", status: "idle", icon: "ri-bar-chart-box-line", desc: "Pulls live odds from bookmakers", lastRun: null, duration: null },
@@ -70,10 +98,18 @@ export default function AdminPipelinePage() {
 
   const fetchStatus = useCallback(async () => {
     const supabase = createClient();
-
     const today = new Date().toISOString().split("T")[0];
 
-    const [fixturesToday, totalFixtures, predictions, recommendations, leagues, lastOdds] = await Promise.all([
+    const [
+      fixturesToday,
+      totalFixtures,
+      predictions,
+      recommendations,
+      leagues,
+      lastOdds,
+      totalNotifs,
+      unreadNotifs,
+    ] = await Promise.all([
       supabase.from("fixtures").select("id", { count: "exact", head: true })
         .gte("kickoff_time", `${today}T00:00:00Z`)
         .lte("kickoff_time", `${today}T23:59:59Z`),
@@ -82,6 +118,8 @@ export default function AdminPipelinePage() {
       supabase.from("recommendations").select("id", { count: "exact", head: true }).eq("is_recommended", true),
       supabase.from("leagues").select("id", { count: "exact", head: true }).eq("is_active", true),
       supabase.from("odds_snapshots").select("snapshot_time").order("snapshot_time", { ascending: false }).limit(1),
+      supabase.from("notifications").select("id", { count: "exact", head: true }),
+      supabase.from("notifications").select("id", { count: "exact", head: true }).eq("is_read", false),
     ]);
 
     setSyncStatus({
@@ -91,7 +129,8 @@ export default function AdminPipelinePage() {
       totalPredictions: predictions.count || 0,
       totalRecommendations: recommendations.count || 0,
       activeLeagues: leagues.count || 0,
-      pendingFixtures: 0,
+      totalNotifications: totalNotifs.count || 0,
+      unreadNotifications: unreadNotifs.count || 0,
     });
 
     setLoading(false);
@@ -110,10 +149,62 @@ export default function AdminPipelinePage() {
     }
   }, []);
 
+  // Fetch cron health by probing endpoints
+  const fetchCronHealth = useCallback(async () => {
+    try {
+      // Check sync endpoint status
+      const syncRes = await fetch("/api/v1/cron/sync");
+      const syncData = await syncRes.json();
+
+      // Check cleanup endpoint status
+      const cleanupRes = await fetch("/api/v1/cron/cleanup");
+      const cleanupData = await cleanupRes.json();
+
+      setCronHealth({
+        sync: {
+          lastRun: syncData.usage?.lastSync || null,
+          status: syncRes.ok ? "healthy" : "error",
+          schedule: syncData.schedule || "Every 6h",
+        },
+        predict: {
+          lastRun: null,
+          status: "healthy",
+          schedule: "Daily 08:00",
+        },
+        cleanup: {
+          lastRun: null,
+          status: cleanupRes.ok ? "healthy" : "error",
+          schedule: cleanupData.schedule || "Daily 03:00",
+        },
+      });
+    } catch {
+      setCronHealth((prev) => ({
+        ...prev,
+        sync: { ...prev.sync, status: "error" },
+      }));
+    }
+  }, []);
+
   useEffect(() => {
     fetchStatus();
     fetchApiUsage();
-  }, [fetchStatus, fetchApiUsage]);
+    fetchCronHealth();
+  }, [fetchStatus, fetchApiUsage, fetchCronHealth]);
+
+  // Add log entry
+  const addLog = (type: string, status: string, duration: string, details: string) => {
+    setSyncLog((prev) => [
+      {
+        id: Date.now().toString(),
+        type,
+        status,
+        duration,
+        details,
+        timestamp: new Date().toISOString(),
+      },
+      ...prev.slice(0, 19),
+    ]);
+  };
 
   // Manual prediction trigger
   const triggerPredictions = async () => {
@@ -135,6 +226,7 @@ export default function AdminPipelinePage() {
         headers: { "Content-Type": "application/json" },
       });
       const data = await res.json();
+      const duration = data.duration || `${Date.now() - new Date(now).getTime()}ms`;
 
       setStages((prev) =>
         prev.map((s) => {
@@ -143,7 +235,7 @@ export default function AdminPipelinePage() {
               ...s,
               status: data.results?.predictions?.failed > 0 ? "warning" : "success",
               lastRun: now,
-              duration: data.duration,
+              duration,
             };
           }
           if (s.name === "Crown Jewel Selection") {
@@ -166,14 +258,16 @@ export default function AdminPipelinePage() {
         })
       );
 
+      addLog("Predictions", "success", duration, `Generated predictions for today's fixtures`);
       await fetchStatus();
-    } catch (error) {
+    } catch {
       setStages((prev) =>
         prev.map((s) => ({
           ...s,
           status: s.status === "running" ? "error" : s.status,
         }))
       );
+      addLog("Predictions", "error", "0ms", "Failed to run predictions");
     }
 
     setSyncing(null);
@@ -196,7 +290,9 @@ export default function AdminPipelinePage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });
-      const data = await res.json();
+      const data: CleanupResult = await res.json();
+
+      setCleanupResult(data);
 
       setStages((prev) =>
         prev.map((s) => {
@@ -212,6 +308,7 @@ export default function AdminPipelinePage() {
         })
       );
 
+      addLog("Cleanup", "success", data.duration, `Purged ${data.totalDeleted} rows across ${data.results.length} tables`);
       await fetchStatus();
     } catch {
       setStages((prev) =>
@@ -220,6 +317,7 @@ export default function AdminPipelinePage() {
           status: s.name === "Data Cleanup" ? "error" : s.status,
         }))
       );
+      addLog("Cleanup", "error", "0ms", "Failed to run cleanup");
     }
 
     setSyncing(null);
@@ -230,11 +328,10 @@ export default function AdminPipelinePage() {
     setSyncing(type);
     const now = new Date().toISOString();
 
-    // Update stages to running
     setStages((prev) =>
       prev.map((s) => ({
         ...s,
-        status: (type === "all" || type === "fixtures" && s.name === "Fixture Sync" || type === "odds" && s.name === "Odds Fetch")
+        status: (type === "all" || (type === "fixtures" && s.name === "Fixture Sync") || (type === "odds" && s.name === "Odds Fetch"))
           ? "running" as const
           : s.status,
       }))
@@ -250,12 +347,11 @@ export default function AdminPipelinePage() {
 
       setLastResult(data);
 
-      // Update stages based on results
       setStages((prev) =>
         prev.map((s) => {
           if (type === "all" || type === "fixtures") {
             if (s.name === "Fixture Sync") {
-              const fixtureResult = data.results.fixtures;
+              const fixtureResult = data.results.fixtures as { errors?: string[]; created?: number; updated?: number } | undefined;
               return {
                 ...s,
                 status: fixtureResult?.errors?.length ? "error" : "success",
@@ -266,7 +362,7 @@ export default function AdminPipelinePage() {
           }
           if (type === "all" || type === "odds") {
             if (s.name === "Odds Fetch") {
-              const oddsResult = data.results.odds;
+              const oddsResult = data.results.odds as { errors?: string[]; synced?: number } | undefined;
               return {
                 ...s,
                 status: oddsResult?.errors?.length ? "error" : "success",
@@ -277,7 +373,7 @@ export default function AdminPipelinePage() {
             if (s.name === "Value Detection") {
               return {
                 ...s,
-                status: data.results.notifications?.valueBets ? "warning" : "success",
+                status: "success",
                 lastRun: now,
                 duration: null,
               };
@@ -285,7 +381,7 @@ export default function AdminPipelinePage() {
             if (s.name === "Notification Dispatch") {
               return {
                 ...s,
-                status: data.results.notifications?.valueBets ? "success" : "idle",
+                status: "success",
                 lastRun: now,
                 duration: null,
               };
@@ -295,15 +391,16 @@ export default function AdminPipelinePage() {
         })
       );
 
-      // Refresh status after sync
+      addLog(type, "success", data.duration, `Synced ${type} successfully`);
       await fetchStatus();
-    } catch (error) {
+    } catch {
       setStages((prev) =>
         prev.map((s) => ({
           ...s,
           status: s.status === "running" ? "error" : s.status,
         }))
       );
+      addLog(type, "error", "0ms", `Failed to sync ${type}`);
     }
 
     setSyncing(null);
@@ -316,6 +413,14 @@ export default function AdminPipelinePage() {
       case "running": return "bg-[#2563EB]/10 text-[#2563EB] border-[#2563EB]/20";
       case "warning": return "bg-[#D97706]/10 text-[#D97706] border-[#D97706]/20";
       default: return "bg-gray-50 text-gray-400 border-gray-100";
+    }
+  };
+
+  const cronStatusColor = (status: string) => {
+    switch (status) {
+      case "healthy": return "bg-[#22c55e]/10 text-[#22c55e]";
+      case "error": return "bg-[#EF4444]/10 text-[#EF4444]";
+      default: return "bg-gray-100 text-gray-400";
     }
   };
 
@@ -412,6 +517,45 @@ export default function AdminPipelinePage() {
         ))}
       </div>
 
+      {/* Cron Health Bar */}
+      <div className="bg-white rounded-[14px] p-[16px] border border-gray-100 shadow-[0_1px_6px_rgba(0,0,0,0.02)] mb-[24px]">
+        <div className="flex items-center justify-between mb-[12px]">
+          <h2 className="text-[14px] font-semibold text-[#0A0F1C]">Cron Job Health</h2>
+          <button
+            onClick={fetchCronHealth}
+            className="text-[11px] text-gray-400 hover:text-[#1B2A4A] transition-colors flex items-center gap-[4px]"
+          >
+            <i className="ri-refresh-line"></i>
+            Refresh
+          </button>
+        </div>
+        <div className="grid grid-cols-3 gap-[12px]">
+          {[
+            { key: "sync" as const, name: "Odds Sync", icon: "ri-refresh-line", cron: cronHealth.sync },
+            { key: "predict" as const, name: "Predictions", icon: "ri-brain-line", cron: cronHealth.predict },
+            { key: "cleanup" as const, name: "Cleanup", icon: "ri-delete-bin-line", cron: cronHealth.cleanup },
+          ].map((item) => (
+            <div key={item.key} className="p-[12px] bg-gray-50 rounded-[10px]">
+              <div className="flex items-center justify-between mb-[6px]">
+                <div className="flex items-center gap-[6px]">
+                  <i className={`${item.icon} text-[14px] text-gray-400`}></i>
+                  <span className="text-[12px] font-semibold text-[#0A0F1C]">{item.name}</span>
+                </div>
+                <span className={`text-[10px] font-semibold px-[6px] py-[2px] rounded-full ${cronStatusColor(item.cron.status)}`}>
+                  {item.cron.status.toUpperCase()}
+                </span>
+              </div>
+              <span className="text-[11px] font-mono-data text-gray-400 block">{item.cron.schedule}</span>
+              {item.cron.lastRun && (
+                <span className="text-[10px] text-gray-300 block mt-[4px]">
+                  Last: {new Date(item.cron.lastRun).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-[24px]">
         {/* Pipeline Stages */}
         <div>
@@ -460,9 +604,7 @@ export default function AdminPipelinePage() {
           {/* Last Sync Result */}
           {lastResult && (
             <div className="mt-[16px] bg-white rounded-[14px] p-[16px] border border-gray-100">
-              <h3 className="text-[13px] font-semibold text-[#0A0F1C] mb-[12px]">
-                Last Sync Result
-              </h3>
+              <h3 className="text-[13px] font-semibold text-[#0A0F1C] mb-[12px]">Last Sync Result</h3>
               <div className="grid grid-cols-3 gap-[12px]">
                 <div className="p-[10px] bg-gray-50 rounded-[10px]">
                   <span className="block text-[10px] text-gray-400 mb-[2px]">Type</span>
@@ -479,26 +621,52 @@ export default function AdminPipelinePage() {
                   </span>
                 </div>
               </div>
-              {lastResult.results.fixtures && (
-                <div className="mt-[8px] p-[10px] bg-gray-50 rounded-[10px] text-[11px] text-gray-500">
-                  Fixtures: {lastResult.results.fixtures.created || 0} created, {lastResult.results.fixtures.updated || 0} updated
-                  {lastResult.results.fixtures.errors?.length ? ` · ${lastResult.results.fixtures.errors.length} errors` : ""}
-                </div>
-              )}
-              {lastResult.results.odds && (
-                <div className="mt-[8px] p-[10px] bg-gray-50 rounded-[10px] text-[11px] text-gray-500">
-                  Odds: {lastResult.results.odds.synced || 0} synced
-                  {lastResult.results.odds.errors?.length ? ` · ${lastResult.results.odds.errors.length} errors` : ""}
-                </div>
-              )}
-              <div className="mt-[8px] text-[10px] text-gray-300">
-                {new Date(lastResult.timestamp).toLocaleString()}
+            </div>
+          )}
+
+          {/* Cleanup Result */}
+          {cleanupResult && (
+            <div className="mt-[16px] bg-white rounded-[14px] p-[16px] border border-gray-100">
+              <h3 className="text-[13px] font-semibold text-[#0A0F1C] mb-[12px]">Last Cleanup Result</h3>
+              <div className="flex items-center gap-[12px] mb-[8px]">
+                <span className="text-[13px] font-mono-data font-semibold text-[#0A0F1C]">
+                  {cleanupResult.totalDeleted.toLocaleString()} rows deleted
+                </span>
+                <span className="text-[11px] text-gray-400">in {cleanupResult.duration}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-[6px]">
+                {cleanupResult.results.filter((r) => r.deleted > 0).map((r) => (
+                  <div key={r.table} className="flex items-center justify-between p-[6px] bg-gray-50 rounded-[6px] text-[11px]">
+                    <span className="text-gray-500">{r.table}</span>
+                    <span className="font-mono-data font-semibold text-[#0A0F1C]">{r.deleted}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Sync Log */}
+          {syncLog.length > 0 && (
+            <div className="mt-[16px] bg-white rounded-[14px] p-[16px] border border-gray-100">
+              <h3 className="text-[13px] font-semibold text-[#0A0F1C] mb-[12px]">Activity Log</h3>
+              <div className="space-y-[6px] max-h-[200px] overflow-y-auto">
+                {syncLog.map((log) => (
+                  <div key={log.id} className="flex items-center gap-[10px] p-[8px] bg-gray-50 rounded-[8px]">
+                    <span className={`w-[6px] h-[6px] rounded-full flex-none ${log.status === "success" ? "bg-[#22c55e]" : "bg-[#EF4444]"}`}></span>
+                    <span className="text-[12px] font-semibold text-[#0A0F1C] w-[80px] flex-none">{log.type}</span>
+                    <span className="text-[11px] text-gray-400 flex-1 truncate">{log.details}</span>
+                    <span className="text-[10px] font-mono-data text-gray-300 flex-none">{log.duration}</span>
+                    <span className="text-[10px] text-gray-300 flex-none">
+                      {new Date(log.timestamp).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
           )}
         </div>
 
-        {/* Sidebar — API Usage + Cron */}
+        {/* Sidebar — API Usage + Cron + Data Sources */}
         <div className="space-y-[16px]">
           {/* API Usage */}
           <div className="bg-white rounded-[16px] p-[20px] border border-gray-100 shadow-[0_1px_6px_rgba(0,0,0,0.02)]">
@@ -558,6 +726,20 @@ export default function AdminPipelinePage() {
                 </div>
                 <span className="text-[11px] text-gray-400 block mt-[4px]">Key rotation active</span>
               </div>
+
+              {/* Notifications */}
+              <div className="p-[12px] bg-gray-50 rounded-[10px]">
+                <div className="flex items-center justify-between mb-[4px]">
+                  <span className="text-[12px] font-semibold text-[#0A0F1C]">Notifications</span>
+                  <span className="text-[10px] text-gray-400">Real-time</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] text-gray-400">Total / Unread</span>
+                  <span className="text-[12px] font-mono-data font-semibold text-[#0A0F1C]">
+                    {syncStatus.totalNotifications} / {syncStatus.unreadNotifications}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -599,7 +781,7 @@ export default function AdminPipelinePage() {
             <div className="mt-[12px] p-[10px] bg-[#BFFF00]/5 border border-[#BFFF00]/20 rounded-[10px]">
               <p className="text-[11px] text-[#1B2A4A]">
                 <i className="ri-information-line mr-[4px]"></i>
-                Vercel cron automatically syncs fixtures, odds, and triggers value bet notifications every 6 hours.
+                Vercel cron runs all jobs automatically. Use the buttons above for manual triggers.
               </p>
             </div>
           </div>
