@@ -2,7 +2,16 @@ import type { Metadata } from "next";
 import { Space_Grotesk, DM_Sans, JetBrains_Mono } from "next/font/google";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { ToastContainer } from "@/components/notifications/Toast";
+import { validateEnv } from "@/lib/env";
 import "./globals.css";
+
+// Validate environment variables on startup
+if (typeof window === "undefined") {
+  const env = validateEnv();
+  if (!env.valid) {
+    console.error("[STARTUP] Cannot start — missing required environment variables");
+  }
+}
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
