@@ -3,15 +3,20 @@
 import React from "react";
 import Image from "next/image";
 import { useScrollReveal, getScrollRevealClasses } from "@/hooks/useScrollReveal";
+import type { LandingStats } from "@/lib/landing-stats";
 
-const aboutCards = [
-  { icon: "ri-line-chart-line", title: "Live Match Tracking", desc: "Follow predictions in real-time as matches unfold across 360+ leagues.", color: "bg-[#BFFF00]/10", iconColor: "text-[#1B2A4A]" },
+interface AboutProps {
+  stats?: LandingStats;
+}
+
+const getAboutCards = (leagueCount: string) => [
+  { icon: "ri-line-chart-line", title: "Live Match Tracking", desc: `Follow predictions in real-time as matches unfold across ${leagueCount} leagues.`, color: "bg-[#BFFF00]/10", iconColor: "text-[#1B2A4A]" },
   { icon: "ri-notification-3-line", title: "Instant Alerts", desc: "Get notified the moment a value bet is detected or Crown Jewel is ready.", color: "bg-[#D97706]/10", iconColor: "text-[#D97706]" },
   { icon: "ri-bar-chart-grouped-line", title: "Deep Analytics", desc: "Model accuracy, edge, and confidence at a glance for every prediction.", color: "bg-[#22c55e]/10", iconColor: "text-[#22c55e]" },
   { icon: "ri-stack-line", title: "Smart Optimization", desc: "Accumulator builder maximizes your returns while managing risk.", color: "bg-[#2563EB]/10", iconColor: "text-[#2563EB]" },
 ];
 
-const About: React.FC = () => {
+const About: React.FC<AboutProps> = ({ stats }) => {
   const { ref, isVisible } = useScrollReveal({ threshold: 0.05 });
 
   return (
@@ -91,7 +96,7 @@ const About: React.FC = () => {
             </p>
 
             <div className="space-y-[12px]">
-              {aboutCards.map((card, index) => (
+              {getAboutCards(stats?.totalLeagues ? `${stats.totalLeagues}+` : "360+").map((card, index) => (
                 <div
                   key={index}
                   {...getScrollRevealClasses(isVisible, 200 + index * 80)}

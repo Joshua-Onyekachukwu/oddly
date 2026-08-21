@@ -2,17 +2,22 @@
 
 import React from "react";
 import { useScrollReveal, getScrollRevealClasses } from "@/hooks/useScrollReveal";
+import type { LandingStats } from "@/lib/landing-stats";
 
-const useCasesData = [
+interface UseCasesProps {
+  stats?: LandingStats;
+}
+
+const getUseCasesData = (leagueCount: string) => [
   { id: 1, title: "Daily Bettors", desc: "Get AI-powered picks every morning with the Crown Jewel and value bets.", icon: "ri-calendar-check-line", color: "text-[#1B2A4A]", bg: "bg-[#BFFF00]/10" },
   { id: 2, title: "Accumulator Builders", desc: "Smart combination optimization that maximizes returns while managing risk.", icon: "ri-stack-line", color: "text-[#D97706]", bg: "bg-[#D97706]/10" },
   { id: 3, title: "Rollover Chasers", desc: "Track daily rollover chains with automated pick selection and bank management.", icon: "ri-fire-line", color: "text-[#EF4444]", bg: "bg-[#EF4444]/10" },
   { id: 4, title: "Data Analysts", desc: "Deep dive into model performance, accuracy reports, and feature importance.", icon: "ri-bar-chart-line", color: "text-[#2563EB]", bg: "bg-[#2563EB]/10" },
-  { id: 5, title: "Value Seekers", desc: "Automated edge detection across 360+ leagues with real-time odds comparison.", icon: "ri-percent-line", color: "text-[#22c55e]", bg: "bg-[#22c55e]/10" },
+  { id: 5, title: "Value Seekers", desc: `Automated edge detection across ${leagueCount} leagues with real-time odds comparison.`, icon: "ri-percent-line", color: "text-[#22c55e]", bg: "bg-[#22c55e]/10" },
   { id: 6, title: "Premium Members", desc: "Unlimited AI chat, priority alerts, and exclusive model insights.", icon: "ri-vip-crown-line", color: "text-[#8B5CF6]", bg: "bg-[#8B5CF6]/10" },
 ];
 
-const UseCases: React.FC = () => {
+const UseCases: React.FC<UseCasesProps> = ({ stats }) => {
   const { ref, isVisible } = useScrollReveal({ threshold: 0.05 });
 
   return (
@@ -37,7 +42,7 @@ const UseCases: React.FC = () => {
 
         {/* Use case cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[16px]">
-          {useCasesData.map((useCase, i) => (
+          {getUseCasesData(stats?.totalLeagues ? `${stats.totalLeagues}+` : "360+").map((useCase, i) => (
             <div
               key={useCase.id}
               {...getScrollRevealClasses(isVisible, 200 + i * 60)}

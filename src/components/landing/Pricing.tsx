@@ -2,8 +2,13 @@
 
 import React, { useState } from "react";
 import { useScrollReveal, getScrollRevealClasses } from "@/hooks/useScrollReveal";
+import type { LandingStats } from "@/lib/landing-stats";
 
-const plans = [
+interface PricingProps {
+  stats?: LandingStats;
+}
+
+const getPlans = (leagueCount: string) => [
   {
     name: "Free",
     price: "₦0",
@@ -25,7 +30,7 @@ const plans = [
     description: "Full access to all models, value bet detection, and accumulator builder.",
     features: [
       "Unlimited predictions",
-      "All 360+ leagues",
+      `All ${leagueCount} leagues`,
       "Value bet detection",
       "Accumulator builder",
       "Weekly performance reports",
@@ -52,7 +57,7 @@ const plans = [
   },
 ];
 
-const Pricing: React.FC = () => {
+const Pricing: React.FC<PricingProps> = ({ stats }) => {
   const [annual, setAnnual] = useState(false);
   const { ref, isVisible } = useScrollReveal({ threshold: 0.1 });
 
@@ -75,7 +80,7 @@ const Pricing: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-[20px] max-w-[1000px] mx-auto">
-          {plans.map((plan, i) => (
+          {getPlans(stats?.totalLeagues ? `${stats.totalLeagues}+` : "360+").map((plan, i) => (
             <div
               key={plan.name}
               {...getScrollRevealClasses(isVisible, 100 + i * 80)}

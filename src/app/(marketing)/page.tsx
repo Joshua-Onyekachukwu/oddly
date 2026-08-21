@@ -25,25 +25,25 @@ export default async function Home() {
 
       <Partners />
 
-      <About />
+      <About stats={data.stats} />
 
       <Features />
 
-      <DashboardShowcase />
+      <DashboardShowcase stats={data.stats} />
 
       <Testimonials />
 
-      <UseCases />
+      <UseCases stats={data.stats} />
 
-      <Pricing />
+      <Pricing stats={data.stats} />
 
-      <FAQ />
+      <FAQ stats={data.stats} />
 
       <FunFacts stats={data.stats} />
 
       <GetStarted />
 
-      <Footer />
+      <Footer stats={data.stats} />
     </>
   );
 }

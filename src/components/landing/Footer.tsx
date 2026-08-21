@@ -2,8 +2,13 @@
 
 import React from "react";
 import Link from "next/link";
+import type { LandingStats } from "@/lib/landing-stats";
 
-const Footer: React.FC = () => {
+interface FooterProps {
+  stats?: LandingStats;
+}
+
+const Footer: React.FC<FooterProps> = ({ stats }) => {
   return (
     <footer className="bg-[#0A0F1C] pt-[80px] md:pt-[100px] pb-[40px]">
       <div className="container sm:max-w-[540px] md:max-w-[720px] lg:max-w-[960px] xl:max-w-[1200px] mx-auto px-[16px]">
@@ -17,8 +22,7 @@ const Footer: React.FC = () => {
               </span>
             </Link>
             <p className="text-[14px] text-white/30 !leading-[1.75] !mb-0 max-w-[280px]">
-              AI-powered football prediction platform that helps you find value
-              bets with 90%+ confidence across 360+ leagues.
+              {"AI-powered football prediction platform that helps you find value bets with 90%+ confidence across "}{stats?.totalLeagues ? `${stats.totalLeagues}+` : "360+"}{" leagues."}
             </p>
           </div>
 
