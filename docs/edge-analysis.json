@@ -1,0 +1,58 @@
+{
+  "generatedAt": "2026-08-21T01:51:41.885Z",
+  "totalMatches": 50000,
+  "tierAnalysis": {
+    "VERY_HIGH": {
+      "accuracy": 51.8,
+      "total": 29568,
+      "correct": 15329,
+      "avgEdge": 4.5
+    },
+    "HIGH": {
+      "accuracy": 48.7,
+      "total": 13938,
+      "correct": 6789,
+      "avgEdge": 3
+    },
+    "MEDIUM": {
+      "accuracy": 44.8,
+      "total": 5268,
+      "correct": 2361,
+      "avgEdge": 2.9
+    },
+    "LOW": {
+      "accuracy": 40.8,
+      "total": 1226,
+      "correct": 500,
+      "avgEdge": 0.4
+    }
+  },
+  "winningPatterns": [
+    {
+      "patterns": "awayMomentum+h2hDominant+homeMomentum+leagueEdge",
+      "accuracy": 50.7,
+      "total": 17278
+    },
+    {
+      "patterns": "awayMomentum+homeMomentum+leagueEdge",
+      "accuracy": 50.5,
+      "total": 28586
+    },
+    {
+      "patterns": "awayMomentum+h2hDominant+homeMomentum",
+      "accuracy": 44.6,
+      "total": 1582
+    },
+    {
+      "patterns": "awayMomentum+homeMomentum",
+      "accuracy": 42.2,
+      "total": 2554
+    }
+  ],
+  "goldenRule": {
+    "minConfidence": 0.6,
+    "minEdge": 0.03,
+    "minPatterns": 2,
+    "expectedAccuracy": 51.8
+  }
+}

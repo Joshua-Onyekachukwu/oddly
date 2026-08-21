@@ -1,0 +1,38 @@
+{
+  "generatedAt": "2026-08-21T01:56:26.831Z",
+  "totalMatches": 3002,
+  "predicted": 220,
+  "skipped": 2782,
+  "overallAccuracy": 75.5,
+  "tierAnalysis": {
+    "ELITE": {
+      "accuracy": 78.1,
+      "total": 151,
+      "correct": 118
+    },
+    "VERY_HIGH": {
+      "accuracy": 69.6,
+      "total": 69,
+      "correct": 48
+    },
+    "HIGH": {
+      "accuracy": null,
+      "total": 0,
+      "correct": 0
+    },
+    "SKIPPED": {
+      "accuracy": null,
+      "total": 2782,
+      "correct": 0
+    }
+  },
+  "goldenRule": {
+    "eloDiffMin": 200,
+    "homeWinRateMin": 0.6,
+    "awayWinRateMax": 0.35,
+    "minStreak": 3,
+    "minH2HWinRate": 0.7,
+    "predictionRate": 7.3,
+    "expectedAccuracy": 75.5
+  }
+}
