@@ -1,6 +1,4 @@
 {
-  "installCommand": "rm -rf node_modules .next && npm install",
-  "buildCommand": "next build",
   "crons": [
     {
       "path": "/api/v1/cron/daily",
