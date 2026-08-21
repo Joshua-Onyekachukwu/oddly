@@ -274,19 +274,23 @@ export default function PredictionsPage() {
             return (
               <div
                 key={fixtureId}
+                role="article"
+                aria-label={`${pick.home_team} vs ${pick.away_team} — ${getMarketLabel(bestPick.market)} ${getSelectionLabel(bestPick.selection)} ${Math.round(bestPick.model_probability * 100)}% confidence`}
                 className="rounded-[16px] bg-white border border-gray-100 overflow-hidden transition-all duration-200 ease-out hover:border-gray-200 hover:shadow-[0_4px_20px_rgba(0,0,0,0.04)]"
                 style={{ animationDelay: `${idx * 40}ms` }}
               >
                 {/* Match Header — Clickable */}
                 <button
                   onClick={() => setExpandedMatch(isExpanded ? null : fixtureId)}
-                  className="w-full text-left p-[16px] flex items-center gap-[12px] active:scale-[0.99] transition-transform duration-100"
+                  aria-expanded={isExpanded}
+                  aria-label={`Toggle details for ${pick.home_team} vs ${pick.away_team}`}
+                  className="w-full text-left p-[16px] flex items-center gap-[12px] active:scale-[0.99] transition-transform duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] focus-visible:ring-inset rounded-[16px]"
                 >
                   {/* League + Time */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-[8px] mb-[10px]">
                       {pick.league_logo && (
-                        <img src={pick.league_logo} alt="" className="w-[16px] h-[16px] object-contain flex-none" />
+                        <img src={pick.league_logo} alt={pick.league} className="w-[16px] h-[16px] object-contain flex-none" />
                       )}
                       <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">{pick.league}</span>
                       <span className="text-[10px] text-gray-300">•</span>
@@ -301,7 +305,7 @@ export default function PredictionsPage() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-[10px] flex-1 min-w-0">
                         {pick.home_logo && (
-                          <img src={pick.home_logo} alt="" className="w-[24px] h-[24px] object-contain flex-none" />
+                          <img src={pick.home_logo} alt={pick.home_team} className="w-[24px] h-[24px] object-contain flex-none" />
                         )}
                         <span className="text-[14px] font-semibold text-[#0A0F1C] truncate">{pick.home_team}</span>
                       </div>
@@ -309,7 +313,7 @@ export default function PredictionsPage() {
                       <div className="flex items-center gap-[10px] flex-1 min-w-0 justify-end">
                         <span className="text-[14px] font-semibold text-[#0A0F1C] truncate text-right">{pick.away_team}</span>
                         {pick.away_logo && (
-                          <img src={pick.away_logo} alt="" className="w-[24px] h-[24px] object-contain flex-none" />
+                          <img src={pick.away_logo} alt={pick.away_team} className="w-[24px] h-[24px] object-contain flex-none" />
                         )}
                       </div>
                     </div>

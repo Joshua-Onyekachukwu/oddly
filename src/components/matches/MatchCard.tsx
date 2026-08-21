@@ -162,7 +162,11 @@ export function MatchCard({ fixture, onClick }: MatchCardProps) {
   return (
     <div
       onClick={handleClick}
-      className="bg-white rounded-[14px] border border-gray-100 hover:border-gray-200 hover:shadow-[0_4px_20px_rgba(0,0,0,0.04)] transition-all duration-300 cursor-pointer group overflow-hidden"
+      role="article"
+      aria-label={`${fixture.home_team_name || 'Home'} vs ${fixture.away_team_name || 'Away'} — ${strongest ? `${strongest.selection} ${Math.round(strongest.model_probability * 100)}%` : 'Prediction pending'}`}
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick(); } }}
+      className="bg-white rounded-[14px] border border-gray-100 hover:border-gray-200 hover:shadow-[0_4px_20px_rgba(0,0,0,0.04)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] focus-visible:ring-inset transition-all duration-300 cursor-pointer group overflow-hidden"
     >
       {/* Header: League + Kickoff */}
       <div className="px-[14px] pt-[12px] pb-[8px] flex items-center justify-between">
@@ -170,7 +174,7 @@ export function MatchCard({ fixture, onClick }: MatchCardProps) {
           {fixture.league_logo ? (
             <img
               src={fixture.league_logo}
-              alt=""
+              alt={fixture.leagues?.name || 'League'}
               className="w-[14px] h-[14px] object-contain flex-none"
               onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
             />
@@ -258,17 +262,17 @@ export function MatchCard({ fixture, onClick }: MatchCardProps) {
         {allPreds.length > 1 && (
           <div className="flex items-center gap-[6px] mt-[6px] flex-wrap">
             {under35 && (
-              <span className="text-[9px] font-medium text-gray-400 bg-gray-50 px-[5px] py-[2px] rounded">
+              <span className="text-[9px] font-medium text-gray-400 bg-gray-50 px-[5px] py-[2px] rounded" title="Under 3.5 goals — fewer than 4 goals in the match">
                 U3.5 {Math.round(under35.model_probability * 100)}%
               </span>
             )}
             {btts && (
-              <span className="text-[9px] font-medium text-gray-400 bg-gray-50 px-[5px] py-[2px] rounded">
+              <span className="text-[9px] font-medium text-gray-400 bg-gray-50 px-[5px] py-[2px] rounded" title="Both Teams To Score — both teams score at least 1 goal">
                 BTTS {Math.round(btts.model_probability * 100)}%
               </span>
             )}
             {overUnder && (
-              <span className="text-[9px] font-medium text-gray-400 bg-gray-50 px-[5px] py-[2px] rounded">
+              <span className="text-[9px] font-medium text-gray-400 bg-gray-50 px-[5px] py-[2px] rounded" title="Over 2.5 goals — more than 2 goals in the match">
                 O2.5 {Math.round(overUnder.model_probability * 100)}%
               </span>
             )}
