@@ -1,4 +1,5 @@
 {
+  "buildCommand": "rm -rf .next && next build",
   "crons": [
     {
       "path": "/api/v1/cron/daily",
