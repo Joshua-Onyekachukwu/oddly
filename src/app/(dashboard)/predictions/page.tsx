@@ -173,15 +173,15 @@ export default function PredictionsPage() {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-[10px] mb-[20px]">
         {[
-          { label: "ELITE", value: stats.elite, color: "from-[#F59E0B] to-[#D97706]", icon: "👑", desc: "70%+ confidence" },
-          { label: "HIGH", value: stats.high, color: "from-[#10B981] to-[#059669]", icon: "✅", desc: "60%+ confidence" },
-          { label: "TOTAL", value: stats.total, color: "from-[#6366F1] to-[#4F46E5]", icon: "📊", desc: "all predictions" },
+          { label: "ELITE", value: stats.elite, color: "from-[#F59E0B] to-[#D97706]", icon: "ri-vip-crown-fill", desc: "70%+ confidence" },
+          { label: "HIGH", value: stats.high, color: "from-[#10B981] to-[#059669]", icon: "ri-check-double-line", desc: "60%+ confidence" },
+          { label: "TOTAL", value: stats.total, color: "from-[#6366F1] to-[#4F46E5]", icon: "ri-bar-chart-grouped-line", desc: "all predictions" },
         ].map((stat) => (
-          <div key={stat.label} className="relative overflow-hidden rounded-[14px] bg-white border border-gray-100 p-[16px] group hover:border-gray-200 transition-all duration-200">
+          <div key={stat.label} className="relative overflow-hidden rounded-[14px] bg-white border border-gray-100 p-[16px] group hover:border-gray-200 transition-[border-color,box-shadow] duration-200 ease-out">
             <div className={`absolute top-0 right-0 w-[80px] h-[80px] bg-gradient-to-br ${stat.color} opacity-[0.06] rounded-bl-[40px] group-hover:opacity-[0.1] transition-opacity`} />
             <div className="relative">
               <div className="flex items-center gap-[6px] mb-[6px]">
-                <span className="text-[14px]">{stat.icon}</span>
+                <i className={`${stat.icon} text-[14px]`} />
                 <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">{stat.label}</span>
               </div>
               <span className="text-[28px] font-bold text-[#0A0F1C] font-mono tabular-nums block">
@@ -208,7 +208,7 @@ export default function PredictionsPage() {
                 : "text-gray-400 hover:text-gray-600 hover:bg-white/50"
             }`}
           >
-            {t === "ELITE" ? "👑 " : t === "HIGH" ? "✅ " : ""}{t}
+            {t === "ELITE" ? <i className="ri-vip-crown-fill text-[10px]" /> : t === "HIGH" ? <i className="ri-check-double-line text-[10px]" /> : null}{" "}{t}
           </button>
         ))}
       </div>
@@ -241,7 +241,7 @@ export default function PredictionsPage() {
                 key={fixtureId}
                 role="article"
                 aria-label={`${pick.home_team} vs ${pick.away_team} — ${getMarketLabel(bestPick.market)} ${getSelectionLabel(bestPick.selection)} ${Math.round(bestPick.model_probability * 100)}% confidence`}
-                className={`rounded-[16px] bg-white border overflow-hidden transition-all duration-200 ease-out hover:shadow-[0_4px_20px_rgba(0,0,0,0.04)] ${
+                className={`rounded-[16px] bg-white border overflow-hidden transition-[border-color,box-shadow] duration-200 ease-out hover:shadow-[0_4px_20px_rgba(0,0,0,0.04)] ${
                   bestPick.confidence_tier === "ELITE" ? "border-[#F59E0B]/20" : "border-gray-100 hover:border-gray-200"
                 }`}
                 style={{ animationDelay: `${idx * 40}ms` }}

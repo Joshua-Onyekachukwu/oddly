@@ -167,7 +167,7 @@ export function MatchCard({ fixture, onClick }: MatchCardProps) {
       aria-label={`${fixture.home_team_name || 'Home'} vs ${fixture.away_team_name || 'Away'} — ${strongest ? `${strongest.selection} ${Math.round(strongest.model_probability * 100)}%` : 'Prediction pending'}`}
       tabIndex={0}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick(); } }}
-      className="bg-white rounded-[14px] border border-gray-100 hover:border-gray-200 hover:shadow-[0_4px_20px_rgba(0,0,0,0.04)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] focus-visible:ring-inset transition-all duration-300 cursor-pointer group overflow-hidden"
+      className="bg-white rounded-[14px] border border-gray-100 hover:border-gray-200 hover:shadow-[0_4px_20px_rgba(0,0,0,0.04)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] focus-visible:ring-inset transition-[border-color,box-shadow,transform] duration-200 ease-out cursor-pointer group overflow-hidden active:scale-[0.98]"
     >
       {/* Header: League + Kickoff */}
       <div className="px-[14px] pt-[12px] pb-[8px] flex items-center justify-between pointer-events-none">
