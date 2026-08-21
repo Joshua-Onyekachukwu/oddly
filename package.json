@@ -27,6 +27,8 @@
     "daily-settle": "node worker/daily-loop.js settle",
     "daily-learn": "node worker/daily-loop.js learn",
     "weekly-retrain": "node worker/weekly-retrain.js",
+    "collect-statsbomb": "node worker/collect-statsbomb.js",
+    "calculate-player-impact": "node worker/calculate-player-impact.js",
     "pipeline": "echo 'Running full pipeline...' && npm run sync:fixtures && npm run self-learn"
   },
   "dependencies": {
