@@ -217,8 +217,7 @@ export default function ModelHealthPage() {
           description="Model health metrics will appear once predictions have been evaluated."
         />
       ) : (
-        <div className="space-y-[12px]">
-          {Object.entries(byModel).map(([version, periods]) => {
+        <div className="space-y-[12px]">            {Object.entries(byModel).map(([version, periods]) => {
             const total = periods.reduce((a, p) => a + (p.total_predictions || 0), 0);
             const correct = periods.reduce((a, p) => a + (p.correct_predictions || 0), 0);
             const acc = total > 0 ? ((correct / total) * 100).toFixed(1) : "0.0";
@@ -238,7 +237,7 @@ export default function ModelHealthPage() {
                 : "critical";
 
             return (
-              <Card key={version}>
+              <Card key={version} hover>
                 <div className="flex items-center justify-between mb-[12px]">
                   <div className="flex items-center gap-[8px]">
                     <h3 className="text-[14px] font-semibold text-[#0A0F1C]">{version}</h3>
