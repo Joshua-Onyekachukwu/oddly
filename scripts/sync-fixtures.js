@@ -48,15 +48,35 @@ const ODDS_API_KEY = env.THE_ODDS_API_KEY;
 
 // Sports to sync
 const SPORTS = [
+  // Top 5 European Leagues
   { key: "soccer_epl", league: "Premier League", country: "England" },
   { key: "soccer_spain_la_liga", league: "La Liga", country: "Spain" },
   { key: "soccer_germany_bundesliga", league: "Bundesliga", country: "Germany" },
   { key: "soccer_italy_serie_a", league: "Serie A", country: "Italy" },
   { key: "soccer_france_ligue_one", league: "Ligue 1", country: "France" },
+  // Second Divisions
+  { key: "soccer_efl_champ", league: "Championship", country: "England" },
+  { key: "soccer_germany_bundesliga2", league: "Bundesliga 2", country: "Germany" },
+  { key: "soccer_italy_serie_b", league: "Serie B", country: "Italy" },
+  { key: "soccer_france_ligue_two", league: "Ligue 2", country: "France" },
+  { key: "soccer_spain_segunda_division", league: "La Liga 2", country: "Spain" },
+  // European Leagues
   { key: "soccer_netherlands_eredivisie", league: "Eredivisie", country: "Netherlands" },
   { key: "soccer_portugal_primeira_liga", league: "Primeira Liga", country: "Portugal" },
+  { key: "soccer_turkey_super_league", league: "Super Lig", country: "Turkey" },
+  { key: "soccer_belgium_first_div", league: "Belgian First Division", country: "Belgium" },
+  { key: "soccer_spl", league: "Scottish Premiership", country: "Scotland" },
+  { key: "soccer_switzerland_superleague", league: "Swiss Super League", country: "Switzerland" },
+  { key: "soccer_austria_bundesliga", league: "Austrian Bundesliga", country: "Austria" },
+  // Americas
   { key: "soccer_brazil_campeonato", league: "Brasileirão", country: "Brazil" },
   { key: "soccer_usa_mls", league: "MLS", country: "USA" },
+  { key: "soccer_argentina_primera_division", league: "Argentine Primera", country: "Argentina" },
+  // Asia & Other
+  { key: "soccer_japan_j_league", league: "J League", country: "Japan" },
+  { key: "soccer_korea_kleague1", league: "K League 1", country: "South Korea" },
+  { key: "soccer_china_superleague", league: "Chinese Super League", country: "China" },
+  // Competitions
   { key: "soccer_uefa_champs_league", league: "Champions League", country: "Europe" },
 ];
 
