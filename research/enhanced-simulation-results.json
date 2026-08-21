@@ -1,0 +1,264 @@
+{
+  "timestamp": "2026-08-21T07:38:14.225Z",
+  "matches": 5253,
+  "accuracy": 79,
+  "smartAccuracy": 83.1,
+  "markets": {
+    "1X2_Home": {
+      "total": 2439,
+      "correct": 1053
+    },
+    "1X2_Draw": {
+      "total": 2439,
+      "correct": 597
+    },
+    "1X2_Away": {
+      "total": 2439,
+      "correct": 789
+    },
+    "OU5_Over": {
+      "total": 2439,
+      "correct": 0
+    },
+    "OU5_Under": {
+      "total": 2439,
+      "correct": 0
+    },
+    "OU15_Over": {
+      "total": 2439,
+      "correct": 1898
+    },
+    "OU15_Under": {
+      "total": 2439,
+      "correct": 541
+    },
+    "OU25_Over": {
+      "total": 2439,
+      "correct": 1330
+    },
+    "OU25_Under": {
+      "total": 2439,
+      "correct": 1109
+    },
+    "OU35_Over": {
+      "total": 2439,
+      "correct": 768
+    },
+    "OU35_Under": {
+      "total": 2439,
+      "correct": 1671
+    },
+    "OU45_Over": {
+      "total": 2439,
+      "correct": 384
+    },
+    "OU45_Under": {
+      "total": 2439,
+      "correct": 2055
+    },
+    "BTTS_Yes": {
+      "total": 2439,
+      "correct": 1361
+    },
+    "BTTS_No": {
+      "total": 2439,
+      "correct": 1078
+    },
+    "DC_HomeOrDraw": {
+      "total": 2439,
+      "correct": 1650
+    },
+    "DC_DrawOrAway": {
+      "total": 2439,
+      "correct": 1386
+    },
+    "DC_HomeOrAway": {
+      "total": 2439,
+      "correct": 1842
+    }
+  },
+  "confidence": {
+    "90-100%": {
+      "total": 1888,
+      "correct": 1548
+    },
+    "80-90%": {
+      "total": 449,
+      "correct": 379
+    },
+    "120-130%": {
+      "total": 10,
+      "correct": 0
+    },
+    "110-120%": {
+      "total": 29,
+      "correct": 0
+    },
+    "140-150%": {
+      "total": 4,
+      "correct": 0
+    },
+    "100-110%": {
+      "total": 49,
+      "correct": 0
+    },
+    "160-170%": {
+      "total": 2,
+      "correct": 0
+    },
+    "150-160%": {
+      "total": 3,
+      "correct": 0
+    },
+    "130-140%": {
+      "total": 5,
+      "correct": 0
+    }
+  },
+  "learningCurve": [
+    {
+      "match": 100,
+      "accuracy": 76.1,
+      "smartAccuracy": 81.7
+    },
+    {
+      "match": 300,
+      "accuracy": 76.3,
+      "smartAccuracy": 80.5
+    },
+    {
+      "match": 500,
+      "accuracy": 76.6,
+      "smartAccuracy": 81.5
+    },
+    {
+      "match": 600,
+      "accuracy": 76.6,
+      "smartAccuracy": 81.6
+    },
+    {
+      "match": 700,
+      "accuracy": 76.5,
+      "smartAccuracy": 80.9
+    },
+    {
+      "match": 800,
+      "accuracy": 77.1,
+      "smartAccuracy": 81.3
+    },
+    {
+      "match": 900,
+      "accuracy": 77.6,
+      "smartAccuracy": 81.6
+    },
+    {
+      "match": 1000,
+      "accuracy": 78.2,
+      "smartAccuracy": 81.9
+    },
+    {
+      "match": 1100,
+      "accuracy": 78.6,
+      "smartAccuracy": 82.2
+    },
+    {
+      "match": 1200,
+      "accuracy": 78.7,
+      "smartAccuracy": 82.3
+    },
+    {
+      "match": 1500,
+      "accuracy": 78.2,
+      "smartAccuracy": 82.4
+    },
+    {
+      "match": 1700,
+      "accuracy": 77.5,
+      "smartAccuracy": 82.1
+    },
+    {
+      "match": 1800,
+      "accuracy": 77.4,
+      "smartAccuracy": 82
+    },
+    {
+      "match": 2000,
+      "accuracy": 78.1,
+      "smartAccuracy": 82.5
+    },
+    {
+      "match": 2200,
+      "accuracy": 78.3,
+      "smartAccuracy": 82.7
+    },
+    {
+      "match": 2300,
+      "accuracy": 78.3,
+      "smartAccuracy": 82.7
+    },
+    {
+      "match": 2400,
+      "accuracy": 78.6,
+      "smartAccuracy": 82.9
+    },
+    {
+      "match": 2600,
+      "accuracy": 78.7,
+      "smartAccuracy": 83
+    },
+    {
+      "match": 2700,
+      "accuracy": 78.7,
+      "smartAccuracy": 83
+    },
+    {
+      "match": 2800,
+      "accuracy": 78.8,
+      "smartAccuracy": 83
+    },
+    {
+      "match": 2900,
+      "accuracy": 78.8,
+      "smartAccuracy": 82.9
+    },
+    {
+      "match": 3100,
+      "accuracy": 78.9,
+      "smartAccuracy": 83
+    },
+    {
+      "match": 3200,
+      "accuracy": 79.2,
+      "smartAccuracy": 83.2
+    },
+    {
+      "match": 3300,
+      "accuracy": 79,
+      "smartAccuracy": 83.1
+    },
+    {
+      "match": 3400,
+      "accuracy": 78.9,
+      "smartAccuracy": 83.1
+    },
+    {
+      "match": 3415,
+      "accuracy": 79,
+      "smartAccuracy": 83.1
+    }
+  ],
+  "seasons": {
+    "2024": {
+      "total": 528,
+      "correct": 407
+    },
+    "2025": {
+      "total": 1246,
+      "correct": 991
+    },
+    "2026": {
+      "total": 665,
+      "correct": 529
+    }
+  }
+}

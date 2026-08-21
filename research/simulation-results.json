@@ -1,0 +1,1299 @@
+{
+  "timestamp": "2026-08-21T07:36:44.191Z",
+  "totalMatches": 5253,
+  "trainingMatches": 2101,
+  "evaluationMatches": 3152,
+  "results": {
+    "static": {
+      "accuracy": 0.7776015228426396,
+      "total": 3152,
+      "correct": 2451
+    },
+    "periodic": {
+      "accuracy": 0.7776015228426396,
+      "total": 3152,
+      "correct": 2451
+    },
+    "continuous": {
+      "accuracy": 0.7734771573604061,
+      "total": 3152,
+      "correct": 2438
+    }
+  },
+  "markets": {
+    "1X2_Home": {
+      "total": 3152,
+      "correct": 1359
+    },
+    "1X2_Draw": {
+      "total": 3152,
+      "correct": 781
+    },
+    "1X2_Away": {
+      "total": 3152,
+      "correct": 1012
+    },
+    "OU25_Over": {
+      "total": 3152,
+      "correct": 1669
+    },
+    "OU25_Under": {
+      "total": 3152,
+      "correct": 1483
+    },
+    "OU15_Over": {
+      "total": 3152,
+      "correct": 2420
+    },
+    "OU15_Under": {
+      "total": 3152,
+      "correct": 732
+    },
+    "OU35_Over": {
+      "total": 3152,
+      "correct": 966
+    },
+    "OU35_Under": {
+      "total": 3152,
+      "correct": 2186
+    },
+    "BTTS_Yes": {
+      "total": 3152,
+      "correct": 1706
+    },
+    "BTTS_No": {
+      "total": 3152,
+      "correct": 1446
+    },
+    "DC_HomeOrDraw": {
+      "total": 3152,
+      "correct": 2140
+    },
+    "DC_DrawOrAway": {
+      "total": 3152,
+      "correct": 1793
+    },
+    "DC_HomeOrAway": {
+      "total": 3152,
+      "correct": 2371
+    }
+  },
+  "confidence": {
+    "40-50%": {
+      "total": 837,
+      "correct": 657
+    },
+    "30-40%": {
+      "total": 896,
+      "correct": 692
+    },
+    "50-60%": {
+      "total": 461,
+      "correct": 349
+    },
+    "10-20%": {
+      "total": 14,
+      "correct": 13
+    },
+    "20-30%": {
+      "total": 313,
+      "correct": 259
+    },
+    "70-80%": {
+      "total": 151,
+      "correct": 117
+    },
+    "60-70%": {
+      "total": 287,
+      "correct": 213
+    },
+    "90-100%": {
+      "total": 46,
+      "correct": 32
+    },
+    "80-90%": {
+      "total": 104,
+      "correct": 77
+    },
+    "100-110%": {
+      "total": 20,
+      "correct": 11
+    },
+    "130-140%": {
+      "total": 3,
+      "correct": 2
+    },
+    "120-130%": {
+      "total": 6,
+      "correct": 5
+    },
+    "140-150%": {
+      "total": 5,
+      "correct": 4
+    },
+    "110-120%": {
+      "total": 9,
+      "correct": 7
+    }
+  },
+  "learningCurve": {
+    "static": [
+      {
+        "match": 50,
+        "accuracy": 82,
+        "total": 50,
+        "correct": 41
+      },
+      {
+        "match": 100,
+        "accuracy": 80,
+        "total": 100,
+        "correct": 80
+      },
+      {
+        "match": 150,
+        "accuracy": 78.7,
+        "total": 150,
+        "correct": 118
+      },
+      {
+        "match": 200,
+        "accuracy": 79,
+        "total": 200,
+        "correct": 158
+      },
+      {
+        "match": 250,
+        "accuracy": 78.8,
+        "total": 250,
+        "correct": 197
+      },
+      {
+        "match": 300,
+        "accuracy": 78.3,
+        "total": 300,
+        "correct": 235
+      },
+      {
+        "match": 350,
+        "accuracy": 77.1,
+        "total": 350,
+        "correct": 270
+      },
+      {
+        "match": 400,
+        "accuracy": 76.8,
+        "total": 400,
+        "correct": 307
+      },
+      {
+        "match": 450,
+        "accuracy": 77.1,
+        "total": 450,
+        "correct": 347
+      },
+      {
+        "match": 500,
+        "accuracy": 77,
+        "total": 500,
+        "correct": 385
+      },
+      {
+        "match": 550,
+        "accuracy": 76.9,
+        "total": 550,
+        "correct": 423
+      },
+      {
+        "match": 600,
+        "accuracy": 77.2,
+        "total": 600,
+        "correct": 463
+      },
+      {
+        "match": 650,
+        "accuracy": 77.5,
+        "total": 650,
+        "correct": 504
+      },
+      {
+        "match": 700,
+        "accuracy": 78,
+        "total": 700,
+        "correct": 546
+      },
+      {
+        "match": 750,
+        "accuracy": 77.9,
+        "total": 750,
+        "correct": 584
+      },
+      {
+        "match": 800,
+        "accuracy": 77.8,
+        "total": 800,
+        "correct": 622
+      },
+      {
+        "match": 850,
+        "accuracy": 78.1,
+        "total": 850,
+        "correct": 664
+      },
+      {
+        "match": 900,
+        "accuracy": 77.7,
+        "total": 900,
+        "correct": 699
+      },
+      {
+        "match": 950,
+        "accuracy": 77.4,
+        "total": 950,
+        "correct": 735
+      },
+      {
+        "match": 1000,
+        "accuracy": 77.6,
+        "total": 1000,
+        "correct": 776
+      },
+      {
+        "match": 1050,
+        "accuracy": 77.7,
+        "total": 1050,
+        "correct": 816
+      },
+      {
+        "match": 1100,
+        "accuracy": 77.8,
+        "total": 1100,
+        "correct": 856
+      },
+      {
+        "match": 1150,
+        "accuracy": 77.7,
+        "total": 1150,
+        "correct": 894
+      },
+      {
+        "match": 1200,
+        "accuracy": 77.9,
+        "total": 1200,
+        "correct": 935
+      },
+      {
+        "match": 1250,
+        "accuracy": 77.3,
+        "total": 1250,
+        "correct": 966
+      },
+      {
+        "match": 1300,
+        "accuracy": 77.4,
+        "total": 1300,
+        "correct": 1006
+      },
+      {
+        "match": 1350,
+        "accuracy": 77.9,
+        "total": 1350,
+        "correct": 1052
+      },
+      {
+        "match": 1400,
+        "accuracy": 78.3,
+        "total": 1400,
+        "correct": 1096
+      },
+      {
+        "match": 1450,
+        "accuracy": 78.4,
+        "total": 1450,
+        "correct": 1137
+      },
+      {
+        "match": 1500,
+        "accuracy": 78.7,
+        "total": 1500,
+        "correct": 1181
+      },
+      {
+        "match": 1550,
+        "accuracy": 78.7,
+        "total": 1550,
+        "correct": 1220
+      },
+      {
+        "match": 1600,
+        "accuracy": 78.9,
+        "total": 1600,
+        "correct": 1262
+      },
+      {
+        "match": 1650,
+        "accuracy": 78.7,
+        "total": 1650,
+        "correct": 1299
+      },
+      {
+        "match": 1700,
+        "accuracy": 78.8,
+        "total": 1700,
+        "correct": 1339
+      },
+      {
+        "match": 1750,
+        "accuracy": 78.6,
+        "total": 1750,
+        "correct": 1376
+      },
+      {
+        "match": 1800,
+        "accuracy": 78.4,
+        "total": 1800,
+        "correct": 1412
+      },
+      {
+        "match": 1850,
+        "accuracy": 78.4,
+        "total": 1850,
+        "correct": 1450
+      },
+      {
+        "match": 1900,
+        "accuracy": 78.3,
+        "total": 1900,
+        "correct": 1487
+      },
+      {
+        "match": 1950,
+        "accuracy": 78.1,
+        "total": 1950,
+        "correct": 1523
+      },
+      {
+        "match": 2000,
+        "accuracy": 78.1,
+        "total": 2000,
+        "correct": 1562
+      },
+      {
+        "match": 2050,
+        "accuracy": 78.4,
+        "total": 2050,
+        "correct": 1607
+      },
+      {
+        "match": 2100,
+        "accuracy": 78.3,
+        "total": 2100,
+        "correct": 1645
+      },
+      {
+        "match": 2150,
+        "accuracy": 78.4,
+        "total": 2150,
+        "correct": 1686
+      },
+      {
+        "match": 2200,
+        "accuracy": 78.4,
+        "total": 2200,
+        "correct": 1724
+      },
+      {
+        "match": 2250,
+        "accuracy": 78.4,
+        "total": 2250,
+        "correct": 1763
+      },
+      {
+        "match": 2300,
+        "accuracy": 78.3,
+        "total": 2300,
+        "correct": 1800
+      },
+      {
+        "match": 2350,
+        "accuracy": 78.2,
+        "total": 2350,
+        "correct": 1838
+      },
+      {
+        "match": 2400,
+        "accuracy": 78.1,
+        "total": 2400,
+        "correct": 1874
+      },
+      {
+        "match": 2450,
+        "accuracy": 78,
+        "total": 2450,
+        "correct": 1911
+      },
+      {
+        "match": 2500,
+        "accuracy": 78,
+        "total": 2500,
+        "correct": 1949
+      },
+      {
+        "match": 2550,
+        "accuracy": 77.9,
+        "total": 2550,
+        "correct": 1987
+      },
+      {
+        "match": 2600,
+        "accuracy": 77.9,
+        "total": 2600,
+        "correct": 2026
+      },
+      {
+        "match": 2650,
+        "accuracy": 78,
+        "total": 2650,
+        "correct": 2068
+      },
+      {
+        "match": 2700,
+        "accuracy": 77.7,
+        "total": 2700,
+        "correct": 2099
+      },
+      {
+        "match": 2750,
+        "accuracy": 77.7,
+        "total": 2750,
+        "correct": 2138
+      },
+      {
+        "match": 2800,
+        "accuracy": 77.8,
+        "total": 2800,
+        "correct": 2178
+      },
+      {
+        "match": 2850,
+        "accuracy": 77.8,
+        "total": 2850,
+        "correct": 2217
+      },
+      {
+        "match": 2900,
+        "accuracy": 77.8,
+        "total": 2900,
+        "correct": 2255
+      },
+      {
+        "match": 2950,
+        "accuracy": 77.6,
+        "total": 2950,
+        "correct": 2290
+      },
+      {
+        "match": 3000,
+        "accuracy": 77.7,
+        "total": 3000,
+        "correct": 2332
+      },
+      {
+        "match": 3050,
+        "accuracy": 77.7,
+        "total": 3050,
+        "correct": 2369
+      },
+      {
+        "match": 3100,
+        "accuracy": 77.6,
+        "total": 3100,
+        "correct": 2406
+      },
+      {
+        "match": 3150,
+        "accuracy": 77.8,
+        "total": 3150,
+        "correct": 2450
+      },
+      {
+        "match": 3152,
+        "accuracy": 77.8,
+        "total": 3152,
+        "correct": 2451
+      }
+    ],
+    "periodic": [
+      {
+        "match": 50,
+        "accuracy": 82,
+        "total": 50,
+        "correct": 41
+      },
+      {
+        "match": 100,
+        "accuracy": 80,
+        "total": 100,
+        "correct": 80
+      },
+      {
+        "match": 150,
+        "accuracy": 78.7,
+        "total": 150,
+        "correct": 118
+      },
+      {
+        "match": 200,
+        "accuracy": 79,
+        "total": 200,
+        "correct": 158
+      },
+      {
+        "match": 250,
+        "accuracy": 78.8,
+        "total": 250,
+        "correct": 197
+      },
+      {
+        "match": 300,
+        "accuracy": 78.7,
+        "total": 300,
+        "correct": 236
+      },
+      {
+        "match": 350,
+        "accuracy": 77.4,
+        "total": 350,
+        "correct": 271
+      },
+      {
+        "match": 400,
+        "accuracy": 77,
+        "total": 400,
+        "correct": 308
+      },
+      {
+        "match": 450,
+        "accuracy": 77.3,
+        "total": 450,
+        "correct": 348
+      },
+      {
+        "match": 500,
+        "accuracy": 77.2,
+        "total": 500,
+        "correct": 386
+      },
+      {
+        "match": 550,
+        "accuracy": 77.1,
+        "total": 550,
+        "correct": 424
+      },
+      {
+        "match": 600,
+        "accuracy": 77.5,
+        "total": 600,
+        "correct": 465
+      },
+      {
+        "match": 650,
+        "accuracy": 78,
+        "total": 650,
+        "correct": 507
+      },
+      {
+        "match": 700,
+        "accuracy": 78.4,
+        "total": 700,
+        "correct": 549
+      },
+      {
+        "match": 750,
+        "accuracy": 78.3,
+        "total": 750,
+        "correct": 587
+      },
+      {
+        "match": 800,
+        "accuracy": 78.1,
+        "total": 800,
+        "correct": 625
+      },
+      {
+        "match": 850,
+        "accuracy": 78.4,
+        "total": 850,
+        "correct": 666
+      },
+      {
+        "match": 900,
+        "accuracy": 77.9,
+        "total": 900,
+        "correct": 701
+      },
+      {
+        "match": 950,
+        "accuracy": 77.7,
+        "total": 950,
+        "correct": 738
+      },
+      {
+        "match": 1000,
+        "accuracy": 78,
+        "total": 1000,
+        "correct": 780
+      },
+      {
+        "match": 1050,
+        "accuracy": 77.9,
+        "total": 1050,
+        "correct": 818
+      },
+      {
+        "match": 1100,
+        "accuracy": 78,
+        "total": 1100,
+        "correct": 858
+      },
+      {
+        "match": 1150,
+        "accuracy": 77.9,
+        "total": 1150,
+        "correct": 896
+      },
+      {
+        "match": 1200,
+        "accuracy": 78.1,
+        "total": 1200,
+        "correct": 937
+      },
+      {
+        "match": 1250,
+        "accuracy": 77.6,
+        "total": 1250,
+        "correct": 970
+      },
+      {
+        "match": 1300,
+        "accuracy": 77.7,
+        "total": 1300,
+        "correct": 1010
+      },
+      {
+        "match": 1350,
+        "accuracy": 78.1,
+        "total": 1350,
+        "correct": 1055
+      },
+      {
+        "match": 1400,
+        "accuracy": 78.4,
+        "total": 1400,
+        "correct": 1098
+      },
+      {
+        "match": 1450,
+        "accuracy": 78.6,
+        "total": 1450,
+        "correct": 1139
+      },
+      {
+        "match": 1500,
+        "accuracy": 78.9,
+        "total": 1500,
+        "correct": 1183
+      },
+      {
+        "match": 1550,
+        "accuracy": 79,
+        "total": 1550,
+        "correct": 1224
+      },
+      {
+        "match": 1600,
+        "accuracy": 79.1,
+        "total": 1600,
+        "correct": 1265
+      },
+      {
+        "match": 1650,
+        "accuracy": 79,
+        "total": 1650,
+        "correct": 1304
+      },
+      {
+        "match": 1700,
+        "accuracy": 79.1,
+        "total": 1700,
+        "correct": 1345
+      },
+      {
+        "match": 1750,
+        "accuracy": 78.9,
+        "total": 1750,
+        "correct": 1380
+      },
+      {
+        "match": 1800,
+        "accuracy": 78.7,
+        "total": 1800,
+        "correct": 1416
+      },
+      {
+        "match": 1850,
+        "accuracy": 78.6,
+        "total": 1850,
+        "correct": 1455
+      },
+      {
+        "match": 1900,
+        "accuracy": 78.5,
+        "total": 1900,
+        "correct": 1492
+      },
+      {
+        "match": 1950,
+        "accuracy": 78.3,
+        "total": 1950,
+        "correct": 1527
+      },
+      {
+        "match": 2000,
+        "accuracy": 78.3,
+        "total": 2000,
+        "correct": 1566
+      },
+      {
+        "match": 2050,
+        "accuracy": 78.5,
+        "total": 2050,
+        "correct": 1610
+      },
+      {
+        "match": 2100,
+        "accuracy": 78.6,
+        "total": 2100,
+        "correct": 1650
+      },
+      {
+        "match": 2150,
+        "accuracy": 78.6,
+        "total": 2150,
+        "correct": 1690
+      },
+      {
+        "match": 2200,
+        "accuracy": 78.5,
+        "total": 2200,
+        "correct": 1728
+      },
+      {
+        "match": 2250,
+        "accuracy": 78.5,
+        "total": 2250,
+        "correct": 1767
+      },
+      {
+        "match": 2300,
+        "accuracy": 78.5,
+        "total": 2300,
+        "correct": 1805
+      },
+      {
+        "match": 2350,
+        "accuracy": 78.4,
+        "total": 2350,
+        "correct": 1842
+      },
+      {
+        "match": 2400,
+        "accuracy": 78.2,
+        "total": 2400,
+        "correct": 1877
+      },
+      {
+        "match": 2450,
+        "accuracy": 78.1,
+        "total": 2450,
+        "correct": 1914
+      },
+      {
+        "match": 2500,
+        "accuracy": 78,
+        "total": 2500,
+        "correct": 1951
+      },
+      {
+        "match": 2550,
+        "accuracy": 78,
+        "total": 2550,
+        "correct": 1988
+      },
+      {
+        "match": 2600,
+        "accuracy": 78,
+        "total": 2600,
+        "correct": 2027
+      },
+      {
+        "match": 2650,
+        "accuracy": 78.1,
+        "total": 2650,
+        "correct": 2070
+      },
+      {
+        "match": 2700,
+        "accuracy": 77.9,
+        "total": 2700,
+        "correct": 2102
+      },
+      {
+        "match": 2750,
+        "accuracy": 77.8,
+        "total": 2750,
+        "correct": 2140
+      },
+      {
+        "match": 2800,
+        "accuracy": 77.9,
+        "total": 2800,
+        "correct": 2181
+      },
+      {
+        "match": 2850,
+        "accuracy": 77.8,
+        "total": 2850,
+        "correct": 2217
+      },
+      {
+        "match": 2900,
+        "accuracy": 77.8,
+        "total": 2900,
+        "correct": 2255
+      },
+      {
+        "match": 2950,
+        "accuracy": 77.7,
+        "total": 2950,
+        "correct": 2292
+      },
+      {
+        "match": 3000,
+        "accuracy": 77.8,
+        "total": 3000,
+        "correct": 2335
+      },
+      {
+        "match": 3050,
+        "accuracy": 77.7,
+        "total": 3050,
+        "correct": 2370
+      },
+      {
+        "match": 3100,
+        "accuracy": 77.6,
+        "total": 3100,
+        "correct": 2406
+      },
+      {
+        "match": 3150,
+        "accuracy": 77.8,
+        "total": 3150,
+        "correct": 2450
+      },
+      {
+        "match": 3152,
+        "accuracy": 77.8,
+        "total": 3152,
+        "correct": 2451
+      }
+    ],
+    "continuous": [
+      {
+        "match": 50,
+        "accuracy": 82,
+        "total": 50,
+        "correct": 41
+      },
+      {
+        "match": 100,
+        "accuracy": 79,
+        "total": 100,
+        "correct": 79
+      },
+      {
+        "match": 150,
+        "accuracy": 78,
+        "total": 150,
+        "correct": 117
+      },
+      {
+        "match": 200,
+        "accuracy": 75,
+        "total": 200,
+        "correct": 150
+      },
+      {
+        "match": 250,
+        "accuracy": 74,
+        "total": 250,
+        "correct": 185
+      },
+      {
+        "match": 300,
+        "accuracy": 75.7,
+        "total": 300,
+        "correct": 227
+      },
+      {
+        "match": 350,
+        "accuracy": 75.1,
+        "total": 350,
+        "correct": 263
+      },
+      {
+        "match": 400,
+        "accuracy": 76.5,
+        "total": 400,
+        "correct": 306
+      },
+      {
+        "match": 450,
+        "accuracy": 76.7,
+        "total": 450,
+        "correct": 345
+      },
+      {
+        "match": 500,
+        "accuracy": 76.2,
+        "total": 500,
+        "correct": 381
+      },
+      {
+        "match": 550,
+        "accuracy": 76.5,
+        "total": 550,
+        "correct": 421
+      },
+      {
+        "match": 600,
+        "accuracy": 76.3,
+        "total": 600,
+        "correct": 458
+      },
+      {
+        "match": 650,
+        "accuracy": 77.1,
+        "total": 650,
+        "correct": 501
+      },
+      {
+        "match": 700,
+        "accuracy": 77,
+        "total": 700,
+        "correct": 539
+      },
+      {
+        "match": 750,
+        "accuracy": 76.4,
+        "total": 750,
+        "correct": 573
+      },
+      {
+        "match": 800,
+        "accuracy": 75.9,
+        "total": 800,
+        "correct": 607
+      },
+      {
+        "match": 850,
+        "accuracy": 76,
+        "total": 850,
+        "correct": 646
+      },
+      {
+        "match": 900,
+        "accuracy": 76,
+        "total": 900,
+        "correct": 684
+      },
+      {
+        "match": 950,
+        "accuracy": 76.3,
+        "total": 950,
+        "correct": 725
+      },
+      {
+        "match": 1000,
+        "accuracy": 76.6,
+        "total": 1000,
+        "correct": 766
+      },
+      {
+        "match": 1050,
+        "accuracy": 76.9,
+        "total": 1050,
+        "correct": 807
+      },
+      {
+        "match": 1100,
+        "accuracy": 76.7,
+        "total": 1100,
+        "correct": 844
+      },
+      {
+        "match": 1150,
+        "accuracy": 76.3,
+        "total": 1150,
+        "correct": 878
+      },
+      {
+        "match": 1200,
+        "accuracy": 76.8,
+        "total": 1200,
+        "correct": 922
+      },
+      {
+        "match": 1250,
+        "accuracy": 76.8,
+        "total": 1250,
+        "correct": 960
+      },
+      {
+        "match": 1300,
+        "accuracy": 76.9,
+        "total": 1300,
+        "correct": 1000
+      },
+      {
+        "match": 1350,
+        "accuracy": 77.3,
+        "total": 1350,
+        "correct": 1043
+      },
+      {
+        "match": 1400,
+        "accuracy": 77.3,
+        "total": 1400,
+        "correct": 1082
+      },
+      {
+        "match": 1450,
+        "accuracy": 76.9,
+        "total": 1450,
+        "correct": 1115
+      },
+      {
+        "match": 1500,
+        "accuracy": 77.1,
+        "total": 1500,
+        "correct": 1157
+      },
+      {
+        "match": 1550,
+        "accuracy": 77.3,
+        "total": 1550,
+        "correct": 1198
+      },
+      {
+        "match": 1600,
+        "accuracy": 77.3,
+        "total": 1600,
+        "correct": 1236
+      },
+      {
+        "match": 1650,
+        "accuracy": 77.3,
+        "total": 1650,
+        "correct": 1276
+      },
+      {
+        "match": 1700,
+        "accuracy": 77.4,
+        "total": 1700,
+        "correct": 1315
+      },
+      {
+        "match": 1750,
+        "accuracy": 77,
+        "total": 1750,
+        "correct": 1348
+      },
+      {
+        "match": 1800,
+        "accuracy": 77.3,
+        "total": 1800,
+        "correct": 1391
+      },
+      {
+        "match": 1850,
+        "accuracy": 77.3,
+        "total": 1850,
+        "correct": 1430
+      },
+      {
+        "match": 1900,
+        "accuracy": 77.2,
+        "total": 1900,
+        "correct": 1466
+      },
+      {
+        "match": 1950,
+        "accuracy": 77.2,
+        "total": 1950,
+        "correct": 1505
+      },
+      {
+        "match": 2000,
+        "accuracy": 77,
+        "total": 2000,
+        "correct": 1540
+      },
+      {
+        "match": 2050,
+        "accuracy": 77.2,
+        "total": 2050,
+        "correct": 1582
+      },
+      {
+        "match": 2100,
+        "accuracy": 77.3,
+        "total": 2100,
+        "correct": 1624
+      },
+      {
+        "match": 2150,
+        "accuracy": 77.4,
+        "total": 2150,
+        "correct": 1665
+      },
+      {
+        "match": 2200,
+        "accuracy": 77.3,
+        "total": 2200,
+        "correct": 1701
+      },
+      {
+        "match": 2250,
+        "accuracy": 77.4,
+        "total": 2250,
+        "correct": 1741
+      },
+      {
+        "match": 2300,
+        "accuracy": 77.3,
+        "total": 2300,
+        "correct": 1777
+      },
+      {
+        "match": 2350,
+        "accuracy": 77.2,
+        "total": 2350,
+        "correct": 1815
+      },
+      {
+        "match": 2400,
+        "accuracy": 77.1,
+        "total": 2400,
+        "correct": 1850
+      },
+      {
+        "match": 2450,
+        "accuracy": 76.9,
+        "total": 2450,
+        "correct": 1885
+      },
+      {
+        "match": 2500,
+        "accuracy": 77.1,
+        "total": 2500,
+        "correct": 1927
+      },
+      {
+        "match": 2550,
+        "accuracy": 77,
+        "total": 2550,
+        "correct": 1964
+      },
+      {
+        "match": 2600,
+        "accuracy": 77.1,
+        "total": 2600,
+        "correct": 2005
+      },
+      {
+        "match": 2650,
+        "accuracy": 77.1,
+        "total": 2650,
+        "correct": 2044
+      },
+      {
+        "match": 2700,
+        "accuracy": 77.1,
+        "total": 2700,
+        "correct": 2081
+      },
+      {
+        "match": 2750,
+        "accuracy": 76.9,
+        "total": 2750,
+        "correct": 2115
+      },
+      {
+        "match": 2800,
+        "accuracy": 77.1,
+        "total": 2800,
+        "correct": 2158
+      },
+      {
+        "match": 2850,
+        "accuracy": 77.1,
+        "total": 2850,
+        "correct": 2198
+      },
+      {
+        "match": 2900,
+        "accuracy": 77.3,
+        "total": 2900,
+        "correct": 2241
+      },
+      {
+        "match": 2950,
+        "accuracy": 77.2,
+        "total": 2950,
+        "correct": 2276
+      },
+      {
+        "match": 3000,
+        "accuracy": 77.3,
+        "total": 3000,
+        "correct": 2319
+      },
+      {
+        "match": 3050,
+        "accuracy": 77.2,
+        "total": 3050,
+        "correct": 2355
+      },
+      {
+        "match": 3100,
+        "accuracy": 77.2,
+        "total": 3100,
+        "correct": 2394
+      },
+      {
+        "match": 3150,
+        "accuracy": 77.4,
+        "total": 3150,
+        "correct": 2437
+      },
+      {
+        "match": 3152,
+        "accuracy": 77.3,
+        "total": 3152,
+        "correct": 2438
+      }
+    ]
+  }
+}
