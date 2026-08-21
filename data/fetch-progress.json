@@ -1,0 +1,114 @@
+{
+  "ELC-2023": {
+    "done": true,
+    "stored": 0,
+    "dupes": 557,
+    "fetched": 557,
+    "ts": "2026-08-21T12:26:09.581Z"
+  },
+  "ELC-2024": {
+    "done": true,
+    "stored": 0,
+    "dupes": 557,
+    "fetched": 557,
+    "ts": "2026-08-21T12:28:11.538Z"
+  },
+  "ELC-2025": {
+    "done": true,
+    "stored": 0,
+    "dupes": 557,
+    "fetched": 557,
+    "ts": "2026-08-21T12:30:13.073Z"
+  },
+  "DED-2023": {
+    "done": true,
+    "stored": 0,
+    "dupes": 306,
+    "fetched": 306,
+    "ts": "2026-08-21T12:31:30.463Z"
+  },
+  "DED-2024": {
+    "done": true,
+    "stored": 0,
+    "dupes": 306,
+    "fetched": 306,
+    "ts": "2026-08-21T12:32:43.981Z"
+  },
+  "DED-2025": {
+    "done": true,
+    "stored": 0,
+    "dupes": 306,
+    "fetched": 306,
+    "ts": "2026-08-21T12:33:51.011Z"
+  },
+  "PPL-2023": {
+    "done": true,
+    "stored": 0,
+    "dupes": 306,
+    "fetched": 306,
+    "ts": "2026-08-21T12:35:02.979Z"
+  },
+  "PPL-2024": {
+    "done": true,
+    "stored": 0,
+    "dupes": 306,
+    "fetched": 306,
+    "ts": "2026-08-21T12:36:20.040Z"
+  },
+  "PPL-2025": {
+    "done": true,
+    "stored": 0,
+    "dupes": 306,
+    "fetched": 306,
+    "ts": "2026-08-21T12:37:29.330Z"
+  },
+  "CL-2023": {
+    "done": true,
+    "stored": 0,
+    "dupes": 125,
+    "fetched": 125,
+    "ts": "2026-08-21T12:38:10.000Z"
+  },
+  "CL-2024": {
+    "done": true,
+    "stored": 0,
+    "dupes": 189,
+    "fetched": 189,
+    "ts": "2026-08-21T12:38:57.201Z"
+  },
+  "CL-2025": {
+    "done": true,
+    "stored": 0,
+    "dupes": 189,
+    "fetched": 189,
+    "ts": "2026-08-21T12:39:47.360Z"
+  },
+  "PL-2023": {
+    "done": true,
+    "stored": 0,
+    "dupes": 380,
+    "fetched": 380,
+    "ts": "2026-08-21T12:41:12.681Z"
+  },
+  "PL-2024": {
+    "done": true,
+    "stored": 0,
+    "dupes": 380,
+    "fetched": 380,
+    "ts": "2026-08-21T12:42:36.854Z"
+  },
+  "PL-2025": {
+    "done": true,
+    "stored": 0,
+    "dupes": 380,
+    "fetched": 380,
+    "ts": "2026-08-21T12:43:57.977Z"
+  },
+  "PD-2023": {
+    "done": true,
+    "stored": 0,
+    "dupes": 380,
+    "fetched": 380,
+    "ts": "2026-08-21T12:45:23.660Z"
+  }
+}
