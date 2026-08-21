@@ -97,6 +97,7 @@ export default function RolloverPage() {
       .from("recommendations")
       .select("*")
       .eq("is_recommended", true)
+      .in("confidence_tier", ["high", "very_high"] as any)
       .order("edge", { ascending: false })
       .limit(10);
 
