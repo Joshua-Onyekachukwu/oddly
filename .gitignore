@@ -47,3 +47,6 @@ Trezo/
 Thumbs.db
 Desktop.ini
 .freebuff/
+
+.vercel
+.env*
