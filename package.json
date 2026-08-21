@@ -33,6 +33,9 @@
     "fetch-logos:dry": "node scripts/fetch-logos-v2.js --dry-run",
     "collect-injuries": "node scripts/collect-injuries.js",
     "train-xgboost": "python scripts/train-xgboost.py",
+    "predict:markets": "node worker/market-models.js",
+    "collect:xg": "node scripts/collect-statsbomb-xg.js",
+    "collect:injuries": "node scripts/collect-injuries-v2.js",
     "pipeline": "echo 'Running full pipeline...' && npm run sync:fixtures && npm run self-learn"
   },
   "dependencies": {
