@@ -49,10 +49,18 @@ export async function POST(request: NextRequest) {
       process.env.NEXT_PUBLIC_APP_URL ||
       "http://localhost:3000";
 
-    const portalSession = await createPortalSession(
-      profile.stripe_customer_id,
-      `${origin}/settings`
-    );
+    let portalSession: { url: string };
+    try {
+      portalSession = await createPortalSession(
+        profile.stripe_customer_id,
+        `${origin}/settings`
+      );
+    } catch (err) {
+      return NextResponse.json(
+        { error: "Stripe is not configured yet" },
+        { status: 503 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
