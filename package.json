@@ -19,7 +19,9 @@
     "compute:features": "node scripts/compute-features.js",
     "backtest": "node scripts/backtest-models.js",
     "simulate": "node scripts/run-simulation.js",
-    "pipeline": "echo 'Running full pipeline...' && npm run sync:fixtures && npm run sync:historical && npm run compute:features && npm run backtest"
+    "self-learn": "node scripts/self-learning.js",
+    "backfill": "node scripts/backfill-historical.js",
+    "pipeline": "echo 'Running full pipeline...' && npm run sync:fixtures && npm run self-learn"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",
