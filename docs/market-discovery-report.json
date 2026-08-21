@@ -1,0 +1,102 @@
+{
+  "date": "2026-08-21T03:28:11.437Z",
+  "totalMatches": 1000,
+  "bestMarketSelected": 1000,
+  "overallAccuracy": 0.71,
+  "marketRanking": [
+    {
+      "market": "ht_under_25",
+      "name": "HT Under 2.5",
+      "accuracy": 1,
+      "total": 128,
+      "avgConfidence": 0.9283498389307541
+    },
+    {
+      "market": "over_05",
+      "name": "Over 0.5 Goals",
+      "accuracy": 0.925,
+      "total": 600,
+      "avgConfidence": 0.9495236522548968
+    },
+    {
+      "market": "over_45",
+      "name": "Over 4.5 Goals",
+      "accuracy": 0.15555555555555556,
+      "total": 45,
+      "avgConfidence": 0.9625173102266881
+    },
+    {
+      "market": "home_over_25",
+      "name": "Home Team Over 2.5",
+      "accuracy": 0.13114754098360656,
+      "total": 122,
+      "avgConfidence": 0.9539252190440877
+    },
+    {
+      "market": "away_over_25",
+      "name": "Away Team Over 2.5",
+      "accuracy": 0.0380952380952381,
+      "total": 105,
+      "avgConfidence": 0.952892664516972
+    }
+  ],
+  "confidenceBuckets": [
+    {
+      "confidence": 50,
+      "accuracy": null,
+      "total": 0
+    },
+    {
+      "confidence": 55,
+      "accuracy": null,
+      "total": 0
+    },
+    {
+      "confidence": 60,
+      "accuracy": null,
+      "total": 0
+    },
+    {
+      "confidence": 65,
+      "accuracy": null,
+      "total": 0
+    },
+    {
+      "confidence": 70,
+      "accuracy": null,
+      "total": 0
+    },
+    {
+      "confidence": 75,
+      "accuracy": null,
+      "total": 0
+    },
+    {
+      "confidence": 80,
+      "accuracy": null,
+      "total": 0
+    },
+    {
+      "confidence": 85,
+      "accuracy": null,
+      "total": 0
+    },
+    {
+      "confidence": 90,
+      "accuracy": 0.7518382352941176,
+      "total": 544
+    },
+    {
+      "confidence": 95,
+      "accuracy": 0.6600877192982456,
+      "total": 456
+    },
+    {
+      "confidence": 100,
+      "accuracy": null,
+      "total": 0
+    }
+  ],
+  "highConfidenceAccuracy": 0.71,
+  "lowConfidenceAccuracy": 0
+}
