@@ -1,0 +1,187 @@
+{
+  "generatedAt": "2026-08-21T04:02:12.746Z",
+  "totalMatches": 5253,
+  "trainSize": 1000,
+  "testSize": 4253,
+  "seasons": [
+    "2023/2024",
+    "2024/2025",
+    "2025/2026"
+  ],
+  "experiments": {
+    "static": {
+      "accuracy": 0.9278156595344462,
+      "predictions": 4253,
+      "highConfCount": 4253,
+      "highConfAccuracy": 0.9278156595344462
+    },
+    "periodic": {
+      "accuracy": 0.9235833529273454,
+      "predictions": 4253,
+      "retrainInterval": 500
+    },
+    "continuous": {
+      "accuracy": 0.9231130966376675,
+      "predictions": 4253,
+      "learningWindow": 50
+    }
+  },
+  "marketReliability": [
+    {
+      "market": "under_3.5",
+      "accuracy": 1,
+      "total": 1,
+      "correct": 1
+    },
+    {
+      "market": "over_0.5",
+      "accuracy": 0.9396719488462608,
+      "total": 3597,
+      "correct": 3380
+    },
+    {
+      "market": "dc_1X",
+      "accuracy": 0.9012345679012346,
+      "total": 162,
+      "correct": 146
+    },
+    {
+      "market": "under_4.5",
+      "accuracy": 0.8888888888888888,
+      "total": 234,
+      "correct": 208
+    },
+    {
+      "market": "over_1.5",
+      "accuracy": 0.8146718146718147,
+      "total": 259,
+      "correct": 211
+    }
+  ],
+  "learningCurve": [
+    {
+      "matches": 100,
+      "static": 0.87,
+      "periodic": 0.88,
+      "continuous": 0.87
+    },
+    {
+      "matches": 250,
+      "static": 0.916,
+      "periodic": 0.916,
+      "continuous": 0.916
+    },
+    {
+      "matches": 500,
+      "static": 0.926,
+      "periodic": 0.928,
+      "continuous": 0.93
+    },
+    {
+      "matches": 750,
+      "static": 0.9346666666666666,
+      "periodic": 0.936,
+      "continuous": 0.9373333333333334
+    },
+    {
+      "matches": 1000,
+      "static": 0.929,
+      "periodic": 0.93,
+      "continuous": 0.931
+    },
+    {
+      "matches": 1500,
+      "static": 0.9306666666666666,
+      "periodic": 0.9306666666666666,
+      "continuous": 0.9313333333333333
+    },
+    {
+      "matches": 2000,
+      "static": 0.9285,
+      "periodic": 0.926,
+      "continuous": 0.9265
+    },
+    {
+      "matches": 2500,
+      "static": 0.9296,
+      "periodic": 0.9256,
+      "continuous": 0.9256
+    },
+    {
+      "matches": 3000,
+      "static": 0.9273333333333333,
+      "periodic": 0.9233333333333333,
+      "continuous": 0.9233333333333333
+    },
+    {
+      "matches": 3500,
+      "static": 0.9277142857142857,
+      "periodic": 0.9231428571428572,
+      "continuous": 0.9228571428571428
+    },
+    {
+      "matches": 4000,
+      "static": 0.927,
+      "periodic": 0.923,
+      "continuous": 0.9225
+    }
+  ],
+  "bySeason": {
+    "2023/2024": {
+      "accuracy": 0.9375,
+      "total": 752
+    },
+    "2024/2025": {
+      "accuracy": 0.9205714285714286,
+      "total": 1750
+    },
+    "2025/2026": {
+      "accuracy": 0.9194745859508852,
+      "total": 1751
+    }
+  },
+  "byLeague": {
+    "La Liga": {
+      "accuracy": 0.9390642002176278,
+      "total": 919
+    },
+    "Premier League": {
+      "accuracy": 0.9315960912052117,
+      "total": 921
+    },
+    "Bundesliga": {
+      "accuracy": 0.9302949061662198,
+      "total": 746
+    },
+    "Ligue 1": {
+      "accuracy": 0.9139784946236559,
+      "total": 744
+    },
+    "Serie A": {
+      "accuracy": 0.9003250270855905,
+      "total": 923
+    }
+  },
+  "confidenceAnalysis": {
+    "high70": {
+      "count": 4253,
+      "accuracy": 0.9231130966376675
+    },
+    "medium60": {
+      "count": 0,
+      "accuracy": 0
+    },
+    "low60": {
+      "count": 0,
+      "accuracy": 0
+    }
+  },
+  "finalWeights": {
+    "elo": 0.4020100502512563,
+    "form": 0.25125628140703515,
+    "goals": 0.12482412060301504,
+    "market": 0.08321608040200996,
+    "homeAdv": 0.06934673366834172,
+    "streak": 0.06934673366834172
+  }
+}
