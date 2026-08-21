@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { PageHeader, Card, CardHeader, EmptyState } from "@/components/ui";
 
 interface ScoringConfig {
   id: string;
@@ -13,7 +14,6 @@ interface ScoringConfig {
 export default function AdminScoringPage() {
   const [configs, setConfigs] = useState<ScoringConfig[]>([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState<string | null>(null);
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
 
   const fetchConfigs = useCallback(async () => {
@@ -33,49 +33,33 @@ export default function AdminScoringPage() {
     fetchConfigs();
   }, [fetchConfigs]);
 
-  const updateConfig = async (key: string, value: any) => {
-    setSaving(key);
-    const supabase = createClient();
-    await supabase
-      .from("scoring_config")
-      .update({ config_value: value, updated_at: new Date().toISOString() })
-      .eq("config_key", key);
-    setSaving(null);
-    fetchConfigs();
-  };
-
   return (
     <div>
-      <div className="mb-[24px]">
-        <h1 className="font-display text-[24px] md:text-[28px] font-bold text-[#0A0F1C] mb-[4px]">
-          Scoring Configuration
-        </h1>
-        <p className="text-[14px] text-gray-500">
-          Adjust opportunity score weights, thresholds, and confidence tiers.
-        </p>
-      </div>
+      <PageHeader
+        title="Scoring Configuration"
+        description="Adjust opportunity score weights, thresholds, and confidence tiers."
+      />
 
       {loading ? (
-        <div className="space-y-[12px]">
+        <div className="space-y-[6px]">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-[60px] bg-white rounded-[14px] animate-pulse"></div>
+            <div key={i} className="h-[64px] bg-white rounded-[10px] animate-pulse" />
           ))}
         </div>
       ) : configs.length === 0 ? (
-        <div className="text-center py-[48px] bg-white rounded-[16px] border border-gray-100">
-          <p className="text-[13px] text-gray-400">No scoring configuration found.</p>
-        </div>
+        <EmptyState
+          icon="ri-settings-5-line"
+          title="No scoring configuration found"
+          description="Scoring configs will appear here once initialized."
+        />
       ) : (
-        <div className="space-y-[8px]">
+        <div className="space-y-[6px]">
           {configs.map((config) => {
             const isExpanded = expandedKey === config.config_key;
             const value = config.config_value;
 
             return (
-              <div
-                key={config.config_key}
-                className="bg-white rounded-[14px] border border-gray-100 overflow-hidden"
-              >
+              <Card key={config.config_key} padding="none" className="overflow-hidden">
                 <button
                   onClick={() => setExpandedKey(isExpanded ? null : config.config_key)}
                   className="w-full flex items-center justify-between p-[16px] text-left hover:bg-gray-50/50 transition-colors"
@@ -89,18 +73,21 @@ export default function AdminScoringPage() {
                     </span>
                   </div>
                   <i
-                    className={`ri-arrow-down-s-line text-[18px] text-gray-400 transition-transform duration-300 ${
+                    className={`ri-arrow-down-s-line text-[18px] text-gray-400 transition-transform duration-200 ${
                       isExpanded ? "rotate-180" : ""
                     }`}
-                  ></i>
+                  />
                 </button>
 
                 {isExpanded && (
                   <div className="px-[16px] pb-[16px] border-t border-gray-50 pt-[12px]">
                     {typeof value === "object" ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-[8px]">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-[6px]">
                         {Object.entries(value).map(([k, v]) => (
-                          <div key={k} className="flex items-center justify-between p-[10px] bg-gray-50 rounded-[8px]">
+                          <div
+                            key={k}
+                            className="flex items-center justify-between p-[10px] bg-gray-50 rounded-[8px]"
+                          >
                             <span className="text-[12px] text-gray-500">
                               {k.replace(/_/g, " ")}
                             </span>
@@ -112,12 +99,14 @@ export default function AdminScoringPage() {
                       </div>
                     ) : (
                       <div className="p-[10px] bg-gray-50 rounded-[8px]">
-                        <span className="text-[13px] font-mono-data text-[#0A0F1C]">{String(value)}</span>
+                        <span className="text-[13px] font-mono-data text-[#0A0F1C]">
+                          {String(value)}
+                        </span>
                       </div>
                     )}
                   </div>
                 )}
-              </div>
+              </Card>
             );
           })}
         </div>
