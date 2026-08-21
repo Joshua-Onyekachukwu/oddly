@@ -390,6 +390,21 @@ export default function UpcomingMatchesPage() {
           >
             {sortBy === "kickoff" ? "📅 By Time" : "🎯 By Confidence"}
           </button>
+
+          {/* Clear All Filters */}
+          {(dateFilter !== "week" || confidenceFilter !== "all" || leagueFilter !== "all" || searchQuery) && (
+            <button
+              onClick={() => {
+                setDateFilter("week");
+                setConfidenceFilter("all");
+                setLeagueFilter("all");
+                setSearchQuery("");
+              }}
+              className="px-[10px] py-[6px] rounded-[8px] text-[11px] font-semibold bg-red-50 text-red-500 hover:bg-red-100 transition-all flex items-center gap-[4px]"
+            >
+              ✕ Clear filters
+            </button>
+          )}
         </div>
 
         {/* Search + League + Count */}
@@ -462,13 +477,21 @@ export default function UpcomingMatchesPage() {
           <h3 className="font-display text-[16px] font-semibold text-[#0A0F1C] mb-[4px]">
             Unable to load matches
           </h3>
-          <p className="text-[13px] text-gray-400 mb-[16px]">{error}</p>
-          <button
-            onClick={fetchFixtures}
-            className="px-[16px] py-[8px] rounded-[10px] bg-[#1B2A4A] text-white text-[12px] font-semibold hover:opacity-90 transition-all"
-          >
-            Retry
-          </button>
+          <p className="text-[13px] text-gray-400 mb-[16px] max-w-[360px] mx-auto">{error}</p>
+          <div className="flex items-center justify-center gap-[8px]">
+            <button
+              onClick={fetchFixtures}
+              className="px-[16px] py-[8px] rounded-[10px] bg-[#1B2A4A] text-white text-[12px] font-semibold hover:opacity-90 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
+            >
+              Retry
+            </button>
+            <button
+              onClick={() => { setDateFilter("week"); fetchFixtures(); }}
+              className="px-[16px] py-[8px] rounded-[10px] bg-gray-100 text-gray-600 text-[12px] font-semibold hover:bg-gray-200 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
+            >
+              Reset & Retry
+            </button>
+          </div>
         </div>
       )}
 
