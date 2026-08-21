@@ -1,0 +1,199 @@
+{
+  "timestamp": "2026-08-21T10:35:50.664Z",
+  "totalPredictions": 1000,
+  "valueCount": 12,
+  "goldenPicks": 0,
+  "topPicks": [
+    {
+      "fixture": "Real Madrid vs Atletico Madrid",
+      "league": "La Liga",
+      "market": "AwayGoals",
+      "selection": "Away",
+      "modelProb": "66.0",
+      "impliedProb": "20.8",
+      "edge": "45.2",
+      "odds": "4.80",
+      "ev": "2.170",
+      "kelly": "0.571",
+      "tier": "LOW",
+      "kickoff": "2026-08-21T21:00:00+00:00"
+    },
+    {
+      "fixture": "Real Madrid vs Atletico Madrid",
+      "league": "La Liga",
+      "market": "AwayGoals",
+      "selection": "Away",
+      "modelProb": "66.0",
+      "impliedProb": "20.8",
+      "edge": "45.2",
+      "odds": "4.80",
+      "ev": "2.170",
+      "kelly": "0.571",
+      "tier": "LOW",
+      "kickoff": "2026-08-21T21:00:00+00:00"
+    },
+    {
+      "fixture": "Real Madrid vs Atletico Madrid",
+      "league": "La Liga",
+      "market": "DNB",
+      "selection": "Away",
+      "modelProb": "42.0",
+      "impliedProb": "20.8",
+      "edge": "21.2",
+      "odds": "4.80",
+      "ev": "1.016",
+      "kelly": "0.267",
+      "tier": "LOW",
+      "kickoff": "2026-08-21T21:00:00+00:00"
+    },
+    {
+      "fixture": "Real Madrid vs Atletico Madrid",
+      "league": "La Liga",
+      "market": "DNB",
+      "selection": "Away",
+      "modelProb": "42.0",
+      "impliedProb": "20.8",
+      "edge": "21.2",
+      "odds": "4.80",
+      "ev": "1.016",
+      "kelly": "0.267",
+      "tier": "LOW",
+      "kickoff": "2026-08-21T21:00:00+00:00"
+    },
+    {
+      "fixture": "Real Madrid vs Atletico Madrid",
+      "league": "La Liga",
+      "market": "HomeGoals",
+      "selection": "Home",
+      "modelProb": "73.3",
+      "impliedProb": "58.1",
+      "edge": "15.2",
+      "odds": "1.72",
+      "ev": "0.261",
+      "kelly": "0.362",
+      "tier": "LOW",
+      "kickoff": "2026-08-21T21:00:00+00:00"
+    },
+    {
+      "fixture": "Real Madrid vs Atletico Madrid",
+      "league": "La Liga",
+      "market": "HomeGoals",
+      "selection": "Home",
+      "modelProb": "73.3",
+      "impliedProb": "58.1",
+      "edge": "15.2",
+      "odds": "1.72",
+      "ev": "0.261",
+      "kelly": "0.362",
+      "tier": "LOW",
+      "kickoff": "2026-08-21T21:00:00+00:00"
+    },
+    {
+      "fixture": "Real Madrid vs Atletico Madrid",
+      "league": "La Liga",
+      "market": "1X2",
+      "selection": "Away",
+      "modelProb": "30.5",
+      "impliedProb": "20.8",
+      "edge": "9.7",
+      "odds": "4.80",
+      "ev": "0.464",
+      "kelly": "0.122",
+      "tier": "LOW",
+      "kickoff": "2026-08-21T21:00:00+00:00"
+    },
+    {
+      "fixture": "Real Madrid vs Atletico Madrid",
+      "league": "La Liga",
+      "market": "1X2",
+      "selection": "Away",
+      "modelProb": "30.5",
+      "impliedProb": "20.8",
+      "edge": "9.7",
+      "odds": "4.80",
+      "ev": "0.464",
+      "kelly": "0.122",
+      "tier": "LOW",
+      "kickoff": "2026-08-21T21:00:00+00:00"
+    },
+    {
+      "fixture": "Real Madrid vs Atletico Madrid",
+      "league": "La Liga",
+      "market": "AwayGoals",
+      "selection": "Away",
+      "modelProb": "29.4",
+      "impliedProb": "20.8",
+      "edge": "8.5",
+      "odds": "4.80",
+      "ev": "0.409",
+      "kelly": "0.108",
+      "tier": "LOW",
+      "kickoff": "2026-08-21T21:00:00+00:00"
+    },
+    {
+      "fixture": "Real Madrid vs Atletico Madrid",
+      "league": "La Liga",
+      "market": "AwayGoals",
+      "selection": "Away",
+      "modelProb": "29.4",
+      "impliedProb": "20.8",
+      "edge": "8.5",
+      "odds": "4.80",
+      "ev": "0.409",
+      "kelly": "0.108",
+      "tier": "LOW",
+      "kickoff": "2026-08-21T21:00:00+00:00"
+    },
+    {
+      "fixture": "Real Madrid vs Atletico Madrid",
+      "league": "La Liga",
+      "market": "1X2",
+      "selection": "Draw",
+      "modelProb": "27.4",
+      "impliedProb": "26.3",
+      "edge": "1.1",
+      "odds": "3.80",
+      "ev": "0.042",
+      "kelly": "0.015",
+      "tier": "LOW",
+      "kickoff": "2026-08-21T21:00:00+00:00"
+    },
+    {
+      "fixture": "Real Madrid vs Atletico Madrid",
+      "league": "La Liga",
+      "market": "1X2",
+      "selection": "Draw",
+      "modelProb": "27.4",
+      "impliedProb": "26.3",
+      "edge": "1.1",
+      "odds": "3.80",
+      "ev": "0.042",
+      "kelly": "0.015",
+      "tier": "LOW",
+      "kickoff": "2026-08-21T21:00:00+00:00"
+    }
+  ],
+  "marketBreakdown": [
+    {
+      "market": "Away",
+      "count": 8,
+      "avgEdge": "21.1",
+      "avgOdds": "4.80"
+    },
+    {
+      "market": "Home",
+      "count": 2,
+      "avgEdge": "15.2",
+      "avgOdds": "1.72"
+    },
+    {
+      "market": "Draw",
+      "count": 2,
+      "avgEdge": "1.1",
+      "avgOdds": "3.80"
+    }
+  ],
+  "tierBreakdown": {
+    "LOW": 12
+  }
+}
