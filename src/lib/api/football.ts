@@ -92,7 +92,8 @@ export interface TeamForm {
 }
 
 // ==========================================
-// API-Football (primary)
+// API-Football (secondary — free plan limited to 2022-2024 seasons)
+// Primary data source is The Odds API (see sync/odds.ts)
 // ==========================================
 
 async function apiFootballFetch(endpoint: string): Promise<unknown> {
@@ -127,21 +128,7 @@ async function apiFootballFetch(endpoint: string): Promise<unknown> {
 interface LeagueStandings { league: { standings: TeamStanding[][] } }
 interface StandingsApiResponse { response: LeagueStandings[] }
 
-async function fetchWithFallback<T>(
-  primaryFn: () => Promise<T>,
-  fallbackFn: () => Promise<T>
-): Promise<T> {
-  try {
-    return await primaryFn();
-  } catch (primaryError) {
-    console.warn("Primary API failed, trying fallback:", primaryError);
-    try {
-      return await fallbackFn();
-    } catch (fallbackError) {
-      throw new Error(`Both APIs failed. Primary: ${primaryError}. Fallback: ${fallbackError}`);
-    }
-  }
-}
+
 
 /**
  * Get today's fixtures for a specific league.
@@ -150,29 +137,25 @@ export async function getTodayFixtures(
   leagueId: number,
   season?: number
 ): Promise<FootballFixture[]> {
-  // Free plan supports 2022-2024 seasons; try current year, fall back to 2024
+  // Free plan supports seasons 2022-2024 only.
+  // For 2026+ fixtures, The Odds API is the primary source (see sync/odds.ts).
+  // This function is used as a secondary fallback for live score updates.
   const currentSeason = season || Math.min(new Date().getFullYear(), 2024);
   const today = new Date().toISOString().split("T")[0];
 
-  // Try date range (today + 3 days) to get upcoming fixtures
-  const toDate = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
-
-  const data = await fetchWithFallback(
-    async () => {
-      const result = await apiFootballFetch(
-        `/fixtures?league=${leagueId}&from=${today}&to=${toDate}&season=${currentSeason}`
-      ) as { response: FootballFixture[] };
-      return result.response;
-    },
-    async () => {
-      const result = await apiFootballFetch(
-        `/fixtures?league=${leagueId}&date=${today}&season=${currentSeason}`
-      ) as { response: FootballFixture[] };
-      return result.response;
+  try {
+    const result = await apiFootballFetch(
+      `/fixtures?league=${leagueId}&date=${today}&season=${currentSeason}`
+    ) as { response: FootballFixture[] };
+    return result.response || [];
+  } catch (error) {
+    // Silently return empty if season not supported on free plan
+    const msg = error instanceof Error ? error.message : String(error);
+    if (msg.includes("Free plans do not have access")) {
+      return []; // Expected for 2026+ seasons on free plan
     }
-  );
-
-  return data;
+    throw error;
+  }
 }
 
 /**
@@ -186,22 +169,16 @@ export async function getFixturesByDate(
 ): Promise<FootballFixture[]> {
   const currentSeason = season || Math.min(new Date().getFullYear(), 2024);
 
-  const data = await fetchWithFallback(
-    async () => {
-      const result = await apiFootballFetch(
-        `/fixtures?league=${leagueId}&from=${from}&to=${to}&season=${currentSeason}`
-      ) as { response: FootballFixture[] };
-      return result.response;
-    },
-    async () => {
-      const result = await apiFootballFetch(
-        `/fixtures?league=${leagueId}&from=${from}&to=${to}&season=${currentSeason}`
-      ) as { response: FootballFixture[] };
-      return result.response;
-    }
-  );
-
-  return data;
+  try {
+    const result = await apiFootballFetch(
+      `/fixtures?league=${leagueId}&from=${from}&to=${to}&season=${currentSeason}`
+    ) as { response: FootballFixture[] };
+    return result.response || [];
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    if (msg.includes("Free plans do not have access")) return [];
+    throw error;
+  }
 }
 
 /**
@@ -213,40 +190,28 @@ export async function getStandings(
 ): Promise<TeamStanding[]> {
   const currentSeason = season || new Date().getFullYear();
 
-  const data = await fetchWithFallback(
-    async () => {
-      const result = (await apiFootballFetch(
-        `/standings?league=${leagueId}&season=${currentSeason}`
-      )) as StandingsApiResponse;
-      return result.response[0]?.league?.standings[0] || [];
-    },
-    async () => {
-      const result = (await apiFootballFetch(
-        `/standings?league=${leagueId}&season=${currentSeason}`
-      )) as StandingsApiResponse;
-      return result.response[0]?.league?.standings[0] || [];
-    }
-  );
-
-  return data;
+  try {
+    const result = (await apiFootballFetch(
+      `/standings?league=${leagueId}&season=${currentSeason}`
+    )) as StandingsApiResponse;
+    return result.response[0]?.league?.standings[0] || [];
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    if (msg.includes("Free plans do not have access")) return [];
+    throw error;
+  }
 }
 
 /**
  * Get team recent form (last 5-10 matches).
  */
 export async function getTeamForm(teamId: number): Promise<TeamForm> {
-  const data = await fetchWithFallback(
-    async () => {
-      const result = (await apiFootballFetch(`/teams/statistics?team=${teamId}&league=39&season=2024`)) as { response: TeamForm };
-      return result.response;
-    },
-    async () => {
-      const result = (await apiFootballFetch(`/teams/statistics?team=${teamId}&league=39&season=2024`)) as { response: TeamForm };
-      return result.response;
-    }
-  );
-
-  return data;
+  try {
+    const result = (await apiFootballFetch(`/teams/statistics?team=${teamId}&league=39&season=2024`)) as { response: TeamForm };
+    return result.response;
+  } catch {
+    return { team: { id: teamId, name: "" }, fixtures: { played: 0, wins: 0, draws: 0, loses: 0 }, goals: { for: { total: 0, average: 0 }, against: { total: 0, average: 0 } }, form: "" };
+  }
 }
 
 /**
@@ -255,22 +220,14 @@ export async function getTeamForm(teamId: number): Promise<TeamForm> {
 export async function searchTeam(
   name: string
 ): Promise<Array<{ id: number; name: string; country: string; logo: string }>> {
-  const data = await fetchWithFallback(
-    async () => {
-      const result = await apiFootballFetch(`/teams?search=${encodeURIComponent(name)}`) as {
-        response: Array<{ team: { id: number; name: string; country: string; logo: string } }>;
-      };
-      return result.response.map((r) => r.team);
-    },
-    async () => {
-      const result = await apiFootballFetch(`/teams?search=${encodeURIComponent(name)}`) as {
-        response: Array<{ team: { id: number; name: string; country: string; logo: string } }>;
-      };
-      return result.response.map((r) => r.team);
-    }
-  );
-
-  return data;
+  try {
+    const result = await apiFootballFetch(`/teams?search=${encodeURIComponent(name)}`) as {
+      response: Array<{ team: { id: number; name: string; country: string; logo: string } }>;
+    };
+    return result.response.map((r) => r.team);
+  } catch {
+    return [];
+  }
 }
 
 /**
@@ -279,23 +236,12 @@ export async function searchTeam(
 export async function getHeadToHead(
   team1Id: number,
   team2Id: number
-): Promise<FootballFixture[]> {
-  const data = await fetchWithFallback(
-    async () => {
-      const result = await apiFootballFetch(
-        `/fixtures?h2h=${team1Id}-${team2Id}`
-      ) as { response: FootballFixture[] };
-      return result.response;
-    },
-    async () => {
-      const result = await apiFootballFetch(
-        `/fixtures?h2h=${team1Id}-${team2Id}`
-      ) as { response: FootballFixture[] };
-      return result.response;
-    }
-  );
-
-  return data;
+): Promise<FootballFixture[]> {  try {
+    const result = await apiFootballFetch(`/fixtures?h2h=${team1Id}-${team2Id}`) as { response: FootballFixture[] };
+    return result.response || [];
+  } catch {
+    return [];
+  }
 }
 
 /**
@@ -321,6 +267,11 @@ export async function getLiveFixtures(): Promise<FootballFixture[]> {
 
 /**
  * Get all upcoming fixtures across all tracked leagues for today.
+ */
+/**
+ * Get all upcoming fixtures across all tracked leagues for today.
+ * NOTE: On free plan, this returns empty for 2026+ seasons.
+ * The Odds API (sync/odds.ts) is the primary source for current fixtures.
  */
 export async function getAllTodayFixtures(): Promise<FootballFixture[]> {
   const allFixtures: FootballFixture[] = [];
