@@ -41,6 +41,18 @@ interface RolloverPick {
   actual_return: number | null;
   user_marked: boolean;
   settled_at: string | null;
+  fixtures?: { home_team_name: string; away_team_name: string; kickoff_time: string } | null;
+}
+
+interface Recommendation {
+  id: string;
+  fixture_id: string;
+  market: string;
+  selection: string;
+  bookmaker_odds: number;
+  model_probability: number;
+  edge: number;
+  risk_tier: string;
 }
 
 export default function RolloverPage() {
@@ -48,7 +60,10 @@ export default function RolloverPage() {
   const [chains, setChains] = useState<RolloverChain[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
-  const [selectedChain, setSelectedChain] = useState<RolloverChain | null>(null);
+  const [showAddPick, setShowAddPick] = useState(false);
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [loadingRecs, setLoadingRecs] = useState(false);
+  const [addingPick, setAddingPick] = useState<string | null>(null);
 
   // Create form
   const [chainName, setChainName] = useState("");
@@ -67,15 +82,27 @@ export default function RolloverPage() {
 
     if (!error && data) {
       setChains(data);
-      const active = data.find((c) => c.status === "active");
-      if (active && !selectedChain) setSelectedChain(active);
     }
     setLoading(false);
-  }, [user, selectedChain]);
+  }, [user]);
 
   useEffect(() => {
     fetchChains();
   }, [fetchChains]);
+
+  const fetchRecommendations = useCallback(async () => {
+    setLoadingRecs(true);
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("recommendations")
+      .select("*")
+      .eq("is_recommended", true)
+      .order("edge", { ascending: false })
+      .limit(10);
+
+    if (data) setRecommendations(data);
+    setLoadingRecs(false);
+  }, []);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,6 +119,7 @@ export default function RolloverPage() {
       odds_range_min: 2.0,
       odds_range_max: 2.5,
       min_probability: 0.9,
+      rollover_percentage: 100,
       status: "active",
     });
 
@@ -103,6 +131,108 @@ export default function RolloverPage() {
     setCreating(false);
   };
 
+  const handleAddPick = async (rec: Recommendation) => {
+    const activeChain = chains.find((c) => c.status === "active");
+    if (!activeChain) return;
+
+    setAddingPick(rec.id);
+    const supabase = createClient();
+
+    // Calculate next day number
+    const existingPicks = activeChain.rollover_picks || [];
+    const nextDay = existingPicks.length > 0
+      ? Math.max(...existingPicks.map((p) => p.day_number)) + 1
+      : 1;
+
+    const stake = activeChain.current_balance;
+    const potentialReturn = stake * rec.bookmaker_odds;
+
+    const { error } = await supabase.from("rollover_picks").insert({
+      chain_id: activeChain.id,
+      day_number: nextDay,
+      fixture_id: rec.fixture_id,
+      market: rec.market,
+      selection: rec.selection,
+      odds: rec.bookmaker_odds,
+      model_probability: rec.model_probability,
+      opportunity_score: rec.edge,
+      stake: stake,
+      potential_return: potentialReturn,
+      result: "pending",
+      user_marked: false,
+    });
+
+    if (!error) {
+      // Update chain current_day
+      await supabase
+        .from("rollover_chains")
+        .update({ current_day: nextDay })
+        .eq("id", activeChain.id);
+
+      fetchChains();
+      setShowAddPick(false);
+    }
+    setAddingPick(null);
+  };
+
+  const handleMarkResult = async (pickId: string, result: "won" | "lost") => {
+    const supabase = createClient();
+    const activeChain = chains.find((c) => c.status === "active");
+    if (!activeChain) return;
+
+    // Get the pick
+    const pick = activeChain.rollover_picks?.find((p) => p.id === pickId);
+    if (!pick) return;
+
+    const actualReturn = result === "won" ? (pick.stake || 0) * (pick.odds || 1) : 0;
+
+    // Update pick
+    await supabase
+      .from("rollover_picks")
+      .update({ result, actual_return: actualReturn, settled_at: new Date().toISOString() })
+      .eq("id", pickId);
+
+    // Update chain balance
+    const newBalance = result === "won" ? actualReturn : 0;
+    const newBanked = activeChain.banked_amount + (result === "won" ? actualReturn * 0.5 : 0);
+
+    await supabase
+      .from("rollover_chains")
+      .update({
+        current_balance: newBalance,
+        banked_amount: newBanked,
+      })
+      .eq("id", activeChain.id);
+
+    // If lost, mark chain as broken
+    if (result === "lost") {
+      await supabase
+        .from("rollover_chains")
+        .update({ status: "broken", ended_at: new Date().toISOString() })
+        .eq("id", activeChain.id);
+    }
+
+    fetchChains();
+  };
+
+  const handleBank = async () => {
+    const activeChain = chains.find((c) => c.status === "active");
+    if (!activeChain) return;
+
+    const supabase = createClient();
+    const bankAmount = activeChain.current_balance * 0.5;
+
+    await supabase
+      .from("rollover_chains")
+      .update({
+        banked_amount: activeChain.banked_amount + bankAmount,
+        current_balance: activeChain.current_balance - bankAmount,
+      })
+      .eq("id", activeChain.id);
+
+    fetchChains();
+  };
+
   const activeChain = chains.find((c) => c.status === "active");
   const progressPercent = activeChain
     ? Math.round((activeChain.current_day / (activeChain.target_days || 30)) * 100)
@@ -112,13 +242,17 @@ export default function RolloverPage() {
     <div>
       <PageHeader
         title="Rollover Challenge"
-        description={`Daily Crown Jewel picks at ~2.0 odds. Compound your stake over ${activeChain?.target_days || 30} days.`}
+        description={`Daily picks at ~2.0 odds. Compound your stake over ${activeChain?.target_days || 30} days.`}
         action={
           !activeChain ? (
             <Button onClick={() => setShowCreate(true)} icon="ri-add-line" size="sm">
               Start Chain
             </Button>
-          ) : undefined
+          ) : (
+            <Button onClick={() => { setShowAddPick(true); fetchRecommendations(); }} icon="ri-add-circle-line" size="sm">
+              Add Today's Pick
+            </Button>
+          )
         }
       />
 
@@ -137,6 +271,13 @@ export default function RolloverPage() {
                 Started {new Date(activeChain.started_at).toLocaleDateString()}
               </p>
             </div>
+            <div className="flex items-center gap-[6px]">
+              {activeChain.current_balance > 0 && (
+                <Button onClick={handleBank} variant="ghost" size="sm" icon="ri-safe-2-line">
+                  Bank 50%
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Stats */}
@@ -145,7 +286,7 @@ export default function RolloverPage() {
               { label: "Current Balance", value: `$${activeChain.current_balance.toFixed(2)}` },
               { label: "Banked", value: `$${activeChain.banked_amount.toFixed(2)}`, color: "text-green-600" },
               { label: "Day", value: `${activeChain.current_day}/${activeChain.target_days}` },
-              { label: "Return", value: `${((activeChain.current_balance / activeChain.starting_stake - 1) * 100).toFixed(1)}%`, color: "text-green-600" },
+              { label: "Return", value: `${((activeChain.current_balance / activeChain.starting_stake - 1) * 100).toFixed(1)}%`, color: activeChain.current_balance >= activeChain.starting_stake ? "text-green-600" : "text-red-500" },
             ].map((stat) => (
               <div key={stat.label} className="p-[12px] bg-gray-50 rounded-[8px]">
                 <span className="block text-[10px] text-gray-400 mb-[2px]">{stat.label}</span>
@@ -170,16 +311,15 @@ export default function RolloverPage() {
             </div>
           </div>
 
-          {/* Recent picks */}
+          {/* All picks */}
           {activeChain.rollover_picks && activeChain.rollover_picks.length > 0 && (
             <div className="mt-[16px]">
               <h3 className="text-[12px] font-semibold text-gray-500 uppercase tracking-wider mb-[8px]">
-                Recent Picks
+                All Picks ({activeChain.rollover_picks.length})
               </h3>
               <div className="space-y-[4px]">
                 {activeChain.rollover_picks
                   .sort((a, b) => b.day_number - a.day_number)
-                  .slice(0, 5)
                   .map((pick) => (
                     <div
                       key={pick.id}
@@ -196,19 +336,107 @@ export default function RolloverPage() {
                           <span className="text-[11px] text-gray-400 ml-[6px]">
                             @{pick.odds?.toFixed(2)}
                           </span>
+                          {pick.stake && (
+                            <span className="text-[10px] text-gray-300 ml-[6px]">
+                              ${pick.stake.toFixed(2)} stake
+                            </span>
+                          )}
                         </div>
                       </div>
-                      <Badge
-                        variant={
-                          pick.result === "won" ? "success" : pick.result === "lost" ? "danger" : "default"
-                        }
-                        size="sm"
-                      >
-                        {pick.result.toUpperCase()}
-                      </Badge>
+                      <div className="flex items-center gap-[4px]">
+                        {pick.result === "pending" ? (
+                          <>
+                            <button
+                              onClick={() => handleMarkResult(pick.id, "won")}
+                              className="text-[10px] font-medium text-green-600 bg-green-50 hover:bg-green-100 px-[8px] py-[3px] rounded-[4px] transition-colors"
+                            >
+                              Won
+                            </button>
+                            <button
+                              onClick={() => handleMarkResult(pick.id, "lost")}
+                              className="text-[10px] font-medium text-red-500 bg-red-50 hover:bg-red-100 px-[8px] py-[3px] rounded-[4px] transition-colors"
+                            >
+                              Lost
+                            </button>
+                          </>
+                        ) : (
+                          <Badge
+                            variant={pick.result === "won" ? "success" : "danger"}
+                            size="sm"
+                          >
+                            {pick.result.toUpperCase()}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   ))}
               </div>
+            </div>
+          )}
+        </Card>
+      )}
+
+      {/* Add Pick Modal */}
+      {showAddPick && (
+        <Card className="mb-[20px]">
+          <div className="flex items-center justify-between mb-[12px]">
+            <h3 className="text-[14px] font-semibold text-[#0A0F1C]">
+              Add Today's Pick
+            </h3>
+            <button
+              onClick={() => setShowAddPick(false)}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <i className="ri-close-line text-[18px]" />
+            </button>
+          </div>
+          <p className="text-[12px] text-gray-400 mb-[12px]">
+            Select a value bet to add to your rollover chain. Picks should be around 2.0 odds for optimal compounding.
+          </p>
+
+          {loadingRecs ? (
+            <div className="space-y-[4px]">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="h-[48px] bg-gray-50 rounded-[8px] animate-pulse" />
+              ))}
+            </div>
+          ) : recommendations.length === 0 ? (
+            <div className="text-center py-[16px] text-gray-400 text-[12px]">
+              No value bets available right now. Check back when matches are closer to kickoff.
+            </div>
+          ) : (
+            <div className="space-y-[4px]">
+              {recommendations.map((rec) => (
+                <div
+                  key={rec.id}
+                  className="flex items-center justify-between p-[10px] bg-gray-50 rounded-[8px] hover:bg-gray-100/80 transition-colors"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-[6px] mb-[1px]">
+                      <span className="text-[12px] font-medium text-[#0A0F1C] truncate">
+                        {rec.selection}
+                      </span>
+                      <span className="text-[10px] text-gray-400">{rec.market}</span>
+                    </div>
+                    <div className="flex items-center gap-[8px] text-[11px] text-gray-400">
+                      <span className="font-mono-data">@{rec.bookmaker_odds.toFixed(2)}</span>
+                      <span className="text-green-600 font-mono-data font-medium">
+                        +{(rec.edge * 100).toFixed(1)}% edge
+                      </span>
+                      <span className="font-mono-data">
+                        {(rec.model_probability * 100).toFixed(0)}% prob
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleAddPick(rec)}
+                    disabled={addingPick === rec.id}
+                    className="ml-[12px] px-[10px] py-[5px] bg-[#1B2A4A] text-white text-[11px] font-medium rounded-[6px] hover:bg-[#243B53] transition-colors disabled:opacity-50"
+                  >
+                    {addingPick === rec.id ? "Adding..." : "Add Pick"}
+                  </button>
+                </div>
+              ))}
             </div>
           )}
         </Card>
@@ -317,7 +545,7 @@ export default function RolloverPage() {
                         <span className="text-[13px] font-semibold text-[#0A0F1C]">
                           {chain.name}
                         </span>
-                        <Badge variant={chain.status === "completed" ? "success" : "danger"} size="sm">
+                        <Badge variant={chain.status === "completed" ? "success" : chain.status === "broken" ? "danger" : "default"} size="sm">
                           {chain.status.toUpperCase()}
                         </Badge>
                       </div>
@@ -352,7 +580,7 @@ export default function RolloverPage() {
         <EmptyState
           icon="ri-trophy-line"
           title="Start your first rollover chain"
-          description="Pick the Crown Jewel each day at ~2.0 odds and compound your stake."
+          description="Pick the best value bet each day at ~2.0 odds and compound your stake."
           action={
             <Button onClick={() => setShowCreate(true)} size="sm">
               Start Challenge

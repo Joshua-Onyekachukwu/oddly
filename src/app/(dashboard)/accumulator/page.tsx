@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/providers/AuthProvider";
 import { createClient } from "@/lib/supabase/client";
+import Link from "next/link";
 import { PageHeader, Card, EmptyState, Button, Badge } from "@/components/ui";
 
 interface Recommendation {
@@ -47,6 +48,26 @@ export default function AccumulatorPage() {
     }
     setLoading(false);
   }, []);
+
+  // Restore selected legs from localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("oddly_accumulator_legs");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setSelectedLegs(parsed);
+        }
+      }
+    } catch {}
+  }, []);
+
+  // Persist selected legs to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem("oddly_accumulator_legs", JSON.stringify(selectedLegs));
+    } catch {}
+  }, [selectedLegs]);
 
   useEffect(() => {
     fetchRecommendations();
@@ -103,6 +124,7 @@ export default function AccumulatorPage() {
         setSavedMsg("");
         setSelectedLegs([]);
         setAccName("");
+        try { localStorage.removeItem("oddly_accumulator_legs"); } catch {}
       }, 2000);
     }
 
