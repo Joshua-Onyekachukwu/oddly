@@ -1,0 +1,28 @@
+{
+  "generatedAt": "2026-08-21T01:57:29.884Z",
+  "totalMatches": 3002,
+  "predicted": 277,
+  "overallAccuracy": 70,
+  "tierAnalysis": {
+    "ELITE": {
+      "accuracy": 79.8,
+      "total": 84,
+      "correct": 67
+    },
+    "VERY_HIGH": {
+      "accuracy": 0,
+      "total": 2,
+      "correct": 0
+    },
+    "HIGH": {
+      "accuracy": 66.5,
+      "total": 191,
+      "correct": 127
+    },
+    "SKIPPED": {
+      "accuracy": null,
+      "total": 2725,
+      "correct": 0
+    }
+  }
+}
