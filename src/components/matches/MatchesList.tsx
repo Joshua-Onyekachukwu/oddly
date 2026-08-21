@@ -8,11 +8,14 @@ interface Fixture {
   id: string;
   home_team_name?: string;
   away_team_name?: string;
+  home_team_logo?: string | null;
+  away_team_logo?: string | null;
+  league_logo?: string | null;
   kickoff_time: string;
   status: string;
   home_score: number | null;
   away_score: number | null;
-  leagues?: { name: string; country: string };
+  leagues?: { name: string; country: string; logo?: string | null };
   predictions?: Array<{
     id: string;
     market: string;
@@ -174,11 +177,17 @@ export function MatchesList({ fixtures }: { fixtures: Fixture[] }) {
                 {/* Teams */}
                 <div className="flex items-center gap-[16px] flex-1">
                   <div className="flex items-center gap-[10px] flex-1">
-                    <div className="w-[32px] h-[32px] bg-[#0A0F1C]/4 rounded-full flex items-center justify-center flex-none">
-                      <span className="text-[12px] font-bold text-[#0A0F1C] font-display">
-                        {(fixture.home_team_name || "H").charAt(0)}
-                      </span>
-                    </div>
+                    {fixture.home_team_logo ? (
+                      <div className="w-[32px] h-[32px] rounded-full bg-gray-50 flex items-center justify-center flex-none overflow-hidden">
+                        <img src={fixture.home_team_logo} alt="" className="w-[24px] h-[24px] object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                      </div>
+                    ) : (
+                      <div className="w-[32px] h-[32px] bg-[#0A0F1C]/4 rounded-full flex items-center justify-center flex-none">
+                        <span className="text-[12px] font-bold text-[#0A0F1C] font-display">
+                          {(fixture.home_team_name || "H").charAt(0)}
+                        </span>
+                      </div>
+                    )}
                     <span className="text-[14px] font-medium text-[#0A0F1C] truncate">
                       {fixture.home_team_name || "Home"}
                     </span>
@@ -196,11 +205,17 @@ export function MatchesList({ fixtures }: { fixtures: Fixture[] }) {
                     <span className="text-[14px] font-medium text-[#0A0F1C] truncate text-right">
                       {fixture.away_team_name || "Away"}
                     </span>
-                    <div className="w-[32px] h-[32px] bg-[#0A0F1C]/4 rounded-full flex items-center justify-center flex-none">
-                      <span className="text-[12px] font-bold text-[#0A0F1C] font-display">
-                        {(fixture.away_team_name || "A").charAt(0)}
-                      </span>
-                    </div>
+                    {fixture.away_team_logo ? (
+                      <div className="w-[32px] h-[32px] rounded-full bg-gray-50 flex items-center justify-center flex-none overflow-hidden">
+                        <img src={fixture.away_team_logo} alt="" className="w-[24px] h-[24px] object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                      </div>
+                    ) : (
+                      <div className="w-[32px] h-[32px] bg-[#0A0F1C]/4 rounded-full flex items-center justify-center flex-none">
+                        <span className="text-[12px] font-bold text-[#0A0F1C] font-display">
+                          {(fixture.away_team_name || "A").charAt(0)}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

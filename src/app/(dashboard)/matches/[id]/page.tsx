@@ -37,9 +37,9 @@ async function MatchContent({ id }: { id: string }) {
     .select(
       `
       *,
-      leagues (id, name, country),
-      home_team:teams!fixtures_home_team_id_fkey(canonical_name),
-      away_team:teams!fixtures_away_team_id_fkey(canonical_name),
+      leagues (id, name, country, logo),
+      home_team:teams!fixtures_home_team_id_fkey(canonical_name, logo),
+      away_team:teams!fixtures_away_team_id_fkey(canonical_name, logo),
       predictions (
         id, market, selection, model_probability, confidence_lower, confidence_upper,
         model_version, features_used, sub_model_probabilities, model_disagreement,
@@ -64,6 +64,9 @@ async function MatchContent({ id }: { id: string }) {
     ...rawFixture,
     home_team_name: (rawFixture.home_team as any)?.canonical_name || "TBD",
     away_team_name: (rawFixture.away_team as any)?.canonical_name || "TBD",
+    home_team_logo: (rawFixture.home_team as any)?.logo || null,
+    away_team_logo: (rawFixture.away_team as any)?.logo || null,
+    league_logo: (rawFixture.leagues as any)?.logo || null,
   } as any;
 
   // Fetch odds for this fixture

@@ -18,16 +18,13 @@ async function getTodayFixtures() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  const today = new Date().toISOString().split("T")[0];
-
-  const { data: fixtures, error } = await supabase
+  const today = new Date().toISOString().split("T")[0];  const { data: fixtures, error } = await supabase
     .from("fixtures")
     .select(
-      `
-      *,
-      leagues (name, country),
-      home_team:teams!fixtures_home_team_id_fkey(canonical_name),
-      away_team:teams!fixtures_away_team_id_fkey(canonical_name),
+      `      *,
+      leagues (name, country, logo),
+      home_team:teams!fixtures_home_team_id_fkey(canonical_name, logo),
+      away_team:teams!fixtures_away_team_id_fkey(canonical_name, logo),
       predictions (id, market, selection, model_probability, confidence_lower, confidence_upper)
     `
     )
@@ -45,6 +42,9 @@ async function getTodayFixtures() {
     ...f,
     home_team_name: (f.home_team as any)?.canonical_name || "TBD",
     away_team_name: (f.away_team as any)?.canonical_name || "TBD",
+    home_team_logo: (f.home_team as any)?.logo || null,
+    away_team_logo: (f.away_team as any)?.logo || null,
+    league_logo: (f.leagues as any)?.logo || null,
   }));
 }
 

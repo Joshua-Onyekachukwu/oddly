@@ -51,12 +51,15 @@ interface Fixture {
   away_team_name: string;
   home_team_id: string;
   away_team_id: string;
+  home_team_logo?: string | null;
+  away_team_logo?: string | null;
+  league_logo?: string | null;
   kickoff_time: string;
   status: string;
   home_score: number | null;
   away_score: number | null;
   is_featured: boolean;
-  leagues?: { name: string; country: string };
+  leagues?: { name: string; country: string; logo?: string | null };
   predictions?: Prediction[];
   recommendations?: Recommendation[];
 }
@@ -165,11 +168,17 @@ export function MatchDetail({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-[16px] flex-1">
             <div className="flex items-center gap-[12px] flex-1">
-              <div className="w-[44px] h-[44px] bg-[#1B2A4A]/5 rounded-full flex items-center justify-center flex-none">
-                <span className="text-[16px] font-bold text-[#1B2A4A] font-display">
-                  {(fixture.home_team_name || "H").charAt(0)}
-                </span>
-              </div>
+              {fixture.home_team_logo ? (
+                <div className="w-[44px] h-[44px] rounded-full bg-gray-50 flex items-center justify-center flex-none overflow-hidden">
+                  <img src={fixture.home_team_logo} alt="" className="w-[36px] h-[36px] object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                </div>
+              ) : (
+                <div className="w-[44px] h-[44px] bg-[#1B2A4A]/5 rounded-full flex items-center justify-center flex-none">
+                  <span className="text-[16px] font-bold text-[#1B2A4A] font-display">
+                    {(fixture.home_team_name || "H").charAt(0)}
+                  </span>
+                </div>
+              )}
               <span className="text-[16px] md:text-[18px] font-semibold text-[#0A0F1C]">
                 {fixture.home_team_name || "Home"}
               </span>
@@ -191,11 +200,17 @@ export function MatchDetail({
               <span className="text-[16px] md:text-[18px] font-semibold text-[#0A0F1C] text-right">
                 {fixture.away_team_name || "Away"}
               </span>
-              <div className="w-[44px] h-[44px] bg-[#1B2A4A]/5 rounded-full flex items-center justify-center flex-none">
-                <span className="text-[16px] font-bold text-[#1B2A4A] font-display">
-                  {(fixture.away_team_name || "A").charAt(0)}
-                </span>
-              </div>
+              {fixture.away_team_logo ? (
+                <div className="w-[44px] h-[44px] rounded-full bg-gray-50 flex items-center justify-center flex-none overflow-hidden">
+                  <img src={fixture.away_team_logo} alt="" className="w-[36px] h-[36px] object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                </div>
+              ) : (
+                <div className="w-[44px] h-[44px] bg-[#1B2A4A]/5 rounded-full flex items-center justify-center flex-none">
+                  <span className="text-[16px] font-bold text-[#1B2A4A] font-display">
+                    {(fixture.away_team_name || "A").charAt(0)}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>
