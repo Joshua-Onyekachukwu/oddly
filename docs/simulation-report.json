@@ -1,0 +1,97 @@
+{
+  "generatedAt": "2026-08-21T01:36:55.476Z",
+  "totalMatches": 5256,
+  "seasons": [
+    2023,
+    2024,
+    2025
+  ],
+  "modelAccuracy": {
+    "dixon-coles": {
+      "accuracy": 43.4,
+      "brier": 0.1805,
+      "logLoss": 0.9726,
+      "total": 5256,
+      "correct": 2282
+    },
+    "elo": {
+      "accuracy": 46.7,
+      "brier": 0.1477,
+      "logLoss": 0.9825,
+      "total": 5256,
+      "correct": 2452
+    },
+    "ensemble": {
+      "accuracy": 47.8,
+      "brier": 0.1976,
+      "logLoss": 0.8944,
+      "total": 5256,
+      "correct": 2511
+    }
+  },
+  "tierAnalysis": {
+    "high": {
+      "accuracy": 59.1,
+      "total": 1401
+    },
+    "medium": {
+      "accuracy": 47.9,
+      "total": 2013
+    },
+    "low": {
+      "accuracy": 39,
+      "total": 1842
+    }
+  },
+  "leagueBreakdown": {
+    "Serie A": {
+      "accuracy": 50.4,
+      "matches": 1140
+    },
+    "Premier League": {
+      "accuracy": 48.5,
+      "matches": 1140
+    },
+    "Ligue 1": {
+      "accuracy": 47.1,
+      "matches": 918
+    },
+    "La Liga": {
+      "accuracy": 46.9,
+      "matches": 1140
+    },
+    "Bundesliga": {
+      "accuracy": 45.3,
+      "matches": 918
+    }
+  },
+  "rolloverResults": [
+    {
+      "name": "Aggressive",
+      "final": 12.51,
+      "peak": 19.06,
+      "roi": 25,
+      "wins": 14,
+      "losses": 16,
+      "broken": false
+    },
+    {
+      "name": "Balanced",
+      "final": 5.64,
+      "peak": 13.68,
+      "roi": -44,
+      "wins": 12,
+      "losses": 18,
+      "broken": false
+    },
+    {
+      "name": "Conservative",
+      "final": 3.82,
+      "peak": 10,
+      "roi": -62,
+      "wins": 15,
+      "losses": 15,
+      "broken": false
+    }
+  ]
+}

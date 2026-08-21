@@ -18,6 +18,7 @@
     "sync:historical": "node scripts/collect-historical-data.js",
     "compute:features": "node scripts/compute-features.js",
     "backtest": "node scripts/backtest-models.js",
+    "simulate": "node scripts/run-simulation.js",
     "pipeline": "echo 'Running full pipeline...' && npm run sync:fixtures && npm run sync:historical && npm run compute:features && npm run backtest"
   },
   "dependencies": {
