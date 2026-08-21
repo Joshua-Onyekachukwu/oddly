@@ -14,7 +14,11 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "sync:fixtures": "node scripts/sync-fixtures.js",
-    "sync:logos": "node scripts/sync-logos.js"
+    "sync:logos": "node scripts/sync-logos.js",
+    "sync:historical": "node scripts/collect-historical-data.js",
+    "compute:features": "node scripts/compute-features.js",
+    "backtest": "node scripts/backtest-models.js",
+    "pipeline": "echo 'Running full pipeline...' && npm run sync:fixtures && npm run sync:historical && npm run compute:features && npm run backtest"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",
