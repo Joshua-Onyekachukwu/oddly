@@ -4,9 +4,9 @@
 -- ============================================
 
 -- 1. Force-confirm ALL unconfirmed users
+-- Note: confirmed_at is a generated column in newer Supabase, so we only set email_confirmed_at
 UPDATE auth.users
-SET email_confirmed_at = COALESCE(email_confirmed_at, NOW()),
-    confirmed_at = COALESCE(confirmed_at, NOW())
+SET email_confirmed_at = COALESCE(email_confirmed_at, NOW())
 WHERE email_confirmed_at IS NULL;
 
 -- 2. Create profiles for ALL users who don't have one
