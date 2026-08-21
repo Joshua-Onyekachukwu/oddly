@@ -43,6 +43,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "Challenges",
     items: [
+      { label: "Golden Picks", href: "/predictions", icon: "ri-vip-crown-line", badge: "New", badgeColor: "bg-amber-50 text-amber-600" },
       { label: "Rollover", href: "/rollover", icon: "ri-fire-line", badge: "Elite", badgeColor: "bg-amber-50 text-amber-600" },
       { label: "Tracking", href: "/tracking", icon: "ri-bookmark-line" },
     ],
