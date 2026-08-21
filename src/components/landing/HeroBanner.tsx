@@ -150,9 +150,9 @@ const HeroBanner: React.FC<HeroBannerProps> = ({ crownJewel, stats }) => {
                 className="mt-[48px] md:mt-[64px] flex items-center gap-[20px] flex-wrap justify-center md:justify-start"
               >
                 {[
-                  { value: stats.avgAccuracy > 0 ? `${stats.avgAccuracy}%` : "94.4%", label: "accuracy" },
-                  { value: stats.totalLeagues > 0 ? `${stats.totalLeagues}+` : "100+", label: "leagues" },
-                  { value: stats.totalFixturesToday > 0 ? `${stats.totalFixturesToday}` : "0", label: "fixtures today" },
+                  { value: stats.avgAccuracy > 0 ? `${stats.avgAccuracy}%` : "—", label: "accuracy" },
+                  { value: stats.totalLeagues > 0 ? `${stats.totalLeagues}+` : "—", label: "leagues" },
+                  { value: stats.totalFixturesToday > 0 ? `${stats.totalFixturesToday}` : "—", label: "fixtures today" },
                 ].map((stat, i) => (
                   <React.Fragment key={stat.label}>
                     {i > 0 && <div className="w-[1px] h-[20px] bg-white/8"></div>}
