@@ -92,7 +92,7 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Stats grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-[12px] mb-[24px]">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-[12px] mb-[24px]">
         <StatCard
           label="Users"
           value={loading ? "—" : stats.totalUsers.toLocaleString()}
@@ -132,12 +132,12 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Quick links */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-[8px] mb-[24px]">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-[12px] mb-[24px]">
         {QUICK_LINKS.map((link) => (
           <Link
             key={link.href}
             href={link.href}
-            className="p-[14px] bg-white rounded-[10px] border border-gray-100 hover:border-gray-200 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all group"
+            className="p-[14px] bg-white rounded-[12px] border border-gray-100 hover:border-gray-200 hover:shadow-[0_4px_20px_rgba(0,0,0,0.04)] transition-all group cursor-pointer"
           >
             <i className={`${link.icon} text-[18px] text-gray-400 group-hover:text-[#1B2A4A] transition-colors mb-[6px] block`} />
             <span className="text-[12px] font-semibold text-[#0A0F1C] block">{link.label}</span>
