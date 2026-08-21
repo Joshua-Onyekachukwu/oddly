@@ -166,7 +166,7 @@ function DashboardPreview() {
                   <span className="text-[9px] text-white/30">Active Models</span>
                 </div>
                 <div className="bg-white/[0.02] rounded-[10px] border border-white/5 p-[10px] text-center">
-                  <span className="text-[16px] font-bold text-white font-mono-data block">12+</span>
+                  <span className="text-[16px] font-bold text-white font-mono-data block">360+</span>
                   <span className="text-[9px] text-white/30">Leagues</span>
                 </div>
               </div>
@@ -187,7 +187,7 @@ const FEATURES = [
   {
     icon: "ri-search-eye-line",
     title: "Automatic Value Detection",
-    description: "Scans 100+ markets per match to find bets where your model has a mathematical advantage.",
+    description: "Scans 26+ markets per match to find bets where your model has a mathematical advantage.",
   },
   {
     icon: "ri-fire-line",
@@ -197,7 +197,7 @@ const FEATURES = [
   {
     icon: "ri-line-chart-line",
     title: "Live Odds Comparison",
-    description: "Real-time odds from Pinnacle, Betway, and 100+ bookmakers — always find the best price.",
+    description: "Real-time odds from Pinnacle, Betway, and multiple bookmakers — always find the best price.",
   },
 ];
 

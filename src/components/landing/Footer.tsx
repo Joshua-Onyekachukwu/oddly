@@ -18,7 +18,7 @@ const Footer: React.FC = () => {
             </Link>
             <p className="text-[14px] text-white/30 !leading-[1.75] !mb-0 max-w-[280px]">
               AI-powered football prediction platform that helps you find value
-              bets with 90%+ confidence across 100+ leagues.
+              bets with 90%+ confidence across 360+ leagues.
             </p>
           </div>
 
