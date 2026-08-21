@@ -23,7 +23,7 @@ export function StatCard({
     <div
       className={`
         relative overflow-hidden bg-white rounded-[14px] p-[16px] border border-gray-100
-        hover:border-gray-200 hover:shadow-[0_2px_12px_rgba(0,0,0,0.03)] transition-all duration-200
+        hover:border-gray-200 hover:shadow-[0_2px_12px_rgba(0,0,0,0.04)] transition-[border-color,box-shadow] duration-200 ease-out
         group ${className}
       `}
     >

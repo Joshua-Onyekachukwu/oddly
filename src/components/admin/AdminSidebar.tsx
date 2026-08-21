@@ -86,24 +86,24 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ toggleActive }) => {
       />
 
       {/* Sidebar */}
-      <aside className="fixed top-0 left-0 h-screen w-[260px] bg-white border-r border-gray-100 z-[7] flex flex-col transition-transform duration-300 xl:translate-x-0 -translate-x-full">
+      <aside className="fixed top-0 left-0 h-screen w-[260px] bg-[#0A0F1C] border-r border-white/5 z-[7] flex flex-col transition-transform duration-300 xl:translate-x-0 -translate-x-full">
         {/* Logo + Admin badge */}
-        <div className="h-[60px] flex items-center justify-between px-[20px] border-b border-gray-100 flex-none">
+        <div className="h-[60px] flex items-center justify-between px-[20px] border-b border-white/5 flex-none">
           <Link href="/admin" className="flex items-center gap-[8px]">
-            <span className="text-[22px] font-display font-bold tracking-tight text-[#0A0F1C]">
+            <span className="text-[22px] font-display font-bold tracking-tight text-white">
               ODD
             </span>
-            <span className="text-[22px] font-display font-bold tracking-tight text-[#D97706]">
+            <span className="text-[22px] font-display font-bold tracking-tight text-[#BFFF00]">
               LY
             </span>
-            <span className="text-[9px] font-bold px-[6px] py-[2px] rounded-full bg-[#1B2A4A] text-white uppercase tracking-wider">
+            <span className="text-[9px] font-bold px-[6px] py-[2px] rounded-full bg-white/10 text-white/80 uppercase tracking-wider">
               Admin
             </span>
           </Link>
           <button
             type="button"
             onClick={toggleActive}
-            className="w-[32px] h-[32px] rounded-[8px] flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors xl:hidden"
+            className="w-[32px] h-[32px] rounded-[8px] flex items-center justify-center text-white/40 hover:text-white/70 hover:bg-white/5 transition-colors xl:hidden"
           >
             <i className="ri-close-line text-[18px]" />
           </button>
@@ -116,7 +116,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ toggleActive }) => {
               {/* Group header */}
               <button
                 onClick={() => toggleGroup(groupIdx)}
-                className="w-full flex items-center justify-between px-[8px] py-[6px] text-[10px] font-semibold text-gray-400 uppercase tracking-wider hover:text-gray-500 transition-colors"
+                className="w-full flex items-center justify-between px-[8px] py-[6px] text-[10px] font-semibold text-white/30 uppercase tracking-wider hover:text-white/50 transition-colors"
               >
                 {group.label}
                 <i
@@ -144,14 +144,14 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ toggleActive }) => {
                           flex items-center gap-[10px] px-[10px] py-[8px] rounded-[8px] text-[13px] font-medium transition-all duration-150
                           ${
                             active
-                              ? "bg-[#1B2A4A] text-white"
-                              : "text-gray-600 hover:bg-gray-50 hover:text-[#0A0F1C]"
+                              ? "bg-[#BFFF00]/10 text-[#BFFF00]"
+                              : "text-white/50 hover:bg-white/5 hover:text-white/80"
                           }
                         `}
                       >
                         <i
                           className={`${item.icon} text-[16px] ${
-                            active ? "text-white" : "text-gray-400"
+                            active ? "text-[#BFFF00]" : "text-white/30"
                           }`}
                         />
                         <span className="flex-1">{item.label}</span>
@@ -165,28 +165,28 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ toggleActive }) => {
         </nav>
 
         {/* Bottom section — back to app + user info */}
-        <div className="border-t border-gray-100 p-[12px] flex-none">
+        <div className="border-t border-white/5 p-[12px] flex-none">
           {/* Back to app link */}
           <Link
             href="/matches"
-            className="flex items-center gap-[10px] px-[10px] py-[8px] rounded-[8px] text-[13px] font-medium text-gray-500 hover:bg-gray-50 hover:text-[#0A0F1C] transition-all mb-[8px]"
+            className="flex items-center gap-[10px] px-[10px] py-[8px] rounded-[8px] text-[13px] font-medium text-white/40 hover:bg-white/5 hover:text-white/70 transition-all mb-[8px]"
           >
-            <i className="ri-arrow-left-line text-[16px] text-gray-400" />
+            <i className="ri-arrow-left-line text-[16px] text-white/30" />
             <span>Back to App</span>
           </Link>
 
           {/* User info */}
-          <div className="flex items-center gap-[10px] px-[8px] py-[8px] rounded-[8px] bg-gray-50">
-            <div className="w-[32px] h-[32px] rounded-full bg-[#1B2A4A] flex items-center justify-center flex-none">
-              <span className="text-[12px] font-bold text-white">
+          <div className="flex items-center gap-[10px] px-[8px] py-[8px] rounded-[8px] bg-white/5">
+            <div className="w-[32px] h-[32px] rounded-full bg-[#BFFF00]/20 flex items-center justify-center flex-none">
+              <span className="text-[12px] font-bold text-[#BFFF00]">
                 {profile?.display_name?.[0] || profile?.email?.[0]?.toUpperCase() || "A"}
               </span>
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-[12px] font-semibold text-[#0A0F1C] truncate">
+              <div className="text-[12px] font-semibold text-white/80 truncate">
                 {profile?.display_name || "Admin"}
               </div>
-              <div className="text-[10px] text-gray-400 truncate">
+              <div className="text-[10px] text-white/30 truncate">
                 Administrator
               </div>
             </div>

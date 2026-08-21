@@ -267,6 +267,37 @@ export default function AccuracyPage() {
         </div>
       </div>
 
+      {/* Hero Accuracy Metric */}
+      {!loading && settledPreds > 0 && (
+        <div className="mb-[24px] bg-white rounded-[14px] border border-gray-100 p-[24px] flex items-center gap-[24px]">
+          <div className="flex-1">
+            <div className="flex items-center gap-[8px] mb-[4px]">
+              <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Overall Accuracy</span>
+              <span className={`text-[10px] font-bold px-[6px] py-[2px] rounded-full ${
+                overallAccuracy >= 65 ? "bg-green-50 text-green-600" : overallAccuracy >= 55 ? "bg-amber-50 text-amber-600" : "bg-red-50 text-red-600"
+              }`}>
+                {overallAccuracy >= 65 ? "Healthy" : overallAccuracy >= 55 ? "Moderate" : "Needs Attention"}
+              </span>
+            </div>
+            <div className="text-[48px] font-bold font-mono tabular-nums text-[#0A0F1C] leading-none">
+              {overallAccuracy}%
+            </div>
+            <p className="text-[12px] text-gray-400 mt-[6px]">
+              {correctPreds.toLocaleString()} correct out of {settledPreds.toLocaleString()} settled predictions
+            </p>
+          </div>
+          {highConfStats.total > 0 && (
+            <div className="text-center px-[24px] border-l border-gray-100">
+              <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-[4px]">ELITE Tier</div>
+              <div className="text-[32px] font-bold font-mono tabular-nums text-[#D97706] leading-none">
+                {highConfStats.accuracy}%
+              </div>
+              <p className="text-[11px] text-gray-400 mt-[4px]">{highConfStats.correct}/{highConfStats.total}</p>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Summary Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-[12px] mb-[24px]">
         <StatCard
