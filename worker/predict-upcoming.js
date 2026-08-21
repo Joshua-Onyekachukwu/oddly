@@ -241,6 +241,10 @@ async function main() {
     const bttsProb = clamp(0.45 + homeForm.winRate * 0.15 + awayForm.winRate * 0.1 + 
       (homeForm.avgGoals > 1.2 ? 0.05 : 0) + (awayForm.avgGoals > 1.0 ? 0.05 : 0));
 
+    // Compute confidence tier
+    const bestProb = Math.max(homeProb, 1 - homeProb, 0.25);
+    const confidenceTier = bestProb >= 0.70 ? "ELITE" : bestProb >= 0.60 ? "HIGH" : bestProb >= 0.50 ? "MEDIUM" : "LOW";
+    mainPrediction.confidence_tier = confidenceTier;
     batchInserts.push(mainPrediction);
     batchInserts.push({
       fixture_id: fixture.id,
@@ -251,6 +255,7 @@ async function main() {
       confidence_upper: Math.round(clamp(over25Prob * 1.1) * 10000) / 10000,
       model_version: "v2.0",
       result: "pending",
+      confidence_tier: over25Prob >= 0.70 ? "ELITE" : over25Prob >= 0.60 ? "HIGH" : over25Prob >= 0.50 ? "MEDIUM" : "LOW",
     });
     batchInserts.push({
       fixture_id: fixture.id,
@@ -261,6 +266,7 @@ async function main() {
       confidence_upper: Math.round(clamp(under35Prob * 1.1) * 10000) / 10000,
       model_version: "v2.0",
       result: "pending",
+      confidence_tier: under35Prob >= 0.70 ? "ELITE" : under35Prob >= 0.60 ? "HIGH" : under35Prob >= 0.50 ? "MEDIUM" : "LOW",
     });
     batchInserts.push({
       fixture_id: fixture.id,
@@ -271,6 +277,7 @@ async function main() {
       confidence_upper: Math.round(clamp(bttsProb * 1.1) * 10000) / 10000,
       model_version: "v2.0",
       result: "pending",
+      confidence_tier: bttsProb >= 0.70 ? "ELITE" : bttsProb >= 0.60 ? "HIGH" : bttsProb >= 0.50 ? "MEDIUM" : "LOW",
     });
 
     predictions.push(mainPrediction);
