@@ -63,6 +63,10 @@ const SPORTS = [
   { key: "soccer_italy_serie_b", league: "Serie B", country: "Italy" },
   { key: "soccer_france_ligue_two", league: "Ligue 2", country: "France" },
   { key: "soccer_spain_segunda_division", league: "La Liga 2", country: "Spain" },
+  { key: "soccer_germany_liga3", league: "3. Liga", country: "Germany" },
+  // Third/Fourth Divisions
+  { key: "soccer_england_league1", league: "League 1", country: "England" },
+  { key: "soccer_england_league2", league: "League 2", country: "England" },
   // European Leagues
   { key: "soccer_netherlands_eredivisie", league: "Eredivisie", country: "Netherlands" },
   { key: "soccer_portugal_primeira_liga", league: "Primeira Liga", country: "Portugal" },
@@ -71,16 +75,35 @@ const SPORTS = [
   { key: "soccer_spl", league: "Scottish Premiership", country: "Scotland" },
   { key: "soccer_switzerland_superleague", league: "Swiss Super League", country: "Switzerland" },
   { key: "soccer_austria_bundesliga", league: "Austrian Bundesliga", country: "Austria" },
+  { key: "soccer_greece_super_league", league: "Greek Super League", country: "Greece" },
+  { key: "soccer_denmark_superliga", league: "Danish Superliga", country: "Denmark" },
+  { key: "soccer_sweden_allsvenskan", league: "Swedish Allsvenskan", country: "Sweden" },
+  { key: "soccer_sweden_superettan", league: "Swedish Superettan", country: "Sweden" },
+  { key: "soccer_norway_eliteserien", league: "Norwegian Eliteserien", country: "Norway" },
+  { key: "soccer_poland_ekstraklasa", league: "Polish Ekstraklasa", country: "Poland" },
+  { key: "soccer_finland_veikkausliiga", league: "Finnish Veikkausliiga", country: "Finland" },
+  { key: "soccer_league_of_ireland", league: "League of Ireland", country: "Ireland" },
+  { key: "soccer_russia_premier_league", league: "Russian Premier League", country: "Russia" },
   // Americas
   { key: "soccer_brazil_campeonato", league: "Brasileirão", country: "Brazil" },
+  { key: "soccer_brazil_serie_b", league: "Brasileirão Serie B", country: "Brazil" },
   { key: "soccer_usa_mls", league: "MLS", country: "USA" },
   { key: "soccer_argentina_primera_division", league: "Argentine Primera", country: "Argentina" },
-  // Asia & Other
+  { key: "soccer_chile_campeonato", league: "Chilean Primera División", country: "Chile" },
+  { key: "soccer_mexico_ligamx", league: "Liga MX", country: "Mexico" },
+  // Middle East & Africa
+  { key: "soccer_saudi_arabia_pro_league", league: "Saudi Pro League", country: "Saudi Arabia" },
+  // Asia
   { key: "soccer_japan_j_league", league: "J League", country: "Japan" },
   { key: "soccer_korea_kleague1", league: "K League 1", country: "South Korea" },
   { key: "soccer_china_superleague", league: "Chinese Super League", country: "China" },
-  // Competitions
+  // Competitions & Cups
   { key: "soccer_uefa_champs_league", league: "Champions League", country: "Europe" },
+  { key: "soccer_conmebol_copa_libertadores", league: "Copa Libertadores", country: "South America" },
+  { key: "soccer_conmebol_copa_sudamericana", league: "Copa Sudamericana", country: "South America" },
+  { key: "soccer_england_efl_cup", league: "EFL Cup", country: "England" },
+  { key: "soccer_fa_cup", league: "FA Cup", country: "England" },
+  { key: "soccer_germany_dfb_pokal", league: "DFB-Pokal", country: "Germany" },
 ];
 
 function normalizeTeamName(name) {
