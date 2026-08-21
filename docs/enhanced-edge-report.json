@@ -1,0 +1,29 @@
+{
+  "generatedAt": "2026-08-21T02:06:18.907Z",
+  "dataPoints": 16,
+  "totalMatches": 3002,
+  "predicted": 378,
+  "overallAccuracy": 68.3,
+  "tierAnalysis": {
+    "ELITE": {
+      "accuracy": 77.9,
+      "total": 86,
+      "correct": 67
+    },
+    "VERY_HIGH": {
+      "accuracy": null,
+      "total": 0,
+      "correct": 0
+    },
+    "HIGH": {
+      "accuracy": 65.4,
+      "total": 292,
+      "correct": 191
+    },
+    "SKIP": {
+      "accuracy": null,
+      "total": 2624,
+      "correct": 0
+    }
+  }
+}
