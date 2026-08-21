@@ -1,0 +1,94 @@
+{
+  "generatedAt": "2026-08-21T01:42:51.343Z",
+  "version": "v2-improved",
+  "totalMatches": 5256,
+  "modelAccuracy": {
+    "dixon-coles": {
+      "accuracy": 38,
+      "brier": 0.1862,
+      "logLoss": 1.089,
+      "total": 5256,
+      "correct": 1998
+    },
+    "elo": {
+      "accuracy": 44.9,
+      "brier": 0.1039,
+      "logLoss": 1.2138,
+      "total": 5256,
+      "correct": 2359
+    },
+    "gradient-boosting": {
+      "accuracy": 32,
+      "brier": 0.1709,
+      "logLoss": 1.0959,
+      "total": 5256,
+      "correct": 1681
+    },
+    "market": {
+      "accuracy": 45.5,
+      "brier": 0.1103,
+      "logLoss": 1.1962,
+      "total": 5256,
+      "correct": 2389
+    },
+    "ensemble-v2": {
+      "accuracy": 45.2,
+      "brier": 0.15,
+      "logLoss": 1.0755,
+      "total": 5256,
+      "correct": 2375
+    }
+  },
+  "tierAnalysis": {
+    "high": {
+      "accuracy": 50.8,
+      "total": 1164
+    },
+    "medium": {
+      "accuracy": 44.5,
+      "total": 2878
+    },
+    "low": {
+      "accuracy": 41.4,
+      "total": 1214
+    }
+  },
+  "rolloverResults": [
+    {
+      "name": "Conservative",
+      "final": 10.96,
+      "peak": 10.96,
+      "roi": 10,
+      "wins": 2,
+      "losses": 0,
+      "broken": false
+    },
+    {
+      "name": "High-Confidence",
+      "final": 10,
+      "peak": 10,
+      "roi": 0,
+      "wins": 0,
+      "losses": 0,
+      "broken": false
+    },
+    {
+      "name": "Aggressive",
+      "final": 3.9,
+      "peak": 11.62,
+      "roi": -61,
+      "wins": 9,
+      "losses": 21,
+      "broken": false
+    },
+    {
+      "name": "Balanced",
+      "final": 2.98,
+      "peak": 10,
+      "roi": -70,
+      "wins": 10,
+      "losses": 20,
+      "broken": false
+    }
+  ]
+}
