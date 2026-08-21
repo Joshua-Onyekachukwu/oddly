@@ -1,6 +1,60 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateTodayPredictions, generateCrownJewel } from "@/lib/nvidia/prediction-engine";
+import { createClient } from "@supabase/supabase-js";
 import { notifyCrownJewel } from "@/lib/notifications";
+
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+  process.env.SUPABASE_SERVICE_ROLE_KEY || ""
+);
+
+function clamp(v: number, lo = 0.01, hi = 0.99) { return Math.max(lo, Math.min(hi, v)); }
+
+// ─── Poisson Model ───────────────────────────────────────────────────────
+function poissonProb(lambda: number, k: number): number {
+  if (lambda <= 0) return k === 0 ? 1 : 0;
+  let logP = -lambda;
+  for (let i = 1; i <= k; i++) logP += Math.log(lambda) - Math.log(i);
+  return Math.exp(logP);
+}
+
+function poissonGoals(hL: number, aL: number, max = 8): number[][] {
+  const grid: number[][] = [];
+  for (let i = 0; i <= max; i++) {
+    grid[i] = [];
+    for (let j = 0; j <= max; j++) grid[i][j] = poissonProb(hL, i) * poissonProb(aL, j);
+  }
+  return grid;
+}
+
+function computeMarkets(grid: number[][]): Record<string, number> {
+  const m: Record<string, number> = {};
+  let pH = 0, pD = 0, pA = 0;
+  for (let i = 0; i < grid.length; i++)
+    for (let j = 0; j < grid[i].length; j++) {
+      if (i > j) pH += grid[i][j]; else if (i === j) pD += grid[i][j]; else pA += grid[i][j];
+    }
+  m["1X2_Home"] = clamp(pH); m["1X2_Draw"] = clamp(pD); m["1X2_Away"] = clamp(pA);
+  m["DC_1X"] = clamp(pH + pD); m["DC_X2"] = clamp(pD + pA); m["DC_12"] = clamp(pH + pA);
+  const dnb = pH + pA;
+  m["DNB_Home"] = dnb > 0 ? clamp(pH / dnb) : 0.5;
+  m["DNB_Away"] = dnb > 0 ? clamp(pA / dnb) : 0.5;
+  const totals: Record<number, number> = {};
+  let cum = 0;
+  for (let t = 0; t <= 9; t++) {
+    for (let i = 0; i < grid.length; i++)
+      for (let j = 0; j < grid[i].length; j++) if (i + j === t) cum += grid[i][j];
+    totals[t] = cum;
+  }
+  for (const l of [0.5, 1.5, 2.5, 3.5, 4.5]) {
+    m[`OU_Over_${l}`] = clamp(1 - (totals[Math.floor(l)] || 0));
+    m[`OU_Under_${l}`] = clamp(totals[Math.floor(l)] || 0);
+  }
+  let btts = 0;
+  for (let i = 1; i < grid.length; i++)
+    for (let j = 1; j < grid[i].length; j++) btts += grid[i][j];
+  m["BTTS_Yes"] = clamp(btts); m["BTTS_No"] = clamp(1 - btts);
+  return m;
+}
 
 /**
  * Verify the request is from Vercel Cron or an authorized caller.
@@ -23,52 +77,128 @@ async function runPredictionPipeline() {
   const startTime = Date.now();
   const results: Record<string, unknown> = {};
 
-  // Step 1: Generate predictions for all scheduled fixtures
-  console.log("[PREDICT] Generating predictions for today's fixtures...");
-  const predictions = await generateTodayPredictions();
-  results.predictions = predictions;
-  console.log(`[PREDICT] ${predictions.success}/${predictions.total} predictions generated`);
+  // Load historical data for model calibration
+  console.log("[PREDICT] Loading historical data...");
+  const eloMap: Record<string, number> = {};
+  const formMap: Record<string, { gf: number; ga: number; isHome: boolean }[]> = {};
 
-  // Step 2: Select Crown Jewel
-  if (predictions.success > 0) {
-    console.log("[PREDICT] Selecting Crown Jewel pick...");
-    const crownJewel = await generateCrownJewel();
-    results.crownJewel = crownJewel;
+  const { data: histFixtures } = await supabaseAdmin
+    .from("fixtures")
+    .select("home_score, away_score, home:teams!fixtures_home_team_id_fkey(canonical_name), away:teams!fixtures_away_team_id_fkey(canonical_name)")
+    .eq("status", "finished")
+    .not("home_score", "is", null)
+    .order("kickoff_time", { ascending: true })
+    .limit(2000);
 
-    if (crownJewel.success && crownJewel.selection) {
-      console.log(`[PREDICT] Crown Jewel: ${crownJewel.selection.reasoning}`);
+  if (histFixtures) {
+    for (const f of histFixtures) {
+      const home = (f as any).home?.canonical_name;
+      const away = (f as any).away?.canonical_name;
+      if (!home || !away) continue;
+      // Elo update
+      const h = (eloMap[home] || 1500) + 65;
+      const a = eloMap[away] || 1500;
+      const eH = 1 / (1 + Math.pow(10, (a - h) / 400));
+      const actual = f.home_score > f.away_score ? 1 : f.home_score < f.away_score ? 0 : 0.5;
+      eloMap[home] = (eloMap[home] || 1500) + 32 * (actual - eH);
+      eloMap[away] = (eloMap[away] || 1500) + 32 * ((1 - actual) - (1 - eH));
+      // Form
+      if (!formMap[home]) formMap[home] = [];
+      if (!formMap[away]) formMap[away] = [];
+      formMap[home].push({ gf: f.home_score, ga: f.away_score, isHome: true });
+      formMap[away].push({ gf: f.away_score, ga: f.home_score, isHome: false });
+      if (formMap[home].length > 15) formMap[home].shift();
+      if (formMap[away].length > 15) formMap[away].shift();
+    }
+  }
+  console.log(`[PREDICT] Loaded ${histFixtures?.length || 0} historical matches`);
 
-      // Step 3: Notify users about Crown Jewel
-      try {
-        const notified = await notifyCrownJewel(
-          {
-            homeTeam: crownJewel.selection.reasoning.split(" vs ")[0]?.split(": ").pop() || "Home",
-            awayTeam: crownJewel.selection.reasoning.split(" vs ")[1]?.split(" (")[0] || "Away",
-            league: crownJewel.selection.reasoning.split("(")[1]?.split(")")[0] || "Unknown",
-          },
-          {
-            market: crownJewel.selection.market,
-            selection: crownJewel.selection.selection,
-            edge: crownJewel.selection.edge,
-            confidence: crownJewel.selection.confidence,
-          }
-        );
-        results.notifications = { crownJewel: notified };
-        console.log(`[PREDICT] Crown Jewel notification sent to ${notified} users`);
-      } catch (err) {
-        console.error("[PREDICT] Failed to send Crown Jewel notification:", err);
-      }
-    } else {
-      console.log(`[PREDICT] No Crown Jewel: ${crownJewel.error}`);
+  // Get upcoming fixtures
+  const { data: fixtures } = await supabaseAdmin
+    .from("fixtures")
+    .select("id, league_id, home_team_id, away_team_id")
+    .eq("status", "scheduled")
+    .gte("kickoff_time", new Date().toISOString())
+    .order("kickoff_time")
+    .limit(200);
+
+  if (!fixtures?.length) {
+    return { success: true, duration: `${Date.now() - startTime}ms`, results: { message: "No upcoming fixtures" }, timestamp: new Date().toISOString() };
+  }
+  console.log(`[PREDICT] Found ${fixtures.length} upcoming fixtures`);
+
+  // Get team names
+  const teamIds = [...new Set([...fixtures.map(f => f.home_team_id), ...fixtures.map(f => f.away_team_id)])];
+  const { data: teams } = await supabaseAdmin.from("teams").select("id, canonical_name").in("id", teamIds);
+  const teamMap: Record<string, string> = {};
+  for (const t of teams || []) teamMap[t.id] = t.canonical_name;
+
+  // Generate enhanced predictions
+  const predictions: any[] = [];
+  for (const fixture of fixtures) {
+    const home = teamMap[fixture.home_team_id];
+    const away = teamMap[fixture.away_team_id];
+    if (!home || !away) continue;
+
+    // Get features
+    const hHist = (formMap[home] || []).slice(-10);
+    const aHist = (formMap[away] || []).slice(-10);
+    const hPPG = hHist.length > 0 ? hHist.slice(-5).reduce((s, m) => s + (m.gf > m.ga ? 3 : m.gf === m.ga ? 1 : 0), 0) / Math.min(hHist.length, 5) : 1.5;
+    const aPPG = aHist.length > 0 ? aHist.slice(-5).reduce((s, m) => s + (m.gf > m.ga ? 3 : m.gf === m.ga ? 1 : 0), 0) / Math.min(aHist.length, 5) : 1.5;
+    const hGS = hHist.length > 0 ? hHist.slice(-5).reduce((s, m) => s + m.gf, 0) / Math.min(hHist.length, 5) : 1.3;
+    const aGS = aHist.length > 0 ? aHist.slice(-5).reduce((s, m) => s + m.gf, 0) / Math.min(aHist.length, 5) : 1.3;
+    const hGC = hHist.length > 0 ? hHist.slice(-5).reduce((s, m) => s + m.ga, 0) / Math.min(hHist.length, 5) : 1.2;
+    const aGC = aHist.length > 0 ? aHist.slice(-5).reduce((s, m) => s + m.ga, 0) / Math.min(aHist.length, 5) : 1.2;
+    const eloDiff = (eloMap[home] || 1500) - (eloMap[away] || 1500);
+
+    // Enhanced formula
+    let prob = 0.5 + (eloDiff - 150) * 0.001;
+    prob += (hPPG - 1.5) * 0.08;
+    prob -= (aPPG - 1.5) * 0.08;
+    prob += (hGS - 1.3) * 0.04;
+    prob -= (aGS - 1.3) * 0.04;
+    prob -= (hGC - 1.2) * 0.03;
+    prob += (aGC - 1.2) * 0.03;
+    if (eloDiff > 200) prob += 0.10;
+    prob = clamp(prob);
+
+    // Poisson lambdas
+    const hL = clamp(hGS * 1.1 * (aGC / 1.3) * (1 + eloDiff * 0.0004), 0.3, 4.5);
+    const aL = clamp(aGS * 0.9 * (hGC / 1.3) * (1 - eloDiff * 0.0004), 0.3, 4.5);
+    const grid = poissonGoals(hL, aL);
+    const markets = computeMarkets(grid);
+
+    // Find best market
+    let bestMk = "OU_Over_0.5";
+    let bestPr = 0;
+    for (const [mk, pr] of Object.entries(markets)) {
+      if (pr > bestPr) { bestPr = pr; bestMk = mk; }
+    }
+
+    // Store predictions
+    for (const [mk, pr] of Object.entries(markets)) {
+      predictions.push({
+        fixture_id: fixture.id,
+        market: mk.split("_")[0],
+        selection: mk.split("_").slice(1).join("_"),
+        model_probability: Math.round(pr * 10000) / 10000,
+        model_version: "v3.0-cron",
+      });
     }
   }
 
+  // Batch insert
+  for (let i = 0; i < predictions.length; i += 50) {
+    await supabaseAdmin.from("predictions").insert(predictions.slice(i, i + 50));
+  }
+
   const duration = Date.now() - startTime;
+  console.log(`[PREDICT] Generated ${predictions.length} predictions in ${duration}ms`);
 
   return {
     success: true,
     duration: `${duration}ms`,
-    results,
+    results: { total: fixtures.length, predictions: predictions.length },
     timestamp: new Date().toISOString(),
   };
 }
