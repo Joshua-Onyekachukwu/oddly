@@ -25,7 +25,7 @@ const plans = [
     description: "Full access to all models, value bet detection, and accumulator builder.",
     features: [
       "Unlimited predictions",
-      "All 100+ leagues",
+      "All 360+ leagues",
       "Value bet detection",
       "Accumulator builder",
       "Weekly performance reports",

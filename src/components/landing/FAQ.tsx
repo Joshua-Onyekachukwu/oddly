@@ -27,7 +27,7 @@ const faqData = [
   {
     question: "Which leagues does ODDLY cover?",
     answer:
-      "We cover 100+ leagues across Europe, South America, Africa, and Asia — including the Premier League, La Liga, Bundesliga, Serie A, Ligue 1, Eredivisie, NPFL, MLS, Brasileirão, and many more.",
+      "We cover 360+ leagues across Europe, South America, Africa, and Asia — including the Premier League, La Liga, Bundesliga, Serie A, Ligue 1, Eredivisie, NPFL, MLS, Brasileirão, and many more.",
   },
   {
     question: "What's the difference between Premium and Elite?",

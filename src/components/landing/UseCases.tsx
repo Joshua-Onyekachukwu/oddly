@@ -8,7 +8,7 @@ const useCasesData = [
   { id: 2, title: "Accumulator Builders", desc: "Smart combination optimization that maximizes returns while managing risk.", icon: "ri-stack-line", color: "text-[#D97706]", bg: "bg-[#D97706]/10" },
   { id: 3, title: "Rollover Chasers", desc: "Track daily rollover chains with automated pick selection and bank management.", icon: "ri-fire-line", color: "text-[#EF4444]", bg: "bg-[#EF4444]/10" },
   { id: 4, title: "Data Analysts", desc: "Deep dive into model performance, accuracy reports, and feature importance.", icon: "ri-bar-chart-line", color: "text-[#2563EB]", bg: "bg-[#2563EB]/10" },
-  { id: 5, title: "Value Seekers", desc: "Automated edge detection across 100+ leagues with real-time odds comparison.", icon: "ri-percent-line", color: "text-[#22c55e]", bg: "bg-[#22c55e]/10" },
+  { id: 5, title: "Value Seekers", desc: "Automated edge detection across 360+ leagues with real-time odds comparison.", icon: "ri-percent-line", color: "text-[#22c55e]", bg: "bg-[#22c55e]/10" },
   { id: 6, title: "Premium Members", desc: "Unlimited AI chat, priority alerts, and exclusive model insights.", icon: "ri-vip-crown-line", color: "text-[#8B5CF6]", bg: "bg-[#8B5CF6]/10" },
 ];
 
