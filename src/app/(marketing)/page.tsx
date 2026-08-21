@@ -9,7 +9,6 @@ import UseCases from "@/components/landing/UseCases";
 import Pricing from "@/components/landing/Pricing";
 import FAQ from "@/components/landing/FAQ";
 import FunFacts from "@/components/landing/FunFacts";
-import LiveMatches from "@/components/landing/LiveMatches";
 import GetStarted from "@/components/landing/GetStarted";
 import Footer from "@/components/landing/Footer";
 import { getLandingPageData } from "@/lib/landing-data";
@@ -29,8 +28,6 @@ export default async function Home() {
       <About />
 
       <Features />
-
-      <LiveMatches fixtures={data.upcomingFixtures} valueBets={data.topValueBets} />
 
       <DashboardShowcase />
 

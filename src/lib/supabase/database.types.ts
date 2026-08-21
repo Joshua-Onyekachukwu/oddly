@@ -72,6 +72,8 @@ export interface Database {
           sport: string;
           is_active: boolean;
           priority: number;
+          logo: string | null;
+          country_flag: string | null;
           created_at: string;
         };
         Insert: {
@@ -81,6 +83,8 @@ export interface Database {
           sport?: string;
           is_active?: boolean;
           priority?: number;
+          logo?: string | null;
+          country_flag?: string | null;
           created_at?: string;
         };
         Update: {
@@ -90,6 +94,8 @@ export interface Database {
           sport?: string;
           is_active?: boolean;
           priority?: number;
+          logo?: string | null;
+          country_flag?: string | null;
           created_at?: string;
         };
         Relationships: [];
@@ -100,6 +106,7 @@ export interface Database {
           canonical_name: string;
           country: string | null;
           league_id: string | null;
+          logo: string | null;
           created_at: string;
         };
         Insert: {
@@ -107,6 +114,7 @@ export interface Database {
           canonical_name: string;
           country?: string | null;
           league_id?: string | null;
+          logo?: string | null;
           created_at?: string;
         };
         Update: {
@@ -114,6 +122,7 @@ export interface Database {
           canonical_name?: string;
           country?: string | null;
           league_id?: string | null;
+          logo?: string | null;
           created_at?: string;
         };
         Relationships: [];

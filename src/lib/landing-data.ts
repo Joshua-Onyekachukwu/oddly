@@ -98,9 +98,9 @@ export async function getLandingPageData(): Promise<LandingPageData> {
         id,
         kickoff_time,
         status,
-        home_team:teams!fixtures_home_team_id_fkey(canonical_name),
-        away_team:teams!fixtures_away_team_id_fkey(canonical_name),
-        league:leagues(name)
+        home_team:teams!fixtures_home_team_id_fkey(canonical_name, logo),
+        away_team:teams!fixtures_away_team_id_fkey(canonical_name, logo),
+        league:leagues(name, logo)
       `)
       .gte("kickoff_time", todayStart.toISOString())
       .lte("kickoff_time", todayEnd.toISOString())

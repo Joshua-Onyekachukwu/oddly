@@ -13,7 +13,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "sync:fixtures": "node scripts/sync-fixtures.js"
+    "sync:fixtures": "node scripts/sync-fixtures.js",
+    "sync:logos": "node scripts/sync-logos.js"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",

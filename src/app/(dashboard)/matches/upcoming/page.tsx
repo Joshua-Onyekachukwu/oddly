@@ -22,9 +22,9 @@ async function getUpcomingFixtures() {
     .from("fixtures")
     .select(`
       *,
-      leagues (name, country),
-      home_team:teams!fixtures_home_team_id_fkey(canonical_name),
-      away_team:teams!fixtures_away_team_id_fkey(canonical_name),
+      leagues (name, country, logo),
+      home_team:teams!fixtures_home_team_id_fkey(canonical_name, logo),
+      away_team:teams!fixtures_away_team_id_fkey(canonical_name, logo),
       predictions (id, market, selection, model_probability, confidence_lower, confidence_upper)
     `)
     .gte("kickoff_time", now)
@@ -41,6 +41,9 @@ async function getUpcomingFixtures() {
     ...f,
     home_team_name: f.home_team?.canonical_name || "TBD",
     away_team_name: f.away_team?.canonical_name || "TBD",
+    home_team_logo: f.home_team?.logo || null,
+    away_team_logo: f.away_team?.logo || null,
+    league_logo: f.leagues?.logo || null,
   }));
 }
 
