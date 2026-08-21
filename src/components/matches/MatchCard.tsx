@@ -170,7 +170,7 @@ export function MatchCard({ fixture, onClick }: MatchCardProps) {
       className="bg-white rounded-[14px] border border-gray-100 hover:border-gray-200 hover:shadow-[0_4px_20px_rgba(0,0,0,0.04)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] focus-visible:ring-inset transition-all duration-300 cursor-pointer group overflow-hidden"
     >
       {/* Header: League + Kickoff */}
-      <div className="px-[14px] pt-[12px] pb-[8px] flex items-center justify-between">
+      <div className="px-[14px] pt-[12px] pb-[8px] flex items-center justify-between pointer-events-none">
         <div className="flex items-center gap-[6px] min-w-0">
           {fixture.league_logo ? (
             <img
@@ -197,7 +197,7 @@ export function MatchCard({ fixture, onClick }: MatchCardProps) {
       </div>
 
       {/* Teams */}
-      <div className="px-[14px] py-[8px]">
+      <div className="px-[14px] py-[8px] pointer-events-none">
         <div className="flex items-center gap-[10px]">
           {/* Home */}
           <div className="flex items-center gap-[8px] flex-1 min-w-0">
@@ -229,7 +229,7 @@ export function MatchCard({ fixture, onClick }: MatchCardProps) {
       </div>
 
       {/* Prediction + Odds */}
-      <div className="px-[14px] pb-[12px] pt-[4px] border-t border-gray-50">
+      <div className="px-[14px] pb-[12px] pt-[4px] border-t border-gray-50 pointer-events-none">
         {strongest ? (
           <div className="flex items-center justify-between">
             <PredictionBadge prediction={strongest} />

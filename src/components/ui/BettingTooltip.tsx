@@ -95,22 +95,18 @@ export function BettingTooltip({ term, children, className = "", showAbbrev = fa
   const displayLabel = showAbbrev ? (ABBREV_LABELS[term] || SHORT_LABELS[term] || term) : (SHORT_LABELS[term] || term);
 
   if (!info) {
-    return <span className={className}>{children || term}</span>;
+    return <span className={`pointer-events-none ${className}`}>{children || term}</span>;
   }
 
   return (
     <span
-      className={`relative inline-block ${className}`}
+      className={`relative inline-block pointer-events-none ${className}`}
       onMouseEnter={() => setShow(true)}
       onMouseLeave={() => setShow(false)}
-      onFocus={() => setShow(true)}
-      onBlur={() => setShow(false)}
     >
       <span
-        tabIndex={0}
-        role="button"
         aria-describedby={`tooltip-${term}`}
-        className="cursor-help border-b border-dashed border-current opacity-80 hover:opacity-100 transition-opacity"
+        className="border-b border-dashed border-current opacity-80"
       >
         {children || displayLabel}
       </span>
