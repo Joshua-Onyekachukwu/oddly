@@ -36,7 +36,21 @@ BEGIN
     SELECT 1 FROM pg_constraint 
     WHERE conname = 'fixtures_external_id_unique'
   ) THEN
-    -- Remove duplicates using ROW_NUMBER
+    -- Remove odds for duplicate fixtures first (foreign key constraint)
+    DELETE FROM odds_snapshots WHERE fixture_id IN (
+      SELECT id FROM (
+        SELECT id, ROW_NUMBER() OVER (PARTITION BY external_id ORDER BY created_at) as rn
+        FROM fixtures WHERE external_id IS NOT NULL
+      ) t WHERE rn > 1
+    );
+    -- Also remove predictions for duplicate fixtures
+    DELETE FROM predictions WHERE fixture_id IN (
+      SELECT id FROM (
+        SELECT id, ROW_NUMBER() OVER (PARTITION BY external_id ORDER BY created_at) as rn
+        FROM fixtures WHERE external_id IS NOT NULL
+      ) t WHERE rn > 1
+    );
+    -- Now remove the duplicate fixtures
     DELETE FROM fixtures WHERE id IN (
       SELECT id FROM (
         SELECT id, ROW_NUMBER() OVER (PARTITION BY external_id ORDER BY created_at) as rn
