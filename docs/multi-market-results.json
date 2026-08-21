@@ -1,0 +1,228 @@
+{
+  "timestamp": "2026-08-21T06:01:23.204Z",
+  "totalMatches": 9068,
+  "marketsTested": 26,
+  "bestMarketAccuracy": "93.3",
+  "coverage": {
+    "70": 9068,
+    "75": 9068,
+    "80": 9068,
+    "85": 9068,
+    "90": 9068,
+    "95": 4903
+  },
+  "marketStats": {
+    "1X2_Home": {
+      "total": 9068,
+      "correct": 5762,
+      "accuracy": 63.5,
+      "avgProb": 44.6,
+      "brierScore": 0.2243
+    },
+    "1X2_Draw": {
+      "total": 9068,
+      "correct": 6772,
+      "accuracy": 74.7,
+      "avgProb": 23.5,
+      "brierScore": 0.1888
+    },
+    "1X2_Away": {
+      "total": 9068,
+      "correct": 6402,
+      "accuracy": 70.6,
+      "avgProb": 31.9,
+      "brierScore": 0.1958
+    },
+    "DC_1X": {
+      "total": 9068,
+      "correct": 6404,
+      "accuracy": 70.6,
+      "avgProb": 68,
+      "brierScore": 0.1958
+    },
+    "DC_X2": {
+      "total": 9068,
+      "correct": 5758,
+      "accuracy": 63.5,
+      "avgProb": 55.4,
+      "brierScore": 0.2243
+    },
+    "DC_12": {
+      "total": 9068,
+      "correct": 6772,
+      "accuracy": 74.7,
+      "avgProb": 76.4,
+      "brierScore": 0.1888
+    },
+    "DNB_Home": {
+      "total": 9068,
+      "correct": 4562,
+      "accuracy": 50.3,
+      "avgProb": 57.8,
+      "brierScore": 0.1683
+    },
+    "DNB_Away": {
+      "total": 9068,
+      "correct": 4562,
+      "accuracy": 50.3,
+      "avgProb": 42.2,
+      "brierScore": 0.1683
+    },
+    "OU_Over_0.5": {
+      "total": 9068,
+      "correct": 8546,
+      "accuracy": 94.2,
+      "avgProb": 92.4,
+      "brierScore": 0.056
+    },
+    "OU_Under_0.5": {
+      "total": 9068,
+      "correct": 8546,
+      "accuracy": 94.2,
+      "avgProb": 7.6,
+      "brierScore": 0.056
+    },
+    "OU_Over_1.5": {
+      "total": 9068,
+      "correct": 6904,
+      "accuracy": 76.1,
+      "avgProb": 74.9,
+      "brierScore": 0.1779
+    },
+    "OU_Under_1.5": {
+      "total": 9068,
+      "correct": 6904,
+      "accuracy": 76.1,
+      "avgProb": 25.1,
+      "brierScore": 0.1779
+    },
+    "OU_Over_2.5": {
+      "total": 9068,
+      "correct": 5055,
+      "accuracy": 55.7,
+      "avgProb": 52.9,
+      "brierScore": 0.2577
+    },
+    "OU_Under_2.5": {
+      "total": 9068,
+      "correct": 5055,
+      "accuracy": 55.7,
+      "avgProb": 47.1,
+      "brierScore": 0.2577
+    },
+    "OU_Over_3.5": {
+      "total": 9068,
+      "correct": 5880,
+      "accuracy": 64.8,
+      "avgProb": 33,
+      "brierScore": 0.2279
+    },
+    "OU_Under_3.5": {
+      "total": 9068,
+      "correct": 5880,
+      "accuracy": 64.8,
+      "avgProb": 67,
+      "brierScore": 0.2279
+    },
+    "OU_Over_4.5": {
+      "total": 9068,
+      "correct": 7459,
+      "accuracy": 82.3,
+      "avgProb": 18.5,
+      "brierScore": 0.1427
+    },
+    "OU_Under_4.5": {
+      "total": 9068,
+      "correct": 7459,
+      "accuracy": 82.3,
+      "avgProb": 81.5,
+      "brierScore": 0.1427
+    },
+    "BTTS_Yes": {
+      "total": 9068,
+      "correct": 4795,
+      "accuracy": 52.9,
+      "avgProb": 51.6,
+      "brierScore": 0.2603
+    },
+    "BTTS_No": {
+      "total": 9068,
+      "correct": 4795,
+      "accuracy": 52.9,
+      "avgProb": 48.4,
+      "brierScore": 0.2603
+    },
+    "HomeGoals_Over_0.5": {
+      "total": 9068,
+      "correct": 6899,
+      "accuracy": 76.1,
+      "avgProb": 75.6,
+      "brierScore": 0.1702
+    },
+    "HomeGoals_Over_1.5": {
+      "total": 9068,
+      "correct": 5492,
+      "accuracy": 60.6,
+      "avgProb": 45.2,
+      "brierScore": 0.2423
+    },
+    "HomeGoals_Over_2.5": {
+      "total": 9068,
+      "correct": 7013,
+      "accuracy": 77.3,
+      "avgProb": 22.9,
+      "brierScore": 0.1639
+    },
+    "AwayGoals_Over_0.5": {
+      "total": 9068,
+      "correct": 6288,
+      "accuracy": 69.3,
+      "avgProb": 68.4,
+      "brierScore": 0.204
+    },
+    "AwayGoals_Over_1.5": {
+      "total": 9068,
+      "correct": 5741,
+      "accuracy": 63.3,
+      "avgProb": 35.5,
+      "brierScore": 0.2308
+    },
+    "AwayGoals_Over_2.5": {
+      "total": 9068,
+      "correct": 7750,
+      "accuracy": 85.5,
+      "avgProb": 15.4,
+      "brierScore": 0.1198
+    }
+  },
+  "calibration": {
+    "50-59": {
+      "correct": 97681,
+      "total": 145853
+    },
+    "60-69": {
+      "correct": 15186,
+      "total": 24837
+    },
+    "70-79": {
+      "correct": 19114,
+      "total": 27538
+    },
+    "80-84": {
+      "correct": 9074,
+      "total": 11725
+    },
+    "85-89": {
+      "correct": 8239,
+      "total": 10048
+    },
+    "90-94": {
+      "correct": 7946,
+      "total": 9074
+    },
+    "95+": {
+      "correct": 6215,
+      "total": 6693
+    }
+  }
+}
