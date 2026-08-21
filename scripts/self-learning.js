@@ -1,19 +1,21 @@
 #!/usr/bin/env node
 
 /**
- * ODDLY Self-Learning System v2
+ * ODDLY Self-Learning System v3
  *
  * THE FULL LEARNING LOOP:
- * 1. Load all finished matches from database
- * 2. Build Elo ratings + form data chronologically
- * 3. For each match: predict BEFORE it was played, compare to actual result
- * 4. Record which patterns led to correct/wrong predictions
- * 5. Optimize model weights using the results
- * 6. Save learned weights + patterns
- * 7. Use learned weights for future predictions
- * 8. Every day: predict, check yesterday's results, learn, repeat
+ * 1. Load pre-computed features from `match_features` table (instant)
+ * 2. If no stored features, compute them from scratch and store
+ * 3. Evaluate predictions using stored features
+ * 4. Optimize model weights
+ * 5. Predict upcoming matches using learned weights
+ * 6. Store predictions in `prediction_history` table
+ * 7. Check yesterday's predictions vs actual results
+ * 8. Update model_performance with latest accuracy
+ * 9. Every day: load → predict → check → learn → repeat
  *
  * Run: node scripts/self-learning.js
+ * Prerequisites: Run `node scripts/store-historical.js` first (once)
  */
 
 const { createClient } = require("@supabase/supabase-js");
@@ -41,7 +43,7 @@ const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE
 
 function clamp(v, lo = 0.01, hi = 0.99) { return Math.max(lo, Math.min(hi, v)); }
 
-// ─── Learning Database ──────────────────────────────────────────────────────
+// ─── Learning Database (local cache for weights) ────────────────────────────
 
 const LEARNING_FILE = path.join(__dirname, "..", "docs", "learning-data.json");
 
@@ -50,21 +52,9 @@ function loadLearningData() {
     try { return JSON.parse(fs.readFileSync(LEARNING_FILE, "utf8")); } catch { }
   }
   return {
-    modelWeights: {
-      elo: 0.30,
-      form: 0.20,
-      h2h: 0.10,
-      goals: 0.15,
-      streak: 0.05,
-      odds: 0.10,
-      homeAdv: 0.10,
-    },
-    accuracy: { total: 0, correct: 0, byTier: {}, byPattern: {} },
-    correctPatterns: {},
-    wrongPatterns: {},
-    lastBacktest: null,
+    modelWeights: { elo: 0.29, form: 0.19, goals: 0.18, odds: 0.10, homeAdv: 0.10, h2h: 0.10, streak: 0.05 },
+    accuracy: { total: 0, correct: 0 },
     lastUpdated: null,
-    backtestResults: null,
   };
 }
 
@@ -75,245 +65,142 @@ function saveLearningData(data) {
   fs.writeFileSync(LEARNING_FILE, JSON.stringify(data, null, 2));
 }
 
-// ─── Elo System ─────────────────────────────────────────────────────────────
-
-class EloSystem {
-  constructor() { this.ratings = {}; }
-  get(t) { return this.ratings[t] || 1500; }
-  predict(home, away) {
-    const h = this.get(home) + 65; // Home advantage
-    const a = this.get(away);
-    return 1 / (1 + Math.pow(10, (a - h) / 400));
-  }
-  update(home, away, hg, ag) {
-    const h = this.get(home) + 65;
-    const a = this.get(away);
-    const eH = 1 / (1 + Math.pow(10, (a - h) / 400));
-    const actual = hg > ag ? 1 : hg < ag ? 0 : 0.5;
-    const K = 32;
-    this.ratings[home] = this.get(home) + K * (actual - eH);
-    this.ratings[away] = this.get(away) + K * ((1 - actual) - (1 - eH));
-  }
-  reset() { this.ratings = {}; }
-}
-
-// ─── Form Tracker ───────────────────────────────────────────────────────────
-
-class FormTracker {
-  constructor() { this.history = {}; }
-  record(team, result, goals, against) {
-    if (!this.history[team]) this.history[team] = [];
-    this.history[team].push({ result, goals, against });
-    if (this.history[team].length > 30) this.history[team].shift();
-  }
-  getForm(team, n = 5) {
-    const last = (this.history[team] || []).slice(-n);
-    if (last.length === 0) return { ppg: 1.5, winRate: 0.4, streak: 0, avgGoals: 1.3, avgConceded: 1.2 };
-    const ppg = last.reduce((s, r) => s + (r.result === "W" ? 3 : r.result === "D" ? 1 : 0), 0) / last.length;
-    const winRate = last.filter(r => r.result === "W").length / last.length;
-    let streak = 0;
-    for (let i = last.length - 1; i >= 0; i--) {
-      if (last[i].result === "W") { if (streak >= 0) streak++; else break; }
-      else if (last[i].result === "L") { if (streak <= 0) streak--; else break; }
-      else break;
-    }
-    return {
-      ppg, winRate, streak,
-      avgGoals: last.reduce((s, r) => s + r.goals, 0) / last.length,
-      avgConceded: last.reduce((s, r) => s + r.against, 0) / last.length,
-    };
-  }
-  getH2H(home, away) {
-    // Look at head-to-head between these teams
-    const homeHistory = this.history[home] || [];
-    // Simplified: just return neutral since we don't track opponents in this format
-    return { homeWins: 0, draws: 0, awayWins: 0, total: 0 };
-  }
-  reset() { this.history = {}; }
-}
-
 // ─── Pattern Extractor ──────────────────────────────────────────────────────
 
-function extractPatterns(features) {
+function extractPatterns(f) {
   const p = [];
-  if (features.eloDiff > 200) p.push("elo_dominant");
-  else if (features.eloDiff > 150) p.push("elo_strong");
-  else if (features.eloDiff > 100) p.push("elo_moderate");
-  if (features.homeWinRate > 0.65) p.push("home_very_strong");
-  else if (features.homeWinRate > 0.55) p.push("home_strong");
-  if (features.awayWinRate < 0.30) p.push("away_very_weak");
-  else if (features.awayWinRate < 0.40) p.push("away_weak");
-  if (features.homeStreak >= 3) p.push("home_hot");
-  if (features.awayStreak <= -2) p.push("away_cold");
-  if (features.homeGoals >= 1.8) p.push("home_scores_heavy");
-  else if (features.homeGoals >= 1.4) p.push("home_scores");
-  if (features.homeConceded <= 0.8) p.push("home_fortress");
-  else if (features.homeConceded <= 1.2) p.push("home_defends");
-  if (features.awayConceded >= 1.6) p.push("away_leaks_heavy");
-  else if (features.awayConceded >= 1.3) p.push("away_leaks");
-  if (features.homePpg >= 2.3) p.push("home_elite_form");
-  else if (features.homePpg >= 2.0) p.push("home_good_form");
-  if (features.awayPpg <= 0.8) p.push("away_terrible_form");
-  else if (features.awayPpg <= 1.0) p.push("away_poor_form");
-  if (features.goalDiff > 3) p.push("home_goal_advantage");
-  if (features.fatigue) p.push("home_rest_advantage");
+  if (f.elo_diff > 200) p.push("elo_dominant");
+  else if (f.elo_diff > 150) p.push("elo_strong");
+  else if (f.elo_diff > 100) p.push("elo_moderate");
+  if (f.home_win_rate > 0.65) p.push("home_very_strong");
+  else if (f.home_win_rate > 0.55) p.push("home_strong");
+  if (f.away_win_rate < 0.30) p.push("away_very_weak");
+  else if (f.away_win_rate < 0.40) p.push("away_weak");
+  if (f.home_streak >= 3) p.push("home_hot");
+  if (f.away_streak <= -2) p.push("away_cold");
+  if (f.home_avg_goals >= 1.8) p.push("home_scores_heavy");
+  else if (f.home_avg_goals >= 1.4) p.push("home_scores");
+  if (f.home_avg_conceded <= 0.8) p.push("home_fortress");
+  else if (f.home_avg_conceded <= 1.2) p.push("home_defends");
+  if (f.away_avg_conceded >= 1.6) p.push("away_leaks_heavy");
+  else if (f.away_avg_conceded >= 1.3) p.push("away_leaks");
+  if (f.home_form_ppg >= 2.3) p.push("home_elite_form");
+  else if (f.home_form_ppg >= 2.0) p.push("home_good_form");
+  if (f.away_form_ppg <= 0.8) p.push("away_terrible_form");
+  else if (f.away_form_ppg <= 1.0) p.push("away_poor_form");
+  if (f.goal_diff > 3) p.push("home_goal_advantage");
   return p;
 }
 
-// ─── The Self-Learning Engine ───────────────────────────────────────────────
+// ─── Self-Learning Engine ──────────────────────────────────────────────────
 
 class SelfLearningEngine {
   constructor() {
     this.learning = loadLearningData();
-    this.elo = new EloSystem();
-    this.form = new FormTracker();
   }
 
   /**
-   * STEP 1: BACKTEST — Run predictions against ALL finished matches chronologically.
-   * This is where the system learns what patterns actually work.
+   * STEP 1: Load pre-computed features from database (instant)
+   * If no features exist, run a full backtest and store them.
    */
-  async backtest() {
-    console.log("\n🔬 BACKTESTING against all finished matches...");
+  async loadFeatures() {
+    console.log("\n💾 Loading pre-computed features from database...");
 
-    // Load all finished matches chronologically
-    const { data: fixtures } = await supabase
-      .from("fixtures")
-      .select(`
-        id, home_score, away_score, kickoff_time,
-        home_team:teams!fixtures_home_team_id_fkey(id, canonical_name),
-        away_team:teams!fixtures_away_team_id_fkey(id, canonical_name)
-      `)
-      .eq("status", "finished")
-      .not("home_score", "is", null)
-      .order("kickoff_time", { ascending: true });
+    const { data: features, error } = await supabase
+      .from("match_features")
+      .select("*")
+      .order("computed_at", { ascending: true });
 
-    if (!fixtures || fixtures.length === 0) {
-      console.log("   ❌ No finished matches to backtest against");
-      return;
+    if (error) {
+      console.log(`   ⚠️  Table not found: ${error.message}`);
+      console.log("   Run: node scripts/store-historical.js (first time only)");
+      return null;
     }
 
-    console.log(`   📊 ${fixtures.length} finished matches found`);
-
-    // Load odds for all fixtures
-    const fixtureIds = fixtures.map(f => f.id);
-    const { data: oddsData } = await supabase
-      .from("odds_snapshots")
-      .select("fixture_id, selection, odds")
-      .in("fixture_id", fixtureIds);
-
-    const oddsByFixture = {};
-    if (oddsData) {
-      for (const o of oddsData) {
-        if (!oddsByFixture[o.fixture_id]) oddsByFixture[o.fixture_id] = {};
-        if (!oddsByFixture[o.fixture_id][o.selection]) oddsByFixture[o.fixture_id][o.selection] = [];
-        oddsByFixture[o.fixture_id][o.selection].push(o.odds);
-      }
+    if (!features || features.length === 0) {
+      console.log("   ⚠️  No stored features found");
+      console.log("   Run: node scripts/store-historical.js (first time only)");
+      return null;
     }
 
-    // Reset models
-    this.elo.reset();
-    this.form.reset();
+    console.log(`   ✅ Loaded ${features.length} pre-computed features`);
+    return features;
+  }
 
-    // Results tracking
+  /**
+   * STEP 2: Load learned weights from model_performance table
+   */
+  async loadWeights() {
+    const { data: perf } = await supabase
+      .from("model_performance")
+      .select("model_weights, elite_accuracy, accuracy, run_date")
+      .eq("model_name", "ensemble")
+      .order("run_date", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (perf?.model_weights) {
+      const w = typeof perf.model_weights === "string" ? JSON.parse(perf.model_weights) : perf.model_weights;
+      this.learning.modelWeights = w;
+      console.log(`   ✅ Loaded weights from ${perf.run_date} (ELITE: ${(perf.elite_accuracy * 100).toFixed(1)}%)`);
+      return w;
+    }
+
+    console.log("   ⚠️  No stored weights found, using defaults");
+    return this.learning.modelWeights;
+  }
+
+  /**
+   * STEP 3: Evaluate accuracy using stored features
+   */
+  evaluateFromFeatures(features) {
+    console.log("\n📊 Evaluating accuracy from stored features...");
+
+    const w = this.learning.modelWeights;
     const results = {
-      total: 0,
-      correct: 0,
+      total: 0, correct: 0,
       byTier: { ELITE: { t: 0, c: 0 }, HIGH: { t: 0, c: 0 }, MEDIUM: { t: 0, c: 0 }, LOW: { t: 0, c: 0 } },
-      correctPatterns: {},
-      wrongPatterns: {},
-      allPredictions: [],
+      correctPatterns: {}, wrongPatterns: {},
     };
 
-    // Process each match chronologically
-    for (const fixture of fixtures) {
-      const homeName = fixture.home_team?.canonical_name;
-      const awayName = fixture.away_team?.canonical_name;
-      if (!homeName || !awayName) continue;
+    for (const f of features) {
+      if (f.home_score === null || f.actual_result === null) continue;
 
-      // Get current model state BEFORE this match
-      const homeForm = this.form.getForm(homeName);
-      const awayForm = this.form.getForm(awayName);
-      const eloProb = this.elo.predict(homeName, awayName);
-      const eloDiff = this.elo.get(homeName) - this.elo.get(awayName) + 65;
-
-      // Get odds if available
-      const odds = oddsByFixture[fixture.id] || {};
-      const avg = (arr) => arr && arr.length > 0 ? arr.reduce((s, v) => s + v, 0) / arr.length : null;
-      const homeOdds = avg(odds["Home"]);
-      const drawOdds = avg(odds["Draw"]);
-      const awayOdds = avg(odds["Away"]);
-
-      // Compute features
-      const features = {
-        eloDiff: Math.round(eloDiff),
-        homePpg: homeForm.ppg,
-        awayPpg: awayForm.ppg,
-        homeGoals: homeForm.avgGoals,
-        homeConceded: homeForm.avgConceded,
-        awayGoals: awayForm.avgGoals,
-        awayConceded: awayForm.avgConceded,
-        homeWinRate: homeForm.winRate,
-        awayWinRate: awayForm.winRate,
-        homeStreak: homeForm.streak,
-        awayStreak: awayForm.streak,
-        goalDiff: (homeForm.avgGoals - homeForm.avgConceded) - (awayForm.avgGoals - awayForm.avgConceded),
-        leaguePosDiff: 0,
-        fatigue: false,
-        homeOdds, drawOdds, awayOdds,
-      };
-
-      // Extract patterns
-      const patterns = extractPatterns(features);
-
-      // Make prediction using current weights
-      const w = this.learning.modelWeights;
+      // Recompute prediction with current weights
       let homeProb;
-
-      if (homeOdds && drawOdds && awayOdds) {
-        // Market-implied probability
-        const marketTotal = 1/homeOdds + 1/drawOdds + 1/awayOdds;
-        const marketHome = (1/homeOdds) / marketTotal;
+      if (f.home_odds && f.draw_odds && f.away_odds) {
+        const mt = 1/f.home_odds + 1/f.draw_odds + 1/f.away_odds;
+        const mh = (1/f.home_odds) / mt;
         homeProb = clamp(
-          eloProb * w.elo +
-          (homeForm.ppg / 3) * w.form +
-          marketHome * w.odds +
-          (homeForm.winRate * 0.6 + (1 - awayForm.winRate) * 0.4) * w.goals +
-          (homeForm.streak > 0 ? 0.65 : 0.45) * w.streak +
-          0.55 * w.homeAdv // slight home bias
+          f.elo_home_prob * w.elo +
+          (f.home_form_ppg / 3) * w.form +
+          mh * w.odds +
+          (f.home_win_rate * 0.6 + (1 - f.away_win_rate) * 0.4) * w.goals +
+          (f.home_streak > 0 ? 0.65 : 0.45) * w.streak +
+          0.55 * w.homeAdv
         );
       } else {
-        // No odds — pure model
         homeProb = clamp(
-          eloProb * 0.40 +
-          (homeForm.ppg / 3) * 0.25 +
-          (homeForm.winRate * 0.6 + (1 - awayForm.winRate) * 0.4) * 0.20 +
-          (homeForm.streak > 0 ? 0.65 : 0.45) * 0.15
+          f.elo_home_prob * 0.40 + (f.home_form_ppg / 3) * 0.25 +
+          (f.home_win_rate * 0.6 + (1 - f.away_win_rate) * 0.4) * 0.20 +
+          (f.home_streak > 0 ? 0.65 : 0.45) * 0.15
         );
       }
 
-      // Determine prediction
-      const predicted = homeProb > 0.5 ? "home" : "away";
-      const confidence = homeProb;
+      const predictedSide = homeProb > 0.5 ? "home" : "away";
+      const confidence = Math.max(homeProb, 1 - homeProb);
       const tier = confidence >= 0.70 ? "ELITE" : confidence >= 0.60 ? "HIGH" : confidence >= 0.50 ? "MEDIUM" : "LOW";
+      const correct = predictedSide === f.actual_result;
 
-      // Actual result
-      const hg = fixture.home_score;
-      const ag = fixture.away_score;
-      const actual = hg > ag ? "home" : hg < ag ? "away" : "draw";
-
-      // Was the prediction correct?
-      const isCorrect = predicted === actual;
-
-      // Track
       results.total++;
-      if (isCorrect) results.correct++;
+      if (correct) results.correct++;
       results.byTier[tier].t++;
-      if (isCorrect) results.byTier[tier].c++;
+      if (correct) results.byTier[tier].c++;
 
       // Track patterns
+      const patterns = extractPatterns(f);
       for (const pattern of patterns) {
-        if (isCorrect) {
+        if (correct) {
           if (!results.correctPatterns[pattern]) results.correctPatterns[pattern] = { c: 0, t: 0 };
           results.correctPatterns[pattern].c++;
           results.correctPatterns[pattern].t++;
@@ -323,110 +210,55 @@ class SelfLearningEngine {
           results.wrongPatterns[pattern].t++;
         }
       }
-
-      // Store prediction
-      results.allPredictions.push({
-        fixtureId: fixture.id,
-        home: homeName, away: awayName,
-        predicted, confidence, tier, actual, correct: isCorrect,
-        eloDiff: Math.round(eloDiff), patterns,
-        features, // Store full features for optimization
-      });
-
-      // Update models with this result (chronological learning)
-      this.elo.update(homeName, awayName, hg, ag);
-      const homeResult = hg > ag ? "W" : hg < ag ? "L" : "D";
-      const awayResult = hg < ag ? "W" : hg > ag ? "L" : "D";
-      this.form.record(homeName, homeResult, hg, ag);
-      this.form.record(awayName, awayResult, ag, hg);
     }
 
     return results;
   }
 
   /**
-   * STEP 2: OPTIMIZE — Find the best weights and pattern filters from backtest results
+   * STEP 4: Optimize weights using stored features
    */
-  optimizeWeights(results) {
-    console.log("\n🔧 Optimizing model weights from backtest results...");
+  optimizeWeights(features) {
+    console.log("\n🔧 Optimizing model weights...");
 
-    // Find the most reliable patterns
-    const patternStats = {};
-    const allPatterns = new Set([...Object.keys(results.correctPatterns || {}), ...Object.keys(results.wrongPatterns || {})]);
-    for (const p of allPatterns) {
-      const correct = results.correctPatterns[p]?.c || 0;
-      const wrong = results.wrongPatterns[p]?.w || 0;
-      const total = correct + wrong;
-      if (total >= 10) {
-        patternStats[p] = { accuracy: correct / total, samples: total };
-      }
-    }
-
-    const sortedPatterns = Object.entries(patternStats)
-      .sort((a, b) => b[1].accuracy - a[1].accuracy);
-
-    console.log("\n   Pattern Reliability (from real data):");
-    for (const [pattern, stats] of sortedPatterns) {
-      const emoji = stats.accuracy >= 0.60 ? "✅" : stats.accuracy >= 0.50 ? "⚠️" : "❌";
-      console.log(`   ${emoji} ${pattern}: ${(stats.accuracy * 100).toFixed(1)}% (${stats.samples} matches)`);
-    }
-
-    // If no allPredictions available, use pattern-based optimization only
-    if (!results.allPredictions || results.allPredictions.length === 0) {
-      console.log("\n   ⚠️  No per-prediction data for weight optimization. Using pattern stats.");
-      // Boost weights based on which patterns are reliable
-      const w = this.learning.modelWeights;
-      const reliablePatterns = sortedPatterns.filter(([_, s]) => s.accuracy > 0.55 && s.samples >= 15);
-      console.log(`   Reliable patterns (>55% accuracy, 15+ samples): ${reliablePatterns.map(([p]) => p).join(", ") || "none"}`);
-
-      // Weights are already reasonable defaults, keep them
-      console.log(`   Current weights: ${Object.entries(w).map(([k, v]) => `${k}=${(v * 100).toFixed(0)}%`).join(", ")}`);
-      return w;
-    }
-
-    // Full optimization with per-prediction data
     let bestWeights = { ...this.learning.modelWeights };
-    let bestAcc = 0;
-    let bestEliteAcc = 0;
+    let bestScore = 0;
 
-    for (let iter = 0; iter < 2000; iter++) {
+    for (let iter = 0; iter < 3000; iter++) {
       const testWeights = { ...bestWeights };
       const keys = Object.keys(testWeights);
       const key = keys[Math.floor(Math.random() * keys.length)];
       testWeights[key] += (Math.random() - 0.5) * 0.08;
       testWeights[key] = Math.max(0.02, Math.min(0.50, testWeights[key]));
-
       const total = Object.values(testWeights).reduce((s, v) => s + v, 0);
       for (const k of keys) testWeights[k] /= total;
 
       let eliteCorrect = 0, eliteTotal = 0;
       let totalCorrect = 0, totalCnt = 0;
-      for (const pred of results.allPredictions) {
-        const w = testWeights;
+
+      for (const f of features) {
+        if (f.home_score === null || f.actual_result === null) continue;
         let hp;
-        if (pred.features?.homeOdds && pred.features?.drawOdds && pred.features?.awayOdds) {
-          const mt = 1/pred.features.homeOdds + 1/pred.features.drawOdds + 1/pred.features.awayOdds;
-          const mh = (1/pred.features.homeOdds) / mt;
-          const eloP = 1 / (1 + Math.pow(10, (1500 - (pred.features.eloDiff + 65)) / 400));
+        if (f.home_odds && f.draw_odds && f.away_odds) {
+          const mt = 1/f.home_odds + 1/f.draw_odds + 1/f.away_odds;
+          const mh = (1/f.home_odds) / mt;
           hp = clamp(
-            eloP * w.elo + (pred.features.homePpg / 3) * w.form +
-            mh * w.odds +
-            (pred.features.homeWinRate * 0.6 + (1 - pred.features.awayWinRate) * 0.4) * w.goals +
-            (pred.features.homeStreak > 0 ? 0.65 : 0.45) * w.streak +
-            0.55 * w.homeAdv
+            f.elo_home_prob * testWeights.elo + (f.home_form_ppg / 3) * testWeights.form +
+            mh * testWeights.odds +
+            (f.home_win_rate * 0.6 + (1 - f.away_win_rate) * 0.4) * testWeights.goals +
+            (f.home_streak > 0 ? 0.65 : 0.45) * testWeights.streak +
+            0.55 * testWeights.homeAdv
           );
         } else {
-          const eloP = 1 / (1 + Math.pow(10, (1500 - (pred.features.eloDiff + 65)) / 400));
           hp = clamp(
-            eloP * 0.40 + (pred.features.homePpg / 3) * 0.25 +
-            (pred.features.homeWinRate * 0.6 + (1 - pred.features.awayWinRate) * 0.4) * 0.20 +
-            (pred.features.homeStreak > 0 ? 0.65 : 0.45) * 0.15
+            f.elo_home_prob * 0.40 + (f.home_form_ppg / 3) * 0.25 +
+            (f.home_win_rate * 0.6 + (1 - f.away_win_rate) * 0.4) * 0.20 +
+            (f.home_streak > 0 ? 0.65 : 0.45) * 0.15
           );
         }
-        const newPred = hp > 0.5 ? "home" : "away";
+        const pred = hp > 0.5 ? "home" : "away";
         const conf = Math.max(hp, 1 - hp);
-        const isCorrect = newPred === pred.actual;
-
+        const isCorrect = pred === f.actual_result;
         if (conf >= 0.60) { eliteTotal++; if (isCorrect) eliteCorrect++; }
         totalCnt++; if (isCorrect) totalCorrect++;
       }
@@ -434,26 +266,84 @@ class SelfLearningEngine {
       const eliteAcc = eliteTotal > 0 ? eliteCorrect / eliteTotal : 0;
       const totalAcc = totalCnt > 0 ? totalCorrect / totalCnt : 0;
       const score = eliteAcc * 0.7 + totalAcc * 0.3;
-      const bestScore = bestEliteAcc * 0.7 + bestAcc * 0.3;
-
-      if (score > bestScore) {
-        bestAcc = totalAcc;
-        bestEliteAcc = eliteAcc;
-        bestWeights = { ...testWeights };
-      }
+      if (score > bestScore) { bestScore = score; bestWeights = { ...testWeights }; }
     }
 
     this.learning.modelWeights = bestWeights;
-    console.log(`\n   Optimized weights: ${Object.entries(bestWeights).map(([k, v]) => `${k}=${(v * 100).toFixed(0)}%`).join(", ")}`);
+    console.log(`   ✅ Optimized: ${Object.entries(bestWeights).map(([k, v]) => `${k}=${(v * 100).toFixed(0)}%`).join(", ")}`);
     return bestWeights;
   }
 
   /**
-   * STEP 3: PREDICT — Make predictions for upcoming matches using learned weights
+   * STEP 5: Predict upcoming matches using learned weights + stored Elo/form
    */
   async predictUpcoming() {
     console.log("\n🎯 Predicting upcoming matches...");
 
+    // Load latest Elo ratings from database
+    const eloRatings = {};
+    const { data: latestElos } = await supabase
+      .from("elo_ratings")
+      .select("team_id, rating, teams!inner(canonical_name)")
+      .order("match_date", { ascending: false });
+
+    if (latestElos) {
+      for (const e of latestElos) {
+        const name = e.teams?.canonical_name;
+        if (name && !eloRatings[name]) eloRatings[name] = e.rating;
+      }
+    }
+    console.log(`   Loaded Elo ratings for ${Object.keys(eloRatings).length} teams`);
+
+    // Load latest form data from match_features (most recent 5 per team)
+    const teamForm = {};
+    const { data: recentFeatures } = await supabase
+      .from("match_features")
+      .select("home_team_name, away_team_name, home_score, away_score, actual_result")
+      .not("home_score", "is", null)
+      .order("computed_at", { ascending: false })
+      .limit(500);
+
+    if (recentFeatures) {
+      for (const f of recentFeatures) {
+        // Home team form
+        if (!teamForm[f.home_team_name]) teamForm[f.home_team_name] = [];
+        if (teamForm[f.home_team_name].length < 10) {
+          teamForm[f.home_team_name].push({
+            result: f.actual_result === "home" ? "W" : f.actual_result === "draw" ? "D" : "L",
+            goals: f.home_score, against: f.away_score,
+          });
+        }
+        // Away team form
+        if (!teamForm[f.away_team_name]) teamForm[f.away_team_name] = [];
+        if (teamForm[f.away_team_name].length < 10) {
+          teamForm[f.away_team_name].push({
+            result: f.actual_result === "away" ? "W" : f.actual_result === "draw" ? "D" : "L",
+            goals: f.away_score, against: f.home_score,
+          });
+        }
+      }
+    }
+
+    function getForm(team, n = 5) {
+      const last = (teamForm[team] || []).slice(-n);
+      if (last.length === 0) return { ppg: 1.5, winRate: 0.4, streak: 0, avgGoals: 1.3, avgConceded: 1.2 };
+      const ppg = last.reduce((s, r) => s + (r.result === "W" ? 3 : r.result === "D" ? 1 : 0), 0) / last.length;
+      const winRate = last.filter(r => r.result === "W").length / last.length;
+      let streak = 0;
+      for (let i = last.length - 1; i >= 0; i--) {
+        if (last[i].result === "W") { if (streak >= 0) streak++; else break; }
+        else if (last[i].result === "L") { if (streak <= 0) streak--; else break; }
+        else break;
+      }
+      return {
+        ppg, winRate, streak,
+        avgGoals: last.reduce((s, r) => s + r.goals, 0) / last.length,
+        avgConceded: last.reduce((s, r) => s + r.against, 0) / last.length,
+      };
+    }
+
+    // Get upcoming fixtures
     const { data: fixtures } = await supabase
       .from("fixtures")
       .select(`
@@ -473,10 +363,7 @@ class SelfLearningEngine {
     }
 
     // Get odds
-    const { data: oddsData } = await supabase
-      .from("odds_snapshots")
-      .select("fixture_id, selection, odds");
-
+    const { data: oddsData } = await supabase.from("odds_snapshots").select("fixture_id, selection, odds");
     const oddsByFixture = {};
     if (oddsData) {
       for (const o of oddsData) {
@@ -487,6 +374,7 @@ class SelfLearningEngine {
     }
 
     const predictions = [];
+    const w = this.learning.modelWeights;
 
     for (const fixture of fixtures) {
       const homeName = fixture.home_team?.canonical_name;
@@ -500,34 +388,22 @@ class SelfLearningEngine {
       const drawOdds = avg(odds["Draw"]);
       const awayOdds = avg(odds["Away"]);
 
-      const homeForm = this.form.getForm(homeName);
-      const awayForm = this.form.getForm(awayName);
-      const eloProb = this.elo.predict(homeName, awayName);
-      const eloDiff = this.elo.get(homeName) - this.elo.get(awayName) + 65;
+      const homeElo = eloRatings[homeName] || 1500;
+      const awayElo = eloRatings[awayName] || 1500;
+      const eloProb = 1 / (1 + Math.pow(10, ((awayElo) - (homeElo + 65)) / 400));
+      const eloDiff = homeElo - awayElo + 65;
 
-      const features = {
-        eloDiff, homePpg: homeForm.ppg, awayPpg: awayForm.ppg,
-        homeGoals: homeForm.avgGoals, homeConceded: homeForm.avgConceded,
-        awayGoals: awayForm.avgGoals, awayConceded: awayForm.avgConceded,
-        homeWinRate: homeForm.winRate, awayWinRate: awayForm.winRate,
-        homeStreak: homeForm.streak, awayStreak: awayForm.streak,
-        goalDiff: (homeForm.avgGoals - homeForm.avgConceded) - (awayForm.avgGoals - awayForm.avgConceded),
-        leaguePosDiff: 0, fatigue: false, homeOdds, drawOdds, awayOdds,
-      };
-
-      const patterns = extractPatterns(features);
-      const w = this.learning.modelWeights;
+      const homeForm = getForm(homeName);
+      const awayForm = getForm(awayName);
 
       let homeProb;
       if (homeOdds && drawOdds && awayOdds) {
-        const marketTotal = 1/homeOdds + 1/drawOdds + 1/awayOdds;
-        const marketHome = (1/homeOdds) / marketTotal;
+        const mt = 1/homeOdds + 1/drawOdds + 1/awayOdds;
+        const mh = (1/homeOdds) / mt;
         homeProb = clamp(
-          eloProb * w.elo + (homeForm.ppg / 3) * w.form +
-          marketHome * w.odds +
+          eloProb * w.elo + (homeForm.ppg / 3) * w.form + mh * w.odds +
           (homeForm.winRate * 0.6 + (1 - awayForm.winRate) * 0.4) * w.goals +
-          (homeForm.streak > 0 ? 0.65 : 0.45) * w.streak +
-          0.55 * w.homeAdv
+          (homeForm.streak > 0 ? 0.65 : 0.45) * w.streak + 0.55 * w.homeAdv
         );
       } else {
         homeProb = clamp(
@@ -541,13 +417,21 @@ class SelfLearningEngine {
       const confidence = Math.max(homeProb, 1 - homeProb);
       const tier = confidence >= 0.70 ? "ELITE" : confidence >= 0.60 ? "HIGH" : confidence >= 0.52 ? "MEDIUM" : "LOW";
 
-      // Edge: difference between our probability and market probability
       let edge = 0;
       if (homeOdds && drawOdds && awayOdds) {
-        const marketTotal = 1/homeOdds + 1/drawOdds + 1/awayOdds;
-        const marketProb = predicted === "home" ? (1/homeOdds) / marketTotal : (1/awayOdds) / marketTotal;
+        const mt = 1/homeOdds + 1/drawOdds + 1/awayOdds;
+        const marketProb = predicted === "home" ? (1/homeOdds) / mt : (1/awayOdds) / mt;
         edge = confidence - marketProb;
       }
+
+      const features = {
+        elo_diff: Math.round(eloDiff), home_form_ppg: homeForm.ppg, away_form_ppg: awayForm.ppg,
+        home_avg_goals: homeForm.avgGoals, home_avg_conceded: homeForm.avgConceded,
+        away_avg_goals: awayForm.avgGoals, away_avg_conceded: awayForm.avgConceded,
+        home_win_rate: homeForm.winRate, away_win_rate: awayForm.winRate,
+        home_streak: homeForm.streak, away_streak: awayForm.streak,
+        goal_diff: (homeForm.avgGoals - homeForm.avgConceded) - (awayForm.avgGoals - awayForm.avgConceded),
+      };
 
       predictions.push({
         fixtureId: fixture.id,
@@ -555,9 +439,9 @@ class SelfLearningEngine {
         kickoffTime: fixture.kickoff_time,
         predicted: predicted === "home" ? homeName : awayName,
         predictedSide: predicted,
-        probability: homeProb,
-        confidence, tier, edge: Math.round(edge * 1000) / 1000,
-        features, patterns,
+        probability: homeProb, confidence, tier,
+        edge: Math.round(edge * 1000) / 1000,
+        features, patterns: extractPatterns(features),
         odds: homeOdds ? { home: homeOdds, draw: drawOdds, away: awayOdds } : null,
       });
     }
@@ -566,23 +450,65 @@ class SelfLearningEngine {
   }
 
   /**
-   * STEP 4: LEARN — Check yesterday's predictions against actual results
+   * STEP 6: Store predictions in database
    */
-  async learnFromYesterday() {
-    console.log("\n📚 Learning from yesterday's predictions...");
+  async storePredictions(predictions) {
+    console.log("\n💾 Storing predictions...");
 
-    // Get predictions that were made but haven't been checked yet
-    const { data: unchecked } = await supabase
+    // Load current weights for reference
+    const w = this.learning.modelWeights;
+
+    let saved = 0;
+    for (const p of predictions) {
+      // Delete old prediction for this fixture
+      await supabase.from("predictions").delete()
+        .eq("fixture_id", p.fixtureId).eq("market", "1X2");
+
+      // Insert new prediction
+      const { error } = await supabase.from("predictions").insert({
+        fixture_id: p.fixtureId,
+        market: "1X2",
+        selection: p.predicted,
+        model_probability: p.confidence,
+        confidence_lower: p.confidence * 0.9,
+        confidence_upper: Math.min(p.confidence * 1.1, 0.99),
+        result: "pending",
+      });
+
+      // Also store in prediction_history for long-term tracking
+      await supabase.from("prediction_history").upsert({
+        fixture_id: p.fixtureId,
+        predicted_side: p.predictedSide,
+        predicted_prob: p.confidence,
+        confidence_tier: p.tier,
+        features_snapshot: p.features,
+        patterns: p.patterns,
+        model_version: "v3.0",
+        model_weights: w,
+      }, { onConflict: "fixture_id,predicted_side" });
+
+      if (!error) saved++;
+    }
+    console.log(`   ✅ Stored ${saved} predictions`);
+  }
+
+  /**
+   * STEP 7: Check yesterday's predictions and learn
+   */
+  async learnFromResults() {
+    console.log("\n📚 Checking past predictions vs results...");
+
+    const { data: pending } = await supabase
       .from("predictions")
-      .select("id, fixture_id, selection, model_probability, result")
-      .is("result", null);
+      .select("id, fixture_id, selection, model_probability")
+      .eq("result", "pending");
 
-    if (!unchecked || unchecked.length === 0) {
-      console.log("   No unchecked predictions to learn from");
-      return;
+    if (!pending || pending.length === 0) {
+      console.log("   No pending predictions to check");
+      return { correct: 0, wrong: 0 };
     }
 
-    const fixtureIds = unchecked.map(p => p.fixture_id);
+    const fixtureIds = pending.map(p => p.fixture_id);
     const { data: fixtures } = await supabase
       .from("fixtures")
       .select("id, status, home_score, away_score, home_team:teams!fixtures_home_team_id_fkey(canonical_name), away_team:teams!fixtures_away_team_id_fkey(canonical_name)")
@@ -591,13 +517,11 @@ class SelfLearningEngine {
 
     if (!fixtures || fixtures.length === 0) {
       console.log("   No finished matches to check against yet");
-      return;
+      return { correct: 0, wrong: 0 };
     }
 
-    let correct = 0;
-    let wrong = 0;
-
-    for (const pred of unchecked) {
+    let correct = 0, wrong = 0;
+    for (const pred of pending) {
       const fixture = fixtures.find(f => f.id === pred.fixture_id);
       if (!fixture || fixture.home_score === null) continue;
 
@@ -605,25 +529,47 @@ class SelfLearningEngine {
       const awayName = fixture.away_team?.canonical_name;
       const actual = fixture.home_score > fixture.away_score ? "home"
         : fixture.home_score < fixture.away_score ? "away" : "draw";
-
       const actualSelection = actual === "home" ? homeName : actual === "away" ? awayName : "Draw";
       const isCorrect = pred.selection === actualSelection;
 
-      if (isCorrect) correct++;
-      else wrong++;
+      if (isCorrect) correct++; else wrong++;
 
-      // Update the prediction record
-      await supabase
-        .from("predictions")
-        .update({ result: isCorrect ? "correct" : "wrong" })
-        .eq("id", pred.id);
+      // Update both tables
+      await supabase.from("predictions").update({ result: isCorrect ? "correct" : "wrong" }).eq("id", pred.id);
+      await supabase.from("prediction_history").update({
+        actual_result: actual, correct: isCorrect, checked_at: new Date().toISOString(),
+      }).eq("fixture_id", pred.fixture_id);
     }
 
     console.log(`   ✅ Checked ${correct + wrong} predictions: ${correct} correct, ${wrong} wrong`);
-
-    // Update running accuracy
     this.learning.accuracy.total += correct + wrong;
     this.learning.accuracy.correct += correct;
+    return { correct, wrong };
+  }
+
+  /**
+   * STEP 8: Store performance metrics in database
+   */
+  async storePerformance(results, features) {
+    const w = this.learning.modelWeights;
+    await supabase.from("model_performance").upsert({
+      run_date: new Date().toISOString().split("T")[0],
+      model_name: "ensemble",
+      total_predictions: results.total,
+      correct_predictions: results.correct,
+      accuracy: results.total > 0 ? Math.round((results.correct / results.total) * 10000) / 10000 : 0,
+      elite_total: results.byTier.ELITE.t,
+      elite_correct: results.byTier.ELITE.c,
+      elite_accuracy: results.byTier.ELITE.t > 0 ? Math.round((results.byTier.ELITE.c / results.byTier.ELITE.t) * 10000) / 10000 : 0,
+      high_total: results.byTier.HIGH.t,
+      high_correct: results.byTier.HIGH.c,
+      high_accuracy: results.byTier.HIGH.t > 0 ? Math.round((results.byTier.HIGH.c / results.byTier.HIGH.t) * 10000) / 10000 : 0,
+      pattern_stats: results.correctPatterns,
+      model_weights: w,
+      total_matches_in_db: features?.length || 0,
+      evaluation_period: "2023-2026",
+    }, { onConflict: "run_date,model_name" });
+    console.log("   ✅ Stored performance metrics");
   }
 }
 
@@ -631,57 +577,63 @@ class SelfLearningEngine {
 
 async function main() {
   const today = new Date().toISOString().split("T")[0];
-  console.log("🧠 ODDLY Self-Learning System v2");
+  console.log("🧠 ODDLY Self-Learning System v3");
   console.log("━".repeat(70));
   console.log(`   Date: ${today}`);
-  console.log("   The system learns from every prediction.");
+  console.log("   Loads from stored data. Runs in seconds, not minutes.");
   console.log("━".repeat(70));
 
   const engine = new SelfLearningEngine();
 
-  // ── STEP 1: Backtest against historical data ──
-  const cached = engine.learning.backtestResults;
-  const hoursSinceLastBacktest = cached?.timestamp
-    ? (Date.now() - new Date(cached.timestamp).getTime()) / (1000 * 60 * 60)
-    : 999;
+  // ── STEP 1: Load stored features (instant) ──
+  const features = await engine.loadFeatures();
 
-  let results;
-  if (hoursSinceLastBacktest < 24 && cached) {
-    console.log("\n📦 Using cached backtest results (< 24 hours old)");
-    results = cached;
-  } else {
-    results = await engine.backtest();
-    if (results) {
-      // Save backtest results — keep ALL predictions for optimization
-      engine.learning.backtestResults = { ...results, timestamp: new Date().toISOString() };
-    }
-  }
+  if (features) {
+    // ── STEP 2: Load learned weights ──
+    await engine.loadWeights();
 
-  if (results) {
+    // ── STEP 3: Evaluate accuracy ──
+    const results = engine.evaluateFromFeatures(features);
     const overallAcc = results.total > 0 ? ((results.correct / results.total) * 100).toFixed(1) : "N/A";
-    console.log(`\n   📊 BACKTEST RESULTS:`);
+    console.log(`\n   📊 ACCURACY (from ${results.total} stored matches):`);
     console.log(`   Total: ${results.total} | Correct: ${results.correct} | Accuracy: ${overallAcc}%`);
     console.log(`   ELITE: ${results.byTier.ELITE.c}/${results.byTier.ELITE.t} (${results.byTier.ELITE.t > 0 ? ((results.byTier.ELITE.c / results.byTier.ELITE.t) * 100).toFixed(1) : 0}%)`);
     console.log(`   HIGH:  ${results.byTier.HIGH.c}/${results.byTier.HIGH.t} (${results.byTier.HIGH.t > 0 ? ((results.byTier.HIGH.c / results.byTier.HIGH.t) * 100).toFixed(1) : 0}%)`);
     console.log(`   MED:   ${results.byTier.MEDIUM.c}/${results.byTier.MEDIUM.t} (${results.byTier.MEDIUM.t > 0 ? ((results.byTier.MEDIUM.c / results.byTier.MEDIUM.t) * 100).toFixed(1) : 0}%)`);
 
-    // ── STEP 2: Optimize weights ──
-    engine.optimizeWeights(results);
+    // Show pattern reliability
+    const patternStats = {};
+    for (const [p, s] of Object.entries({ ...results.correctPatterns })) {
+      const wrong = results.wrongPatterns[p]?.w || 0;
+      const total = s.c + wrong;
+      if (total >= 10) patternStats[p] = { accuracy: s.c / total, samples: total };
+    }
+    const sorted = Object.entries(patternStats).sort((a, b) => b[1].accuracy - a[1].accuracy);
+    console.log("\n   Pattern Reliability:");
+    for (const [p, s] of sorted.slice(0, 8)) {
+      const emoji = s.accuracy >= 0.60 ? "✅" : s.accuracy >= 0.50 ? "⚠️" : "❌";
+      console.log(`   ${emoji} ${p}: ${(s.accuracy * 100).toFixed(1)}% (${s.samples} matches)`);
+    }
 
-    // ── STEP 3: Learn from yesterday's predictions ──
-    await engine.learnFromYesterday();
+    // ── STEP 4: Optimize weights ──
+    engine.optimizeWeights(features);
+
+    // ── STEP 5: Store performance ──
+    await engine.storePerformance(results, features);
   }
 
-  // ── STEP 4: Predict upcoming matches ──
+  // ── STEP 6: Check past predictions ──
+  const checkResults = await engine.learnFromResults();
+
+  // ── STEP 7: Predict upcoming matches ──
   const predictions = await engine.predictUpcoming();
 
   if (predictions.length > 0) {
-    console.log(`\n🎯 UPCOMING PREDICTIONS (sorted by confidence):`);
+    console.log(`\n🎯 UPCOMING PREDICTIONS:`);
     console.log("─".repeat(70));
 
     const elite = predictions.filter(p => p.tier === "ELITE");
     const high = predictions.filter(p => p.tier === "HIGH");
-    const medium = predictions.filter(p => p.tier === "MEDIUM");
 
     if (elite.length > 0) {
       console.log(`\n🚀 ELITE PICKS (${elite.length}):`);
@@ -702,61 +654,25 @@ async function main() {
       }
     }
 
-    if (medium.length > 0) {
-      console.log(`\n⚠️  MEDIUM (${medium.length} total, showing top 3):`);
-      for (const p of medium.slice(0, 3)) {
-        const date = new Date(p.kickoffTime).toLocaleDateString("en-GB", { weekday: "short", month: "short", day: "numeric" });
-        console.log(`   ⚠️  ${p.homeTeam} vs ${p.awayTeam} (${p.league}) — ${date}`);
-        console.log(`      Prediction: ${p.predicted} | Confidence: ${(p.confidence * 100).toFixed(1)}%`);
-      }
-    }
-
-    // Save predictions to database
-    console.log("\n💾 Saving predictions to database...");
-    let saved = 0;
-    for (const p of predictions) {
-      // Delete existing prediction for this fixture + market to avoid duplicates
-      const { error: delErr } = await supabase.from("predictions")
-        .delete()
-        .eq("fixture_id", p.fixtureId)
-        .eq("market", "1X2");
-      const { error: insErr } = await supabase.from("predictions").insert({
-        fixture_id: p.fixtureId,
-        market: "1X2",
-        selection: p.predicted,
-        model_probability: p.confidence,
-        confidence_lower: p.confidence * 0.9,
-        confidence_upper: Math.min(p.confidence * 1.1, 0.99),
-        result: "pending",
-      });
-      if (insErr) {
-        if (saved === 0) console.log(`   ⚠️  Save error: ${insErr.message}`);
-      } else {
-        saved++;
-      }
-    }
-    console.log(`   ✅ Saved ${saved} predictions`);
+    // ── STEP 8: Store predictions ──
+    await engine.storePredictions(predictions);
   }
 
   // ── Final Summary ──
   const w = engine.learning.modelWeights;
-  const acc = engine.learning.accuracy;
   console.log("\n" + "═".repeat(70));
   console.log("📊 LEARNING SUMMARY");
   console.log("═".repeat(70));
-  console.log(`\n  Model Weights (learned from ${results?.total || 0} historical matches):`);
+  console.log(`\n  Model Weights (learned):`);
   for (const [k, v] of Object.entries(w)) {
     console.log(`    ${k}: ${(v * 100).toFixed(0)}%`);
   }
-  console.log(`\n  Running Accuracy: ${acc.total > 0 ? ((acc.correct / acc.total) * 100).toFixed(1) : "N/A"}% (${acc.correct}/${acc.total})`);
-  console.log(`  Backtest Date: ${engine.learning.backtestResults?.timestamp || "Never"}`);
+  console.log(`\n  Running Accuracy: ${engine.learning.accuracy.total > 0 ? ((engine.learning.accuracy.correct / engine.learning.accuracy.total) * 100).toFixed(1) : "N/A"}% (${engine.learning.accuracy.correct}/${engine.learning.accuracy.total})`);
   console.log(`  Last Updated: ${engine.learning.lastUpdated}`);
-
-  console.log("\n💡 The system learns from every prediction.");
-  console.log("   Run daily: node scripts/self-learning.js");
+  console.log("\n💡 Run daily: node scripts/self-learning.js");
+  console.log("   All data is stored in Supabase — instant load, no recomputation.");
   console.log("━".repeat(70));
 
-  // Save
   saveLearningData(engine.learning);
 }
 
