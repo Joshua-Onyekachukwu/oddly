@@ -36,9 +36,12 @@ BEGIN
     SELECT 1 FROM pg_constraint 
     WHERE conname = 'fixtures_external_id_unique'
   ) THEN
-    -- Remove duplicates first
-    DELETE FROM fixtures WHERE id NOT IN (
-      SELECT MIN(id) FROM fixtures WHERE external_id IS NOT NULL GROUP BY external_id
+    -- Remove duplicates using ROW_NUMBER
+    DELETE FROM fixtures WHERE id IN (
+      SELECT id FROM (
+        SELECT id, ROW_NUMBER() OVER (PARTITION BY external_id ORDER BY created_at) as rn
+        FROM fixtures WHERE external_id IS NOT NULL
+      ) t WHERE rn > 1
     );
     ALTER TABLE fixtures ADD CONSTRAINT fixtures_external_id_unique UNIQUE (external_id);
     RAISE NOTICE 'Added external_id unique constraint';
