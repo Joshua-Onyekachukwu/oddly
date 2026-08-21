@@ -1,0 +1,539 @@
+{
+  "date": "2026-08-21T03:17:16.882Z",
+  "totalMatches": 1000,
+  "testMatches": 300,
+  "features": 56,
+  "accuracy": 0.6566666666666666,
+  "tiers": {
+    "ELITE": {
+      "c": 127,
+      "t": 178
+    },
+    "HIGH": {
+      "c": 38,
+      "t": 63
+    },
+    "MEDIUM": {
+      "c": 32,
+      "t": 59
+    },
+    "LOW": {
+      "c": 0,
+      "t": 0
+    }
+  },
+  "predictabilityBreakdown": {
+    "moderately_predictable": {
+      "c": 59,
+      "t": 114
+    },
+    "highly_predictable": {
+      "c": 41,
+      "t": 79
+    },
+    "uncertain": {
+      "c": 21,
+      "t": 46
+    },
+    "volatile": {
+      "c": 30,
+      "t": 61
+    }
+  },
+  "topFeatures": [
+    {
+      "name": "league_avg_goals",
+      "importance": 0.07975314502729647
+    },
+    {
+      "name": "elo_home",
+      "importance": 0.05411820555423689
+    },
+    {
+      "name": "goal_diff",
+      "importance": 0.05221932114882506
+    },
+    {
+      "name": "elo_diff",
+      "importance": 0.04367434132447187
+    },
+    {
+      "name": "home_home_conceded",
+      "importance": 0.04153809636838358
+    },
+    {
+      "name": "total_expected_goals",
+      "importance": 0.0391644908616188
+    },
+    {
+      "name": "form_x_elo",
+      "importance": 0.03726560645620698
+    },
+    {
+      "name": "home_avg_conceded",
+      "importance": 0.03607880370282459
+    },
+    {
+      "name": "goal_adv_x_form",
+      "importance": 0.03512936150011868
+    },
+    {
+      "name": "away_avg_goals",
+      "importance": 0.03441727984808925
+    },
+    {
+      "name": "away_away_conceded",
+      "importance": 0.03417991929741277
+    },
+    {
+      "name": "elo_away",
+      "importance": 0.03204367434132447
+    },
+    {
+      "name": "home_avg_goals",
+      "importance": 0.029907429385236172
+    },
+    {
+      "name": "home_home_goals",
+      "importance": 0.029907429385236172
+    },
+    {
+      "name": "home_over25_rate",
+      "importance": 0.028720626631853787
+    }
+  ],
+  "topSignals": [
+    {
+      "feature": "home_home_win_rate",
+      "accuracy": 0.625,
+      "separation": 0.19396551724137934,
+      "aboveAcc": 0.625,
+      "belowAcc": 0.43103448275862066,
+      "samples": 1000,
+      "pValue": 1.666560445201526e-8,
+      "significant": true
+    },
+    {
+      "feature": "home_win_rate",
+      "accuracy": 0.5918367346938775,
+      "separation": 0.14424466670520897,
+      "aboveAcc": 0.5918367346938775,
+      "belowAcc": 0.4475920679886686,
+      "samples": 1000,
+      "pValue": 0.000032247335322477255,
+      "significant": true
+    },
+    {
+      "feature": "confidence_level",
+      "accuracy": 0.5851703406813628,
+      "separation": 0.1899607598430394,
+      "aboveAcc": 0.5851703406813628,
+      "belowAcc": 0.39520958083832336,
+      "samples": 1000,
+      "pValue": 1.881814704063345e-9,
+      "significant": true
+    },
+    {
+      "feature": "goal_diff",
+      "accuracy": 0.5822222222222222,
+      "separation": 0.16767676767676765,
+      "aboveAcc": 0.5822222222222222,
+      "belowAcc": 0.41454545454545455,
+      "samples": 1000,
+      "pValue": 1.3166907364414726e-7,
+      "significant": true
+    },
+    {
+      "feature": "model_market_gap",
+      "accuracy": 0.5811623246492986,
+      "separation": 0.1819607278429114,
+      "aboveAcc": 0.5811623246492986,
+      "belowAcc": 0.3992015968063872,
+      "samples": 1000,
+      "pValue": 8.67773652935e-9,
+      "significant": true
+    },
+    {
+      "feature": "elo_home",
+      "accuracy": 0.5791583166332666,
+      "separation": 0.1779607118428474,
+      "aboveAcc": 0.5791583166332666,
+      "belowAcc": 0.40119760479041916,
+      "samples": 1000,
+      "pValue": 1.8204096230434175e-8,
+      "significant": true
+    },
+    {
+      "feature": "elo_diff",
+      "accuracy": 0.5789473684210527,
+      "separation": 0.17578531308508427,
+      "aboveAcc": 0.5789473684210527,
+      "belowAcc": 0.4031620553359684,
+      "samples": 1000,
+      "pValue": 2.7119967160871283e-8,
+      "significant": true
+    },
+    {
+      "feature": "elo_home_prob",
+      "accuracy": 0.5789473684210527,
+      "separation": 0.17578531308508427,
+      "aboveAcc": 0.5789473684210527,
+      "belowAcc": 0.4031620553359684,
+      "samples": 1000,
+      "pValue": 2.7119967160871283e-8,
+      "significant": true
+    },
+    {
+      "feature": "market_x_elo",
+      "accuracy": 0.5789473684210527,
+      "separation": 0.17578531308508427,
+      "aboveAcc": 0.5789473684210527,
+      "belowAcc": 0.4031620553359684,
+      "samples": 1000,
+      "pValue": 2.7119967160871283e-8,
+      "significant": true
+    },
+    {
+      "feature": "home_signal_consensus",
+      "accuracy": 0.5759162303664922,
+      "separation": 0.13902302648299708,
+      "aboveAcc": 0.5759162303664922,
+      "belowAcc": 0.4368932038834951,
+      "samples": 1000,
+      "pValue": 0.00001930223619028837,
+      "significant": true
+    }
+  ],
+  "topInteractions": [
+    {
+      "feature1": "elo_home",
+      "feature2": "elo_diff",
+      "accuracy": 0.637883008356546,
+      "separation": 0.21242846290200051,
+      "pValue": 1.0173583819828025e-7,
+      "samples": 1000
+    },
+    {
+      "feature1": "elo_home",
+      "feature2": "elo_home_prob",
+      "accuracy": 0.637883008356546,
+      "separation": 0.21242846290200051,
+      "pValue": 1.0173583819828025e-7,
+      "samples": 1000
+    },
+    {
+      "feature1": "elo_home",
+      "feature2": "market_x_elo",
+      "accuracy": 0.637883008356546,
+      "separation": 0.21242846290200051,
+      "pValue": 1.0173583819828025e-7,
+      "samples": 1000
+    },
+    {
+      "feature1": "goal_diff",
+      "feature2": "elo_home",
+      "accuracy": 0.6525974025974026,
+      "separation": 0.20514995514995515,
+      "pValue": 1.8701865833747888e-7,
+      "samples": 1000
+    },
+    {
+      "feature1": "confidence_level",
+      "feature2": "elo_home",
+      "accuracy": 0.6461988304093568,
+      "separation": 0.20352367117368797,
+      "pValue": 1.671425065019605e-7,
+      "samples": 1000
+    },
+    {
+      "feature1": "home_home_win_rate",
+      "feature2": "confidence_level",
+      "accuracy": 0.6824034334763949,
+      "separation": 0.19575654920339786,
+      "pValue": 0.0000035461945220305324,
+      "samples": 1000
+    },
+    {
+      "feature1": "model_market_gap",
+      "feature2": "elo_home",
+      "accuracy": 0.6358543417366946,
+      "separation": 0.19571349666627208,
+      "pValue": 7.556345726911218e-7,
+      "samples": 1000
+    },
+    {
+      "feature1": "home_home_win_rate",
+      "feature2": "elo_diff",
+      "accuracy": 0.6738197424892703,
+      "separation": 0.18586793526035467,
+      "pValue": 0.000011530992495512038,
+      "samples": 1000
+    },
+    {
+      "feature1": "home_home_win_rate",
+      "feature2": "elo_home_prob",
+      "accuracy": 0.6738197424892703,
+      "separation": 0.18586793526035467,
+      "pValue": 0.000011530992495512038,
+      "samples": 1000
+    },
+    {
+      "feature1": "home_home_win_rate",
+      "feature2": "market_x_elo",
+      "accuracy": 0.6738197424892703,
+      "separation": 0.18586793526035467,
+      "pValue": 0.000011530992495512038,
+      "samples": 1000
+    }
+  ],
+  "errorAnalysis": {
+    "errorCount": 103,
+    "errorAnalysis": [
+      {
+        "feature": "elo_home",
+        "errorAvg": 1505.8324607151076,
+        "count": 103
+      },
+      {
+        "feature": "elo_away",
+        "errorAvg": 1488.9918652973338,
+        "count": 103
+      },
+      {
+        "feature": "elo_diff",
+        "errorAvg": 81.84059541777383,
+        "count": 103
+      },
+      {
+        "feature": "elo_home_prob",
+        "errorAvg": 0.607757677968337,
+        "count": 103
+      },
+      {
+        "feature": "home_form_ppg",
+        "errorAvg": 1.3980582524271845,
+        "count": 103
+      },
+      {
+        "feature": "away_form_ppg",
+        "errorAvg": 1.2660194174757282,
+        "count": 103
+      },
+      {
+        "feature": "home_win_rate",
+        "errorAvg": 0.37281553398058254,
+        "count": 103
+      },
+      {
+        "feature": "away_win_rate",
+        "errorAvg": 0.3300970873786406,
+        "count": 103
+      },
+      {
+        "feature": "home_avg_goals",
+        "errorAvg": 1.2660194174757284,
+        "count": 103
+      },
+      {
+        "feature": "home_avg_conceded",
+        "errorAvg": 1.2757281553398059,
+        "count": 103
+      },
+      {
+        "feature": "away_avg_goals",
+        "errorAvg": 1.2446601941747577,
+        "count": 103
+      },
+      {
+        "feature": "away_avg_conceded",
+        "errorAvg": 1.392233009708738,
+        "count": 103
+      },
+      {
+        "feature": "home_streak",
+        "errorAvg": 0.11650485436893204,
+        "count": 103
+      },
+      {
+        "feature": "away_streak",
+        "errorAvg": -0.07766990291262135,
+        "count": 103
+      },
+      {
+        "feature": "home_clean_sheet_pct",
+        "errorAvg": 0.28155339805825225,
+        "count": 103
+      },
+      {
+        "feature": "away_clean_sheet_pct",
+        "errorAvg": 0.2601941747572814,
+        "count": 103
+      },
+      {
+        "feature": "goal_diff",
+        "errorAvg": 0.137864077669903,
+        "count": 103
+      },
+      {
+        "feature": "total_expected_goals",
+        "errorAvg": 2.510679611650485,
+        "count": 103
+      },
+      {
+        "feature": "home_btts_rate",
+        "errorAvg": 0.5339805825242718,
+        "count": 103
+      },
+      {
+        "feature": "away_btts_rate",
+        "errorAvg": 0.5262135922330096,
+        "count": 103
+      },
+      {
+        "feature": "home_over25_rate",
+        "errorAvg": 0.4601941747572815,
+        "count": 103
+      },
+      {
+        "feature": "away_over25_rate",
+        "errorAvg": 0.4990291262135923,
+        "count": 103
+      },
+      {
+        "feature": "h2h_total",
+        "errorAvg": 0.9902912621359223,
+        "count": 103
+      },
+      {
+        "feature": "h2h_home_rate",
+        "errorAvg": 0.37330097087378644,
+        "count": 103
+      },
+      {
+        "feature": "h2h_draw_rate",
+        "errorAvg": 0.30339805825242716,
+        "count": 103
+      },
+      {
+        "feature": "h2h_away_rate",
+        "errorAvg": 0.3233009708737864,
+        "count": 103
+      },
+      {
+        "feature": "home_home_win_rate",
+        "errorAvg": 0.4027772120005131,
+        "count": 103
+      },
+      {
+        "feature": "away_away_win_rate",
+        "errorAvg": 0.23725804939397174,
+        "count": 103
+      },
+      {
+        "feature": "home_home_goals",
+        "errorAvg": 1.4942556634304205,
+        "count": 103
+      },
+      {
+        "feature": "away_away_goals",
+        "errorAvg": 1.106457727816951,
+        "count": 103
+      },
+      {
+        "feature": "home_home_conceded",
+        "errorAvg": 1.1324133795007578,
+        "count": 103
+      },
+      {
+        "feature": "away_away_conceded",
+        "errorAvg": 1.5751336312015927,
+        "count": 103
+      },
+      {
+        "feature": "league_avg_goals",
+        "errorAvg": 2.699585528811364,
+        "count": 103
+      },
+      {
+        "feature": "league_home_bias",
+        "errorAvg": 0.4500000000000005,
+        "count": 103
+      },
+      {
+        "feature": "league_goal_trend",
+        "errorAvg": 0,
+        "count": 103
+      },
+      {
+        "feature": "form_x_elo",
+        "errorAvg": 0.8969909136543851,
+        "count": 103
+      },
+      {
+        "feature": "goal_adv_x_form",
+        "errorAvg": 0.8737864077669902,
+        "count": 103
+      },
+      {
+        "feature": "market_x_elo",
+        "errorAvg": 0.2734909550857516,
+        "count": 103
+      },
+      {
+        "feature": "total_xg_x_market",
+        "errorAvg": 0.12553398058252424,
+        "count": 103
+      },
+      {
+        "feature": "home_dominance",
+        "errorAvg": 0.23611650485436886,
+        "count": 103
+      },
+      {
+        "feature": "away_weakness",
+        "errorAvg": 1.0139805825242714,
+        "count": 103
+      },
+      {
+        "feature": "streak_differential",
+        "errorAvg": 0.1941747572815534,
+        "count": 103
+      },
+      {
+        "feature": "form_gap",
+        "errorAvg": 0.1320388349514563,
+        "count": 103
+      },
+      {
+        "feature": "home_signal_consensus",
+        "errorAvg": 0.4291262135922332,
+        "count": 103
+      },
+      {
+        "feature": "signal_agreement",
+        "errorAvg": 0.1553398058252427,
+        "count": 103
+      },
+      {
+        "feature": "signal_conflict",
+        "errorAvg": 0.2815533980582524,
+        "count": 103
+      },
+      {
+        "feature": "prediction_entropy",
+        "errorAvg": 0.9713107216099244,
+        "count": 103
+      },
+      {
+        "feature": "model_market_gap",
+        "errorAvg": 0.17107764198189,
+        "count": 103
+      },
+      {
+        "feature": "confidence_level",
+        "errorAvg": 0.6401226695526889,
+        "count": 103
+      }
+    ]
+  }
+}
