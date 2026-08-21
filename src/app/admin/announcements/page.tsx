@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { PageHeader, Button, Card, CardHeader, Badge, EmptyState } from "@/components/ui";
 
 interface Announcement {
   id: string;
@@ -12,6 +13,13 @@ interface Announcement {
   created_at: string;
   expires_at: string | null;
 }
+
+const TARGET_LABELS: Record<string, string> = {
+  all: "All Users",
+  free: "Free Tier",
+  premium: "Premium",
+  elite: "Elite",
+};
 
 export default function AdminAnnouncementsPage() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -49,7 +57,7 @@ export default function AdminAnnouncementsPage() {
     const payload = {
       title: formTitle,
       body: formBody,
-      target: formTarget as "all" | "free" | "premium" | "elite",
+      target: formTarget,
       is_active: true,
     };
 
@@ -82,36 +90,36 @@ export default function AdminAnnouncementsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-[24px]">
-        <div>
-          <h1 className="font-display text-[24px] md:text-[28px] font-bold text-[#0A0F1C] mb-[4px]">
-            Announcements
-          </h1>
-          <p className="text-[14px] text-gray-500">
-            Create and manage platform-wide announcements.
-          </p>
-        </div>
-        <button
-          onClick={() => {
-            setShowForm(true);
-            setEditingId(null);
-            setFormTitle("");
-            setFormBody("");
-            setFormTarget("all");
-          }}
-          className="h-[36px] px-[16px] rounded-[10px] bg-[#1B2A4A] text-white text-[13px] font-semibold transition-all hover:bg-[#243B53] active:scale-[0.98] flex items-center gap-[6px]"
-        >
-          <i className="ri-add-line text-[14px]"></i>
-          New Announcement
-        </button>
-      </div>
+      <PageHeader
+        title="Announcements"
+        description="Create and manage platform-wide announcements."
+        action={
+          <Button
+            onClick={() => {
+              setShowForm(true);
+              setEditingId(null);
+              setFormTitle("");
+              setFormBody("");
+              setFormTarget("all");
+            }}
+            icon="ri-add-line"
+          >
+            New Announcement
+          </Button>
+        }
+      />
 
       {/* Form */}
       {showForm && (
-        <div className="bg-white rounded-[16px] p-[20px] border border-gray-100 mb-[16px]">
-          <h3 className="font-display text-[15px] font-semibold text-[#0A0F1C] mb-[12px]">
-            {editingId ? "Edit Announcement" : "New Announcement"}
-          </h3>
+        <Card className="mb-[16px]">
+          <CardHeader
+            title={editingId ? "Edit Announcement" : "New Announcement"}
+            action={
+              <Button variant="ghost" size="sm" onClick={() => setShowForm(false)}>
+                Cancel
+              </Button>
+            }
+          />
           <form onSubmit={handleSave} className="space-y-[12px]">
             <div>
               <label className="block text-[12px] font-medium text-gray-500 mb-[4px]">Title</label>
@@ -134,7 +142,7 @@ export default function AdminAnnouncementsPage() {
               />
             </div>
             <div>
-              <label className="block text-[12px] font-medium text-gray-500 mb-[4px]">Target</label>
+              <label className="block text-[12px] font-medium text-gray-500 mb-[4px]">Target Audience</label>
               <select
                 value={formTarget}
                 onChange={(e) => setFormTarget(e.target.value as "all" | "free" | "premium" | "elite")}
@@ -146,67 +154,48 @@ export default function AdminAnnouncementsPage() {
                 <option value="elite">Elite</option>
               </select>
             </div>
-            <div className="flex justify-end gap-[8px]">
-              <button
-                type="button"
-                onClick={() => setShowForm(false)}
-                className="h-[36px] px-[16px] rounded-[10px] text-[13px] font-medium text-gray-500 hover:bg-gray-50 transition-all"
-              >
+            <div className="flex justify-end gap-[8px] pt-[4px]">
+              <Button type="button" variant="ghost" onClick={() => setShowForm(false)}>
                 Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={saving}
-                className="h-[36px] px-[16px] rounded-[10px] bg-[#1B2A4A] text-white text-[13px] font-semibold transition-all hover:bg-[#243B53] active:scale-[0.98] disabled:opacity-50 flex items-center gap-[6px]"
-              >
-                {saving ? (
-                  <div className="w-[14px] h-[14px] border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                ) : editingId ? (
-                  "Update"
-                ) : (
-                  "Publish"
-                )}
-              </button>
+              </Button>
+              <Button type="submit" loading={saving} icon={editingId ? "ri-save-line" : "ri-send-plane-line"}>
+                {editingId ? "Update" : "Publish"}
+              </Button>
             </div>
           </form>
-        </div>
+        </Card>
       )}
 
       {/* List */}
       {loading ? (
-        <div className="space-y-[8px]">
+        <div className="space-y-[6px]">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-[60px] bg-white rounded-[14px] animate-pulse"></div>
+            <div key={i} className="h-[64px] bg-white rounded-[10px] animate-pulse" />
           ))}
         </div>
       ) : announcements.length === 0 ? (
-        <div className="text-center py-[48px] bg-white rounded-[16px] border border-gray-100">
-          <p className="text-[13px] text-gray-400">No announcements yet.</p>
-        </div>
+        <EmptyState
+          icon="ri-megaphone-line"
+          title="No announcements yet"
+          description="Create your first announcement to notify users."
+        />
       ) : (
-        <div className="space-y-[8px]">
+        <div className="space-y-[6px]">
           {announcements.map((ann) => (
-            <div
-              key={ann.id}
-              className="bg-white rounded-[14px] p-[16px] border border-gray-100 shadow-[0_1px_6px_rgba(0,0,0,0.02)]"
-            >
+            <Card key={ann.id} padding="sm" className="hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-shadow">
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-[8px] mb-[4px]">
                     <span className="text-[14px] font-semibold text-[#0A0F1C]">{ann.title}</span>
-                    <span
-                      className={`text-[10px] font-semibold px-[6px] py-[2px] rounded-full ${
-                        ann.is_active ? "text-green-600 bg-green-50" : "text-gray-400 bg-gray-100"
-                      }`}
-                    >
+                    <Badge variant={ann.is_active ? "success" : "default"} size="sm">
                       {ann.is_active ? "Active" : "Inactive"}
-                    </span>
-                    <span className="text-[10px] text-gray-400 capitalize">{ann.target}</span>
+                    </Badge>
+                    <Badge variant="default" size="sm">{TARGET_LABELS[ann.target] || ann.target}</Badge>
                   </div>
                   <p className="text-[12px] text-gray-500 truncate">{ann.body}</p>
                 </div>
 
-                <div className="flex items-center gap-[8px] ml-[12px]">
+                <div className="flex items-center gap-[6px] ml-[12px] flex-none">
                   <button
                     onClick={() => toggleActive(ann.id, ann.is_active)}
                     className={`w-[36px] h-[20px] rounded-full transition-all ${
@@ -217,7 +206,7 @@ export default function AdminAnnouncementsPage() {
                       className={`block w-[16px] h-[16px] bg-white rounded-full transition-all ${
                         ann.is_active ? "translate-x-[18px]" : "translate-x-[2px]"
                       }`}
-                    ></span>
+                    />
                   </button>
                   <button
                     onClick={() => {
@@ -227,19 +216,19 @@ export default function AdminAnnouncementsPage() {
                       setFormTarget(ann.target as "all" | "free" | "premium" | "elite");
                       setShowForm(true);
                     }}
-                    className="text-gray-400 hover:text-[#1B2A4A] transition-colors p-[4px]"
+                    className="w-[28px] h-[28px] rounded-[6px] flex items-center justify-center text-gray-400 hover:text-[#1B2A4A] hover:bg-gray-100 transition-colors"
                   >
-                    <i className="ri-edit-line text-[14px]"></i>
+                    <i className="ri-edit-line text-[14px]" />
                   </button>
                   <button
                     onClick={() => deleteAnnouncement(ann.id)}
-                    className="text-gray-400 hover:text-red-500 transition-colors p-[4px]"
+                    className="w-[28px] h-[28px] rounded-[6px] flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
                   >
-                    <i className="ri-delete-bin-line text-[14px]"></i>
+                    <i className="ri-delete-bin-line text-[14px]" />
                   </button>
                 </div>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       )}

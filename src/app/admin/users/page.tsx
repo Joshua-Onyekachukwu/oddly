@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { PageHeader, Card, Badge, EmptyState } from "@/components/ui";
 
 interface UserProfile {
   id: string;
@@ -10,8 +11,18 @@ interface UserProfile {
   subscription_tier: string;
   bankroll: number;
   created_at: string;
-  auth_users?: { email: string };
 }
+
+const TIER_COLORS: Record<string, string> = {
+  free: "default",
+  premium: "info",
+  elite: "warning",
+};
+
+const ROLE_COLORS: Record<string, string> = {
+  user: "default",
+  admin: "danger",
+};
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -72,25 +83,24 @@ export default function AdminUsersPage() {
 
   return (
     <div>
-      <div className="mb-[24px]">
-        <h1 className="font-display text-[24px] md:text-[28px] font-bold text-[#0A0F1C] mb-[4px]">
-          User Management
-        </h1>
-        <p className="text-[14px] text-gray-500">
-          Manage user roles, subscriptions, and access.
-        </p>
-      </div>
+      <PageHeader
+        title="User Management"
+        description="Manage user roles, subscriptions, and access."
+      />
 
       {/* Filters */}
-      <div className="flex gap-[8px] mb-[16px]">
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search users..."
-          className="flex-1 h-[38px] rounded-[10px] border border-gray-200 bg-white px-[12px] text-[13px] focus:outline-none focus:ring-2 focus:ring-[#1B2A4A]/20 transition-all"
-        />
-        <div className="flex gap-[4px] bg-gray-50 rounded-[10px] p-[4px]">
+      <div className="flex items-center gap-[8px] mb-[16px]">
+        <div className="relative flex-1 max-w-[320px]">
+          <i className="ri-search-line absolute left-[12px] top-1/2 -translate-y-1/2 text-[14px] text-gray-400" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by name or ID..."
+            className="w-full h-[38px] rounded-[10px] border border-gray-200 bg-white pl-[36px] pr-[12px] text-[13px] focus:outline-none focus:ring-2 focus:ring-[#1B2A4A]/20 transition-all"
+          />
+        </div>
+        <div className="flex gap-[4px] bg-gray-100 rounded-[10px] p-[4px]">
           {(["all", "user", "admin"] as const).map((r) => (
             <button
               key={r}
@@ -109,53 +119,58 @@ export default function AdminUsersPage() {
 
       {/* Users table */}
       {loading ? (
-        <div className="space-y-[8px]">
+        <div className="space-y-[6px]">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-[48px] bg-white rounded-[10px] animate-pulse"></div>
+            <div key={i} className="h-[52px] bg-white rounded-[10px] animate-pulse" />
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-[48px] bg-white rounded-[16px] border border-gray-100">
-          <p className="text-[13px] text-gray-400">No users found.</p>
-        </div>
+        <EmptyState
+          icon="ri-user-line"
+          title="No users found"
+          description={search ? "Try a different search term." : "No users have signed up yet."}
+        />
       ) : (
-        <div className="bg-white rounded-[14px] border border-gray-100 overflow-hidden">
+        <Card padding="none" className="overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-50">
-                  <th className="text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider px-[16px] py-[10px]">
+                <tr className="border-b border-gray-100">
+                  <th className="text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-[16px] py-[10px]">
                     User
                   </th>
-                  <th className="text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider px-[16px] py-[10px]">
+                  <th className="text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-[16px] py-[10px]">
                     Role
                   </th>
-                  <th className="text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider px-[16px] py-[10px]">
+                  <th className="text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-[16px] py-[10px]">
                     Plan
                   </th>
-                  <th className="text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider px-[16px] py-[10px]">
+                  <th className="text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-[16px] py-[10px]">
                     Bankroll
                   </th>
-                  <th className="text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider px-[16px] py-[10px]">
+                  <th className="text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-[16px] py-[10px]">
                     Joined
                   </th>
-                  <th className="text-right text-[11px] font-semibold text-gray-400 uppercase tracking-wider px-[16px] py-[10px]">
+                  <th className="text-right text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-[16px] py-[10px]">
                     Actions
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((user) => (
-                  <tr key={user.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
+                  <tr
+                    key={user.id}
+                    className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors"
+                  >
                     <td className="px-[16px] py-[12px]">
                       <div className="flex items-center gap-[10px]">
-                        <div className="w-[32px] h-[32px] bg-[#1B2A4A]/5 rounded-full flex items-center justify-center">
+                        <div className="w-[32px] h-[32px] bg-[#1B2A4A]/5 rounded-full flex items-center justify-center flex-none">
                           <span className="text-[12px] font-bold text-[#1B2A4A]">
                             {(user.display_name || "U").charAt(0).toUpperCase()}
                           </span>
                         </div>
-                        <div>
-                          <span className="text-[13px] font-medium text-[#0A0F1C] block">
+                        <div className="min-w-0">
+                          <span className="text-[13px] font-medium text-[#0A0F1C] block truncate">
                             {user.display_name || "Unnamed"}
                           </span>
                           <span className="text-[10px] text-gray-400 font-mono-data">
@@ -169,7 +184,7 @@ export default function AdminUsersPage() {
                         value={user.role}
                         onChange={(e) => updateRole(user.id, e.target.value)}
                         disabled={updating === user.id}
-                        className="text-[11px] font-semibold px-[8px] py-[4px] rounded-full border border-gray-200 bg-white focus:outline-none"
+                        className="text-[11px] font-semibold px-[8px] py-[4px] rounded-full border border-gray-200 bg-white focus:outline-none cursor-pointer"
                       >
                         <option value="user">User</option>
                         <option value="admin">Admin</option>
@@ -180,7 +195,7 @@ export default function AdminUsersPage() {
                         value={user.subscription_tier}
                         onChange={(e) => updateTier(user.id, e.target.value)}
                         disabled={updating === user.id}
-                        className="text-[11px] font-semibold px-[8px] py-[4px] rounded-full border border-gray-200 bg-white focus:outline-none"
+                        className="text-[11px] font-semibold px-[8px] py-[4px] rounded-full border border-gray-200 bg-white focus:outline-none cursor-pointer"
                       >
                         <option value="free">Free</option>
                         <option value="premium">Premium</option>
@@ -199,7 +214,7 @@ export default function AdminUsersPage() {
                     </td>
                     <td className="px-[16px] py-[12px] text-right">
                       {updating === user.id && (
-                        <div className="w-[16px] h-[16px] border-2 border-gray-200 border-t-[#1B2A4A] rounded-full animate-spin inline-block"></div>
+                        <div className="w-[16px] h-[16px] border-2 border-gray-200 border-t-[#1B2A4A] rounded-full animate-spin inline-block" />
                       )}
                     </td>
                   </tr>
@@ -207,7 +222,7 @@ export default function AdminUsersPage() {
               </tbody>
             </table>
           </div>
-        </div>
+        </Card>
       )}
     </div>
   );
