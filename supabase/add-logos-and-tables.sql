@@ -1,44 +1,12 @@
--- ============================================
--- ODDLY — Fix Everything (single run)
--- Paste this ENTIRE file into Supabase SQL Editor
--- ============================================
+-- Run this in Supabase SQL Editor to add logo columns
+-- Safe to run multiple times
 
--- 1. Force-confirm ALL unconfirmed users
--- Note: confirmed_at is a generated column in newer Supabase, so we only set email_confirmed_at
-UPDATE auth.users
-SET email_confirmed_at = COALESCE(email_confirmed_at, NOW())
-WHERE email_confirmed_at IS NULL;
-
--- 2. Create profiles for ALL users who don't have one
-INSERT INTO public.profiles (id, role, display_name, subscription_tier)
-SELECT
-  id,
-  CASE WHEN email = 'admin@oddly.ai' OR email = 'admin1@oddly.ai' THEN 'admin' ELSE 'user' END,
-  COALESCE(user_metadata->>'display_name', split_part(email, '@', 1)),
-  CASE WHEN email IN ('admin@oddly.ai', 'admin1@oddly.ai') THEN 'elite' ELSE 'free' END
-FROM auth.users
-ON CONFLICT (id) DO UPDATE SET
-  role = EXCLUDED.role,
-  display_name = COALESCE(EXCLUDED.display_name, profiles.display_name),
-  subscription_tier = EXCLUDED.subscription_tier;
-
--- 3. Add notification_preferences column (safe)
-DO $$ BEGIN
-  ALTER TABLE public.profiles ADD COLUMN notification_preferences jsonb DEFAULT '{"new_picks":true,"crown_jewel":true,"match_started":true,"result_settled":true,"chain_milestone":true,"chain_broken":true,"accumulator_settled":true,"model_alert":true,"announcement":true,"drawdown_warning":true,"rollover_pick":true}'::jsonb;
-EXCEPTION WHEN duplicate_column THEN NULL; END $$;
-
--- 4. Add logo columns (safe)
+-- Add logo columns (skip if already exists)
 DO $$ BEGIN ALTER TABLE public.leagues ADD COLUMN logo text; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
 DO $$ BEGIN ALTER TABLE public.teams ADD COLUMN logo text; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
 DO $$ BEGIN ALTER TABLE public.leagues ADD COLUMN country_flag text; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
 
--- 5. Enable Realtime (safe)
-DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE fixtures; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-DO $$ BEGIN ALTER TABLE fixtures REPLICA IDENTITY FULL; EXCEPTION WHEN undefined_table THEN NULL; END $$;
-DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE notifications; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-DO $$ BEGIN ALTER TABLE notifications REPLICA IDENTITY FULL; EXCEPTION WHEN undefined_table THEN NULL; END $$;
-
--- 6. Historical Data Schema (safe)
+-- Add historical data tables
 DO $$ BEGIN
   CREATE TABLE IF NOT EXISTS historical_matches (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -115,19 +83,16 @@ DO $$ BEGIN
   );
 EXCEPTION WHEN duplicate_table THEN NULL; END $$;
 
--- Indexes for historical data
-CREATE INDEX IF NOT EXISTS idx_historical_matches_season ON historical_matches(season);
-CREATE INDEX IF NOT EXISTS idx_historical_matches_date ON historical_matches(match_date);
-CREATE INDEX IF NOT EXISTS idx_match_features_season ON match_features(season);
-CREATE INDEX IF NOT EXISTS idx_model_predictions_match ON model_predictions(match_id);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_model_predictions_match_model ON model_predictions(match_id, model_name);
-CREATE INDEX IF NOT EXISTS idx_model_performance_date ON model_performance_history(evaluation_date);
+-- Enable Realtime (safe)
+DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE fixtures; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE fixtures REPLICA IDENTITY FULL; EXCEPTION WHEN undefined_table THEN NULL; END $$;
+DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE notifications; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE notifications REPLICA IDENTITY FULL; EXCEPTION WHEN undefined_table THEN NULL; END $$;
 
--- 7. Verify
-SELECT
-  u.email,
-  CASE WHEN u.email_confirmed_at IS NOT NULL THEN 'CONFIRMED' ELSE 'BLOCKED' END as status,
-  p.role,
-  p.subscription_tier
-FROM auth.users u
-LEFT JOIN public.profiles p ON p.id = u.id;
+-- Add notification preferences (safe)
+DO $$ BEGIN
+  ALTER TABLE public.profiles ADD COLUMN notification_preferences jsonb DEFAULT '{"new_picks":true,"crown_jewel":true,"match_started":true,"result_settled":true,"chain_milestone":true,"chain_broken":true,"accumulator_settled":true,"model_alert":true,"announcement":true,"drawdown_warning":true,"rollover_pick":true}'::jsonb;
+EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+
+-- Verify
+SELECT 'Setup complete!' as status;
