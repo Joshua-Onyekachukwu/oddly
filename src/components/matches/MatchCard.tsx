@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
+import { BettingTooltip, getAbbrevLabel } from "@/components/ui/BettingTooltip";
 
 interface MatchCardProps {
   fixture: {
@@ -120,7 +121,7 @@ function PredictionBadge({ prediction }: { prediction: { market: string; selecti
   return (
     <div className="flex items-center gap-[6px]">
       <span className="text-[10px] font-medium text-gray-500 truncate max-w-[80px]">
-        {prediction.selection}
+        <BettingTooltip term={prediction.selection} showAbbrev>{prediction.selection}</BettingTooltip>
       </span>
       <span
         className={`text-[11px] font-mono-data font-bold px-[5px] py-[1px] rounded ${
@@ -262,18 +263,18 @@ export function MatchCard({ fixture, onClick }: MatchCardProps) {
         {allPreds.length > 1 && (
           <div className="flex items-center gap-[6px] mt-[6px] flex-wrap">
             {under35 && (
-              <span className="text-[9px] font-medium text-gray-400 bg-gray-50 px-[5px] py-[2px] rounded" title="Under 3.5 goals — fewer than 4 goals in the match">
-                U3.5 {Math.round(under35.model_probability * 100)}%
+              <span className="text-[9px] font-medium text-gray-400 bg-gray-50 px-[5px] py-[2px] rounded">
+                <BettingTooltip term="Under_3.5" showAbbrev>U3.5</BettingTooltip> {Math.round(under35.model_probability * 100)}%
               </span>
             )}
             {btts && (
-              <span className="text-[9px] font-medium text-gray-400 bg-gray-50 px-[5px] py-[2px] rounded" title="Both Teams To Score — both teams score at least 1 goal">
-                BTTS {Math.round(btts.model_probability * 100)}%
+              <span className="text-[9px] font-medium text-gray-400 bg-gray-50 px-[5px] py-[2px] rounded">
+                <BettingTooltip term="BTTS" showAbbrev>BTTS</BettingTooltip> {Math.round(btts.model_probability * 100)}%
               </span>
             )}
             {overUnder && (
-              <span className="text-[9px] font-medium text-gray-400 bg-gray-50 px-[5px] py-[2px] rounded" title="Over 2.5 goals — more than 2 goals in the match">
-                O2.5 {Math.round(overUnder.model_probability * 100)}%
+              <span className="text-[9px] font-medium text-gray-400 bg-gray-50 px-[5px] py-[2px] rounded">
+                <BettingTooltip term="Over_2.5" showAbbrev>O2.5</BettingTooltip> {Math.round(overUnder.model_probability * 100)}%
               </span>
             )}
           </div>

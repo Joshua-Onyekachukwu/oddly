@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { EmptyState } from "@/components/ui";
+import { BettingTooltip, getMarketLabel, getSelectionLabel, getAbbrevLabel } from "@/components/ui/BettingTooltip";
 
 interface GoldenPick {
   fixture_id: string;
@@ -24,51 +25,12 @@ interface GoldenPick {
   edge: number;
 }
 
-function getTierColor(tier: string) {
+function getTierStyle(tier: string) {
   switch (tier) {
-    case "ELITE": return { bg: "bg-[#F59E0B]/10", text: "text-[#D97706]", border: "border-[#F59E0B]/20", glow: "shadow-[0_0_20px_rgba(245,158,11,0.15)]" };
-    case "HIGH": return { bg: "bg-[#10B981]/10", text: "text-[#059669]", border: "border-[#10B981]/20", glow: "shadow-[0_0_20px_rgba(16,185,129,0.15)]" };
-    default: return { bg: "bg-gray-50", text: "text-gray-500", border: "border-gray-100", glow: "" };
+    case "ELITE": return { bg: "bg-[#F59E0B]/10", text: "text-[#D97706]", border: "border-[#F59E0B]/20", ring: "ring-[#F59E0B]/20" };
+    case "HIGH": return { bg: "bg-[#10B981]/10", text: "text-[#059669]", border: "border-[#10B981]/20", ring: "ring-[#10B981]/20" };
+    default: return { bg: "bg-gray-50", text: "text-gray-500", border: "border-gray-100", ring: "ring-gray-100" };
   }
-}
-
-function getMarketLabel(market: string): string {
-  const labels: Record<string, string> = {
-    "1X2": "Match Result",
-    "DC": "Double Chance",
-    "DNB": "Draw No Bet",
-    "OU": "Goals",
-    "BTTS": "BTTS",
-    "HomeGoals": "Home Goals",
-    "AwayGoals": "Away Goals",
-  };
-  return labels[market] || market;
-}
-
-function getSelectionLabel(selection: string): string {
-  const labels: Record<string, string> = {
-    "Home": "Home Win",
-    "Away": "Away Win",
-    "Draw": "Draw",
-    "1X": "Home or Draw",
-    "X2": "Draw or Away",
-    "12": "No Draw",
-    "Home_DNB": "Home (No Draw)",
-    "Away_DNB": "Away (No Draw)",
-    "Yes": "Yes",
-    "No": "No",
-    "Over_0.5": "Over 0.5",
-    "Under_0.5": "Under 0.5",
-    "Over_1.5": "Over 1.5",
-    "Under_1.5": "Under 1.5",
-    "Over_2.5": "Over 2.5",
-    "Under_2.5": "Under 2.5",
-    "Over_3.5": "Over 3.5",
-    "Under_3.5": "Under 3.5",
-    "Over_4.5": "Over 4.5",
-    "Under_4.5": "Under 4.5",
-  };
-  return labels[selection] || selection.replace(/_/g, " ");
 }
 
 export default function PredictionsPage() {
@@ -192,9 +154,9 @@ export default function PredictionsPage() {
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <div className="mb-[28px]">
+      <div className="mb-[24px]">
         <div className="flex items-center gap-[12px] mb-[6px]">
-          <div className="w-[36px] h-[36px] rounded-[10px] bg-gradient-to-br from-[#F59E0B] to-[#D97706] flex items-center justify-center">
+          <div className="w-[36px] h-[36px] rounded-[10px] bg-gradient-to-br from-[#F59E0B] to-[#D97706] flex items-center justify-center shadow-[0_2px_12px_rgba(245,158,11,0.3)]">
             <span className="text-[18px]">👑</span>
           </div>
           <div>
@@ -203,28 +165,29 @@ export default function PredictionsPage() {
             </h1>
           </div>
         </div>
-        <p className="text-[13px] text-gray-500 ml-[48px]">
-          AI-powered predictions across 26 betting markets. The system finds the most predictable outcome for each match.
+        <p className="text-[13px] text-gray-500 ml-[48px] max-w-[500px]">
+          The system searches <BettingTooltip term="1X2">26 betting markets</BettingTooltip> per match and selects the most predictable outcome. Each pick shows confidence and edge — hover any underlined term for details.
         </p>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-[10px] mb-[24px]">
+      <div className="grid grid-cols-3 gap-[10px] mb-[20px]">
         {[
-          { label: "ELITE", value: stats.elite, color: "from-[#F59E0B] to-[#D97706]", icon: "👑" },
-          { label: "HIGH", value: stats.high, color: "from-[#10B981] to-[#059669]", icon: "✅" },
-          { label: "TOTAL", value: stats.total, color: "from-[#6366F1] to-[#4F46E5]", icon: "📊" },
+          { label: "ELITE", value: stats.elite, color: "from-[#F59E0B] to-[#D97706]", icon: "👑", desc: "70%+ confidence" },
+          { label: "HIGH", value: stats.high, color: "from-[#10B981] to-[#059669]", icon: "✅", desc: "60%+ confidence" },
+          { label: "TOTAL", value: stats.total, color: "from-[#6366F1] to-[#4F46E5]", icon: "📊", desc: "all predictions" },
         ].map((stat) => (
-          <div key={stat.label} className="relative overflow-hidden rounded-[14px] bg-white border border-gray-100 p-[16px]">
-            <div className={`absolute top-0 right-0 w-[80px] h-[80px] bg-gradient-to-br ${stat.color} opacity-[0.06] rounded-bl-[40px]`} />
+          <div key={stat.label} className="relative overflow-hidden rounded-[14px] bg-white border border-gray-100 p-[16px] group hover:border-gray-200 transition-all duration-200">
+            <div className={`absolute top-0 right-0 w-[80px] h-[80px] bg-gradient-to-br ${stat.color} opacity-[0.06] rounded-bl-[40px] group-hover:opacity-[0.1] transition-opacity`} />
             <div className="relative">
-              <div className="flex items-center gap-[6px] mb-[8px]">
+              <div className="flex items-center gap-[6px] mb-[6px]">
                 <span className="text-[14px]">{stat.icon}</span>
                 <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">{stat.label}</span>
               </div>
-              <span className="text-[28px] font-bold text-[#0A0F1C] font-mono tabular-nums">
+              <span className="text-[28px] font-bold text-[#0A0F1C] font-mono tabular-nums block">
                 {loading ? "—" : stat.value}
               </span>
+              <span className="text-[10px] text-gray-400 mt-[2px] block">{stat.desc}</span>
             </div>
           </div>
         ))}
@@ -236,7 +199,8 @@ export default function PredictionsPage() {
           <button
             key={t}
             onClick={() => setTierFilter(t)}
-            className={`px-[18px] py-[8px] rounded-[9px] text-[12px] font-semibold transition-all duration-200 ease-out ${
+            aria-pressed={tierFilter === t}
+            className={`px-[18px] py-[8px] rounded-[9px] text-[12px] font-semibold transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] ${
               tierFilter === t
                 ? t === "ELITE" ? "bg-[#F59E0B] text-white shadow-[0_2px_12px_rgba(245,158,11,0.3)]"
                 : t === "HIGH" ? "bg-[#10B981] text-white shadow-[0_2px_12px_rgba(16,185,129,0.3)]"
@@ -244,7 +208,7 @@ export default function PredictionsPage() {
                 : "text-gray-400 hover:text-gray-600 hover:bg-white/50"
             }`}
           >
-            {t}
+            {t === "ELITE" ? "👑 " : t === "HIGH" ? "✅ " : ""}{t}
           </button>
         ))}
       </div>
@@ -270,13 +234,16 @@ export default function PredictionsPage() {
               p.model_probability > best.model_probability ? p : best
             );
             const isExpanded = expandedMatch === fixtureId;
+            const tierStyle = getTierStyle(bestPick.confidence_tier);
 
             return (
               <div
                 key={fixtureId}
                 role="article"
                 aria-label={`${pick.home_team} vs ${pick.away_team} — ${getMarketLabel(bestPick.market)} ${getSelectionLabel(bestPick.selection)} ${Math.round(bestPick.model_probability * 100)}% confidence`}
-                className="rounded-[16px] bg-white border border-gray-100 overflow-hidden transition-all duration-200 ease-out hover:border-gray-200 hover:shadow-[0_4px_20px_rgba(0,0,0,0.04)]"
+                className={`rounded-[16px] bg-white border overflow-hidden transition-all duration-200 ease-out hover:shadow-[0_4px_20px_rgba(0,0,0,0.04)] ${
+                  bestPick.confidence_tier === "ELITE" ? "border-[#F59E0B]/20" : "border-gray-100 hover:border-gray-200"
+                }`}
                 style={{ animationDelay: `${idx * 40}ms` }}
               >
                 {/* Match Header — Clickable */}
@@ -322,9 +289,7 @@ export default function PredictionsPage() {
                   {/* Best Pick Badge */}
                   <div className="flex-none text-right">
                     <div className="inline-flex items-center gap-[6px] px-[10px] py-[6px] rounded-[8px] bg-[#0A0F1C]/[0.03]">
-                      <span className={`text-[10px] font-bold px-[5px] py-[2px] rounded-[4px] ${
-                        bestPick.confidence_tier === "ELITE" ? "bg-[#F59E0B]/10 text-[#D97706]" : "bg-[#10B981]/10 text-[#059669]"
-                      }`}>
+                      <span className={`text-[10px] font-bold px-[5px] py-[2px] rounded-[4px] ${tierStyle.bg} ${tierStyle.text}`}>
                         {bestPick.confidence_tier}
                       </span>
                       <span className="text-[18px] font-bold text-[#0A0F1C] font-mono tabular-nums">
@@ -332,7 +297,9 @@ export default function PredictionsPage() {
                       </span>
                     </div>
                     <div className="text-[10px] text-gray-400 mt-[4px]">
-                      {getMarketLabel(bestPick.market)} → {getSelectionLabel(bestPick.selection)}
+                      <BettingTooltip term={bestPick.market} showAbbrev>{bestPick.market}</BettingTooltip>
+                      {" → "}
+                      <BettingTooltip term={bestPick.selection} showAbbrev>{bestPick.selection}</BettingTooltip>
                     </div>
                   </div>
 
@@ -353,24 +320,28 @@ export default function PredictionsPage() {
                         .sort((a, b) => b.model_probability - a.model_probability)
                         .slice(0, 12)
                         .map((fp, i) => {
-                          const tierColors = getTierColor(fp.confidence_tier);
+                          const ts = getTierStyle(fp.confidence_tier);
                           return (
                             <div
                               key={i}
                               className="flex items-center justify-between p-[10px] rounded-[10px] bg-gray-50/80 hover:bg-gray-100/80 transition-colors duration-150"
                             >
                               <div className="flex items-center gap-[8px] min-w-0">
-                                <span className={`text-[9px] font-bold px-[5px] py-[2px] rounded-[4px] ${tierColors.bg} ${tierColors.text}`}>
+                                <span className={`text-[9px] font-bold px-[5px] py-[2px] rounded-[4px] ${ts.bg} ${ts.text}`}>
                                   {fp.confidence_tier}
                                 </span>
                                 <div className="min-w-0">
-                                  <span className="text-[11px] font-medium text-gray-500 block">{getMarketLabel(fp.market)}</span>
-                                  <span className="text-[12px] font-semibold text-[#0A0F1C]">{getSelectionLabel(fp.selection)}</span>
+                                  <span className="text-[11px] font-medium text-gray-500 block">
+                                    <BettingTooltip term={fp.market}>{getMarketLabel(fp.market)}</BettingTooltip>
+                                  </span>
+                                  <span className="text-[12px] font-semibold text-[#0A0F1C]">
+                                    <BettingTooltip term={fp.selection}>{getSelectionLabel(fp.selection)}</BettingTooltip>
+                                  </span>
                                 </div>
                               </div>
                               <div className="flex items-center gap-[8px] flex-none">
                                 {fp.edge > 0 && (
-                                  <span className="text-[10px] font-semibold text-[#10B981]">
+                                  <span className="text-[10px] font-semibold text-[#10B981]" title={`Edge over bookmaker: model says ${Math.round(fp.model_probability * 100)}% but odds imply ${Math.round((1 / (fp.model_probability - fp.edge + 0.001)) * 100)}%`}>
                                     +{(fp.edge * 100).toFixed(0)}%
                                   </span>
                                 )}
@@ -387,9 +358,21 @@ export default function PredictionsPage() {
                     {(pick.odds_home || pick.odds_draw || pick.odds_away) && (
                       <div className="flex items-center justify-center gap-[16px] pt-[12px] mt-[8px] border-t border-gray-100">
                         <span className="text-[10px] text-gray-400 font-medium">BOOKMAKER ODDS</span>
-                        {pick.odds_home && <span className="text-[12px] font-mono text-gray-500">H {pick.odds_home.toFixed(2)}</span>}
-                        {pick.odds_draw && <span className="text-[12px] font-mono text-gray-500">D {pick.odds_draw.toFixed(2)}</span>}
-                        {pick.odds_away && <span className="text-[12px] font-mono text-gray-500">A {pick.odds_away.toFixed(2)}</span>}
+                        {pick.odds_home && (
+                          <span className="text-[12px] font-mono text-gray-500" title="Home win odds">
+                            H {pick.odds_home.toFixed(2)}
+                          </span>
+                        )}
+                        {pick.odds_draw && (
+                          <span className="text-[12px] font-mono text-gray-500" title="Draw odds">
+                            D {pick.odds_draw.toFixed(2)}
+                          </span>
+                        )}
+                        {pick.odds_away && (
+                          <span className="text-[12px] font-mono text-gray-500" title="Away win odds">
+                            A {pick.odds_away.toFixed(2)}
+                          </span>
+                        )}
                       </div>
                     )}
                   </div>

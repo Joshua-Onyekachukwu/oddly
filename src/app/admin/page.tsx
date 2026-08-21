@@ -137,7 +137,7 @@ export default function AdminDashboardPage() {
           <Link
             key={link.href}
             href={link.href}
-            className="p-[14px] bg-white rounded-[12px] border border-gray-100 hover:border-gray-200 hover:shadow-[0_4px_20px_rgba(0,0,0,0.04)] transition-all group cursor-pointer"
+            className="p-[14px] bg-white rounded-[14px] border border-gray-100 hover:border-gray-200 hover:shadow-[0_4px_20px_rgba(0,0,0,0.04)] transition-all group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] focus-visible:ring-inset"
           >
             <i className={`${link.icon} text-[18px] text-gray-400 group-hover:text-[#1B2A4A] transition-colors mb-[6px] block`} />
             <span className="text-[12px] font-semibold text-[#0A0F1C] block">{link.label}</span>
