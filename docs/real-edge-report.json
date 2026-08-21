@@ -1,0 +1,87 @@
+{
+  "generatedAt": "2026-08-21T01:55:37.548Z",
+  "totalMatches": 3002,
+  "overallAccuracy": 50.6,
+  "tierAnalysis": {
+    "VERY_HIGH": {
+      "accuracy": 59.8,
+      "total": 1271,
+      "correct": 760,
+      "avgEdge": 8.9
+    },
+    "HIGH": {
+      "accuracy": 39.8,
+      "total": 585,
+      "correct": 233,
+      "avgEdge": 6.9
+    },
+    "MEDIUM": {
+      "accuracy": 30.8,
+      "total": 504,
+      "correct": 155,
+      "avgEdge": 5.7
+    },
+    "LOW": {
+      "accuracy": 57.9,
+      "total": 642,
+      "correct": 372,
+      "avgEdge": -0.6
+    }
+  },
+  "leagueBreakdown": {
+    "Premier League": {
+      "accuracy": 53.8,
+      "total": 653
+    },
+    "La Liga": {
+      "accuracy": 51.5,
+      "total": 647
+    },
+    "Serie A": {
+      "accuracy": 49.6,
+      "total": 657
+    },
+    "Ligue 1": {
+      "accuracy": 49.1,
+      "total": 521
+    },
+    "Bundesliga": {
+      "accuracy": 48.5,
+      "total": 524
+    }
+  },
+  "winningPatterns": [
+    {
+      "patterns": "eloDominance+homeStrong",
+      "accuracy": 78,
+      "total": 41
+    },
+    {
+      "patterns": "awayWeak+eloDominance+homeStrong",
+      "accuracy": 77.8,
+      "total": 90
+    },
+    {
+      "patterns": "awayWeak+eloDominance",
+      "accuracy": 70.8,
+      "total": 48
+    },
+    {
+      "patterns": "eloDominance",
+      "accuracy": 66.3,
+      "total": 163
+    },
+    {
+      "patterns": "awayWeak+homeStrong",
+      "accuracy": 63.6,
+      "total": 176
+    }
+  ],
+  "goldenRule": {
+    "minEloDiff": 200,
+    "minStreak": 3,
+    "minH2HWinRate": 0.7,
+    "minHomeWinRate": 0.6,
+    "expectedAccuracy": 59.8
+  }
+}
