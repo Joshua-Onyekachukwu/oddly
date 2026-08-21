@@ -1,0 +1,41 @@
+{
+  "date": "2026-08-21T03:25:33.801Z",
+  "modelA": {
+    "accuracy": 0.6566666666666666,
+    "tiers": {
+      "ELITE": {
+        "c": 117,
+        "t": 174
+      },
+      "HIGH": {
+        "c": 39,
+        "t": 58
+      },
+      "MEDIUM": {
+        "c": 41,
+        "t": 68
+      }
+    }
+  },
+  "modelB": {
+    "accuracy": 0.6466666666666666,
+    "tiers": {
+      "ELITE": {
+        "c": 132,
+        "t": 189
+      },
+      "HIGH": {
+        "c": 34,
+        "t": 55
+      },
+      "MEDIUM": {
+        "c": 28,
+        "t": 56
+      }
+    }
+  },
+  "improvement": -0.010000000000000009,
+  "changedPreds": 43,
+  "changedCorrect": 20,
+  "verdict": "none"
+}
