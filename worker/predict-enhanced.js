@@ -35,7 +35,9 @@ function loadEnv() {
     if (!t || t.startsWith("#")) continue;
     const i = t.indexOf("=");
     if (i === -1) continue;
-    env[t.slice(0, i).trim()] = t.slice(i + 1).trim();
+    let val = t.slice(i + 1).trim();
+    if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) val = val.slice(1, -1);
+    env[t.slice(0, i).trim()] = val;
   }
   return env;
 }
@@ -177,65 +179,73 @@ class EnhancedTracker {
     const homeGD = (lt[home]?.gf || 0) - (lt[home]?.ga || 0);
     const awayGD = (lt[away]?.gf || 0) - (lt[away]?.ga || 0);
 
-    // ─── ENHANCED FORMULA (from enhanced-edge.js) ────────────────────────
-    let prob = 0.5 + (eloDiff - 150) * 0.001;
+    // ─── IMPROVED 1X2 FORMULA v4 ──────────────────────────────────────
+    // Base: Elo-derived probability
+    let prob = 0.5 + (eloDiff - 100) * 0.0012;
 
-    // Form (PPG)
-    prob += (hf.ppg - 1.5) * 0.08;
-    prob -= (af.ppg - 1.5) * 0.08;
+    // Home/Away-specific PPG (most predictive feature)
+    prob += (hf.homePPG - 1.6) * 0.06;
+    prob -= (af.awayPPG - 1.2) * 0.06;
 
-    // Goals
-    prob += (hf.goalsScored - 1.3) * 0.04;
-    prob -= (af.goalsScored - 1.3) * 0.04;
-    prob -= (hf.goalsConceded - 1.2) * 0.03;
-    prob += (af.goalsConceded - 1.2) * 0.03;
+    // Overall form (recent 5)
+    prob += (hf.ppg - 1.5) * 0.05;
+    prob -= (af.ppg - 1.5) * 0.05;
 
-    // Elo dominance
-    if (eloDiff > 200) prob += 0.10;
+    // Home/Away-specific goal rates
+    prob += (hf.homeGoalsFor - 1.4) * 0.03;
+    prob -= (af.awayGoalsFor - 1.0) * 0.03;
+    prob -= (hf.homeGoalsAgainst - 1.1) * 0.04;
+    prob += (af.awayGoalsAgainst - 1.3) * 0.04;
 
-    // Clean sheet
-    prob += (hf.cleanSheetRate - 0.3) * 0.15;
-    prob -= (af.cleanSheetRate - 0.3) * 0.15;
-
-    // BTTS
-    prob += (hf.bttsRate - 0.5) * 0.05;
+    // Clean sheet dominance
+    prob += (hf.cleanSheetRate - 0.25) * 0.08;
+    prob -= (af.cleanSheetRate - 0.25) * 0.08;
 
     // Home/Away win rates
-    prob += (hf.homeWinRate - 0.45) * 0.12;
-    prob -= (af.awayWinRate - 0.30) * 0.12;
+    prob += (hf.homeWinRate - 0.45) * 0.08;
+    prob -= (af.awayWinRate - 0.30) * 0.08;
 
-    // Streaks
-    prob += (hf.streak > 2 ? 0.08 : hf.streak < -2 ? -0.08 : 0);
-    prob -= (af.streak > 2 ? 0.05 : af.streak < -2 ? -0.05 : 0);
+    // Streaks (winning/losing momentum)
+    prob += (hf.streak > 2 ? 0.06 : hf.streak < -2 ? -0.06 : 0);
+    prob -= (af.streak > 2 ? 0.04 : af.streak < -2 ? -0.04 : 0);
 
-    // Goal difference & league position
-    prob += (homeGD - awayGD) * 0.005;
-    if (homePos && awayPos) prob += ((awayPos - homePos) / 20) * 0.08;
+    // Fatigue: home team rested = advantage, away team tired = disadvantage
+    const homeFatigue = clamp((hf.lastMatchDaysAgo - 5) * 0.005, -0.03, 0.03);
+    const awayFatigue = clamp((af.lastMatchDaysAgo - 5) * -0.005, -0.03, 0.03);
+    prob += homeFatigue + awayFatigue;
+
+    // League position
+    if (homePos && awayPos) prob += ((awayPos - homePos) / 20) * 0.06;
+
+    // Goal difference
+    prob += (homeGD - awayGD) * 0.004;
 
     // H2H
-    prob += (h2h.h2hHomeWins - 0.4) * 0.06;
+    prob += (h2h.h2hHomeWins - 0.4) * 0.05;
 
     prob = clamp(prob);
 
-    // Build Poisson lambdas from enhanced features
-    const homeLambda = clamp(hf.goalsScored * 1.1 * (af.goalsConceded / 1.3) * (1 + eloDiff * 0.0004), 0.3, 4.5);
-    const awayLambda = clamp(af.goalsScored * 0.9 * (hf.goalsConceded / 1.3) * (1 - eloDiff * 0.0004), 0.3, 4.5);
+    // Build Poisson lambdas using home/away-specific rates
+    const homeLambda = clamp(hf.homeGoalsFor * (af.awayGoalsAgainst / 1.3) * (1 + eloDiff * 0.0003), 0.3, 4.5);
+    const awayLambda = clamp(af.awayGoalsFor * (hf.homeGoalsAgainst / 1.3) * (1 - eloDiff * 0.0003), 0.3, 4.5);
 
     return { prob, homeLambda, awayLambda, homeEloProb: prob, features: { hf, af, h2h, eloDiff, homePos, awayPos, homeGD, awayGD } };
   }
 
   getTeamStats(team) {
-    const hist = (this.history[team] || []).slice(-15);
+    const hist = (this.history[team] || []).slice(-20);
     if (hist.length < 3) return {
       ppg: 1.5, goalsScored: 1.3, goalsConceded: 1.2, winRate: 0.4,
       homeWinRate: 0.45, awayWinRate: 0.30, cleanSheetRate: 0.25, bttsRate: 0.5,
-      streak: 0, form5: "",
+      streak: 0, form5: "", homePPG: 1.6, awayPPG: 1.2, homeGoalsFor: 1.4, homeGoalsAgainst: 1.1, awayGoalsFor: 1.0, awayGoalsAgainst: 1.3, lastMatchDaysAgo: 7,
     };
 
     const recent5 = hist.slice(-5);
     const recent10 = hist.slice(-10);
-    const homeMatches = hist.filter(m => m.isHome).slice(-5);
-    const awayMatches = hist.filter(m => !m.isHome).slice(-5);
+    const homeMatches = hist.filter(m => m.isHome).slice(-8);
+    const awayMatches = hist.filter(m => !m.isHome).slice(-8);
+    const lastMatch = hist[hist.length - 1];
+    const daysAgo = lastMatch?.date ? Math.floor((Date.now() - new Date(lastMatch.date).getTime()) / 86400000) : 7;
 
     return {
       ppg: recent5.reduce((s, m) => s + (m.gf > m.ga ? 3 : m.gf === m.ga ? 1 : 0), 0) / recent5.length,
@@ -248,6 +258,14 @@ class EnhancedTracker {
       bttsRate: recent10.filter(m => m.gf > 0 && m.ga > 0).length / recent10.length,
       streak: this.getStreak(hist),
       form5: recent5.map(m => m.gf > m.ga ? "W" : m.gf < m.ga ? "L" : "D").join(""),
+      // Home/Away specific
+      homePPG: homeMatches.length > 0 ? homeMatches.reduce((s, m) => s + (m.gf > m.ga ? 3 : m.gf === m.ga ? 1 : 0), 0) / homeMatches.length : 1.6,
+      awayPPG: awayMatches.length > 0 ? awayMatches.reduce((s, m) => s + (m.gf > m.ga ? 3 : m.gf === m.ga ? 1 : 0), 0) / awayMatches.length : 1.2,
+      homeGoalsFor: homeMatches.length > 0 ? homeMatches.reduce((s, m) => s + m.gf, 0) / homeMatches.length : 1.4,
+      homeGoalsAgainst: homeMatches.length > 0 ? homeMatches.reduce((s, m) => s + m.ga, 0) / homeMatches.length : 1.1,
+      awayGoalsFor: awayMatches.length > 0 ? awayMatches.reduce((s, m) => s + m.gf, 0) / awayMatches.length : 1.0,
+      awayGoalsAgainst: awayMatches.length > 0 ? awayMatches.reduce((s, m) => s + m.ga, 0) / awayMatches.length : 1.3,
+      lastMatchDaysAgo: daysAgo,
     };
   }
 
