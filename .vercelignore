@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+.next/
+out/
+
+# Research files
+research/
+scripts/
+
+# Development files
+*.log
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+
+# Documentation
+*.md
+LICENSE
+
+# Supabase migrations (large SQL files)
+supabase/
+
+# Test files
+__tests__/
+*.test.*
+*.spec.*
