@@ -29,6 +29,10 @@
     "weekly-retrain": "node worker/weekly-retrain.js",
     "collect-statsbomb": "node worker/collect-statsbomb.js",
     "calculate-player-impact": "node worker/calculate-player-impact.js",
+    "fetch-logos": "node scripts/fetch-logos-v2.js",
+    "fetch-logos:dry": "node scripts/fetch-logos-v2.js --dry-run",
+    "collect-injuries": "node scripts/collect-injuries.js",
+    "train-xgboost": "python scripts/train-xgboost.py",
     "pipeline": "echo 'Running full pipeline...' && npm run sync:fixtures && npm run self-learn"
   },
   "dependencies": {

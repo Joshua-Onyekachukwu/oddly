@@ -24,7 +24,9 @@ function loadEnv() {
     if (!t || t.startsWith("#")) continue;
     const i = t.indexOf("=");
     if (i === -1) continue;
-    env[t.slice(0, i).trim()] = t.slice(i + 1).trim();
+    let val = t.slice(i + 1).trim();
+    if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) val = val.slice(1, -1);
+    env[t.slice(0, i).trim()] = val;
   }
   return env;
 }
@@ -58,6 +60,14 @@ function poissonPredict(homeLambda, awayLambda) {
 class EloSystem {
   constructor() { this.ratings = {}; }
   get(t) { return this.ratings[t] || 1500; }
+  update(home, away, homeScore, awayScore) {
+    const h = this.get(home) + 65;
+    const a = this.get(away);
+    const eH = 1 / (1 + Math.pow(10, (a - h) / 400));
+    const actual = homeScore > awayScore ? 1 : homeScore < awayScore ? 0 : 0.5;
+    this.ratings[home] = (this.ratings[home] || 1500) + 32 * (actual - eH);
+    this.ratings[away] = (this.ratings[away] || 1500) + 32 * ((1 - actual) - (1 - eH));
+  }
   predict(home, away) {
     const h = this.get(home) + 65;
     const a = this.get(away);
