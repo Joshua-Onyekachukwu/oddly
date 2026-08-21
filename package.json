@@ -20,6 +20,7 @@
     "backtest": "node scripts/backtest-models.js",
     "simulate": "node scripts/run-simulation.js",
     "self-learn": "node scripts/self-learning.js",
+    "store-historical": "node scripts/store-historical.js",
     "backfill": "node scripts/backfill-historical.js",
     "pipeline": "echo 'Running full pipeline...' && npm run sync:fixtures && npm run self-learn"
   },
