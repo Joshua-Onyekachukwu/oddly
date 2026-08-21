@@ -22,6 +22,11 @@
     "self-learn": "node scripts/self-learning.js",
     "store-historical": "node scripts/store-historical.js",
     "backfill": "node scripts/backfill-historical.js",
+    "daily-loop": "node worker/daily-loop.js",
+    "daily-predict": "node worker/daily-loop.js predict",
+    "daily-settle": "node worker/daily-loop.js settle",
+    "daily-learn": "node worker/daily-loop.js learn",
+    "weekly-retrain": "node worker/weekly-retrain.js",
     "pipeline": "echo 'Running full pipeline...' && npm run sync:fixtures && npm run self-learn"
   },
   "dependencies": {

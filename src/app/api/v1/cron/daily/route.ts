@@ -71,20 +71,34 @@ export async function GET(request: NextRequest) {
     const results: Record<string, unknown> = {};
 
     // Step 1: Sync fixtures and odds
-    console.log("[DAILY CRON] Step 1/3: Syncing fixtures and odds...");
+    console.log("[DAILY CRON] Step 1/5: Syncing fixtures and odds...");
     const syncResult = await callInternal("/api/v1/cron/sync", "POST", { type: "all" });
     results.sync = syncResult;
     console.log(`[DAILY CRON] Sync completed in ${syncResult.duration}`);
 
-    // Step 2: Generate predictions (wait 5 seconds after sync)
-    console.log("[DAILY CRON] Step 2/3: Generating predictions...");
+    // Step 2: Generate predictions
+    console.log("[DAILY CRON] Step 2/5: Generating predictions...");
     await new Promise((resolve) => setTimeout(resolve, 5000));
     const predictResult = await callInternal("/api/v1/cron/predict", "POST");
     results.predict = predictResult;
     console.log(`[DAILY CRON] Predict completed in ${predictResult.duration}`);
 
-    // Step 3: Cleanup old data (wait 5 seconds after predict)
-    console.log("[DAILY CRON] Step 3/3: Cleaning up old data...");
+    // Step 3: Settle finished matches
+    console.log("[DAILY CRON] Step 3/5: Settling finished matches...");
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+    const settleResult = await callInternal("/api/v1/cron/sync", "POST", { type: "settle" });
+    results.settle = settleResult;
+    console.log(`[DAILY CRON] Settle completed in ${settleResult.duration}`);
+
+    // Step 4: Learn from results
+    console.log("[DAILY CRON] Step 4/5: Learning from results...");
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+    const learnResult = await callInternal("/api/v1/cron/sync", "POST", { type: "learn" });
+    results.learn = learnResult;
+    console.log(`[DAILY CRON] Learn completed in ${learnResult.duration}`);
+
+    // Step 5: Cleanup old data
+    console.log("[DAILY CRON] Step 5/5: Cleaning up old data...");
     await new Promise((resolve) => setTimeout(resolve, 5000));
     const cleanupResult = await callInternal("/api/v1/cron/cleanup", "POST");
     results.cleanup = cleanupResult;
