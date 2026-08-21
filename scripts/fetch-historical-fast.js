@@ -41,7 +41,7 @@ const LEAGUES = [
   { code: "FL1", name: "Ligue 1", country: "France" },
 ];
 
-const SEASONS = [2023, 2024, 2025]; // Free tier restricts pre-2023
+const SEASONS = [2023, 2024]; // Free tier allows 2023-2024 for all leagues
 const PROGRESS_FILE = path.join(__dirname, "..", "data", "fetch-progress.json");
 
 function loadProgress() {
