@@ -7,7 +7,7 @@ out/
 
 # Research files
 research/
-scripts/
+/scripts/
 
 # Development files
 *.log
@@ -29,7 +29,7 @@ scripts/
 LICENSE
 
 # Supabase migrations (large SQL files)
-supabase/
+/supabase/
 
 # Test files
 __tests__/
