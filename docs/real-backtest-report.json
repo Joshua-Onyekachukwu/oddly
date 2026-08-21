@@ -1,0 +1,46 @@
+{
+  "generatedAt": "2026-08-21T01:48:08.789Z",
+  "version": "real-backtest",
+  "totalFixtures": 0,
+  "modelAccuracy": {
+    "market": {
+      "accuracy": null,
+      "total": 0,
+      "correct": 0
+    },
+    "elo": {
+      "accuracy": null,
+      "total": 0,
+      "correct": 0
+    },
+    "poisson": {
+      "accuracy": null,
+      "total": 0,
+      "correct": 0
+    },
+    "xgboost": {
+      "accuracy": null,
+      "total": 0,
+      "correct": 0
+    },
+    "ensemble": {
+      "accuracy": null,
+      "total": 0,
+      "correct": 0
+    }
+  },
+  "tierAnalysis": {
+    "high": {
+      "accuracy": 0,
+      "total": 0
+    },
+    "medium": {
+      "accuracy": 0,
+      "total": 0
+    },
+    "low": {
+      "accuracy": 0,
+      "total": 0
+    }
+  }
+}
