@@ -4,167 +4,76 @@
     "stored": 0,
     "dupes": 557,
     "fetched": 557,
-    "ts": "2026-08-21T12:26:09.581Z"
+    "ts": "2026-08-21T14:00:20.507Z"
   },
   "ELC-2024": {
     "done": true,
     "stored": 0,
     "dupes": 557,
     "fetched": 557,
-    "ts": "2026-08-21T12:28:11.538Z"
-  },
-  "ELC-2025": {
-    "done": true,
-    "stored": 0,
-    "dupes": 557,
-    "fetched": 557,
-    "ts": "2026-08-21T12:30:13.073Z"
+    "ts": "2026-08-21T14:02:54.979Z"
   },
   "DED-2023": {
     "done": true,
     "stored": 0,
     "dupes": 306,
     "fetched": 306,
-    "ts": "2026-08-21T12:31:30.463Z"
+    "ts": "2026-08-21T14:04:26.078Z"
   },
   "DED-2024": {
     "done": true,
     "stored": 0,
     "dupes": 306,
     "fetched": 306,
-    "ts": "2026-08-21T12:32:43.981Z"
-  },
-  "DED-2025": {
-    "done": true,
-    "stored": 0,
-    "dupes": 306,
-    "fetched": 306,
-    "ts": "2026-08-21T12:33:51.011Z"
+    "ts": "2026-08-21T14:05:56.048Z"
   },
   "PPL-2023": {
     "done": true,
     "stored": 0,
     "dupes": 306,
     "fetched": 306,
-    "ts": "2026-08-21T12:35:02.979Z"
+    "ts": "2026-08-21T14:07:26.117Z"
   },
   "PPL-2024": {
     "done": true,
     "stored": 0,
     "dupes": 306,
     "fetched": 306,
-    "ts": "2026-08-21T12:36:20.040Z"
-  },
-  "PPL-2025": {
-    "done": true,
-    "stored": 0,
-    "dupes": 306,
-    "fetched": 306,
-    "ts": "2026-08-21T12:37:29.330Z"
+    "ts": "2026-08-21T14:08:51.487Z"
   },
   "CL-2023": {
     "done": true,
     "stored": 0,
     "dupes": 125,
     "fetched": 125,
-    "ts": "2026-08-21T12:38:10.000Z"
+    "ts": "2026-08-21T14:09:34.027Z"
   },
   "CL-2024": {
     "done": true,
     "stored": 0,
     "dupes": 189,
     "fetched": 189,
-    "ts": "2026-08-21T12:38:57.201Z"
-  },
-  "CL-2025": {
-    "done": true,
-    "stored": 0,
-    "dupes": 189,
-    "fetched": 189,
-    "ts": "2026-08-21T12:39:47.360Z"
+    "ts": "2026-08-21T14:10:26.367Z"
   },
   "PL-2023": {
     "done": true,
     "stored": 0,
     "dupes": 380,
     "fetched": 380,
-    "ts": "2026-08-21T12:41:12.681Z"
+    "ts": "2026-08-21T14:11:57.899Z"
   },
   "PL-2024": {
     "done": true,
     "stored": 0,
     "dupes": 380,
     "fetched": 380,
-    "ts": "2026-08-21T12:42:36.854Z"
-  },
-  "PL-2025": {
-    "done": true,
-    "stored": 0,
-    "dupes": 380,
-    "fetched": 380,
-    "ts": "2026-08-21T12:43:57.977Z"
+    "ts": "2026-08-21T14:13:25.248Z"
   },
   "PD-2023": {
     "done": true,
     "stored": 0,
     "dupes": 380,
     "fetched": 380,
-    "ts": "2026-08-21T12:45:23.660Z"
-  },
-  "PD-2024": {
-    "done": true,
-    "stored": 0,
-    "dupes": 380,
-    "fetched": 380,
-    "ts": "2026-08-21T12:46:52.381Z"
-  },
-  "PD-2025": {
-    "done": true,
-    "stored": 0,
-    "dupes": 380,
-    "fetched": 380,
-    "ts": "2026-08-21T12:48:19.386Z"
-  },
-  "SA-2023": {
-    "done": true,
-    "stored": 0,
-    "dupes": 380,
-    "fetched": 380,
-    "ts": "2026-08-21T12:49:48.310Z"
-  },
-  "SA-2024": {
-    "done": true,
-    "stored": 0,
-    "dupes": 380,
-    "fetched": 380,
-    "ts": "2026-08-21T12:51:17.710Z"
-  },
-  "SA-2025": {
-    "done": true,
-    "stored": 0,
-    "dupes": 380,
-    "fetched": 380,
-    "ts": "2026-08-21T12:52:45.810Z"
-  },
-  "FL1-2023": {
-    "done": true,
-    "stored": 0,
-    "dupes": 306,
-    "fetched": 306,
-    "ts": "2026-08-21T12:53:57.986Z"
-  },
-  "FL1-2024": {
-    "done": true,
-    "stored": 0,
-    "dupes": 305,
-    "fetched": 305,
-    "ts": "2026-08-21T12:55:13.099Z"
-  },
-  "FL1-2025": {
-    "done": true,
-    "stored": 0,
-    "dupes": 305,
-    "fetched": 305,
-    "ts": "2026-08-21T12:56:32.428Z"
+    "ts": "2026-08-21T14:14:57.374Z"
   }
 }
