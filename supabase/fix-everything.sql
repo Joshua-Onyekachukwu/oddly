@@ -14,7 +14,7 @@ INSERT INTO public.profiles (id, role, display_name, subscription_tier)
 SELECT
   id,
   CASE WHEN email = 'admin@oddly.ai' OR email = 'admin1@oddly.ai' THEN 'admin' ELSE 'user' END,
-  COALESCE(user_metadata->>'display_name', split_part(email, '@', 1)),
+  split_part(email, '@', 1),
   CASE WHEN email IN ('admin@oddly.ai', 'admin1@oddly.ai') THEN 'elite' ELSE 'free' END
 FROM auth.users
 ON CONFLICT (id) DO UPDATE SET
