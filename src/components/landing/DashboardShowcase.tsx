@@ -2,12 +2,17 @@
 
 import React from "react";
 import { useScrollReveal, getScrollRevealClasses } from "@/hooks/useScrollReveal";
+import type { LandingStats } from "@/lib/landing-stats";
+
+interface DashboardShowcaseProps {
+  stats?: LandingStats;
+}
 
 /**
  * A full-width, immersive dashboard preview that looks like a real app.
  * Uses CSS-only animations for the "live" feel.
  */
-function DashboardPreview() {
+function DashboardPreview({ stats }: { stats?: LandingStats }) {
   return (
     <div className="relative mx-auto max-w-[960px]">
       {/* Glow effect behind the dashboard */}
@@ -166,7 +171,7 @@ function DashboardPreview() {
                   <span className="text-[9px] text-white/30">Active Models</span>
                 </div>
                 <div className="bg-white/[0.02] rounded-[10px] border border-white/5 p-[10px] text-center">
-                  <span className="text-[16px] font-bold text-white font-mono-data block">360+</span>
+                  <span className="text-[16px] font-bold text-white font-mono-data block">{stats?.totalLeagues ? `${stats.totalLeagues}+` : "360+"}</span>
                   <span className="text-[9px] text-white/30">Leagues</span>
                 </div>
               </div>
@@ -201,7 +206,7 @@ const FEATURES = [
   },
 ];
 
-const DashboardShowcase: React.FC = () => {
+const DashboardShowcase: React.FC<DashboardShowcaseProps> = ({ stats }) => {
   const { ref, isVisible } = useScrollReveal({ threshold: 0.05 });
   const { ref: featuresRef, isVisible: featuresVisible } = useScrollReveal({ threshold: 0.1 });
 
@@ -236,7 +241,7 @@ const DashboardShowcase: React.FC = () => {
 
         {/* Dashboard Preview */}
         <div {...getScrollRevealClasses(isVisible, 200)}>
-          <DashboardPreview />
+          <DashboardPreview stats={stats} />
         </div>
 
         {/* Feature highlights */}

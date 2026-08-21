@@ -2,8 +2,13 @@
 
 import React, { useState } from "react";
 import { useScrollReveal, getScrollRevealClasses } from "@/hooks/useScrollReveal";
+import type { LandingStats } from "@/lib/landing-stats";
 
-const faqData = [
+interface FAQProps {
+  stats?: LandingStats;
+}
+
+const getFaqData = (leagueCount: string) => [
   {
     question: "How accurate are ODDLY's predictions?",
     answer:
@@ -27,7 +32,7 @@ const faqData = [
   {
     question: "Which leagues does ODDLY cover?",
     answer:
-      "We cover 360+ leagues across Europe, South America, Africa, and Asia — including the Premier League, La Liga, Bundesliga, Serie A, Ligue 1, Eredivisie, NPFL, MLS, Brasileirão, and many more.",
+      `We cover ${leagueCount} leagues across Europe, South America, Africa, and Asia — including the Premier League, La Liga, Bundesliga, Serie A, Ligue 1, Eredivisie, NPFL, MLS, Brasileirão, and many more.`,
   },
   {
     question: "What's the difference between Premium and Elite?",
@@ -36,7 +41,7 @@ const faqData = [
   },
 ];
 
-const FAQ: React.FC = () => {
+const FAQ: React.FC<FAQProps> = ({ stats }) => {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const { ref, isVisible } = useScrollReveal({ threshold: 0.1 });
 
@@ -64,7 +69,7 @@ const FAQ: React.FC = () => {
         </div>
 
         <div className="max-w-[680px] mx-auto space-y-[8px]">
-          {faqData.map((faq, index) => (
+          {getFaqData(stats?.totalLeagues ? `${stats.totalLeagues}+` : "360+").map((faq, index) => (
             <div
               key={index}
               {...getScrollRevealClasses(isVisible, 80 + index * 60)}
