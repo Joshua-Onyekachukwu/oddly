@@ -31,21 +31,21 @@ const FunFacts: React.FC<FunFactsProps> = ({ stats }) => {
   const factsData = [
     {
       id: 1,
-      value: stats.totalPredictions > 0 ? formatNumber(stats.totalPredictions) : "10k+",
+      value: stats.totalPredictions > 0 ? formatNumber(stats.totalPredictions) : "—",
       highlight: "",
       label: "Predictions Generated",
       icon: "ri-line-chart-line",
     },
     {
       id: 2,
-      value: stats.avgAccuracy > 0 ? `${stats.avgAccuracy}%` : "94.4%",
+      value: stats.avgAccuracy > 0 ? `${stats.avgAccuracy}%` : "—",
       highlight: "",
       label: "Model Accuracy",
       icon: "ri-bar-chart-grouped-line",
     },
     {
       id: 3,
-      value: stats.totalLeagues > 0 ? `${stats.totalLeagues}+` : "100+",
+      value: stats.totalLeagues > 0 ? `${stats.totalLeagues}+` : "—",
       highlight: "",
       label: "Leagues Tracked",
       icon: "ri-global-line",

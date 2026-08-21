@@ -7,7 +7,7 @@ const faqData = [
   {
     question: "How accurate are ODDLY's predictions?",
     answer:
-      "Our ensemble of 7 AI models achieves an average accuracy of 94.4% on value bets with confidence above 80%. We publish full historical accuracy reports so you can verify our track record yourself.",
+      "Our ensemble of 7 AI models achieves over 90% accuracy on high-confidence picks (ELITE tier). We publish full historical accuracy reports so you can verify our track record yourself.",
   },
   {
     question: "What is the Crown Jewel pick?",

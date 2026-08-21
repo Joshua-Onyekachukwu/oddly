@@ -177,14 +177,16 @@ export async function getLandingPageData(): Promise<LandingPageData> {
     }
   }
 
-  // Calculate average accuracy from model performance
+  // Calculate accuracy from settled predictions (real forward-test data)
   let totalPreds = 0;
   let totalCorrect = 0;
   for (const mp of modelPerfResult.data || []) {
     totalPreds += mp.total_predictions || 0;
     totalCorrect += mp.correct_predictions || 0;
   }
-  const avgAccuracy = totalPreds > 0 ? (totalCorrect / totalPreds) * 100 : 94.4;
+  // Also count settled predictions directly
+  const settledCount = predictionsResult.count || 0;
+  const avgAccuracy = settledCount > 0 ? (totalCorrect / settledCount) * 100 : (totalPreds > 0 ? (totalCorrect / totalPreds) * 100 : 0);
 
   // Build upcoming fixtures
   const upcomingFixtures = (fixturesResult.data || []).map((f) => {
@@ -220,7 +222,7 @@ export async function getLandingPageData(): Promise<LandingPageData> {
   return {
     crownJewel,
     stats: {
-      totalLeagues: leaguesResult.count || 10,
+      totalLeagues: leaguesResult.count || 0,
       totalPredictions: predictionsResult.count || 0,
       totalRecommendations: (recommendationsResult.data || []).length,
       avgAccuracy: Math.round(avgAccuracy * 10) / 10,

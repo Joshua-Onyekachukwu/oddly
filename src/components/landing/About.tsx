@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useScrollReveal, getScrollRevealClasses } from "@/hooks/useScrollReveal";
 
 const aboutCards = [
-  { icon: "ri-line-chart-line", title: "Live Match Tracking", desc: "Follow predictions in real-time as matches unfold across 100+ leagues.", color: "bg-[#BFFF00]/10", iconColor: "text-[#1B2A4A]" },
+  { icon: "ri-line-chart-line", title: "Live Match Tracking", desc: "Follow predictions in real-time as matches unfold across 360+ leagues.", color: "bg-[#BFFF00]/10", iconColor: "text-[#1B2A4A]" },
   { icon: "ri-notification-3-line", title: "Instant Alerts", desc: "Get notified the moment a value bet is detected or Crown Jewel is ready.", color: "bg-[#D97706]/10", iconColor: "text-[#D97706]" },
   { icon: "ri-bar-chart-grouped-line", title: "Deep Analytics", desc: "Model accuracy, edge, and confidence at a glance for every prediction.", color: "bg-[#22c55e]/10", iconColor: "text-[#22c55e]" },
   { icon: "ri-stack-line", title: "Smart Optimization", desc: "Accumulator builder maximizes your returns while managing risk.", color: "bg-[#2563EB]/10", iconColor: "text-[#2563EB]" },
