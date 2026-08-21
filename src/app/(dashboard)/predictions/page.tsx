@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { PageHeader, Card, Badge, StatCard, EmptyState } from "@/components/ui";
+import { EmptyState } from "@/components/ui";
 
 interface GoldenPick {
   fixture_id: string;
@@ -24,25 +24,68 @@ interface GoldenPick {
   edge: number;
 }
 
+function getTierColor(tier: string) {
+  switch (tier) {
+    case "ELITE": return { bg: "bg-[#F59E0B]/10", text: "text-[#D97706]", border: "border-[#F59E0B]/20", glow: "shadow-[0_0_20px_rgba(245,158,11,0.15)]" };
+    case "HIGH": return { bg: "bg-[#10B981]/10", text: "text-[#059669]", border: "border-[#10B981]/20", glow: "shadow-[0_0_20px_rgba(16,185,129,0.15)]" };
+    default: return { bg: "bg-gray-50", text: "text-gray-500", border: "border-gray-100", glow: "" };
+  }
+}
+
+function getMarketLabel(market: string): string {
+  const labels: Record<string, string> = {
+    "1X2": "Match Result",
+    "DC": "Double Chance",
+    "DNB": "Draw No Bet",
+    "OU": "Goals",
+    "BTTS": "BTTS",
+    "HomeGoals": "Home Goals",
+    "AwayGoals": "Away Goals",
+  };
+  return labels[market] || market;
+}
+
+function getSelectionLabel(selection: string): string {
+  const labels: Record<string, string> = {
+    "Home": "Home Win",
+    "Away": "Away Win",
+    "Draw": "Draw",
+    "1X": "Home or Draw",
+    "X2": "Draw or Away",
+    "12": "No Draw",
+    "Home_DNB": "Home (No Draw)",
+    "Away_DNB": "Away (No Draw)",
+    "Yes": "Yes",
+    "No": "No",
+    "Over_0.5": "Over 0.5",
+    "Under_0.5": "Under 0.5",
+    "Over_1.5": "Over 1.5",
+    "Under_1.5": "Under 1.5",
+    "Over_2.5": "Over 2.5",
+    "Under_2.5": "Under 2.5",
+    "Over_3.5": "Over 3.5",
+    "Under_3.5": "Under 3.5",
+    "Over_4.5": "Over 4.5",
+    "Under_4.5": "Under 4.5",
+  };
+  return labels[selection] || selection.replace(/_/g, " ");
+}
+
 export default function PredictionsPage() {
   const [picks, setPicks] = useState<GoldenPick[]>([]);
   const [loading, setLoading] = useState(true);
   const [tierFilter, setTierFilter] = useState<"ELITE" | "HIGH" | "ALL">("ELITE");
   const [stats, setStats] = useState({ elite: 0, high: 0, total: 0 });
+  const [expandedMatch, setExpandedMatch] = useState<string | null>(null);
 
   const fetchPicks = useCallback(async () => {
     const supabase = createClient();
-
-    // Get upcoming fixtures with predictions and odds
     const now = new Date().toISOString();
     const weekEnd = new Date(Date.now() + 7 * 86400000).toISOString();
 
     const { data: fixtures } = await supabase
       .from("fixtures")
-      .select(`
-        id, kickoff_time,
-        home_team_id, away_team_id, league_id
-      `)
+      .select("id, kickoff_time, home_team_id, away_team_id, league_id")
       .gte("kickoff_time", now)
       .lte("kickoff_time", weekEnd)
       .order("kickoff_time", { ascending: true });
@@ -51,21 +94,11 @@ export default function PredictionsPage() {
 
     const fixtureIds = fixtures.map((f: any) => f.id);
 
-    // Get predictions for these fixtures
-    const { data: predictions } = await supabase
-      .from("predictions")
-      .select("fixture_id, market, selection, model_probability")
-      .in("fixture_id", fixtureIds);
-
-    // Get team names and logos
-    const homeIds = [...new Set(fixtures.map((f: any) => f.home_team_id).filter(Boolean))];
-    const awayIds = [...new Set(fixtures.map((f: any) => f.away_team_id).filter(Boolean))];
-    const allTeamIds = [...new Set([...homeIds, ...awayIds])];
-    const leagueIds = [...new Set(fixtures.map((f: any) => f.league_id).filter(Boolean))];
-
-    const [teamsRes, leaguesRes] = await Promise.all([
-      allTeamIds.length > 0 ? supabase.from("teams").select("id, canonical_name, logo").in("id", allTeamIds) : { data: [] },
-      leagueIds.length > 0 ? supabase.from("leagues").select("id, name, logo").in("id", leagueIds) : { data: [] },
+    const [predsRes, teamsRes, leaguesRes, oddsRes] = await Promise.all([
+      supabase.from("predictions").select("fixture_id, market, selection, model_probability").in("fixture_id", fixtureIds),
+      supabase.from("teams").select("id, canonical_name, logo").in("id", [...new Set([...fixtures.map((f: any) => f.home_team_id), ...fixtures.map((f: any) => f.away_team_id)])]),
+      supabase.from("leagues").select("id, name, logo").in("id", [...new Set(fixtures.map((f: any) => f.league_id))]),
+      supabase.from("odds_snapshots").select("fixture_id, selection, odds").in("fixture_id", fixtureIds),
     ]);
 
     const teamMap: Record<string, any> = {};
@@ -73,14 +106,20 @@ export default function PredictionsPage() {
     const leagueMap: Record<string, any> = {};
     for (const l of leaguesRes.data || []) leagueMap[l.id] = l;
 
-    // Map predictions to fixtures
+    const oddsByFixture: Record<string, Record<string, number[]>> = {};
+    for (const o of oddsRes.data || []) {
+      if (!oddsByFixture[o.fixture_id]) oddsByFixture[o.fixture_id] = {};
+      if (!oddsByFixture[o.fixture_id][o.selection]) oddsByFixture[o.fixture_id][o.selection] = [];
+      oddsByFixture[o.fixture_id][o.selection].push(o.odds);
+    }
+    const avg = (arr: number[]) => arr && arr.length > 0 ? arr.reduce((s, v) => s + v, 0) / arr.length : null;
+
     const predsByFixture: Record<string, any[]> = {};
-    for (const p of predictions || []) {
+    for (const p of predsRes.data || []) {
       if (!predsByFixture[p.fixture_id]) predsByFixture[p.fixture_id] = [];
       predsByFixture[p.fixture_id].push(p);
     }
 
-    // Attach team/league data to fixtures
     const enrichedFixtures = fixtures.map((f: any) => ({
       ...f,
       home: teamMap[f.home_team_id],
@@ -89,55 +128,31 @@ export default function PredictionsPage() {
       predictions: predsByFixture[f.id] || [],
     }));
 
-    // Get odds for all fixtures
-    const { data: oddsData } = await supabase
-      .from("odds_snapshots")
-      .select("fixture_id, selection, odds")
-      .in("fixture_id", fixtureIds);
-
-    const oddsByFixture: Record<string, Record<string, number[]>> = {};
-    if (oddsData) {
-      for (const o of oddsData) {
-        if (!oddsByFixture[o.fixture_id]) oddsByFixture[o.fixture_id] = {};
-        if (!oddsByFixture[o.fixture_id][o.selection]) oddsByFixture[o.fixture_id][o.selection] = [];
-        oddsByFixture[o.fixture_id][o.selection].push(o.odds);
-      }
-    }
-
-    const avg = (arr: number[]) => arr && arr.length > 0 ? arr.reduce((s, v) => s + v, 0) / arr.length : null;
-
-    // Build golden picks
     const allPicks: GoldenPick[] = [];
     let eliteCount = 0, highCount = 0;
 
     for (const fixture of enrichedFixtures) {
       const home = fixture.home?.canonical_name || "Unknown";
       const away = fixture.away?.canonical_name || "Unknown";
-      const league = fixture.league?.name || "Unknown";
       const odds = oddsByFixture[fixture.id] || {};
       const hOdds = avg(odds["Home"] || odds["home"] || []);
       const dOdds = avg(odds["Draw"] || odds["draw"] || []);
       const aOdds = avg(odds["Away"] || odds["away"] || []);
 
-      // Get best prediction
-      const preds = fixture.predictions || [];
-      for (const pred of preds) {
-        const tier = pred.model_probability >= 0.70 ? "ELITE" : pred.model_probability >= 0.60 ? "HIGH" : pred.model_probability >= 0.50 ? "MEDIUM" : "LOW";
+      for (const pred of fixture.predictions || []) {
+        const tier = pred.model_probability >= 0.70 ? "ELITE" : pred.model_probability >= 0.60 ? "HIGH" : "MEDIUM";
         if (tier === "ELITE") eliteCount++;
         if (tier === "HIGH") highCount++;
 
-        // Calculate edge
         let impliedProb = null;
         if (pred.selection === "Home" && hOdds) impliedProb = 1 / hOdds;
         else if (pred.selection === "Draw" && dOdds) impliedProb = 1 / dOdds;
         else if (pred.selection === "Away" && aOdds) impliedProb = 1 / aOdds;
 
-        const edge = impliedProb ? pred.model_probability - impliedProb : 0;
-
         allPicks.push({
           fixture_id: fixture.id,
           match: `${home} vs ${away}`,
-          league,
+          league: fixture.league?.name || "Unknown",
           league_logo: fixture.league?.logo,
           home_team: home,
           home_logo: fixture.home?.logo,
@@ -151,7 +166,7 @@ export default function PredictionsPage() {
           odds_home: hOdds,
           odds_draw: dOdds,
           odds_away: aOdds,
-          edge,
+          edge: impliedProb ? pred.model_probability - impliedProb : 0,
         });
       }
     }
@@ -168,7 +183,6 @@ export default function PredictionsPage() {
     return p.confidence_tier === tierFilter;
   }).sort((a, b) => b.model_probability - a.model_probability);
 
-  // Group by fixture
   const grouped: Record<string, GoldenPick[]> = {};
   for (const pick of filtered) {
     if (!grouped[pick.fixture_id]) grouped[pick.fixture_id] = [];
@@ -176,153 +190,207 @@ export default function PredictionsPage() {
   }
 
   return (
-    <div>
-      <PageHeader
-        title="Golden Picks"
-        description="AI-powered predictions with the highest confidence for upcoming matches."
-      />
-
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-[12px] mb-[20px]">
-        <StatCard
-          label="ELITE Picks"
-          value={loading ? "—" : String(stats.elite)}
-          icon="ri-vip-crown-line"
-          color="bg-amber-50 text-amber-600"
-        />
-        <StatCard
-          label="HIGH Picks"
-          value={loading ? "—" : String(stats.high)}
-          icon="ri-shield-check-line"
-          color="bg-green-50 text-green-600"
-        />
-        <StatCard
-          label="Total Predictions"
-          value={loading ? "—" : String(stats.total)}
-          icon="ri-brain-line"
-          color="bg-blue-50 text-blue-600"
-        />
+    <div className="min-h-screen">
+      {/* Header */}
+      <div className="mb-[28px]">
+        <div className="flex items-center gap-[12px] mb-[6px]">
+          <div className="w-[36px] h-[36px] rounded-[10px] bg-gradient-to-br from-[#F59E0B] to-[#D97706] flex items-center justify-center">
+            <span className="text-[18px]">👑</span>
+          </div>
+          <div>
+            <h1 className="font-display text-[22px] md:text-[26px] font-bold text-[#0A0F1C]">
+              Golden Picks
+            </h1>
+          </div>
+        </div>
+        <p className="text-[13px] text-gray-500 ml-[48px]">
+          AI-powered predictions across 26 betting markets. The system finds the most predictable outcome for each match.
+        </p>
       </div>
 
-      {/* Tier Filter */}
-      <div className="flex gap-[4px] bg-gray-100 rounded-[10px] p-[4px] mb-[16px] w-fit">
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-[10px] mb-[24px]">
+        {[
+          { label: "ELITE", value: stats.elite, color: "from-[#F59E0B] to-[#D97706]", icon: "👑" },
+          { label: "HIGH", value: stats.high, color: "from-[#10B981] to-[#059669]", icon: "✅" },
+          { label: "TOTAL", value: stats.total, color: "from-[#6366F1] to-[#4F46E5]", icon: "📊" },
+        ].map((stat) => (
+          <div key={stat.label} className="relative overflow-hidden rounded-[14px] bg-white border border-gray-100 p-[16px]">
+            <div className={`absolute top-0 right-0 w-[80px] h-[80px] bg-gradient-to-br ${stat.color} opacity-[0.06] rounded-bl-[40px]`} />
+            <div className="relative">
+              <div className="flex items-center gap-[6px] mb-[8px]">
+                <span className="text-[14px]">{stat.icon}</span>
+                <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">{stat.label}</span>
+              </div>
+              <span className="text-[28px] font-bold text-[#0A0F1C] font-mono tabular-nums">
+                {loading ? "—" : stat.value}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Tier Tabs */}
+      <div className="flex gap-[4px] bg-gray-100/80 rounded-[12px] p-[4px] mb-[20px] w-fit">
         {(["ELITE", "HIGH", "ALL"] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTierFilter(t)}
-            className={`px-[16px] py-[8px] rounded-[8px] text-[12px] font-semibold transition-all ${
+            className={`px-[18px] py-[8px] rounded-[9px] text-[12px] font-semibold transition-all duration-200 ease-out ${
               tierFilter === t
-                ? t === "ELITE" ? "bg-amber-500 text-white shadow-[0_2px_8px_rgba(245,158,11,0.3)]"
-                : t === "HIGH" ? "bg-green-500 text-white shadow-[0_2px_8px_rgba(34,197,94,0.3)]"
+                ? t === "ELITE" ? "bg-[#F59E0B] text-white shadow-[0_2px_12px_rgba(245,158,11,0.3)]"
+                : t === "HIGH" ? "bg-[#10B981] text-white shadow-[0_2px_12px_rgba(16,185,129,0.3)]"
                 : "bg-white text-[#0A0F1C] shadow-[0_1px_4px_rgba(0,0,0,0.06)]"
-                : "text-gray-400 hover:text-gray-600"
+                : "text-gray-400 hover:text-gray-600 hover:bg-white/50"
             }`}
           >
-            {t === "ELITE" ? "👑 " : t === "HIGH" ? "✅ " : ""}
             {t}
           </button>
         ))}
       </div>
 
-      {/* Picks */}
+      {/* Match Cards */}
       {loading ? (
         <div className="space-y-[12px]">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-[120px] bg-white rounded-[14px] animate-pulse" />
+            <div key={i} className="h-[140px] bg-white rounded-[16px] animate-pulse" style={{ animationDelay: `${i * 100}ms` }} />
           ))}
         </div>
-      ) : filtered.length === 0 ? (
+      ) : Object.keys(grouped).length === 0 ? (
         <EmptyState
           icon="ri-vip-crown-line"
-          title={`No ${tierFilter} picks available`}
+          title={`No ${tierFilter} picks this week`}
           description="Check back after the next data sync, or try a different filter."
         />
       ) : (
-        <div className="space-y-[16px]">
-          {Object.entries(grouped).map(([fixtureId, fixturePicks]) => {
+        <div className="space-y-[10px]">
+          {Object.entries(grouped).map(([fixtureId, fixturePicks], idx) => {
             const pick = fixturePicks[0];
             const bestPick = fixturePicks.reduce((best, p) =>
               p.model_probability > best.model_probability ? p : best
             );
+            const isExpanded = expandedMatch === fixtureId;
 
             return (
-              <Card key={fixtureId} className="overflow-hidden">
-                {/* Match Header */}
-                <div className="flex items-center justify-between px-[16px] py-[12px] bg-gray-50 border-b border-gray-100">
-                  <div className="flex items-center gap-[10px]">
-                    {pick.league_logo && (
-                      <img src={pick.league_logo} alt="" className="w-[16px] h-[16px] object-contain" />
-                    )}
-                    <span className="text-[11px] font-semibold text-gray-500 uppercase">{pick.league}</span>
-                  </div>
-                  <span className="text-[11px] text-gray-400">
-                    {new Date(pick.kickoff).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
-                    {" "}
-                    {new Date(pick.kickoff).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
-                  </span>
-                </div>
+              <div
+                key={fixtureId}
+                className="rounded-[16px] bg-white border border-gray-100 overflow-hidden transition-all duration-200 ease-out hover:border-gray-200 hover:shadow-[0_4px_20px_rgba(0,0,0,0.04)]"
+                style={{ animationDelay: `${idx * 40}ms` }}
+              >
+                {/* Match Header — Clickable */}
+                <button
+                  onClick={() => setExpandedMatch(isExpanded ? null : fixtureId)}
+                  className="w-full text-left p-[16px] flex items-center gap-[12px] active:scale-[0.99] transition-transform duration-100"
+                >
+                  {/* League + Time */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-[8px] mb-[10px]">
+                      {pick.league_logo && (
+                        <img src={pick.league_logo} alt="" className="w-[16px] h-[16px] object-contain flex-none" />
+                      )}
+                      <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">{pick.league}</span>
+                      <span className="text-[10px] text-gray-300">•</span>
+                      <span className="text-[10px] text-gray-400">
+                        {new Date(pick.kickoff).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+                        {" "}
+                        {new Date(pick.kickoff).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    </div>
 
-                {/* Teams */}
-                <div className="flex items-center justify-between px-[16px] py-[14px]">
-                  <div className="flex items-center gap-[10px] flex-1">
-                    {pick.home_logo && (
-                      <img src={pick.home_logo} alt="" className="w-[28px] h-[28px] object-contain" />
-                    )}
-                    <span className="text-[14px] font-semibold text-[#0A0F1C]">{pick.home_team}</span>
-                  </div>
-                  <span className="text-[12px] text-gray-400 font-semibold px-[12px]">VS</span>
-                  <div className="flex items-center gap-[10px] flex-1 justify-end">
-                    <span className="text-[14px] font-semibold text-[#0A0F1C]">{pick.away_team}</span>
-                    {pick.away_logo && (
-                      <img src={pick.away_logo} alt="" className="w-[28px] h-[28px] object-contain" />
-                    )}
-                  </div>
-                </div>
-
-                {/* Predictions */}
-                <div className="px-[16px] pb-[14px] space-y-[8px]">
-                  {fixturePicks
-                    .sort((a, b) => b.model_probability - a.model_probability)
-                    .map((fp, i) => (
-                      <div key={i} className="flex items-center justify-between p-[10px] bg-gray-50 rounded-[8px]">
-                        <div className="flex items-center gap-[8px]">
-                          <span className={`text-[10px] font-bold px-[6px] py-[2px] rounded-full ${
-                            fp.confidence_tier === "ELITE" ? "bg-amber-100 text-amber-700" :
-                            fp.confidence_tier === "HIGH" ? "bg-green-100 text-green-700" :
-                            "bg-gray-200 text-gray-600"
-                          }`}>
-                            {fp.confidence_tier}
-                          </span>
-                          <span className="text-[12px] font-medium text-[#0A0F1C] uppercase">{fp.market}</span>
-                          <span className="text-[12px] text-gray-500">→</span>
-                          <span className="text-[12px] font-semibold text-[#0A0F1C]">{fp.selection}</span>
-                        </div>
-                        <div className="flex items-center gap-[12px]">
-                          {fp.edge > 0 && (
-                            <span className="text-[11px] font-semibold text-green-600">
-                              +{(fp.edge * 100).toFixed(1)}% edge
-                            </span>
-                          )}
-                          <div className="text-right">
-                            <span className="text-[16px] font-bold text-[#0A0F1C]">
-                              {Math.round(fp.model_probability * 100)}%
-                            </span>
-                          </div>
-                        </div>
+                    {/* Teams */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-[10px] flex-1 min-w-0">
+                        {pick.home_logo && (
+                          <img src={pick.home_logo} alt="" className="w-[24px] h-[24px] object-contain flex-none" />
+                        )}
+                        <span className="text-[14px] font-semibold text-[#0A0F1C] truncate">{pick.home_team}</span>
                       </div>
-                    ))}
-                </div>
+                      <span className="text-[11px] font-bold text-gray-300 px-[12px] flex-none">VS</span>
+                      <div className="flex items-center gap-[10px] flex-1 min-w-0 justify-end">
+                        <span className="text-[14px] font-semibold text-[#0A0F1C] truncate text-right">{pick.away_team}</span>
+                        {pick.away_logo && (
+                          <img src={pick.away_logo} alt="" className="w-[24px] h-[24px] object-contain flex-none" />
+                        )}
+                      </div>
+                    </div>
+                  </div>
 
-                {/* Odds */}
-                {(pick.odds_home || pick.odds_draw || pick.odds_away) && (
-                  <div className="flex items-center justify-center gap-[16px] px-[16px] pb-[14px]">
-                    <span className="text-[11px] text-gray-400">Odds:</span>
-                    {pick.odds_home && <span className="text-[12px] font-mono text-gray-500">H {pick.odds_home.toFixed(2)}</span>}
-                    {pick.odds_draw && <span className="text-[12px] font-mono text-gray-500">D {pick.odds_draw.toFixed(2)}</span>}
-                    {pick.odds_away && <span className="text-[12px] font-mono text-gray-500">A {pick.odds_away.toFixed(2)}</span>}
+                  {/* Best Pick Badge */}
+                  <div className="flex-none text-right">
+                    <div className="inline-flex items-center gap-[6px] px-[10px] py-[6px] rounded-[8px] bg-[#0A0F1C]/[0.03]">
+                      <span className={`text-[10px] font-bold px-[5px] py-[2px] rounded-[4px] ${
+                        bestPick.confidence_tier === "ELITE" ? "bg-[#F59E0B]/10 text-[#D97706]" : "bg-[#10B981]/10 text-[#059669]"
+                      }`}>
+                        {bestPick.confidence_tier}
+                      </span>
+                      <span className="text-[18px] font-bold text-[#0A0F1C] font-mono tabular-nums">
+                        {Math.round(bestPick.model_probability * 100)}%
+                      </span>
+                    </div>
+                    <div className="text-[10px] text-gray-400 mt-[4px]">
+                      {getMarketLabel(bestPick.market)} → {getSelectionLabel(bestPick.selection)}
+                    </div>
+                  </div>
+
+                  {/* Expand Arrow */}
+                  <svg
+                    className={`w-[16px] h-[16px] text-gray-300 flex-none transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}
+                    fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {/* Expanded: All Predictions */}
+                {isExpanded && (
+                  <div className="px-[16px] pb-[16px] border-t border-gray-50">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-[6px] pt-[12px]">
+                      {fixturePicks
+                        .sort((a, b) => b.model_probability - a.model_probability)
+                        .slice(0, 12)
+                        .map((fp, i) => {
+                          const tierColors = getTierColor(fp.confidence_tier);
+                          return (
+                            <div
+                              key={i}
+                              className="flex items-center justify-between p-[10px] rounded-[10px] bg-gray-50/80 hover:bg-gray-100/80 transition-colors duration-150"
+                            >
+                              <div className="flex items-center gap-[8px] min-w-0">
+                                <span className={`text-[9px] font-bold px-[5px] py-[2px] rounded-[4px] ${tierColors.bg} ${tierColors.text}`}>
+                                  {fp.confidence_tier}
+                                </span>
+                                <div className="min-w-0">
+                                  <span className="text-[11px] font-medium text-gray-500 block">{getMarketLabel(fp.market)}</span>
+                                  <span className="text-[12px] font-semibold text-[#0A0F1C]">{getSelectionLabel(fp.selection)}</span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-[8px] flex-none">
+                                {fp.edge > 0 && (
+                                  <span className="text-[10px] font-semibold text-[#10B981]">
+                                    +{(fp.edge * 100).toFixed(0)}%
+                                  </span>
+                                )}
+                                <span className="text-[15px] font-bold text-[#0A0F1C] font-mono tabular-nums">
+                                  {Math.round(fp.model_probability * 100)}%
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+
+                    {/* Odds Row */}
+                    {(pick.odds_home || pick.odds_draw || pick.odds_away) && (
+                      <div className="flex items-center justify-center gap-[16px] pt-[12px] mt-[8px] border-t border-gray-100">
+                        <span className="text-[10px] text-gray-400 font-medium">BOOKMAKER ODDS</span>
+                        {pick.odds_home && <span className="text-[12px] font-mono text-gray-500">H {pick.odds_home.toFixed(2)}</span>}
+                        {pick.odds_draw && <span className="text-[12px] font-mono text-gray-500">D {pick.odds_draw.toFixed(2)}</span>}
+                        {pick.odds_away && <span className="text-[12px] font-mono text-gray-500">A {pick.odds_away.toFixed(2)}</span>}
+                      </div>
+                    )}
                   </div>
                 )}
-              </Card>
+              </div>
             );
           })}
         </div>
