@@ -73,19 +73,68 @@ class SimpleTracker {
   getLeagueAvgGoals(lid) { return (this.leagueAvg[lid] || 0) / Math.max(1, this.leagueCount[lid] || 1) || 2.6; }
 }
 
-function predict1X2(hs, as, h2h, eloDiff) {
+function predict1X2(hs, as, h2h, eloDiff, xgHome, xgAway) {
+  // --- Core: Elo + home advantage ---
   let pH = 0.40 + (1 / (1 + Math.pow(10, (-eloDiff - 65) / 400)) - 0.45) * 0.35;
-  pH += (hs.homePPG - 1.6) * 0.08 + (hs.homeWinRate - 0.45) * 0.10;
-  pH -= (as.awayPPG - 1.2) * 0.06 + (1 - as.awayWinRate - 0.30) * 0.08;
-  pH += (hs.cleanSheetRate - 0.25) * 0.06 + (h2h.h2hHomeWins - 0.40) * 0.06;
-  let pD = 0.22 + (h2h.h2hDraws * 0.15) + (Math.abs(hs.ppg - as.ppg) < 0.3 ? 0.03 : 0);
+  
+  // --- Form signals (weighted by recency) ---
+  pH += (hs.homePPG - 1.6) * 0.10 + (hs.homeWinRate - 0.45) * 0.12;
+  pH -= (as.awayPPG - 1.2) * 0.08 + (1 - as.awayWinRate - 0.30) * 0.10;
+  
+  // --- Defensive stability ---
+  pH += (hs.cleanSheetRate - 0.25) * 0.08;
+  pH -= (as.cleanSheetRate - 0.25) * 0.04;
+  
+  // --- H2H dominance ---
+  pH += (h2h.h2hHomeWins - 0.40) * 0.08;
+  
+  // --- Goal difference signal ---
+  const homeGD = hs.homeGF - hs.homeGA;
+  const awayGD = as.awayGF - as.awayGA;
+  pH += clamp((homeGD - awayGD) * 0.04, -0.08, 0.08);
+  
+  // --- Form streak: momentum matters ---
+  if (hs.streak >= 3) pH += 0.04; // Home on winning streak
+  if (hs.streak <= -3) pH -= 0.04; // Home on losing streak
+  if (as.streak >= 3) pH -= 0.03; // Away on winning streak (threatens home)
+  if (as.streak <= -3) pH += 0.03; // Away on losing streak
+  
+  // --- xG signals (when available) ---
+  if (xgHome && xgAway) {
+    const xgDiff = xgHome.home_avg_xg - xgAway.away_avg_xg;
+    pH += clamp(xgDiff * 0.08, -0.10, 0.10);
+    const convDiff = (xgHome.home_xg_eff || 1.0) - (xgAway.away_xg_eff || 1.0);
+    pH += clamp(convDiff * 0.03, -0.04, 0.04);
+    const bigDiff = (xgHome.big_chance_rate || 0) - (xgAway.big_chance_rate || 0);
+    pH += clamp(bigDiff * 0.05, -0.05, 0.05);
+  }
+  
+  // --- Draw probability ---
+  let pD = 0.22 + (h2h.h2hDraws * 0.15);
+  // Similar-strength teams draw more
+  if (Math.abs(hs.ppg - as.ppg) < 0.3) pD += 0.03;
+  // Close Elo = more draws
+  if (Math.abs(eloDiff) < 100) pD += 0.02;
+  // High-scoring teams draw less (someone usually wins)
+  if (hs.homeGF > 1.5 && as.awayGF > 1.5) pD -= 0.03;
+  
   let pA = clamp(1 - clamp(pH) - clamp(pD), 0.05, 0.85);
   pH = clamp(pH, 0.05, 0.90); pD = clamp(pD, 0.12, 0.38);
   const t = pH + pD + pA; return { homeWin: pH / t, draw: pD / t, awayWin: pA / t };
 }
 
-function predictOU(hs, as, h2h, eloDiff, lgAvg) {
+function predictOU(hs, as, h2h, eloDiff, lgAvg, xgHome, xgAway) {
   let exp = lgAvg + ((hs.homeGF + as.awayGF) / 2 - 1.2) * 0.8 + ((hs.homeGA + as.awayGA) / 2 - 1.2) * 0.6 + (h2h.h2hAvgGoals - lgAvg) * 0.2;
+  // xG-based expected goals: more accurate than raw goals
+  if (xgHome && xgAway) {
+    const xgExpected = (xgHome.home_avg_xg + xgAway.away_avg_xg) / 2;
+    // Blend: 60% form-based, 40% StatsBomb xG
+    exp = exp * 0.6 + xgExpected * 0.4;
+    // Adjust for xG efficiency (are teams clinical or wasteful?)
+    const homeEff = xgHome.home_xg_eff || 1.0;
+    const awayEff = xgAway.away_xg_eff || 1.0;
+    exp *= (homeEff * 0.5 + awayEff * 0.5);
+  }
   exp = clamp(exp, 1.0, 5.5);
   const p0 = Math.exp(-exp), p1 = exp * p0, p2 = exp * exp / 2 * p0, p3 = exp * exp * exp / 6 * p0;
   return {
@@ -95,11 +144,20 @@ function predictOU(hs, as, h2h, eloDiff, lgAvg) {
   };
 }
 
-function predictBTTS(hs, as, h2h, eloDiff, lgAvg) {
+function predictBTTS(hs, as, h2h, eloDiff, lgAvg, xgHome, xgAway) {
   let p = 0.50 + (hs.scoresInR10 - 0.65) * 0.12 + (as.scoresInR10 - 0.65) * 0.12;
   p += (hs.concedesInR10 - 0.70) * 0.08 + (as.concedesInR10 - 0.70) * 0.08;
   p += (hs.bttsRate - 0.50) * 0.10 + (as.bttsRate - 0.50) * 0.10 + (h2h.h2hBTTS - 0.50) * 0.12;
   p -= (hs.cleanSheetRate - 0.25) * 0.06 + (as.cleanSheetRate - 0.25) * 0.06;
+  // xG-based BTTS: both teams need xG > 0.5 for high BTTS probability
+  if (xgHome && xgAway) {
+    const homeAttack = xgHome.home_avg_xg;
+    const awayAttack = xgAway.away_avg_xg;
+    // If both teams create decent xG (>0.8 each), BTTS is more likely
+    if (homeAttack > 0.8 && awayAttack > 0.8) p += 0.05;
+    // If either team is very defensive (xG < 0.5), BTTS less likely
+    if (homeAttack < 0.5 || awayAttack < 0.5) p -= 0.05;
+  }
   return { bttsYes: clamp(p, 0.15, 0.85), bttsNo: clamp(1 - p, 0.15, 0.85) };
 }
 
@@ -187,11 +245,36 @@ async function main() {
     return;
   }
 
-  // Step 2: Load team names
+  // Step 2: Load team names and xG data
   const { data: teams } = await supabase.from("teams").select("id, canonical_name");
   const teamMap = {};
   for (const t of teams || []) teamMap[t.id] = t.canonical_name;
   console.log(`   Loaded ${Object.keys(teamMap).length} team names`);
+
+  // Load StatsBomb xG features for cross-reference
+  let xgData = {};
+  try {
+    const xgPath = path.join(__dirname, "..", "data", "statsbomb-xg.json");
+    const xgRaw = JSON.parse(fs.readFileSync(xgPath, "utf8"));
+    xgData = xgRaw.features || {};
+    console.log(`   Loaded xG data for ${Object.keys(xgData).length} StatsBomb teams`);
+  } catch (err) {
+    console.log(`   ⚠️  No xG data: ${err.message}`);
+  }
+  // Build name lookup for xG
+  const xgLookup = {};
+  for (const [name, features] of Object.entries(xgData)) {
+    xgLookup[name.toLowerCase()] = features;
+  }
+  function findXG(teamName) {
+    if (!teamName) return null;
+    const lower = teamName.toLowerCase();
+    if (xgLookup[lower]) return xgLookup[lower];
+    for (const [key, val] of Object.entries(xgLookup)) {
+      if (lower.includes(key) || key.includes(lower)) return val;
+    }
+    return null;
+  }
 
   // Step 3: Build tracker and generate predictions in-memory, settling as we go
   const fixturesToProcess = allFinished.slice(0, MAX_FIXTURES);
@@ -218,9 +301,11 @@ async function main() {
     const leagueAvg = tracker.getLeagueAvgGoals(fixture.league_id);
     const h2h = tracker.getH2H(home, away);
 
-    const r1X2 = predict1X2(hs, as, h2h, eloDiff);
-    const rOU = predictOU(hs, as, h2h, eloDiff, leagueAvg);
-    const rBTTS = predictBTTS(hs, as, h2h, eloDiff, leagueAvg);
+    const xgH = findXG(home);
+    const xgA = findXG(away);
+    const r1X2 = predict1X2(hs, as, h2h, eloDiff, xgH, xgA);
+    const rOU = predictOU(hs, as, h2h, eloDiff, leagueAvg, xgH, xgA);
+    const rBTTS = predictBTTS(hs, as, h2h, eloDiff, leagueAvg, xgH, xgA);
 
     const candidates = [
       { market: "1X2", selection: "Home", prob: r1X2.homeWin },
