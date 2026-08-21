@@ -36,6 +36,9 @@
     "predict:markets": "node worker/market-models.js",
     "collect:xg": "node scripts/collect-statsbomb-xg.js",
     "collect:injuries": "node scripts/collect-injuries-v2.js",
+    "settle": "node worker/settle-predictions.js",
+    "prematch-update": "node worker/pre-match-update.js",
+    "scrape:transfermarkt": "node scripts/transfermarkt-scraper.js",
     "pipeline": "echo 'Running full pipeline...' && npm run sync:fixtures && npm run self-learn"
   },
   "dependencies": {
