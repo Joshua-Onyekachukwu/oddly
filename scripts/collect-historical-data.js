@@ -49,7 +49,7 @@ async function fetchFootballData(leagueId, season) {
   // football-data.org API (free tier)
   const url = `https://api.football-data.org/v4/competitions/${leagueId}/matches?season=${season}`;
   const response = await fetch(url, {
-    headers: { "X-Auth-Token": "TODO_ADD_FOOTBALL_DATA_ORG_KEY" },
+    headers: { "X-Auth-Token": env.FOOTBALL_DATA_ORG_KEY || "395f3e8cbe6b4a149f3d854fcdac7ad9" },
   });
 
   if (!response.ok) {
@@ -115,7 +115,7 @@ function generateSyntheticData(leagueId, season) {
   return matches;
 }
 
-async function getOrCreateTeam(name, leagueId) {
+async function getOrCreateTeam(name, leagueUuid) {
   const normalized = name.toLowerCase().trim();
 
   const { data: existing } = await supabase
@@ -128,34 +128,56 @@ async function getOrCreateTeam(name, leagueId) {
 
   const { data: newTeam } = await supabase
     .from("teams")
-    .insert({ canonical_name: normalized, league_id: leagueId })
+    .insert({ canonical_name: normalized, league_id: leagueUuid })
     .select("id")
     .single();
 
   return newTeam?.id;
 }
 
+async function getLeagueUuid(leagueId) {
+  const league = LEAGUES[leagueId];
+  if (!league) return null;
+
+  const { data } = await supabase
+    .from("leagues")
+    .select("id")
+    .eq("name", league.name)
+    .single();
+
+  if (data) return data.id;
+
+  // Create league if it doesn't exist
+  const { data: newLeague } = await supabase
+    .from("leagues")
+    .insert({ name: league.name, country: league.country, sport: "football", is_active: true, priority: 5 })
+    .select("id")
+    .single();
+
+  return newLeague?.id;
+}
+
 async function storeMatch(match, leagueId) {
-  const homeTeamId = await getOrCreateTeam(match.homeTeam.name, leagueId);
-  const awayTeamId = await getOrCreateTeam(match.awayTeam.name, leagueId);
+  const leagueUuid = await getLeagueUuid(leagueId);
+  if (!leagueUuid) return null;
+
+  const homeTeamId = await getOrCreateTeam(match.homeTeam.name, leagueUuid);
+  const awayTeamId = await getOrCreateTeam(match.awayTeam.name, leagueUuid);
 
   if (!homeTeamId || !awayTeamId) return null;
 
+  // Store in fixtures table (where prediction engine reads)
   const { data, error } = await supabase
-    .from("historical_matches")
+    .from("fixtures")
     .upsert({
-      external_id: match.id,
-      season: new Date(match.utcDate).getFullYear(),
-      league_id: leagueId,
+      external_id: String(match.id),
       home_team_id: homeTeamId,
       away_team_id: awayTeamId,
+      league_id: leagueUuid,
+      kickoff_time: match.utcDate,
       home_score: match.score?.fullTime?.home ?? null,
       away_score: match.score?.fullTime?.away ?? null,
-      halftime_home: match.score?.halfTime?.home ?? null,
-      halftime_away: match.score?.halfTime?.away ?? null,
-      match_date: match.utcDate?.split("T")[0],
       status: "finished",
-      data_source: "synthetic",
     }, { onConflict: "external_id" })
     .select("id")
     .single();
@@ -187,11 +209,13 @@ async function collectSeasonData(leagueId, season) {
 async function computeTeamStats() {
   console.log("\n🔄 Computing team statistics...");
 
-  // Get all historical matches
+  // Get all finished matches from fixtures table
   const { data: matches } = await supabase
-    .from("historical_matches")
-    .select("*")
-    .order("match_date", { ascending: true });
+    .from("fixtures")
+    .select("id, home_team_id, away_team_id, home_score, away_score, kickoff_time")
+    .eq("status", "finished")
+    .not("home_score", "is", null)
+    .order("kickoff_time", { ascending: true });
 
   if (!matches?.length) {
     console.log("   No matches to compute stats from");
@@ -216,49 +240,50 @@ async function computeTeamStats() {
 
     for (let i = 0; i < teamMatchList.length; i++) {
       const match = teamMatchList[i];
+      const isHome = match.home_team_id === teamId;
       const last5 = teamMatchList.slice(Math.max(0, i - 5), i);
       const last10 = teamMatchList.slice(Math.max(0, i - 10), i);
 
       // Form
       const form5 = last5.map(m => {
-        const gf = m.isHome ? m.home_score : m.away_score;
-        const ga = m.isHome ? m.away_score : m.home_score;
+        const gf = m.home_team_id === teamId ? m.home_score : m.away_score;
+        const ga = m.home_team_id === teamId ? m.away_score : m.home_score;
         return gf > ga ? "W" : gf < ga ? "L" : "D";
       }).join("");
 
       const form10 = last10.map(m => {
-        const gf = m.isHome ? m.home_score : m.away_score;
-        const ga = m.isHome ? m.away_score : m.home_score;
+        const gf = m.home_team_id === teamId ? m.home_score : m.away_score;
+        const ga = m.home_team_id === teamId ? m.away_score : m.home_score;
         return gf > ga ? "W" : gf < ga ? "L" : "D";
       }).join("");
 
       // PPG
       const ppg5 = last5.length > 0
         ? last5.reduce((sum, m) => {
-            const gf = m.isHome ? m.home_score : m.away_score;
-            const ga = m.isHome ? m.away_score : m.home_score;
+            const gf = m.home_team_id === teamId ? m.home_score : m.away_score;
+            const ga = m.home_team_id === teamId ? m.away_score : m.home_score;
             return sum + (gf > ga ? 3 : gf === ga ? 1 : 0);
           }, 0) / last5.length
         : null;
 
       // Goals
       const goalsScored = last5.length > 0
-        ? last5.reduce((sum, m) => sum + (m.isHome ? m.home_score : m.away_score), 0) / last5.length
+        ? last5.reduce((sum, m) => sum + (m.home_team_id === teamId ? m.home_score : m.away_score), 0) / last5.length
         : null;
 
       const goalsConceded = last5.length > 0
-        ? last5.reduce((sum, m) => sum + (m.isHome ? m.away_score : m.home_score), 0) / last5.length
+        ? last5.reduce((sum, m) => sum + (m.home_team_id === teamId ? m.away_score : m.home_score), 0) / last5.length
         : null;
 
       // Days since last match
       const daysSince = i > 0
-        ? Math.floor((new Date(match.match_date) - new Date(teamMatchList[i - 1].match_date)) / (1000 * 60 * 60 * 24))
+        ? Math.floor((new Date(match.kickoff_time) - new Date(teamMatchList[i - 1].kickoff_time)) / (1000 * 60 * 60 * 24))
         : null;
 
       statsToInsert.push({
         match_id: match.id,
         team_id: teamId,
-        is_home: match.isHome,
+        is_home: isHome,
         form_last5: form5 || null,
         form_last10: form10 || null,
         ppg_last5: ppg5,
@@ -307,8 +332,9 @@ async function main() {
 
   // Summary
   const { count: historicalCount } = await supabase
-    .from("historical_matches")
-    .select("id", { count: "exact", head: true });
+    .from("fixtures")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "finished");
 
   const { count: statsCount } = await supabase
     .from("team_match_stats")
