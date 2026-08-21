@@ -29,25 +29,29 @@ async function runSync(type: string = "all") {
   const results: Record<string, unknown> = {};
   const startTime = Date.now();
 
-  // Sync fixtures
-  if (type === "fixtures" || type === "all") {
-    try {
-      const fixtureResult = await syncTodayFixtures();
-      results.fixtures = fixtureResult;
-    } catch (error) {
-      results.fixtures = {
-        error: error instanceof Error ? error.message : "Unknown error",
-      };
-    }
-  }
-
-  // Sync odds (depends on fixtures existing)
+  // Sync odds first — The Odds API is the primary data source.
+  // It creates fixtures automatically from odds data.
   if (type === "odds" || type === "all") {
     try {
       const oddsResult = await syncAllOdds();
       results.odds = oddsResult;
     } catch (error) {
       results.odds = {
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  }
+
+  // Sync fixtures from API-Football (secondary — free plan limited to 2022-2024).
+  // This is a fallback; The Odds API already creates most fixtures.
+  if (type === "fixtures" || type === "all") {
+    try {
+      const fixtureResult = await syncTodayFixtures();
+      results.fixtures = fixtureResult;
+    } catch (error) {
+      // Silently handle — API-Football free plan may not have current season
+      results.fixtures = {
+        note: "API-Football free plan limited to 2022-2024 seasons. The Odds API is primary source.",
         error: error instanceof Error ? error.message : "Unknown error",
       };
     }
