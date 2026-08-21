@@ -33,6 +33,13 @@ interface FixtureDetail {
     selection: string;
     odds: number;
   }>;
+  home_form?: string;
+  away_form?: string;
+  home_recent?: Array<{ gf: number; ga: number; opp: string; isHome: boolean; date: string }>;
+  away_recent?: Array<{ gf: number; ga: number; opp: string; isHome: boolean; date: string }>;
+  h2h?: Array<{ home: string; away: string; hg: number; ag: number; date: string }>;
+  home_xg?: { avg_xg: number; avg_goals: number; avg_shots: number; avg_on_target: number } | null;
+  away_xg?: { avg_xg: number; avg_goals: number; avg_shots: number; avg_on_target: number } | null;
 }
 
 function TeamLogo({ logo, name, size = 48 }: { logo?: string | null; name: string; size?: number }) {
@@ -88,21 +95,90 @@ export function MatchDetailDrawer({ fixtureId, onClose }: MatchDetailProps) {
         return;
       }
 
+      const homeTeamName = (fixture as any).home_team?.canonical_name;
+      const awayTeamName = (fixture as any).away_team?.canonical_name;
+      const homeTeamId = (fixture as any).home_team_id;
+      const awayTeamId = (fixture as any).away_team_id;
+
       // Get odds
       const { data: odds } = await supabase
         .from("odds_snapshots")
         .select("bookmaker, market, selection, odds")
         .eq("fixture_id", fixtureId);
 
+      // Get recent form (last 5 finished matches for each team) using two separate queries
+      let homeRecent: any[] = [];
+      let awayRecent: any[] = [];
+      if (homeTeamId) {
+        const [asHome, asAway] = await Promise.all([
+          supabase.from("fixtures").select("home_score, away_score, kickoff_time, away_team:teams!fixtures_away_team_id_fkey(canonical_name)").eq("status", "finished").eq("home_team_id", homeTeamId).order("kickoff_time", { ascending: false }).limit(5),
+          supabase.from("fixtures").select("home_score, away_score, kickoff_time, home_team:teams!fixtures_home_team_id_fkey(canonical_name)").eq("status", "finished").eq("away_team_id", homeTeamId).order("kickoff_time", { ascending: false }).limit(5),
+        ]);
+        const all = [
+          ...(asHome.data || []).map((f: any) => ({ gf: f.home_score, ga: f.away_score, opp: f.away_team?.canonical_name, isHome: true, date: f.kickoff_time })),
+          ...(asAway.data || []).map((f: any) => ({ gf: f.away_score, ga: f.home_score, opp: f.home_team?.canonical_name, isHome: false, date: f.kickoff_time })),
+        ].filter(m => m.gf !== null && m.ga !== null).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
+        homeRecent = all;
+      }
+      if (awayTeamId) {
+        const [asHome, asAway] = await Promise.all([
+          supabase.from("fixtures").select("home_score, away_score, kickoff_time, away_team:teams!fixtures_away_team_id_fkey(canonical_name)").eq("status", "finished").eq("home_team_id", awayTeamId).order("kickoff_time", { ascending: false }).limit(5),
+          supabase.from("fixtures").select("home_score, away_score, kickoff_time, home_team:teams!fixtures_home_team_id_fkey(canonical_name)").eq("status", "finished").eq("away_team_id", awayTeamId).order("kickoff_time", { ascending: false }).limit(5),
+        ]);
+        const all = [
+          ...(asHome.data || []).map((f: any) => ({ gf: f.home_score, ga: f.away_score, opp: f.away_team?.canonical_name, isHome: true, date: f.kickoff_time })),
+          ...(asAway.data || []).map((f: any) => ({ gf: f.away_score, ga: f.home_score, opp: f.home_team?.canonical_name, isHome: false, date: f.kickoff_time })),
+        ].filter(m => m.gf !== null && m.ga !== null).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
+        awayRecent = all;
+      }
+
+      // Get H2H (both directions)
+      let h2h: any[] = [];
+      if (homeTeamId && awayTeamId) {
+        const [h2h1, h2h2] = await Promise.all([
+          supabase.from("fixtures").select("home_score, away_score, kickoff_time, home_team:teams!fixtures_home_team_id_fkey(canonical_name), away_team:teams!fixtures_away_team_id_fkey(canonical_name)").eq("status", "finished").eq("home_team_id", homeTeamId).eq("away_team_id", awayTeamId).order("kickoff_time", { ascending: false }).limit(5),
+          supabase.from("fixtures").select("home_score, away_score, kickoff_time, home_team:teams!fixtures_home_team_id_fkey(canonical_name), away_team:teams!fixtures_away_team_id_fkey(canonical_name)").eq("status", "finished").eq("home_team_id", awayTeamId).eq("away_team_id", homeTeamId).order("kickoff_time", { ascending: false }).limit(5),
+        ]);
+        h2h = [...(h2h1.data || []), ...(h2h2.data || [])].filter((f: any) => f.home_score !== null && f.away_score !== null).sort((a, b) => new Date(b.kickoff_time).getTime() - new Date(a.kickoff_time).getTime()).slice(0, 8).map((f: any) => ({
+          home: f.home_team?.canonical_name,
+          away: f.away_team?.canonical_name,
+          hg: f.home_score,
+          ag: f.away_score,
+          date: f.kickoff_time,
+        }));
+      }
+
+      // Get xG data from StatsBomb
+      let homeXg = null;
+      let awayXg = null;
+      try {
+        const xgRes = await fetch("/data/statsbomb-xg.json");
+        if (xgRes.ok) {
+          const xgData = await xgRes.json();
+          homeXg = xgData.features?.[homeTeamName] || null;
+          awayXg = xgData.features?.[awayTeamName] || null;
+        }
+      } catch {}
+
+      // Compute form string (W/D/L)
+      const formStr = (recent: any[]) => recent.map(m => m.gf > m.ga ? "W" : m.gf < m.ga ? "L" : "D").join("");
+
       setData({
         ...fixture,
-        home_team_name: (fixture as any).home_team?.canonical_name || "TBD",
-        away_team_name: (fixture as any).away_team?.canonical_name || "TBD",
+        home_team_name: homeTeamName || "TBD",
+        away_team_name: awayTeamName || "TBD",
         home_team_logo: (fixture as any).home_team?.logo || null,
         away_team_logo: (fixture as any).away_team?.logo || null,
         league_name: (fixture as any).leagues?.name || "Unknown",
         league_logo: (fixture as any).leagues?.logo || null,
         odds: odds || [],
+        home_form: formStr(homeRecent),
+        away_form: formStr(awayRecent),
+        home_recent: homeRecent,
+        away_recent: awayRecent,
+        h2h,
+        home_xg: homeXg,
+        away_xg: awayXg,
       });
       setLoading(false);
     }
@@ -282,6 +358,117 @@ export function MatchDetailDrawer({ fixtureId, onClose }: MatchDetailProps) {
                           style={{ width: `${bttsPred.model_probability * 100}%` }}
                         />
                       </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Form Guide */}
+            {(data.home_form || data.away_form) && (
+              <div className="mb-[20px]">
+                <h3 className="text-[12px] font-semibold text-[#0A0F1C] mb-[10px] uppercase tracking-wider">
+                  Form Guide
+                </h3>
+                <div className="grid grid-cols-2 gap-[10px]">
+                  {/* Home form */}
+                  <div className="bg-gray-50 rounded-[12px] p-[12px]">
+                    <div className="flex items-center gap-[8px] mb-[8px]">
+                      <TeamLogo logo={data.home_team_logo} name={data.home_team_name || ""} size={24} />
+                      <span className="text-[11px] font-semibold text-[#0A0F1C] truncate">{data.home_team_name}</span>
+                    </div>
+                    <div className="flex gap-[4px] mb-[6px]">
+                      {(data.home_form || "").split("").map((r, i) => (
+                        <span key={i} className={`w-[22px] h-[22px] rounded-[4px] flex items-center justify-center text-[10px] font-bold text-white ${
+                          r === "W" ? "bg-[#22C55E]" : r === "L" ? "bg-[#EF4444]" : "bg-[#94A3B8]"
+                        }`}>{r}</span>
+                      ))}
+                    </div>
+                    <span className="text-[10px] text-gray-400">
+                      {data.home_recent?.filter(m => m.gf > m.ga).length || 0}W {data.home_recent?.filter(m => m.gf === m.ga).length || 0}D {data.home_recent?.filter(m => m.gf < m.ga).length || 0}L
+                    </span>
+                  </div>
+                  {/* Away form */}
+                  <div className="bg-gray-50 rounded-[12px] p-[12px]">
+                    <div className="flex items-center gap-[8px] mb-[8px]">
+                      <TeamLogo logo={data.away_team_logo} name={data.away_team_name || ""} size={24} />
+                      <span className="text-[11px] font-semibold text-[#0A0F1C] truncate">{data.away_team_name}</span>
+                    </div>
+                    <div className="flex gap-[4px] mb-[6px]">
+                      {(data.away_form || "").split("").map((r, i) => (
+                        <span key={i} className={`w-[22px] h-[22px] rounded-[4px] flex items-center justify-center text-[10px] font-bold text-white ${
+                          r === "W" ? "bg-[#22C55E]" : r === "L" ? "bg-[#EF4444]" : "bg-[#94A3B8]"
+                        }`}>{r}</span>
+                      ))}
+                    </div>
+                    <span className="text-[10px] text-gray-400">
+                      {data.away_recent?.filter(m => m.gf > m.ga).length || 0}W {data.away_recent?.filter(m => m.gf === m.ga).length || 0}D {data.away_recent?.filter(m => m.gf < m.ga).length || 0}L
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* H2H History */}
+            {data.h2h && data.h2h.length > 0 && (
+              <div className="mb-[20px]">
+                <h3 className="text-[12px] font-semibold text-[#0A0F1C] mb-[10px] uppercase tracking-wider">
+                  Head-to-Head ({data.h2h.length} matches)
+                </h3>
+                <div className="bg-gray-50 rounded-[12px] overflow-hidden">
+                  {data.h2h.slice(0, 6).map((m, i) => (
+                    <div key={i} className={`flex items-center justify-between px-[12px] py-[8px] ${i < data.h2h!.length - 1 ? "border-b border-gray-100" : ""}`}>
+                      <span className="text-[11px] text-gray-500 truncate flex-1 min-w-0">
+                        {m.home}
+                      </span>
+                      <div className="flex items-center gap-[6px] px-[10px] flex-none">
+                        <span className={`text-[12px] font-bold font-mono ${m.hg > m.ag ? "text-[#22C55E]" : "text-gray-600"}`}>{m.hg}</span>
+                        <span className="text-[10px] text-gray-300">-</span>
+                        <span className={`text-[12px] font-bold font-mono ${m.ag > m.hg ? "text-[#22C55E]" : "text-gray-600"}`}>{m.ag}</span>
+                      </div>
+                      <span className="text-[11px] text-gray-500 truncate flex-1 min-w-0 text-right">
+                        {m.away}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* xG Data */}
+            {(data.home_xg || data.away_xg) && (
+              <div className="mb-[20px]">
+                <h3 className="text-[12px] font-semibold text-[#0A0F1C] mb-[10px] uppercase tracking-wider">
+                  Expected Goals (xG)
+                </h3>
+                <div className="bg-gray-50 rounded-[12px] p-[14px]">
+                  <div className="grid grid-cols-3 gap-[12px] text-center">
+                    <div>
+                      <span className="text-[10px] text-gray-400 block mb-[2px]">{data.home_team_name}</span>
+                      <span className="text-[20px] font-bold font-mono text-[#0A0F1C] block">
+                        {data.home_xg ? data.home_xg.avg_xg.toFixed(2) : "—"}
+                      </span>
+                      <span className="text-[9px] text-gray-400">avg xG</span>
+                    </div>
+                    <div className="flex items-center justify-center">
+                      <div className="w-[1px] h-[40px] bg-gray-200" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-gray-400 block mb-[2px]">{data.away_team_name}</span>
+                      <span className="text-[20px] font-bold font-mono text-[#0A0F1C] block">
+                        {data.away_xg ? data.away_xg.avg_xg.toFixed(2) : "—"}
+                      </span>
+                      <span className="text-[9px] text-gray-400">avg xG</span>
+                    </div>
+                  </div>
+                  {(data.home_xg || data.away_xg) && (
+                    <div className="flex items-center justify-between mt-[10px] pt-[10px] border-t border-gray-200">
+                      <span className="text-[10px] text-gray-400">
+                        Shots: {data.home_xg?.avg_shots?.toFixed(0) || "—"} vs {data.away_xg?.avg_shots?.toFixed(0) || "—"}
+                      </span>
+                      <span className="text-[10px] text-gray-400">
+                        On Target: {data.home_xg?.avg_on_target?.toFixed(1) || "—"} vs {data.away_xg?.avg_on_target?.toFixed(1) || "—"}
+                      </span>
                     </div>
                   )}
                 </div>
