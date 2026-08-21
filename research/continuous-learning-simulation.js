@@ -1,25 +1,24 @@
 #!/usr/bin/env node
 
 /**
- * ODDLY Continuous-Learning Simulation Engine
+ * 3-Season Continuous-Learning Simulation
  * 
- * The core experiment: simulate 3 seasons of predictions using
- * three different learning approaches and compare their performance.
- *
- * Experiment A: Static Model (train once, test on all)
- * Experiment B: Periodic Retrain (retrain every 500 matches)
- * Experiment C: Continuous Learning (update after every match)
- *
- * Uses 5,253 finished matches from the fixtures table.
- * All predictions are chronological — no future data leaks.
+ * Simulates what would have happened if the prediction system had been
+ * operating continuously through the last 3 seasons of football.
+ * 
+ * Three approaches compared:
+ * A) Static Model — train once, test on all unseen matches
+ * B) Periodic Retrain — retrain every 200 matches
+ * C) Continuous Learning — update Elo/form after every match
+ * 
+ * Tests across multiple betting markets: 1X2, Over/Under, BTTS, DC
  */
 
 const { createClient } = require("@supabase/supabase-js");
 const fs = require("fs");
 const path = require("path");
 
-// ─── Environment ─────────────────────────────────────────────────────────
-
+// ─── Load Environment ───────────────────────────────────────────────────
 function loadEnv() {
   const envPath = path.join(__dirname, "..", ".env.local");
   const envContent = fs.readFileSync(envPath, "utf8");
@@ -29,7 +28,9 @@ function loadEnv() {
     if (!t || t.startsWith("#")) continue;
     const i = t.indexOf("=");
     if (i === -1) continue;
-    env[t.slice(0, i).trim()] = t.slice(i + 1).trim();
+    let val = t.slice(i + 1).trim();
+    if (val.startsWith('"') && val.endsWith('"')) val = val.slice(1, -1);
+    env[t.slice(0, i).trim()] = val;
   }
   return env;
 }
@@ -37,883 +38,600 @@ function loadEnv() {
 const env = loadEnv();
 const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
-function clamp(v, lo = 0.01, hi = 0.99) { return Math.max(lo, Math.min(hi, v)); }
-function sigmoid(x) { return 1 / (1 + Math.exp(-x)); }
-
-// ═══════════════════════════════════════════════════════════════════════════
-// CORE MODELS
-// ═══════════════════════════════════════════════════════════════════════════
-
-class EloSystem {
-  constructor(k = 32, homeAdv = 65) {
-    this.ratings = {};
-    this.k = k;
-    this.homeAdv = homeAdv;
-  }
-  get(t) { return this.ratings[t] || 1500; }
-  predict(home, away) {
-    const h = this.get(home) + this.homeAdv;
-    const a = this.get(away);
-    return 1 / (1 + Math.pow(10, (a - h) / 400));
-  }
-  update(home, away, hg, ag) {
-    const h = this.get(home) + this.homeAdv;
-    const a = this.get(away);
-    const eH = 1 / (1 + Math.pow(10, (a - h) / 400));
-    const actual = hg > ag ? 1 : hg < ag ? 0 : 0.5;
-    this.ratings[home] = this.get(home) + this.k * (actual - eH);
-    this.ratings[away] = this.get(away) + this.k * ((1 - actual) - (1 - eH));
-  }
-  clone() {
-    const c = new EloSystem(this.k, this.homeAdv);
-    c.ratings = { ...this.ratings };
-    return c;
-  }
+// ─── Poisson Model ──────────────────────────────────────────────────────
+function poissonProb(lambda, k) {
+  let logP = -lambda;
+  for (let i = 2; i <= k; i++) logP += Math.log(lambda) - Math.log(i);
+  return Math.exp(logP);
 }
 
-class FormTracker {
-  constructor() { this.h = {}; this.goals = {}; this.conceded = {}; this.dates = {}; }
-  
-  record(team, result, goals, against, date) {
-    if (!this.h[team]) this.h[team] = [];
-    if (!this.goals[team]) this.goals[team] = [];
-    if (!this.conceded[team]) this.conceded[team] = [];
-    if (!this.dates[team]) this.dates[team] = [];
-    this.h[team].push(result);
-    this.goals[team].push(goals);
-    this.conceded[team].push(against);
-    this.dates[team].push(date);
-    if (this.h[team].length > 30) { this.h[team].shift(); this.goals[team].shift(); this.conceded[team].shift(); this.dates[team].shift(); }
-  }
-  
-  getForm(team, n = 5) {
-    const last = (this.h[team] || []).slice(-n);
-    if (last.length === 0) return { ppg: 1.5, winRate: 0.4, streak: 0, avgGoals: 1.3, avgConceded: 1.2 };
-    const ppg = last.reduce((s, r) => s + (r === "W" ? 3 : r === "D" ? 1 : 0), 0) / last.length;
-    const winRate = last.filter(r => r === "W").length / last.length;
-    let streak = 0;
-    for (let i = last.length - 1; i >= 0; i--) {
-      if (last[i] === "W") { if (streak >= 0) streak++; else break; }
-      else if (last[i] === "L") { if (streak <= 0) streak--; else break; }
-      else break;
-    }
-    const g = (this.goals[team] || []).slice(-n);
-    const c = (this.conceded[team] || []).slice(-n);
-    return {
-      ppg, winRate, streak,
-      avgGoals: g.length > 0 ? g.reduce((s, v) => s + v, 0) / g.length : 1.3,
-      avgConceded: c.length > 0 ? c.reduce((s, v) => s + v, 0) / c.length : 1.2,
-    };
-  }
-  
-  getHomeForm(team) {
-    const all = this.h[team] || [];
-    if (all.length === 0) return 0.45;
-    return all.filter(r => r === "W").length / all.length;
-  }
-  
-  getCleanSheetPct(team, n = 10) {
-    const c = (this.conceded[team] || []).slice(-n);
-    if (c.length === 0) return 0.3;
-    return c.filter(v => v === 0).length / c.length;
-  }
-  
-  getBttsPct(team, n = 10) {
-    const g = (this.goals[team] || []).slice(-n);
-    const c = (this.conceded[team] || []).slice(-n);
-    if (g.length === 0) return 0.5;
-    let btts = 0;
-    for (let i = 0; i < g.length; i++) if (g[i] > 0 && (c[i] || 0) > 0) btts++;
-    return btts / g.length;
-  }
-  
-  getGoalDiff(team, n = 10) {
-    const g = (this.goals[team] || []).slice(-n);
-    const c = (this.conceded[team] || []).slice(-n);
-    if (g.length === 0) return 0;
-    return g.reduce((s, v) => s + v, 0) - c.reduce((s, v) => s + v, 0);
-  }
-  
-  getDaysSinceLast(team) {
-    const d = this.dates[team] || [];
-    if (d.length === 0) return 7;
-    return 7; // Simplified
-  }
+function matchResultProbs(homeXG, awayXG) {
+  const maxGoals = 7;
+  const homeWin = { p: 0, goals: [] };
+  const draw = { p: 0, goals: [] };
+  const awayWin = { p: 0, goals: [] };
 
-  clone() {
-    const c = new FormTracker();
-    c.h = JSON.parse(JSON.stringify(this.h));
-    c.goals = JSON.parse(JSON.stringify(this.goals));
-    c.conceded = JSON.parse(JSON.stringify(this.conceded));
-    c.dates = JSON.parse(JSON.stringify(this.dates));
-    return c;
+  for (let h = 0; h <= maxGoals; h++) {
+    for (let a = 0; a <= maxGoals; a++) {
+      const p = poissonProb(homeXG, h) * poissonProb(awayXG, a);
+      if (h > a) { homeWin.p += p; homeWin.goals.push([h, a, p]); }
+      else if (h === a) { draw.p += p; draw.goals.push([h, a, p]); }
+      else { awayWin.p += p; awayWin.goals.push([h, a, p]); }
+    }
   }
+  return { homeWin: homeWin.p, draw: draw.p, awayWin: awayWin.p };
 }
 
-// ─── Ensemble Model ──────────────────────────────────────────────────────
-
-class EnsembleModel {
-  constructor(weights) {
-    this.weights = weights || { elo: 0.30, form: 0.20, goals: 0.18, market: 0.12, homeAdv: 0.10, streak: 0.10 };
-    this.history = []; // Track what we've learned
-  }
-
-  predict(features) {
-    // Elo probability
-    const eloProb = features.elo_home_prob;
-    
-    // Form probability
-    const formDiff = features.home_form_ppg - features.away_form_ppg;
-    const formProb = clamp(0.50 + formDiff * 0.12);
-    
-    // Goals-based probability
-    const goalsDiff = (features.home_avg_goals - features.home_avg_conceded) - (features.away_avg_goals - features.away_avg_conceded);
-    const goalsProb = clamp(0.50 + goalsDiff * 0.10);
-    
-    // Market probability
-    const marketProb = features.market_home_prob || 0.50;
-    
-    // Home advantage boost
-    const homeAdvProb = clamp(eloProb + (features.home_win_rate > 0.55 ? 0.08 : features.home_win_rate > 0.45 ? 0.04 : 0));
-    
-    // Streak factor
-    const streakProb = clamp(0.50 + features.home_streak * 0.03 - features.away_streak * 0.02);
-    
-    // Ensemble blend
-    const w = this.weights;
-    let homeProb = eloProb * w.elo + formProb * w.form + goalsProb * w.goals + marketProb * w.market + homeAdvProb * w.homeAdv + streakProb * w.streak;
-    
-    // Additional adjustments
-    if (features.elo_diff > 200) homeProb += 0.06;
-    if (features.elo_diff < -200) homeProb -= 0.06;
-    if (features.home_win_rate > 0.65) homeProb += 0.04;
-    if (features.away_win_rate < 0.30) homeProb += 0.04;
-    if (features.home_clean_sheet > 0.4) homeProb += 0.03;
-    if (features.away_clean_sheet < 0.2) homeProb += 0.03;
-    
-    return clamp(homeProb);
-  }
-
-  // Generate predictions for multiple markets
-  predictAll(features) {
-    const homeProb = this.predict(features);
-    const drawProb = clamp(1 - homeProb - (1 - homeProb) * 0.45);
-    const awayProb = clamp(1 - homeProb - drawProb);
-    
-    // Goals-based
-    const expectedGoals = (features.home_avg_goals + features.away_avg_goals);
-    const over25 = clamp(0.50 + (expectedGoals - 2.5) * 0.18);
-    const under35 = clamp(0.50 + (3.5 - expectedGoals) * 0.15);
-    const under45 = clamp(0.50 + (4.5 - expectedGoals) * 0.12);
-    const over05 = clamp(0.85 + (expectedGoals - 1.5) * 0.05);
-    const bttsYes = clamp(0.45 + features.home_btts * 0.2 + features.away_btts * 0.15);
-    
-    // Double chance
-    const dc1X = clamp(homeProb + drawProb);
-    const dcX2 = clamp(drawProb + awayProb);
-    const dc12 = clamp(homeProb + awayProb);
-    
-    return {
-      "home_win": homeProb,
-      "draw": drawProb,
-      "away_win": awayProb,
-      "over_0.5": over05,
-      "over_1.5": clamp(0.50 + (expectedGoals - 1.5) * 0.20),
-      "over_2.5": over25,
-      "over_3.5": clamp(0.50 + (expectedGoals - 3.5) * 0.18),
-      "under_3.5": under35,
-      "under_4.5": under45,
-      "btts_yes": bttsYes,
-      "btts_no": clamp(1 - bttsYes),
-      "dc_1X": dc1X,
-      "dc_X2": dcX2,
-      "dc_12": dc12,
-    };
-  }
-
-  // Select the BEST market prediction for each match
-  selectBestMarket(predictions, actualResult, homeGoals, awayGoals) {
-    const outcomes = {
-      "home_win": homeGoals > awayGoals,
-      "draw": homeGoals === awayGoals,
-      "away_win": awayGoals > homeGoals,
-      "over_0.5": (homeGoals + awayGoals) > 0.5,
-      "over_1.5": (homeGoals + awayGoals) > 1.5,
-      "over_2.5": (homeGoals + awayGoals) > 2.5,
-      "over_3.5": (homeGoals + awayGoals) > 3.5,
-      "under_3.5": (homeGoals + awayGoals) < 3.5,
-      "under_4.5": (homeGoals + awayGoals) < 4.5,
-      "btts_yes": homeGoals > 0 && awayGoals > 0,
-      "btts_no": homeGoals === 0 || awayGoals === 0,
-      "dc_1X": homeGoals >= awayGoals,
-      "dc_X2": awayGoals >= homeGoals,
-      "dc_12": homeGoals !== awayGoals,
-    };
-
-    let bestMarket = null;
-    let bestProb = 0;
-
-    for (const [market, prob] of Object.entries(predictions)) {
-      if (prob > bestProb) {
-        bestProb = prob;
-        bestMarket = market;
-      }
+function overUnderProbs(homeXG, awayXG, line) {
+  const maxGoals = 7;
+  let over = 0, under = 0;
+  for (let h = 0; h <= maxGoals; h++) {
+    for (let a = 0; a <= maxGoals; a++) {
+      const p = poissonProb(homeXG, h) * poissonProb(awayXG, a);
+      if (h + a > line) over += p;
+      else under += p;
     }
-
-    return {
-      market: bestMarket,
-      probability: bestProb,
-      correct: outcomes[bestMarket] || false,
-    };
   }
-
-  clone() {
-    const c = new EnsembleModel({ ...this.weights });
-    c.history = [...this.history];
-    return c;
-  }
+  return { over, under };
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// FEATURE EXTRACTION
-// ═══════════════════════════════════════════════════════════════════════════
-
-function extractFeatures(homeTeam, awayTeam, elo, form, oddsData) {
-  const homeForm = form.getForm(homeTeam);
-  const awayForm = form.getForm(awayTeam);
-  const homeElo = elo.get(homeTeam);
-  const awayElo = elo.get(awayTeam);
-  const eloProb = elo.predict(homeTeam, awayTeam);
-
-  const homeWinRate = form.getHomeForm(homeTeam);
-  const awayWinRate = form.getHomeForm(awayTeam); // We'll treat this as overall win rate
-  const homeCleanSheet = form.getCleanSheetPct(homeTeam);
-  const awayCleanSheet = form.getCleanSheetPct(awayTeam);
-  const homeBtts = form.getBttsPct(homeTeam);
-  const awayBtts = form.getBttsPct(awayTeam);
-  const homeGoalDiff = form.getGoalDiff(homeTeam);
-  const awayGoalDiff = form.getGoalDiff(awayTeam);
-
-  // Market implied
-  let marketHomeProb = null;
-  if (oddsData) {
-    const h = oddsData.home, d = oddsData.draw, a = oddsData.away;
-    if (h && d && a) {
-      const mt = 1/h + 1/d + 1/a;
-      marketHomeProb = (1/h) / mt;
+function bttsProbs(homeXG, awayXG) {
+  const maxGoals = 7;
+  let yes = 0, no = 0;
+  for (let h = 0; h <= maxGoals; h++) {
+    for (let a = 0; a <= maxGoals; a++) {
+      const p = poissonProb(homeXG, h) * poissonProb(awayXG, a);
+      if (h >= 1 && a >= 1) yes += p;
+      else no += p;
     }
   }
+  return { yes, no };
+}
 
+function doubleChanceProbs(homeXG, awayXG) {
+  const { homeWin, draw, awayWin } = matchResultProbs(homeXG, awayXG);
   return {
-    home_form_ppg: homeForm.ppg,
-    away_form_ppg: awayForm.ppg,
-    home_win_rate: homeForm.winRate,
-    away_win_rate: awayForm.winRate,
-    home_avg_goals: homeForm.avgGoals,
-    home_avg_conceded: homeForm.avgConceded,
-    away_avg_goals: awayForm.avgGoals,
-    away_avg_conceded: awayForm.avgConceded,
-    home_streak: homeForm.streak,
-    away_streak: awayForm.streak,
-    elo_home_prob: eloProb,
-    elo_diff: homeElo - awayElo + 65,
-    home_elo: homeElo,
-    away_elo: awayElo,
-    home_clean_sheet: homeCleanSheet,
-    away_clean_sheet: awayCleanSheet,
-    home_btts: homeBtts,
-    away_btts: awayBtts,
-    home_goal_diff: homeGoalDiff,
-    away_goal_diff: awayGoalDiff,
-    goal_diff_diff: homeGoalDiff - awayGoalDiff,
-    market_home_prob: marketHomeProb,
+    homeOrDraw: homeWin + draw,
+    drawOrAway: draw + awayWin,
+    homeOrAway: homeWin + awayWin,
   };
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// LEARNING: UPDATE WEIGHTS BASED ON RESULTS
-// ═══════════════════════════════════════════════════════════════════════════
-
-function analyzeAndUpdate(model, recentResults, step) {
-  if (recentResults.length < 10) return;
-  
-  const correct = recentResults.filter(r => r.correct);
-  const wrong = recentResults.filter(r => !r.correct);
-  const accuracy = correct.length / recentResults.length;
-  
-  // Track feature importance
-  const featureScores = {};
-  for (const r of recentResults) {
-    if (!r.features) continue;
-    for (const [key, value] of Object.entries(r.features)) {
-      if (value === null || typeof value === "string" || typeof value === "object") continue;
-      if (!featureScores[key]) featureScores[key] = { correct: 0, wrong: 0, total: 0 };
-      featureScores[key].total++;
-      if (r.correct) featureScores[key].correct++;
-      else featureScores[key].wrong++;
-    }
-  }
-  
-  // Adjust weights based on which features were most correlated with correct predictions
-  const importance = {};
-  for (const [key, scores] of Object.entries(featureScores)) {
-    if (scores.total >= 5) {
-      importance[key] = scores.correct / scores.total;
-    }
-  }
-  
-  // Simple weight adjustment: increase weights for features that correlate with correctness
-  if (accuracy < 0.55 && step > 0) {
-    // Model is underperforming — reduce all weights slightly and increase market weight
-    model.weights.market = Math.min(0.25, model.weights.market + 0.02);
-    const total = Object.values(model.weights).reduce((s, v) => s + v, 0);
-    for (const k of Object.keys(model.weights)) {
-      if (k !== "market") model.weights[k] *= (1 - 0.02 * model.weights.market / (total - model.weights.market));
-    }
-  } else if (accuracy > 0.62) {
-    // Model is doing well — fine-tune
-    model.weights.elo = Math.min(0.40, model.weights.elo + 0.01);
-    model.weights.form = Math.min(0.25, model.weights.form + 0.005);
-    const total = Object.values(model.weights).reduce((s, v) => s + v, 0);
-    for (const k of Object.keys(model.weights)) {
-      if (k !== "elo" && k !== "form") model.weights[k] *= 0.995;
-    }
-  }
-  
-  // Normalize weights
-  const total = Object.values(model.weights).reduce((s, v) => s + v, 0);
-  for (const k of Object.keys(model.weights)) model.weights[k] /= total;
-  
-  return { accuracy, importance };
+// ─── Elo System ─────────────────────────────────────────────────────────
+function expectedScore(ratingA, ratingB) {
+  return 1 / (1 + Math.pow(10, (ratingB - ratingA) / 400));
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// MAIN SIMULATION
-// ═══════════════════════════════════════════════════════════════════════════
+function updateElo(rating, expected, actual, K = 32) {
+  return rating + K * (actual - expected);
+}
 
+// ─── Form Tracker ───────────────────────────────────────────────────────
+class FormTracker {
+  constructor() {
+    this.teams = {};
+  }
+
+  getForm(teamId, lastN = 5) {
+    if (!this.teams[teamId]) return { ppg: 1.5, goalsScored: 1.3, goalsConceded: 1.1, wins: 2, draws: 1, losses: 2, homePPG: 1.7, awayPPG: 1.3 };
+    const results = this.teams[teamId].slice(-lastN);
+    if (results.length === 0) return { ppg: 1.5, goalsScored: 1.3, goalsConceded: 1.1, wins: 2, draws: 1, losses: 2, homePPG: 1.7, awayPPG: 1.3 };
+    
+    const pts = results.reduce((s, r) => s + r.points, 0);
+    const gs = results.reduce((s, r) => s + r.goalsFor, 0);
+    const gc = results.reduce((s, r) => s + r.goalsAgainst, 0);
+    const wins = results.filter(r => r.points === 3).length;
+    const draws = results.filter(r => r.points === 1).length;
+    const losses = results.filter(r => r.points === 0).length;
+    
+    const homeResults = results.filter(r => r.isHome);
+    const awayResults = results.filter(r => !r.isHome);
+    const homePPG = homeResults.length > 0 ? homeResults.reduce((s, r) => s + r.points, 0) / homeResults.length : 1.5;
+    const awayPPG = awayResults.length > 0 ? awayResults.reduce((s, r) => s + r.points, 0) / awayResults.length : 1.0;
+    
+    return {
+      ppg: pts / results.length,
+      goalsScored: gs / results.length,
+      goalsConceded: gc / results.length,
+      wins, draws, losses,
+      homePPG, awayPPG,
+    };
+  }
+
+  addResult(teamId, points, goalsFor, goalsAgainst, isHome) {
+    if (!this.teams[teamId]) this.teams[teamId] = [];
+    this.teams[teamId].push({ points, goalsFor, goalsAgainst, isHome, time: Date.now() });
+    if (this.teams[teamId].length > 20) this.teams[teamId].shift();
+  }
+}
+
+// ─── Head-to-Head Tracker ───────────────────────────────────────────────
+class H2HTracker {
+  constructor() {
+    this.pairs = {};
+  }
+
+  getKey(teamA, teamB) {
+    return [teamA, teamB].sort().join("_");
+  }
+
+  getStats(teamA, teamB) {
+    const key = this.getKey(teamA, teamB);
+    if (!this.pairs[key]) return null;
+    return this.pairs[key];
+  }
+
+  addResult(teamA, teamB, homeGoals, awayGoals) {
+    const key = this.getKey(teamA, teamB);
+    if (!this.pairs[key]) this.pairs[key] = { matches: 0, homeWins: 0, draws: 0, awayWins: 0, totalGoals: 0 };
+    const h = this.pairs[key];
+    h.matches++;
+    h.totalGoals += homeGoals + awayGoals;
+    if (homeGoals > awayGoals) h.homeWins++;
+    else if (homeGoals === awayGoals) h.draws++;
+    else h.awayWins++;
+    if (h.matches > 10) {
+      // Decay old data
+      h.matches = Math.max(5, h.matches - 1);
+      h.homeWins = Math.max(0, h.homeWins - 0.5);
+      h.draws = Math.max(0, h.draws - 0.3);
+      h.awayWins = Math.max(0, h.awayWins - 0.5);
+      h.totalGoals = h.totalGoals * 0.8;
+    }
+  }
+}
+
+// ─── Prediction Generator ───────────────────────────────────────────────
+function generatePredictions(homeForm, awayForm, eloHome, eloAway, h2h, leagueAvgGoals) {
+  // Estimate expected goals
+  let homeXG = (homeForm.goalsScored + awayForm.goalsConceded) / 2;
+  let awayXG = (awayForm.goalsScored + homeForm.goalsConceded) / 2;
+
+  // Home advantage boost
+  const homeAdvantage = 0.25;
+  homeXG += homeAdvantage;
+
+  // Elo adjustment
+  const eloDiff = eloHome - eloAway;
+  const eloBoost = eloDiff / 800;
+  homeXG += eloBoost * 0.3;
+  awayXG -= eloBoost * 0.3;
+
+  // H2H adjustment
+  if (h2h && h2h.matches >= 3) {
+    const avgGoals = h2h.totalGoals / h2h.matches;
+    const leagueAvg = leagueAvgGoals || 2.7;
+    const h2hFactor = (avgGoals / leagueAvg - 1) * 0.1;
+    homeXG += h2hFactor;
+    awayXG += h2hFactor;
+  }
+
+  // Form-based adjustment
+  const homePPGBoost = (homeForm.ppg - 1.5) * 0.15;
+  const awayPPGBoost = (awayForm.ppg - 1.5) * 0.15;
+  homeXG += homePPGBoost;
+  awayXG += awayPPGBoost;
+
+  // Clamp XG
+  homeXG = Math.max(0.3, Math.min(4.0, homeXG));
+  awayXG = Math.max(0.3, Math.min(4.0, awayXG));
+
+  // Generate market predictions
+  const { homeWin, draw, awayWin } = matchResultProbs(homeXG, awayXG);
+  const ou25 = overUnderProbs(homeXG, awayXG, 2.5);
+  const ou15 = overUnderProbs(homeXG, awayXG, 1.5);
+  const ou35 = overUnderProbs(homeXG, awayXG, 3.5);
+  const btts = bttsProbs(homeXG, awayXG);
+  const dc = doubleChanceProbs(homeXG, awayXG);
+
+  return {
+    homeXG, awayXG,
+    markets: {
+      "1X2_Home": homeWin,
+      "1X2_Draw": draw,
+      "1X2_Away": awayWin,
+      "OU25_Over": ou25.over,
+      "OU25_Under": ou25.under,
+      "OU15_Over": ou15.over,
+      "OU15_Under": ou15.under,
+      "OU35_Over": ou35.over,
+      "OU35_Under": ou35.under,
+      "BTTS_Yes": btts.yes,
+      "BTTS_No": btts.no,
+      "DC_HomeOrDraw": dc.homeOrDraw,
+      "DC_DrawOrAway": dc.drawOrAway,
+      "DC_HomeOrAway": dc.homeOrAway,
+    },
+  };
+}
+
+// ─── Actual Outcome Checker ──────────────────────────────────────────────
+function checkOutcomes(homeGoals, awayGoals) {
+  const totalGoals = homeGoals + awayGoals;
+  return {
+    "1X2_Home": homeGoals > awayGoals,
+    "1X2_Draw": homeGoals === awayGoals,
+    "1X2_Away": homeGoals < awayGoals,
+    "OU25_Over": totalGoals > 2.5,
+    "OU25_Under": totalGoals <= 2.5,
+    "OU15_Over": totalGoals > 1.5,
+    "OU15_Under": totalGoals <= 1.5,
+    "OU35_Over": totalGoals > 3.5,
+    "OU35_Under": totalGoals <= 3.5,
+    "BTTS_Yes": homeGoals >= 1 && awayGoals >= 1,
+    "BTTS_No": homeGoals === 0 || awayGoals === 0,
+    "DC_HomeOrDraw": homeGoals >= awayGoals,
+    "DC_DrawOrAway": homeGoals <= awayGoals,
+    "DC_HomeOrAway": homeGoals !== awayGoals,
+  };
+}
+
+// ─── Main Simulation ────────────────────────────────────────────────────
 async function main() {
-  console.log("🔬 ODDLY Continuous-Learning Simulation Engine");
-  console.log("═".repeat(70));
-  console.log("   Comparing: Static vs Periodic vs Continuous Learning");
-  console.log("   Using 3 seasons of real historical football data");
-  console.log("═".repeat(70));
+  console.log("🔬 3-Season Continuous-Learning Simulation");
+  console.log("━".repeat(60));
 
-  // ─── Load Data ───────────────────────────────────────────────────────
-  console.log("\n📡 Loading finished matches...");
-  
+  // Fetch all finished matches (paginate to get all)
   let allMatches = [];
   let offset = 0;
-  const batchSize = 500;
-  
+  const pageSize = 1000;
   while (true) {
-    const { data: batch } = await supabase
+    const { data: batch, error } = await supabase
       .from("fixtures")
-      .select("id, kickoff_time, home_team:teams!fixtures_home_team_id_fkey(canonical_name), away_team:teams!fixtures_away_team_id_fkey(canonical_name), home_score, away_score, league_id, leagues(name)")
+      .select("id, home_team_id, away_team_id, home_score, away_score, kickoff_time, league_id")
       .eq("status", "finished")
       .not("home_score", "is", null)
       .order("kickoff_time", { ascending: true })
-      .range(offset, offset + batchSize - 1);
-    
+      .range(offset, offset + pageSize - 1);
+    if (error) { console.error("Error:", error.message); break; }
     if (!batch || batch.length === 0) break;
     allMatches = allMatches.concat(batch);
-    offset += batchSize;
-    if (batch.length < batchSize) break;
+    if (batch.length < pageSize) break;
+    offset += pageSize;
   }
+  const matches = allMatches;
+  const error = null;
 
-  // Filter to only matches with valid data
-  allMatches = allMatches.filter(m => 
-    m.home_team?.canonical_name && m.away_team?.canonical_name && 
-    m.home_score !== null && m.away_score !== null
-  );
+  if (error) { console.error("Error:", error.message); return; }
+  if (!matches || matches.length === 0) { console.error("No matches found"); return; }
 
-  console.log(`   Loaded ${allMatches.length} finished matches with valid data`);
+  console.log(`📊 Loaded ${matches.length} matches`);
+  console.log(`📅 Range: ${matches[0].kickoff_time} → ${matches[matches.length - 1].kickoff_time}`);
 
-  // Get odds for all matches
-  console.log("   Loading odds data...");
-  const matchIds = allMatches.map(m => m.id);
-  const oddsByFixture = {};
+  const totalMatches = matches.length;
+  const trainEnd = Math.floor(totalMatches * 0.4); // First 40% for training
+  const evalMatches = matches.slice(trainEnd);
+
+  console.log(`🎓 Training: ${trainEnd} matches | 🧪 Evaluation: ${evalMatches.length} matches`);
+  console.log("");
+
+  // ─── Initialize Systems ──────────────────────────────────────────────
   
-  // Load odds in batches
-  for (let i = 0; i < matchIds.length; i += 200) {
-    const batch = matchIds.slice(i, i + 200);
-    const { data: odds } = await supabase
-      .from("odds_snapshots")
-      .select("fixture_id, selection, odds")
-      .in("fixture_id", batch);
-    
-    if (odds) {
-      for (const o of odds) {
-        if (!oddsByFixture[o.fixture_id]) oddsByFixture[o.fixture_id] = {};
-        if (!oddsByFixture[o.fixture_id][o.selection]) oddsByFixture[o.fixture_id][o.selection] = [];
-        oddsByFixture[o.fixture_id][o.selection].push(o.odds);
-      }
-    }
-  }
-  
-  // Average odds per fixture
-  const avgOdds = {};
-  for (const [fid, selections] of Object.entries(oddsByFixture)) {
-    avgOdds[fid] = {};
-    for (const [sel, arr] of Object.entries(selections)) {
-      avgOdds[fid][sel] = arr.reduce((s, v) => s + v, 0) / arr.length;
-    }
-  }
-  console.log(`   Loaded odds for ${Object.keys(avgOdds).length} matches`);
-
-  // ─── Season markers ──────────────────────────────────────────────────
-  const seasonStarts = {};
-  for (const m of allMatches) {
-    const year = new Date(m.kickoff_time).getFullYear();
-    const month = new Date(m.kickoff_time).getMonth();
-    const season = month >= 6 ? `${year}/${year + 1}` : `${year - 1}/${year}`;
-    if (!seasonStarts[season]) seasonStarts[season] = m.kickoff_time;
-  }
-  const seasons = Object.keys(seasonStarts).sort();
-  console.log(`   Seasons: ${seasons.join(", ")}`);
-
-  // ═══════════════════════════════════════════════════════════════════════
-  // EXPERIMENT A: STATIC MODEL
-  // ═══════════════════════════════════════════════════════════════════════
-  console.log("\n\n" + "═".repeat(70));
-  console.log("🧪 EXPERIMENT A: STATIC MODEL");
-  console.log("   Train once on first 1000 matches, test on remaining");
-  console.log("═".repeat(70));
-
-  const TRAIN_SIZE = 1000;
-  
-  // Train static model
-  const staticElo = new EloSystem();
+  // A) Static model — Elo trained on first 40%, never updated
+  const staticElo = {};
   const staticForm = new FormTracker();
-  
-  for (let i = 0; i < Math.min(TRAIN_SIZE, allMatches.length); i++) {
-    const m = allMatches[i];
-    const home = m.home_team.canonical_name;
-    const away = m.away_team.canonical_name;
-    const hg = m.home_score;
-    const ag = m.away_score;
-    const result = hg > ag ? "W" : hg < ag ? "L" : "D";
-    
-    staticElo.update(home, away, hg, ag);
-    staticForm.record(home, result, hg, ag, m.kickoff_time);
-    staticForm.record(away, result === "W" ? "L" : result === "L" ? "W" : "D", ag, hg, m.kickoff_time);
-  }
-  
-  const staticModel = new EnsembleModel();
-  
-  // Test static model
-  const staticResults = [];
-  const staticMarketResults = {};
-  
-  for (let i = TRAIN_SIZE; i < allMatches.length; i++) {
-    const m = allMatches[i];
-    const home = m.home_team.canonical_name;
-    const away = m.away_team.canonical_name;
-    const hg = m.home_score;
-    const ag = m.away_score;
-    
-    const features = extractFeatures(home, away, staticElo, staticForm, avgOdds[m.id]);
-    const predictions = staticModel.predictAll(features);
-    const best = staticModel.selectBestMarket(predictions, null, hg, ag);
-    
-    staticResults.push({
-      match: i,
-      market: best.market,
-      probability: best.probability,
-      correct: best.correct,
-      season: (() => {
-        const year = new Date(m.kickoff_time).getFullYear();
-        const month = new Date(m.kickoff_time).getMonth();
-        return month >= 6 ? `${year}/${year + 1}` : `${year - 1}/${year}`;
-      })(),
-      league: m.leagues?.name || "Unknown",
-    });
-    
-    // Track by market
-    for (const [market, prob] of Object.entries(predictions)) {
-      if (!staticMarketResults[market]) staticMarketResults[market] = { correct: 0, total: 0 };
-      staticMarketResults[market].total++;
-      const outcome = getOutcome(market, hg, ag);
-      if ((prob > 0.5) === outcome) staticMarketResults[market].correct++;
-    }
-    
-    // Update form (but NOT elo — static means frozen)
-    const result = hg > ag ? "W" : hg < ag ? "L" : "D";
-    staticForm.record(home, result, hg, ag, m.kickoff_time);
-    staticForm.record(away, result === "W" ? "L" : result === "L" ? "W" : "D", ag, hg, m.kickoff_time);
-  }
+  const staticH2H = new H2HTracker();
 
-  const staticAcc = staticResults.filter(r => r.correct).length / staticResults.length;
-  console.log(`   Overall accuracy: ${(staticAcc * 100).toFixed(1)}% (${staticResults.length} matches)`);
-
-  // ═══════════════════════════════════════════════════════════════════════
-  // EXPERIMENT B: PERIODIC RETRAIN (every 500 matches)
-  // ═══════════════════════════════════════════════════════════════════════
-  console.log("\n\n" + "═".repeat(70));
-  console.log("🧪 EXPERIMENT B: PERIODIC RETRAIN (every 500 matches)");
-  console.log("═".repeat(70));
-
-  const periodicElo = new EloSystem();
+  // B) Periodic retrain — Elo retrained every 200 matches
+  const periodicElo = {};
   const periodicForm = new FormTracker();
-  const periodicModel = new EnsembleModel();
+  const periodicH2H = new H2HTracker();
+
+  // C) Continuous learning — Elo updated after every match
+  const continuousElo = {};
+  const continuousForm = new FormTracker();
+  const continuousH2H = new H2HTracker();
+
+  // ─── Phase 1: Train on historical data ──────────────────────────────
+  console.log("Phase 1: Training on historical data...");
   
-  const periodicResults = [];
-  const RETRAIN_INTERVAL = 500;
-  
-  for (let i = 0; i < allMatches.length; i++) {
-    const m = allMatches[i];
-    const home = m.home_team.canonical_name;
-    const away = m.away_team.canonical_name;
-    const hg = m.home_score;
-    const ag = m.away_score;
+  for (let i = 0; i < trainEnd; i++) {
+    const m = matches[i];
+    const hs = m.home_score;
+    const as = m.away_score;
     
-    if (i >= TRAIN_SIZE) {
-      // Make prediction
-      const features = extractFeatures(home, away, periodicElo, periodicForm, avgOdds[m.id]);
-      const predictions = periodicModel.predictAll(features);
-      const best = periodicModel.selectBestMarket(predictions, null, hg, ag);
+    // Update all three systems during training
+    for (const elo of [staticElo, periodicElo, continuousElo]) {
+      if (!elo[m.home_team_id]) elo[m.home_team_id] = 1500;
+      if (!elo[m.away_team_id]) elo[m.away_team_id] = 1500;
       
-      periodicResults.push({
-        match: i,
-        market: best.market,
-        probability: best.probability,
-        correct: best.correct,
-        season: (() => {
-          const year = new Date(m.kickoff_time).getFullYear();
-          const month = new Date(m.kickoff_time).getMonth();
-          return month >= 6 ? `${year}/${year + 1}` : `${year - 1}/${year}`;
-        })(),
-        league: m.leagues?.name || "Unknown",
-      });
+      const expH = expectedScore(elo[m.home_team_id], elo[m.away_team_id]);
+      const expA = expectedScore(elo[m.away_team_id], elo[m.home_team_id]);
       
-      // Periodic retrain
-      if (i % RETRAIN_INTERVAL === 0 && i > TRAIN_SIZE) {
-        const recent = periodicResults.slice(-RETRAIN_INTERVAL);
-        const recentAcc = recent.filter(r => r.correct).length / recent.length;
-        analyzeAndUpdate(periodicModel, recent.map(r => ({ correct: r.correct })), i);
-        console.log(`   Retrain at match ${i}: recent accuracy ${(recentAcc * 100).toFixed(1)}%`);
-      }
+      const actualH = hs > as ? 1 : hs === as ? 0.5 : 0;
+      const actualA = 1 - actualH;
+      
+      elo[m.home_team_id] = updateElo(elo[m.home_team_id], expH, actualH);
+      elo[m.away_team_id] = updateElo(elo[m.away_team_id], expA, actualA);
     }
     
-    // Update trackers
-    periodicElo.update(home, away, hg, ag);
-    const result = hg > ag ? "W" : hg < ag ? "L" : "D";
-    periodicForm.record(home, result, hg, ag, m.kickoff_time);
-    periodicForm.record(away, result === "W" ? "L" : result === "L" ? "W" : "D", ag, hg, m.kickoff_time);
-  }
-
-  const periodicAcc = periodicResults.filter(r => r.correct).length / periodicResults.length;
-  console.log(`   Overall accuracy: ${(periodicAcc * 100).toFixed(1)}% (${periodicResults.length} matches)`);
-
-  // ═══════════════════════════════════════════════════════════════════════
-  // EXPERIMENT C: CONTINUOUS LEARNING
-  // ═══════════════════════════════════════════════════════════════════════
-  console.log("\n\n" + "═".repeat(70));
-  console.log("🧪 EXPERIMENT C: CONTINUOUS LEARNING");
-  console.log("   Learn after every match, validate improvements");
-  console.log("═".repeat(70));
-
-  const contElo = new EloSystem();
-  const contForm = new FormTracker();
-  const contModel = new EnsembleModel();
-  
-  const contResults = [];
-  const LEARNING_WINDOW = 50; // Look at last 50 matches for learning
-  
-  for (let i = 0; i < allMatches.length; i++) {
-    const m = allMatches[i];
-    const home = m.home_team.canonical_name;
-    const away = m.away_team.canonical_name;
-    const hg = m.home_score;
-    const ag = m.away_score;
-    
-    if (i >= TRAIN_SIZE) {
-      // Make prediction
-      const features = extractFeatures(home, away, contElo, contForm, avgOdds[m.id]);
-      const predictions = contModel.predictAll(features);
-      const best = contModel.selectBestMarket(predictions, null, hg, ag);
-      
-      contResults.push({
-        match: i,
-        market: best.market,
-        probability: best.probability,
-        correct: best.correct,
-        season: (() => {
-          const year = new Date(m.kickoff_time).getFullYear();
-          const month = new Date(m.kickoff_time).getMonth();
-          return month >= 6 ? `${year}/${year + 1}` : `${year - 1}/${year}`;
-        })(),
-        league: m.leagues?.name || "Unknown",
-      });
-      
-      // Continuous learn: after every 10 matches
-      if (i % 10 === 0 && contResults.length >= LEARNING_WINDOW) {
-        const recent = contResults.slice(-LEARNING_WINDOW);
-        analyzeAndUpdate(contModel, recent.map(r => ({ correct: r.correct, features: {} })), i);
-      }
+    // Update form trackers
+    for (const form of [staticForm, periodicForm, continuousForm]) {
+      const homePts = hs > as ? 3 : hs === as ? 1 : 0;
+      const awayPts = as > hs ? 3 : as === hs ? 1 : 0;
+      form.addResult(m.home_team_id, homePts, hs, as, true);
+      form.addResult(m.away_team_id, awayPts, as, hs, false);
     }
     
-    // Update trackers
-    contElo.update(home, away, hg, ag);
-    const result = hg > ag ? "W" : hg < ag ? "L" : "D";
-    contForm.record(home, result, hg, ag, m.kickoff_time);
-    contForm.record(away, result === "W" ? "L" : result === "L" ? "W" : "D", ag, hg, m.kickoff_time);
-  }
-
-  const contAcc = contResults.filter(r => r.correct).length / contResults.length;
-  console.log(`   Overall accuracy: ${(contAcc * 100).toFixed(1)}% (${contResults.length} matches)`);
-
-  // ═══════════════════════════════════════════════════════════════════════
-  // LEARNING CURVES
-  // ═══════════════════════════════════════════════════════════════════════
-  console.log("\n\n" + "═".repeat(70));
-  console.log("📈 LEARNING CURVES");
-  console.log("═".repeat(70));
-
-  const checkpoints = [100, 250, 500, 750, 1000, 1500, 2000, 2500, 3000, 3500, 4000];
-  
-  console.log("\n┌──────────────┬──────────────────┬──────────────────┬──────────────────┐");
-  console.log("│ Matches      │ Static           │ Periodic         │ Continuous       │");
-  console.log("├──────────────┼──────────────────┼──────────────────┼──────────────────┤");
-  
-  for (const cp of checkpoints) {
-    if (cp > staticResults.length) continue;
-    
-    const sSlice = staticResults.slice(0, cp);
-    const pSlice = periodicResults.slice(0, cp);
-    const cSlice = contResults.slice(0, cp);
-    
-    const sAcc = sSlice.length > 0 ? (sSlice.filter(r => r.correct).length / sSlice.length * 100).toFixed(1) : "—";
-    const pAcc = pSlice.length > 0 ? (pSlice.filter(r => r.correct).length / pSlice.length * 100).toFixed(1) : "—";
-    const cAcc = cSlice.length > 0 ? (cSlice.filter(r => r.correct).length / cSlice.length * 100).toFixed(1) : "—";
-    
-    console.log(`│ ${String(cp).padStart(12)} │ ${(sAcc + "%").padStart(16)} │ ${(pAcc + "%").padStart(16)} │ ${(cAcc + "%").padStart(16)} │`);
-  }
-  console.log("└──────────────┴──────────────────┴──────────────────┴──────────────────┘");
-
-  // ═══════════════════════════════════════════════════════════════════════
-  // BEST MARKET ANALYSIS (from Static experiment)
-  // ═══════════════════════════════════════════════════════════════════════
-  console.log("\n\n" + "═".repeat(70));
-  console.log("🏆 MARKET RELIABILITY DATABASE");
-  console.log("   Which markets are most predictable?");
-  console.log("═".repeat(70));
-
-  // Recompute market reliability from static results
-  const marketReliability = {};
-  for (const r of staticResults) {
-    if (!marketReliability[r.market]) marketReliability[r.market] = { correct: 0, total: 0 };
-    marketReliability[r.market].total++;
-    if (r.correct) marketReliability[r.market].correct++;
-  }
-  
-  const sortedMarkets = Object.entries(marketReliability)
-    .map(([market, stats]) => ({
-      market,
-      accuracy: stats.correct / stats.total,
-      total: stats.total,
-      correct: stats.correct,
-    }))
-    .sort((a, b) => b.accuracy - a.accuracy);
-
-  console.log("\n┌──────────────────┬──────────┬──────────┬──────────┐");
-  console.log("│ Market           │ Accuracy │ Matches  │ Correct  │");
-  console.log("├──────────────────┼──────────┼──────────┼──────────┤");
-  for (const m of sortedMarkets) {
-    const acc = (m.accuracy * 100).toFixed(1) + "%";
-    const bar = "█".repeat(Math.round(m.accuracy * 20));
-    console.log(`│ ${m.market.padEnd(16)} │ ${acc.padStart(8)} │ ${String(m.total).padStart(8)} │ ${String(m.correct).padStart(8)} │ ${bar}`);
-  }
-  console.log("└──────────────────┴──────────┴──────────┴──────────┘");
-
-  // ═══════════════════════════════════════════════════════════════════════
-  // SEASON-BY-SEASON PERFORMANCE
-  // ═══════════════════════════════════════════════════════════════════════
-  console.log("\n\n" + "═".repeat(70));
-  console.log("📅 PERFORMANCE BY SEASON");
-  console.log("═".repeat(70));
-
-  const bySeason = {};
-  for (const r of contResults) {
-    if (!bySeason[r.season]) bySeason[r.season] = { correct: 0, total: 0, markets: {} };
-    bySeason[r.season].total++;
-    if (r.correct) bySeason[r.season].correct++;
-    if (!bySeason[r.season].markets[r.market]) bySeason[r.season].markets[r.market] = { correct: 0, total: 0 };
-    bySeason[r.season].markets[r.market].total++;
-    if (r.correct) bySeason[r.season].markets[r.market].correct++;
-  }
-
-  for (const [season, stats] of Object.entries(bySeason).sort()) {
-    const acc = (stats.correct / stats.total * 100).toFixed(1);
-    console.log(`\n   ${season}: ${acc}% accuracy (${stats.total} matches)`);
-    
-    const topMarkets = Object.entries(stats.markets)
-      .map(([m, s]) => ({ market: m, accuracy: s.correct / s.total, total: s.total }))
-      .filter(m => m.total >= 10)
-      .sort((a, b) => b.accuracy - a.accuracy)
-      .slice(0, 3);
-    
-    for (const m of topMarkets) {
-      console.log(`     Best: ${m.market} = ${(m.accuracy * 100).toFixed(1)}% (${m.total} matches)`);
+    // Update H2H
+    for (const h2h of [staticH2H, periodicH2H, continuousH2H]) {
+      h2h.addResult(m.home_team_id, m.away_team_id, hs, as);
     }
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // HIGH-CONFIDENCE ANALYSIS
-  // ═══════════════════════════════════════════════════════════════════════
-  console.log("\n\n" + "═".repeat(70));
-  console.log("🎯 HIGH-CONFIDENCE PICK ANALYSIS");
-  console.log("═".repeat(70));
+  // Deep copy static state
+  const staticEloCopy = JSON.parse(JSON.stringify(staticElo));
+  const staticFormCopy = JSON.parse(JSON.stringify(staticForm.teams));
+  const staticH2HCopy = JSON.parse(JSON.stringify(staticH2H.pairs));
 
-  const highConf = contResults.filter(r => r.probability >= 0.70);
-  const medConf = contResults.filter(r => r.probability >= 0.60 && r.probability < 0.70);
-  const lowConf = contResults.filter(r => r.probability < 0.60);
+  // ─── Phase 2: Evaluate on unseen matches ─────────────────────────────
+  console.log("Phase 2: Evaluating on unseen matches...\n");
 
-  console.log(`\n   70%+ confidence: ${highConf.length} picks, ${(highConf.filter(r => r.correct).length / (highConf.length || 1) * 100).toFixed(1)}% accuracy`);
-  console.log(`   60-70% confidence: ${medConf.length} picks, ${(medConf.filter(r => r.correct).length / (medConf.length || 1) * 100).toFixed(1)}% accuracy`);
-  console.log(`   <60% confidence: ${lowConf.length} picks, ${(lowConf.filter(r => r.correct).length / (lowConf.length || 1) * 100).toFixed(1)}% accuracy`);
-
-  // ═══════════════════════════════════════════════════════════════════════
-  // LEAGUE PERFORMANCE
-  // ═══════════════════════════════════════════════════════════════════════
-  console.log("\n\n" + "═".repeat(70));
-  console.log("⚽ PERFORMANCE BY LEAGUE");
-  console.log("═".repeat(70));
-
-  const byLeague = {};
-  for (const r of contResults) {
-    if (!byLeague[r.league]) byLeague[r.league] = { correct: 0, total: 0 };
-    byLeague[r.league].total++;
-    if (r.correct) byLeague[r.league].correct++;
-  }
-
-  const sortedLeagues = Object.entries(byLeague)
-    .map(([name, stats]) => ({ name, accuracy: stats.correct / stats.total, total: stats.total }))
-    .filter(l => l.total >= 20)
-    .sort((a, b) => b.accuracy - a.accuracy);
-
-  console.log("\n┌──────────────────────────────┬──────────┬──────────┐");
-  console.log("│ League                       │ Accuracy │ Matches  │");
-  console.log("├──────────────────────────────┼──────────┼──────────┤");
-  for (const l of sortedLeagues.slice(0, 20)) {
-    const acc = (l.accuracy * 100).toFixed(1) + "%";
-    const bar = "█".repeat(Math.round(l.accuracy * 15));
-    console.log(`│ ${l.name.padEnd(28)} │ ${acc.padStart(8)} │ ${String(l.total).padStart(8)} │ ${bar}`);
-  }
-  console.log("└──────────────────────────────┴──────────┴──────────┘");
-
-  // ═══════════════════════════════════════════════════════════════════════
-  // FINAL COMPARISON
-  // ═══════════════════════════════════════════════════════════════════════
-  console.log("\n\n" + "═".repeat(70));
-  console.log("🏆 FINAL COMPARISON: ALL THREE EXPERIMENTS");
-  console.log("═".repeat(70));
-
-  const staticHighConf = staticResults.filter(r => r.probability >= 0.70);
-  const periodicHighConf = periodicResults.filter(r => r.probability >= 0.70);
-  const contHighConfFinal = contResults.filter(r => r.probability >= 0.70);
-
-  console.log(`
-┌──────────────────────────┬──────────────────┬──────────────────┬──────────────────┐
-│ Metric                   │ Static           │ Periodic         │ Continuous       │
-├──────────────────────────┼──────────────────┼──────────────────┼──────────────────┤
-│ Overall Accuracy         │ ${(staticAcc * 100).toFixed(1)}%             │ ${(periodicAcc * 100).toFixed(1)}%             │ ${(contAcc * 100).toFixed(1)}%             │
-│ Total Predictions        │ ${String(staticResults.length).padStart(16)} │ ${String(periodicResults.length).padStart(16)} │ ${String(contResults.length).padStart(16)} │
-│ High-Conf (70%+)         │ ${String(staticHighConf.length).padStart(16)} │ ${String(periodicHighConf.length).padStart(16)} │ ${String(contHighConfFinal.length).padStart(16)} │
-│ High-Conf Accuracy       │ ${staticHighConf.length > 0 ? (staticHighConf.filter(r => r.correct).length / staticHighConf.length * 100).toFixed(1) + "%" : "N/A".padEnd(16)} │ ${periodicHighConf.length > 0 ? (periodicHighConf.filter(r => r.correct).length / periodicHighConf.length * 100).toFixed(1) + "%" : "N/A".padEnd(16)} │ ${contHighConfFinal.length > 0 ? (contHighConfFinal.filter(r => r.correct).length / contHighConfFinal.length * 100).toFixed(1) + "%" : "N/A".padEnd(16)} │
-│ Best Market              │ ${(sortedMarkets[0]?.market || "N/A").padEnd(16)} │ —                │ —                │
-│ Best Market Accuracy     │ ${sortedMarkets[0] ? (sortedMarkets[0].accuracy * 100).toFixed(1) + "%" : "N/A"}              │ —                │ —                │
-└──────────────────────────┴──────────────────┴──────────────────┴──────────────────┘`);
-
-  // ═══════════════════════════════════════════════════════════════════════
-  // SAVE REPORT
-  // ═══════════════════════════════════════════════════════════════════════
-  const report = {
-    generatedAt: new Date().toISOString(),
-    totalMatches: allMatches.length,
-    trainSize: TRAIN_SIZE,
-    testSize: allMatches.length - TRAIN_SIZE,
-    seasons,
-    experiments: {
-      static: {
-        accuracy: staticAcc,
-        predictions: staticResults.length,
-        highConfCount: staticHighConf.length,
-        highConfAccuracy: staticHighConf.length > 0 ? staticHighConf.filter(r => r.correct).length / staticHighConf.length : null,
-      },
-      periodic: {
-        accuracy: periodicAcc,
-        predictions: periodicResults.length,
-        retrainInterval: RETRAIN_INTERVAL,
-      },
-      continuous: {
-        accuracy: contAcc,
-        predictions: contResults.length,
-        learningWindow: LEARNING_WINDOW,
-      },
-    },
-    marketReliability: sortedMarkets,
-    learningCurve: checkpoints.map(cp => ({
-      matches: cp,
-      static: cp <= staticResults.length ? staticResults.slice(0, cp).filter(r => r.correct).length / Math.min(cp, staticResults.length) : null,
-      periodic: cp <= periodicResults.length ? periodicResults.slice(0, cp).filter(r => r.correct).length / Math.min(cp, periodicResults.length) : null,
-      continuous: cp <= contResults.length ? contResults.slice(0, cp).filter(r => r.correct).length / Math.min(cp, contResults.length) : null,
-    })),
-    bySeason: Object.fromEntries(Object.entries(bySeason).map(([s, stats]) => [s, {
-      accuracy: stats.correct / stats.total,
-      total: stats.total,
-    }])),
-    byLeague: Object.fromEntries(sortedLeagues.map(l => [l.name, { accuracy: l.accuracy, total: l.total }])),
-    confidenceAnalysis: {
-      high70: { count: highConf.length, accuracy: highConf.length > 0 ? highConf.filter(r => r.correct).length / highConf.length : 0 },
-      medium60: { count: medConf.length, accuracy: medConf.length > 0 ? medConf.filter(r => r.correct).length / medConf.length : 0 },
-      low60: { count: lowConf.length, accuracy: lowConf.length > 0 ? lowConf.filter(r => r.correct).length / lowConf.length : 0 },
-    },
-    finalWeights: contModel.weights,
+  const results = {
+    static: { total: 0, correct: 0, byMarket: {}, byConfidence: {}, bySeason: {} },
+    periodic: { total: 0, correct: 0, byMarket: {}, byConfidence: {}, bySeason: {} },
+    continuous: { total: 0, correct: 0, byMarket: {}, byConfidence: {}, bySeason: {} },
   };
 
-  const reportPath = path.join(__dirname, "..", "docs", "continuous-learning-report.json");
-  fs.mkdirSync(path.dirname(reportPath), { recursive: true });
-  fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
-  console.log(`\n📄 Full report saved to: ${reportPath}`);
+  const learningCurve = { static: [], periodic: [], continuous: [] };
+  let periodicCounter = 0;
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // KEY FINDINGS
-  // ═══════════════════════════════════════════════════════════════════════
-  console.log("\n\n" + "═".repeat(70));
-  console.log("🔑 KEY FINDINGS");
-  console.log("═".repeat(70));
+  for (let i = 0; i < evalMatches.length; i++) {
+    const m = evalMatches[i];
+    const hs = m.home_score;
+    const as = m.away_score;
+    const season = new Date(m.kickoff_time).getFullYear();
 
-  const learningGain = contAcc - staticAcc;
-  console.log(`\n   1. Continuous learning ${learningGain > 0 ? "IMPROVES" : "does NOT improve"} accuracy by ${(Math.abs(learningGain) * 100).toFixed(1)}pp`);
-  console.log(`   2. Best individual market: ${sortedMarkets[0]?.market} at ${(sortedMarkets[0]?.accuracy * 100).toFixed(1)}%`);
-  console.log(`   3. High-confidence picks (70%+): ${highConf.length} picks at ${(report.confidenceAnalysis.high70.accuracy * 100).toFixed(1)}%`);
-  console.log(`   4. Most predictable league: ${sortedLeagues[0]?.name} at ${(sortedLeagues[0]?.accuracy * 100).toFixed(1)}%`);
-  console.log(`   5. Final model weights: elo=${(contModel.weights.elo * 100).toFixed(0)}% form=${(contModel.weights.form * 100).toFixed(0)}% goals=${(contModel.weights.goals * 100).toFixed(0)}% market=${(contModel.weights.market * 100).toFixed(0)}%`);
-  
-  console.log("\n" + "═".repeat(70));
-  console.log("✅ Simulation complete!");
-  console.log("═".repeat(70));
-}
+    // Get form and H2H for each system
+    for (const [name, elo, form, h2h] of [
+      ["static", staticEloCopy, staticForm, staticH2H],
+      ["periodic", periodicElo, periodicForm, periodicH2H],
+      ["continuous", continuousElo, continuousForm, continuousH2H],
+    ]) {
+      if (!elo[m.home_team_id]) elo[m.home_team_id] = 1500;
+      if (!elo[m.away_team_id]) elo[m.away_team_id] = 1500;
 
-function getOutcome(market, hg, ag) {
-  const total = hg + ag;
-  switch (market) {
-    case "home_win": return hg > ag;
-    case "draw": return hg === ag;
-    case "away_win": return ag > hg;
-    case "over_0.5": return total > 0.5;
-    case "over_1.5": return total > 1.5;
-    case "over_2.5": return total > 2.5;
-    case "over_3.5": return total > 3.5;
-    case "under_3.5": return total < 3.5;
-    case "under_4.5": return total < 4.5;
-    case "btts_yes": return hg > 0 && ag > 0;
-    case "btts_no": return hg === 0 || ag === 0;
-    case "dc_1X": return hg >= ag;
-    case "dc_X2": return ag >= hg;
-    case "dc_12": return hg !== ag;
-    default: return false;
+      const homeForm = form.getForm(m.home_team_id);
+      const awayForm = form.getForm(m.away_team_id);
+      const h2hStats = h2h.getStats(m.home_team_id, m.away_team_id);
+
+      const predictions = generatePredictions(
+        homeForm, awayForm,
+        elo[m.home_team_id], elo[m.away_team_id],
+        h2hStats, 2.7
+      );
+
+      const outcomes = checkOutcomes(hs, as);
+      const r = results[name];
+      r.total++;
+
+      // Find best prediction for this match
+      let bestProb = 0;
+      let bestMarket = "";
+      let bestSelection = "";
+      let bestCorrect = false;
+
+      for (const [market, prob] of Object.entries(predictions.markets)) {
+        const correct = outcomes[market];
+        if (prob > bestProb) {
+          bestProb = prob;
+          bestMarket = market;
+          bestSelection = market;
+          bestCorrect = correct;
+        }
+
+        // Track per-market accuracy
+        if (!r.byMarket[market]) r.byMarket[market] = { total: 0, correct: 0 };
+        r.byMarket[market].total++;
+        if (correct) r.byMarket[market].correct++;
+      }
+
+      // Track best market prediction
+      if (bestCorrect) r.correct++;
+
+      // Track by confidence
+      const confBucket = Math.floor(bestProb * 10) * 10;
+      const confKey = `${confBucket}-${confBucket + 10}%`;
+      if (!r.byConfidence[confKey]) r.byConfidence[confKey] = { total: 0, correct: 0 };
+      r.byConfidence[confKey].total++;
+      if (bestCorrect) r.byConfidence[confKey].correct++;
+
+      // Track by season
+      if (!r.bySeason[season]) r.bySeason[season] = { total: 0, correct: 0 };
+      r.bySeason[season].total++;
+      if (bestCorrect) r.bySeason[season].correct++;
+
+      // Learning curve (every 50 matches)
+      if ((i + 1) % 50 === 0 || i === evalMatches.length - 1) {
+        const accuracy = r.total > 0 ? (r.correct / r.total * 100) : 0;
+        learningCurve[name].push({
+          match: i + 1,
+          accuracy: Number(accuracy.toFixed(1)),
+          total: r.total,
+          correct: r.correct,
+        });
+      }
+    }
+
+    // Update continuous learning after each match
+    for (const elo of [continuousElo]) {
+      const expH = expectedScore(elo[m.home_team_id], elo[m.away_team_id]);
+      const expA = expectedScore(elo[m.away_team_id], elo[m.home_team_id]);
+      const actualH = hs > as ? 1 : hs === as ? 0.5 : 0;
+      const actualA = 1 - actualH;
+      elo[m.home_team_id] = updateElo(elo[m.home_team_id], expH, actualH, 16);
+      elo[m.away_team_id] = updateElo(elo[m.away_team_id], expA, actualA, 16);
+    }
+    continuousForm.addResult(m.home_team_id, hs > as ? 3 : hs === as ? 1 : 0, hs, as, true);
+    continuousForm.addResult(m.away_team_id, as > hs ? 3 : as === hs ? 1 : 0, as, hs, false);
+    continuousH2H.addResult(m.home_team_id, m.away_team_id, hs, as);
+
+    // Update periodic every 200 matches
+    periodicCounter++;
+    if (periodicCounter >= 200) {
+      periodicCounter = 0;
+      for (const elo of [periodicElo]) {
+        const expH = expectedScore(elo[m.home_team_id], elo[m.away_team_id]);
+        const expA = expectedScore(elo[m.away_team_id], elo[m.home_team_id]);
+        const actualH = hs > as ? 1 : hs === as ? 0.5 : 0;
+        const actualA = 1 - actualH;
+        elo[m.home_team_id] = updateElo(elo[m.home_team_id], expH, actualH, 16);
+        elo[m.away_team_id] = updateElo(elo[m.away_team_id], expA, actualA, 16);
+      }
+      periodicForm.addResult(m.home_team_id, hs > as ? 3 : hs === as ? 1 : 0, hs, as, true);
+      periodicForm.addResult(m.away_team_id, as > hs ? 3 : as === hs ? 1 : 0, as, hs, false);
+      periodicH2H.addResult(m.home_team_id, m.away_team_id, hs, as);
+    }
   }
+
+  // ─── Phase 3: Results ────────────────────────────────────────────────
+  console.log("━".repeat(60));
+  console.log("📊 SIMULATION RESULTS — Best Market Per Match");
+  console.log("━".repeat(60));
+  console.log("");
+
+  for (const [name, label] of [
+    ["static", "A) Static Model"],
+    ["periodic", "B) Periodic Retrain (every 200)"],
+    ["continuous", "C) Continuous Learning"],
+  ]) {
+    const r = results[name];
+    const acc = r.total > 0 ? (r.correct / r.total * 100).toFixed(1) : "0.0";
+    console.log(`${label}:`);
+    console.log(`  Accuracy: ${acc}% (${r.correct}/${r.total})`);
+    console.log("");
+  }
+
+  // Market breakdown for continuous learning
+  console.log("━".repeat(60));
+  console.log("📊 MARKET BREAKDOWN (Continuous Learning)");
+  console.log("━".repeat(60));
+  console.log("");
+
+  const marketOrder = [
+    "1X2_Home", "1X2_Draw", "1X2_Away",
+    "OU25_Over", "OU25_Under", "OU15_Over", "OU15_Under",
+    "OU35_Over", "OU35_Under", "BTTS_Yes", "BTTS_No",
+    "DC_HomeOrDraw", "DC_DrawOrAway", "DC_HomeOrAway",
+  ];
+
+  for (const market of marketOrder) {
+    const r = results.continuous.byMarket[market];
+    if (r && r.total > 0) {
+      const acc = (r.correct / r.total * 100).toFixed(1);
+      console.log(`  ${market.padEnd(20)} ${acc.padStart(5)}%  (${r.correct}/${r.total})`);
+    }
+  }
+
+  // Confidence calibration
+  console.log("");
+  console.log("━".repeat(60));
+  console.log("📊 CONFIDENCE CALIBRATION (Continuous Learning)");
+  console.log("━".repeat(60));
+  console.log("");
+
+  const confKeys = Object.keys(results.continuous.byConfidence).sort();
+  for (const key of confKeys) {
+    const r = results.continuous.byConfidence[key];
+    if (r.total > 0) {
+      const acc = (r.correct / r.total * 100).toFixed(1);
+      console.log(`  ${key.padEnd(12)} ${acc.padStart(5)}%  (${r.correct}/${r.total})`);
+    }
+  }
+
+  // Season performance
+  console.log("");
+  console.log("━".repeat(60));
+  console.log("📊 SEASON PERFORMANCE (Continuous Learning)");
+  console.log("━".repeat(60));
+  console.log("");
+
+  for (const [name, label] of [
+    ["static", "Static"],
+    ["periodic", "Periodic"],
+    ["continuous", "Continuous"],
+  ]) {
+    console.log(`${label}:`);
+    for (const season of Object.keys(results[name].bySeason).sort()) {
+      const r = results[name].bySeason[season];
+      const acc = r.total > 0 ? (r.correct / r.total * 100).toFixed(1) : "0.0";
+      console.log(`  ${season}: ${acc}% (${r.correct}/${r.total})`);
+    }
+    console.log("");
+  }
+
+  // Learning curve
+  console.log("━".repeat(60));
+  console.log("📈 LEARNING CURVE (Accuracy over time)");
+  console.log("━".repeat(60));
+  console.log("");
+  console.log("Matches | Static  | Periodic | Continuous");
+  console.log("--------|---------|----------|----------");
+
+  for (let i = 0; i < learningCurve.continuous.length; i++) {
+    const s = learningCurve.static[i];
+    const p = learningCurve.periodic[i];
+    const c = learningCurve.continuous[i];
+    if (s && p && c) {
+      console.log(
+        `${String(c.match).padStart(7)} | ${String(s.accuracy + "%").padStart(7)} | ${String(p.accuracy + "%").padStart(8)} | ${String(c.accuracy + "%").padStart(9)}`
+      );
+    }
+  }
+
+  // ─── Save Results ────────────────────────────────────────────────────
+  const output = {
+    timestamp: new Date().toISOString(),
+    totalMatches: totalMatches,
+    trainingMatches: trainEnd,
+    evaluationMatches: evalMatches.length,
+    results: {
+      static: {
+        accuracy: results.static.total > 0 ? results.static.correct / results.static.total : 0,
+        total: results.static.total,
+        correct: results.static.correct,
+      },
+      periodic: {
+        accuracy: results.periodic.total > 0 ? results.periodic.correct / results.periodic.total : 0,
+        total: results.periodic.total,
+        correct: results.periodic.correct,
+      },
+      continuous: {
+        accuracy: results.continuous.total > 0 ? results.continuous.correct / results.continuous.total : 0,
+        total: results.continuous.total,
+        correct: results.continuous.correct,
+      },
+    },
+    markets: results.continuous.byMarket,
+    confidence: results.continuous.byConfidence,
+    learningCurve,
+  };
+
+  const outputPath = path.join(__dirname, "..", "research", "simulation-results.json");
+  fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+  fs.writeFileSync(outputPath, JSON.stringify(output, null, 2));
+  console.log(`\n💾 Results saved to ${outputPath}`);
+
+  // ─── Final Summary ──────────────────────────────────────────────────
+  console.log("\n" + "━".repeat(60));
+  console.log("🏆 FINAL SUMMARY");
+  console.log("━".repeat(60));
+  console.log("");
+  
+  const staticAcc = (results.static.correct / results.static.total * 100).toFixed(1);
+  const periodicAcc = (results.periodic.correct / results.periodic.total * 100).toFixed(1);
+  const continuousAcc = (results.continuous.correct / results.continuous.total * 100).toFixed(1);
+  
+  console.log(`A) Static Model:          ${staticAcc}%`);
+  console.log(`B) Periodic Retrain:      ${periodicAcc}%`);
+  console.log(`C) Continuous Learning:   ${continuousAcc}%`);
+  console.log("");
+  
+  const best = Math.max(parseFloat(staticAcc), parseFloat(periodicAcc), parseFloat(continuousAcc));
+  console.log(`Best approach: ${best}%`);
+  console.log(`Target: 84.2%`);
+  console.log(`Status: ${best >= 84.2 ? "✅ TARGET MET" : "⚠️ Below target — need more features"}`);
+  console.log("━".repeat(60));
 }
 
-main().catch(e => { console.error("❌ Error:", e.message); console.error(e.stack); process.exit(1); });
+main().catch((e) => { console.error("❌", e.message); process.exit(1); });
