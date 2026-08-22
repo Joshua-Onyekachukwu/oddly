@@ -40,6 +40,11 @@
     "settle": "node worker/settle-predictions.js",
     "prematch-update": "node worker/pre-match-update.js",
     "scrape:transfermarkt": "node scripts/transfermarkt-scraper.js",
+    "scrape:football-data": "node scripts/scrape-football-data.js",
+    "collect:referee-data": "node scripts/collect-football-data.js",
+    "analyze:deep-relationships": "node scripts/analyze-deep-relationships.js",
+    "scrape:web-data": "node scripts/scrape-web-data.js",
+    "analyze:referees": "node scripts/analyze-referees.js",
     "pipeline": "echo 'Running full pipeline...' && npm run sync:fixtures && npm run self-learn"
   },
   "dependencies": {
