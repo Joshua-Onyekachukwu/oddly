@@ -11,7 +11,6 @@ interface Prediction {
   market: string;
   selection: string;
   model_probability: number;
-  confidence_tier: string;
   model_version: string;
 }
 
@@ -299,7 +298,7 @@ export default function EliteDashboardPage() {
       const fixtureIds = fixtures.map((f) => f.id);
       const { data: predictions } = await sb
         .from("predictions")
-        .select("id, fixture_id, market, selection, model_probability, confidence_tier, model_version")
+        .select("id, fixture_id, market, selection, model_probability, model_version")
         .in("fixture_id", fixtureIds)
         .gte("model_probability", 0.70)
         .order("model_probability", { ascending: false });
