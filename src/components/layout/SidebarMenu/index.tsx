@@ -24,6 +24,12 @@ interface NavGroup {
 
 const NAV_GROUPS: NavGroup[] = [
   {
+    label: "Overview",
+    items: [
+      { label: "ELITE Dashboard", href: "/dashboard", icon: "ri-vip-crown-fill", badge: "New", badgeColor: "bg-amber-50 text-amber-600" },
+    ],
+  },
+  {
     label: "Matches",
     items: [
       { label: "Today's Matches", href: "/matches", icon: "ri-football-line" },
