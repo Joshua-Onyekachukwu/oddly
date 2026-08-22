@@ -100,18 +100,85 @@ def load_odds(sb):
     print(f"   Loaded {len(all_odds)} odds records")
     return all_odds
 
+def compute_elo_ratings(matches):
+    """Compute Elo ratings for all teams from match history."""
+    print("\U0001f4ca Computing Elo ratings from match history...")
+    K = 32
+    elo = {}
+    home_advantage = 65
+    
+    # Sort by kickoff time
+    sorted_matches = sorted([m for m in matches if m['home_score'] is not None],
+                          key=lambda x: x['kickoff_time'] or '')
+    
+    for m in sorted_matches:
+        home_id = m['home_team_id']
+        away_id = m['away_team_id']
+        hs = m['home_score'] or 0
+        as_ = m['away_score'] or 0
+        
+        # Initialize new teams at 1500
+        if home_id not in elo: elo[home_id] = 1500
+        if away_id not in elo: elo[away_id] = 1500
+        
+        # Expected score
+        exp_home = 1.0 / (1 + 10 ** ((elo[away_id] - elo[home_id] - home_advantage) / 400))
+        exp_away = 1 - exp_home
+        
+        # Actual score
+        if hs > as_: actual_home, actual_away = 1.0, 0.0
+        elif hs == as_: actual_home, actual_away = 0.5, 0.5
+        else: actual_home, actual_away = 0.0, 1.0
+        
+        # Update Elo
+        elo[home_id] += K * (actual_home - exp_home)
+        elo[away_id] += K * (actual_away - exp_away)
+    
+    # Compute attack/defense ratings
+    team_stats = {}
+    for m in sorted_matches:
+        home_id = m['home_team_id']
+        away_id = m['away_team_id']
+        hs = m['home_score'] or 0
+        as_ = m['away_score'] or 0
+        
+        for tid, gf, ga, is_home in [(home_id, hs, as_, True), (away_id, as_, hs, False)]:
+            if tid not in team_stats:
+                team_stats[tid] = {'gf': 0, 'ga': 0, 'n': 0, 'home_n': 0, 'away_n': 0, 'home_wins': 0, 'away_wins': 0}
+            ts = team_stats[tid]
+            ts['gf'] += gf
+            ts['ga'] += ga
+            ts['n'] += 1
+            if is_home:
+                ts['home_n'] += 1
+                if gf > ga: ts['home_wins'] += 1
+            else:
+                ts['away_n'] += 1
+                if gf > ga: ts['away_wins'] += 1
+    
+    strengths = {}
+    for tid in elo:
+        ts = team_stats.get(tid, {'gf': 0, 'ga': 0, 'n': 1, 'home_n': 0, 'away_n': 0, 'home_wins': 0, 'away_wins': 0})
+        n = max(ts['n'], 1)
+        strengths[tid] = {
+            'elo_rating': round(elo[tid], 1),
+            'attack_rating': round(ts['gf'] / n, 2),
+            'defense_rating': round(ts['ga'] / n, 2),
+            'home_advantage': round((ts['home_wins'] / max(ts['home_n'], 1) - ts['away_wins'] / max(ts['away_n'], 1)), 3) if ts['home_n'] > 0 and ts['away_n'] > 0 else 0,
+        }
+    
+    print(f"   Computed Elo for {len(elo)} teams")
+    return strengths
+
 def load_teams(sb):
-    """Load team strengths."""
-    print("📦 Loading team data...")
+    """Load team data and compute strengths."""
+    print("\U0001f4e6 Loading team data...")
     
     teams_result = sb.table('teams').select('id,canonical_name,league_id').execute()
     teams = {t['id']: t for t in (teams_result.data or [])}
     
-    strengths_result = sb.table('team_strengths').select('*').execute()
-    strengths = {s['team_id']: s for s in (strengths_result.data or [])}
-    
-    print(f"   Loaded {len(teams)} teams, {len(strengths)} strength records")
-    return teams, strengths
+    print(f"   Loaded {len(teams)} teams")
+    return teams
 
 # ─── Feature Engineering ─────────────────────────────────────────────────
 
@@ -476,6 +543,7 @@ def train_models(X, y_dict, feature_names):
             'test_samples': len(y_test),
             'top_features': top_features,
             'label': info['label'],
+            'type': info['type'],
         }
         
         print(f"      Accuracy: {accuracy:.1%}")
@@ -554,7 +622,8 @@ def main():
     # Load data
     matches = load_matches(sb)
     odds_list = load_odds(sb)
-    teams, strengths = load_teams(sb)
+    teams = load_teams(sb)
+    strengths = compute_elo_ratings(matches)
     
     if len(matches) < 100:
         print("❌ Not enough matches for training. Need at least 100.")
@@ -690,10 +759,10 @@ def main():
         'total_features': len(feature_names),
         'feature_names': feature_names,
         'markets': {m: {
-            'accuracy': r['accuracy'],
-            'brier': r['brier'],
-            'log_loss': r['log_loss'],
-            'samples': r['samples'],
+            'accuracy': float(r['accuracy']),
+            'brier': float(r['brier']),
+            'log_loss': float(r['log_loss']),
+            'samples': int(r['samples']),
             'top_features': [f[0] for f in r['top_features'][:10]],
         } for m, r in results.items()},
     }
