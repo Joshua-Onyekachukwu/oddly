@@ -80,39 +80,45 @@ export default function AccuracyPage() {
   const fetchData = useCallback(async () => {
     const supabase = createClient();
 
-    // Get all settled predictions with results
-    const [correctRes, wrongRes, pendingRes] = await Promise.all([
+    // Get COUNTS first for accurate totals (not limited to 500)
+    const [correctCountRes, wrongCountRes, totalCountRes] = await Promise.all([
+      supabase.from("predictions").select("id", { count: "exact", head: true }).eq("result", "correct"),
+      supabase.from("predictions").select("id", { count: "exact", head: true }).eq("result", "wrong"),
+      supabase.from("predictions").select("id", { count: "exact", head: true }),
+    ]);
+
+    const totalCorrect = correctCountRes.count || 0;
+    const totalWrong = wrongCountRes.count || 0;
+    const totalAll = totalCountRes.count || 0;
+    const totalSettled = totalCorrect + totalWrong;
+
+    setTotalPreds(totalAll);
+    setSettledPreds(totalSettled);
+    setCorrectPreds(totalCorrect);
+
+    if (totalSettled > 0) {
+      setOverallAccuracy(Number(((totalCorrect / totalSettled) * 100).toFixed(1)));
+    }
+
+    // Fetch sample of settled predictions for chart/table computation
+    const [correctRes, wrongRes] = await Promise.all([
       supabase
         .from("predictions")
         .select("*, fixtures(home_team:teams!fixtures_home_team_id_fkey(canonical_name), away_team:teams!fixtures_away_team_id_fkey(canonical_name), home_score, away_score, league:leagues!fixtures_league_id_fkey(name))")
         .eq("result", "correct")
         .order("settled_at", { ascending: false })
-        .limit(500),
+        .limit(2000),
       supabase
         .from("predictions")
         .select("*, fixtures(home_team:teams!fixtures_home_team_id_fkey(canonical_name), away_team:teams!fixtures_away_team_id_fkey(canonical_name), home_score, away_score, league:leagues!fixtures_league_id_fkey(name))")
         .eq("result", "wrong")
         .order("settled_at", { ascending: false })
-        .limit(500),
-      supabase
-        .from("predictions")
-        .select("*")
-        .is("result", null)
-        .limit(1000),
+        .limit(2000),
     ]);
 
     const correctData = correctRes.data || [];
     const incorrectData = wrongRes.data || [];
     const allSettled = [...correctData, ...incorrectData];
-    const totalAll = allSettled.length + (pendingRes.data?.length || 0);
-
-    setTotalPreds(totalAll);
-    setSettledPreds(allSettled.length);
-    setCorrectPreds(correctData.length);
-
-    if (allSettled.length > 0) {
-      setOverallAccuracy(Number(((correctData.length / allSettled.length) * 100).toFixed(1)));
-    }
 
     // Compute daily stats
     const dailyMap: Record<string, { correct: number; total: number }> = {};
