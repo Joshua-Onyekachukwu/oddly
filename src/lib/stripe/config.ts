@@ -18,7 +18,7 @@ export const STRIPE_PLANS = {
     priceId: process.env.STRIPE_PREMIUM_PRICE_ID || "",
     features: [
       "Unlimited predictions",
-      "All 100+ leagues",
+      "All 360+ leagues",
       "Value bet detection",
       "Accumulator builder",
       "Weekly performance reports",
