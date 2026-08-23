@@ -180,6 +180,20 @@ def load_teams(sb):
     print(f"   Loaded {len(teams)} teams")
     return teams
 
+def load_player_impacts():
+    """Load player impact scores from local JSON file."""
+    print("\U0001f3ae Loading player impact scores...")
+    
+    impact_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'team-player-impacts.json')
+    try:
+        with open(impact_path, 'r', encoding='utf-8') as f:
+            impacts = json.load(f)
+        print(f"   Loaded player impacts for {len(impacts)} teams")
+        return impacts
+    except FileNotFoundError:
+        print("   ⚠️  player-team-impacts.json not found. Using defaults.")
+        return {}
+
 # ─── Feature Engineering ─────────────────────────────────────────────────
 
 def compute_team_form(matches, team_id, before_date, n_matches=10):
@@ -301,12 +315,20 @@ def compute_league_stats(matches, league_id, before_date):
         'league_btts_rate': btts / n,
     }
 
-def build_features(match, matches, odds_map, teams, strengths):
+def build_features(match, matches, odds_map, teams, strengths, player_impacts=None, team_names=None):
     """Build feature vector for a single match."""
     home_id = match['home_team_id']
     away_id = match['away_team_id']
     kickoff = match['kickoff_time']
     league_id = match['league_id']
+    
+    # Resolve team names for player impact lookup
+    if team_names is None:
+        team_names = {}
+    home_name = team_names.get(home_id, '')
+    away_name = team_names.get(away_id, '')
+    home_pis = (player_impacts or {}).get(home_name, {})
+    away_pis = (player_impacts or {}).get(away_name, {})
     
     # Team form
     home_form = compute_team_form(matches, home_id, kickoff, 10)
@@ -395,6 +417,25 @@ def build_features(match, matches, odds_map, teams, strengths):
         'odds_draw': draw_odds,
         'odds_away': away_odds,
         'market_overround': home_implied + draw_implied + away_implied - 100,
+        
+        # Player Impact Score features (12 new features)
+        'home_pis': home_pis.get('player_impact_score', 5.0),
+        'away_pis': away_pis.get('player_impact_score', 5.0),
+        'pis_diff': home_pis.get('player_impact_score', 5.0) - away_pis.get('player_impact_score', 5.0),
+        'home_attack_pis': home_pis.get('attack_strength', 0.15),
+        'away_attack_pis': away_pis.get('attack_strength', 0.15),
+        'pis_attack_diff': home_pis.get('attack_strength', 0.15) - away_pis.get('attack_strength', 0.15),
+        'home_shot_accuracy_pis': home_pis.get('shot_accuracy', 0.4),
+        'away_shot_accuracy_pis': away_pis.get('shot_accuracy', 0.4),
+        'home_defense_pis': home_pis.get('defensive_solidity', 1.0),
+        'away_defense_pis': away_pis.get('defensive_solidity', 1.0),
+        'home_squad_depth': home_pis.get('squad_depth', 5),
+        'away_squad_depth': away_pis.get('squad_depth', 5),
+        'home_top_player_goals': home_pis.get('top_player_goals', 0),
+        'away_top_player_goals': away_pis.get('top_player_goals', 0),
+        'home_1x2_pis_impact': home_pis.get('pis_1x2_impact', 0),
+        'away_1x2_pis_impact': away_pis.get('pis_1x2_impact', 0),
+        'pis_1x2_diff': home_pis.get('pis_1x2_impact', 0) - away_pis.get('pis_1x2_impact', 0),
     }
     
     return features
@@ -624,6 +665,12 @@ def main():
     odds_list = load_odds(sb)
     teams = load_teams(sb)
     strengths = compute_elo_ratings(matches)
+    player_impacts = load_player_impacts()
+    
+    # Build team name -> ID mapping for player impact lookup
+    team_names = {}
+    for tid, t in teams.items():
+        team_names[tid] = t.get('canonical_name', '')
     
     if len(matches) < 100:
         print("❌ Not enough matches for training. Need at least 100.")
@@ -657,7 +704,7 @@ def main():
         if match['home_score'] is None:
             continue
         
-        features = build_features(match, matches, odds_map, teams, strengths)
+        features = build_features(match, matches, odds_map, teams, strengths, player_impacts, team_names)
         targets = compute_targets(match)
         
         feature_rows.append(features)
