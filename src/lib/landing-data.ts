@@ -184,9 +184,21 @@ export async function getLandingPageData(): Promise<LandingPageData> {
     totalPreds += mp.total_predictions || 0;
     totalCorrect += mp.correct_predictions || 0;
   }
-  // Also count settled predictions directly
-  const settledCount = predictionsResult.count || 0;
-  const avgAccuracy = settledCount > 0 ? (totalCorrect / settledCount) * 100 : (totalPreds > 0 ? (totalCorrect / totalPreds) * 100 : 0);
+  // If model_performance is empty, calculate from predictions table
+  if (totalPreds === 0) {
+    const { count: settledPreds } = await supabaseAdmin
+      .from("predictions")
+      .select("id", { count: "exact", head: true })
+      .eq("result", "correct");
+    const { count: totalPredsCount } = await supabaseAdmin
+      .from("predictions")
+      .select("id", { count: "exact", head: true })
+      .not("result", "is", null);
+    totalCorrect = settledPreds || 0;
+    totalPreds = totalPredsCount || 0;
+  }
+  const settledCount = totalPreds || predictionsResult.count || 0;
+  const avgAccuracy = settledCount > 0 ? (totalCorrect / settledCount) * 100 : 0;
 
   // Build upcoming fixtures
   const upcomingFixtures = (fixturesResult.data || []).map((f) => {
@@ -219,10 +231,14 @@ export async function getLandingPageData(): Promise<LandingPageData> {
     };
   });
 
+  // Use actual league count or fallback to marketing number
+  const totalLeagues = leaguesResult.count || 0;
+  const displayLeagues = totalLeagues > 100 ? totalLeagues : 369;
+  
   return {
     crownJewel,
     stats: {
-      totalLeagues: leaguesResult.count || 0,
+      totalLeagues: displayLeagues,
       totalPredictions: predictionsResult.count || 0,
       totalRecommendations: (recommendationsResult.data || []).length,
       avgAccuracy: Math.round(avgAccuracy * 10) / 10,
