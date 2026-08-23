@@ -1,0 +1,1703 @@
+[
+  {
+    "player_name": "Erling Haaland",
+    "team_name": null,
+    "status": "injured",
+    "injury_type": "Unknown",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:12:52.775Z"
+  },
+  {
+    "player_name": "Kasey McAteer",
+    "team_name": "Ipswich Town",
+    "status": "injured",
+    "injury_type": "unknown injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:12:52.968Z"
+  },
+  {
+    "player_name": "Darko Gyabi",
+    "team_name": "Hull City",
+    "status": "injured",
+    "injury_type": "Groin injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:12:53.449Z"
+  },
+  {
+    "player_name": "Yankuba Minteh",
+    "team_name": "Brighton &amp; Hove Albion",
+    "status": "injured",
+    "injury_type": "Unknown",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:12:53.638Z"
+  },
+  {
+    "player_name": "Benjamin Fredrick",
+    "team_name": "Brentford FC",
+    "status": "injured",
+    "injury_type": "Knee injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:12:53.838Z"
+  },
+  {
+    "player_name": "Jannik Schuster",
+    "team_name": "Brentford FC",
+    "status": "injured",
+    "injury_type": "Hip flexor problems",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:12:54.027Z"
+  },
+  {
+    "player_name": "Yegor Yarmolyuk",
+    "team_name": "Brentford FC",
+    "status": "injured",
+    "injury_type": "unknown injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:12:54.218Z"
+  },
+  {
+    "player_name": "Miguel Ángel Brau",
+    "team_name": "Coventry City",
+    "status": "injured",
+    "injury_type": "unknown injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:12:54.408Z"
+  },
+  {
+    "player_name": "Oliver Dovin",
+    "team_name": "Coventry City",
+    "status": "injured",
+    "injury_type": "Cruciate ligament tear",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:12:54.629Z"
+  },
+  {
+    "player_name": "Matai Akinmboni",
+    "team_name": "AFC Bournemouth",
+    "status": "injured",
+    "injury_type": "Muscle injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:12:54.808Z"
+  },
+  {
+    "player_name": "Junior Kroupi",
+    "team_name": "AFC Bournemouth",
+    "status": "injured",
+    "injury_type": "Foot injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:12:54.987Z"
+  },
+  {
+    "player_name": "Manuel Ugarte",
+    "team_name": "Manchester United",
+    "status": "injured",
+    "injury_type": "Cruciate ligament tear",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:12:55.159Z"
+  },
+  {
+    "player_name": "Tino Livramento",
+    "team_name": "Newcastle United",
+    "status": "injured",
+    "injury_type": "Knee injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:12:55.347Z"
+  },
+  {
+    "player_name": "Jurriën Timber",
+    "team_name": "Arsenal FC",
+    "status": "injured",
+    "injury_type": "Groin injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:12:55.517Z"
+  },
+  {
+    "player_name": "Aarón Anselmino",
+    "team_name": "Chelsea FC",
+    "status": "injured",
+    "injury_type": "Hamstring injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:12:55.687Z"
+  },
+  {
+    "player_name": "Caleb Wiley",
+    "team_name": "Chelsea FC",
+    "status": "injured",
+    "injury_type": "Adductor injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:12:55.865Z"
+  },
+  {
+    "player_name": "Stefan Bajcetic",
+    "team_name": "Liverpool FC",
+    "status": "injured",
+    "injury_type": "surgery",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:12:56.037Z"
+  },
+  {
+    "player_name": "William Saliba",
+    "team_name": "Arsenal FC",
+    "status": "injured",
+    "injury_type": "Back injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:12:56.207Z"
+  },
+  {
+    "player_name": "Hayden Hackney",
+    "team_name": "Everton FC",
+    "status": "injured",
+    "injury_type": "unknown injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:12:56.407Z"
+  },
+  {
+    "player_name": "Joe Gomez",
+    "team_name": "Liverpool FC",
+    "status": "injured",
+    "injury_type": "Muscle injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:12:56.577Z"
+  },
+  {
+    "player_name": "Conor Bradley",
+    "team_name": "Liverpool FC",
+    "status": "injured",
+    "injury_type": "Knee surgery",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:12:56.737Z"
+  },
+  {
+    "player_name": "Emmanuel Emegha",
+    "team_name": "Chelsea FC",
+    "status": "injured",
+    "injury_type": "Hamstring injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:12:56.917Z"
+  },
+  {
+    "player_name": "Amadou Onana",
+    "team_name": "Aston Villa",
+    "status": "injured",
+    "injury_type": "Cruciate ligament tear",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:12:57.087Z"
+  },
+  {
+    "player_name": "Johan Manzambi",
+    "team_name": "Aston Villa",
+    "status": "injured",
+    "injury_type": "Knee bruise",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:12:57.257Z"
+  },
+  {
+    "player_name": "Giovanni Leoni",
+    "team_name": "Liverpool FC",
+    "status": "injured",
+    "injury_type": "Cruciate ligament tear",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:12:57.427Z"
+  },
+  {
+    "player_name": "Matthijs de Ligt",
+    "team_name": "Manchester United",
+    "status": "injured",
+    "injury_type": "Back injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:12:57.597Z"
+  },
+  {
+    "player_name": "Fábio Carvalho",
+    "team_name": "Brentford FC",
+    "status": "injured",
+    "injury_type": "Cruciate ligament tear",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:12:57.767Z"
+  },
+  {
+    "player_name": "Stefanos Tzimas",
+    "team_name": "Brighton &amp; Hove Albion",
+    "status": "injured",
+    "injury_type": "Unknown",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:12:57.948Z"
+  },
+  {
+    "player_name": "Vitezslav Jaros",
+    "team_name": "Liverpool FC",
+    "status": "injured",
+    "injury_type": "Knee injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:12:58.118Z"
+  },
+  {
+    "player_name": "Tom Cairney",
+    "team_name": "Fulham FC",
+    "status": "injured",
+    "injury_type": "Knee surgery",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:12:58.287Z"
+  },
+  {
+    "player_name": "Wilson Odobert",
+    "team_name": "Tottenham Hotspur",
+    "status": "injured",
+    "injury_type": "Cruciate ligament tear",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:12:58.457Z"
+  },
+  {
+    "player_name": "Eliot Matazo",
+    "team_name": "Hull City",
+    "status": "injured",
+    "injury_type": "Cruciate ligament tear",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:12:58.627Z"
+  },
+  {
+    "player_name": "Hugo Ekitiké",
+    "team_name": "Liverpool FC",
+    "status": "injured",
+    "injury_type": "Achilles tendon rupture",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:12:58.797Z"
+  },
+  {
+    "player_name": "Mateo Joseph",
+    "team_name": "Leeds United",
+    "status": "injured",
+    "injury_type": "Cruciate ligament tear",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:12:58.957Z"
+  },
+  {
+    "player_name": "Xavi Simons",
+    "team_name": "Tottenham Hotspur",
+    "status": "injured",
+    "injury_type": "Cruciate ligament tear",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:12:59.147Z"
+  },
+  {
+    "player_name": "Lamine Yamal",
+    "team_name": null,
+    "status": "injured",
+    "injury_type": "Unknown",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:02.298Z"
+  },
+  {
+    "player_name": "Ionuț Radu",
+    "team_name": "Celta de Vigo",
+    "status": "injured",
+    "injury_type": "muscular problems",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:02.467Z"
+  },
+  {
+    "player_name": "Abiel Osorio",
+    "team_name": "Elche CF",
+    "status": "injured",
+    "injury_type": "Hamstring injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:02.647Z"
+  },
+  {
+    "player_name": "Troy Parrott",
+    "team_name": "Real Betis Balompié",
+    "status": "injured",
+    "injury_type": "unknown injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:02.817Z"
+  },
+  {
+    "player_name": "Gonzalo Petit",
+    "team_name": "Real Betis Balompié",
+    "status": "injured",
+    "injury_type": "Muscle injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:02.987Z"
+  },
+  {
+    "player_name": "Raúl de Tomás",
+    "team_name": "Rayo Vallecano",
+    "status": "injured",
+    "injury_type": "unknown injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:03.157Z"
+  },
+  {
+    "player_name": "Rubén Vargas",
+    "team_name": "Sevilla FC",
+    "status": "injured",
+    "injury_type": "Knee problems",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:03.327Z"
+  },
+  {
+    "player_name": "Marcão",
+    "team_name": "Sevilla FC",
+    "status": "injured",
+    "injury_type": "Right hip flexor problems",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:03.491Z"
+  },
+  {
+    "player_name": "Kike García",
+    "team_name": "RCD Espanyol Barcelona",
+    "status": "injured",
+    "injury_type": "Muscle injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:03.655Z"
+  },
+  {
+    "player_name": "Dimitri Foulquier",
+    "team_name": "Valencia CF",
+    "status": "injured",
+    "injury_type": "Knee injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:03.829Z"
+  },
+  {
+    "player_name": "Raúl Asencio",
+    "team_name": "Real Madrid",
+    "status": "injured",
+    "injury_type": "Muscle injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:03.992Z"
+  },
+  {
+    "player_name": "Pedro Felipe",
+    "team_name": "Racing Santander",
+    "status": "injured",
+    "injury_type": "Muscle tear",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:04.163Z"
+  },
+  {
+    "player_name": "Diego Conde",
+    "team_name": "Real Betis Balompié",
+    "status": "injured",
+    "injury_type": "Shoulder injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:04.331Z"
+  },
+  {
+    "player_name": "Jon Gorrotxategi",
+    "team_name": "Real Sociedad",
+    "status": "injured",
+    "injury_type": "Unknown",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:04.493Z"
+  },
+  {
+    "player_name": "Gonçalo Guedes",
+    "team_name": "Real Sociedad",
+    "status": "injured",
+    "injury_type": "surgery",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:04.653Z"
+  },
+  {
+    "player_name": "Éder Militão",
+    "team_name": "Real Madrid",
+    "status": "injured",
+    "injury_type": "Muscle injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:04.817Z"
+  },
+  {
+    "player_name": "Javi Puado",
+    "team_name": "RCD Espanyol Barcelona",
+    "status": "injured",
+    "injury_type": "Cruciate ligament tear",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:04.980Z"
+  },
+  {
+    "player_name": "Alexander Sørloth",
+    "team_name": "Atlético de Madrid",
+    "status": "injured",
+    "injury_type": "Unknown",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:05.143Z"
+  },
+  {
+    "player_name": "Thiago Pitarch",
+    "team_name": "Real Madrid",
+    "status": "injured",
+    "injury_type": "Ligament injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:05.310Z"
+  },
+  {
+    "player_name": "Rodrygo",
+    "team_name": "Real Madrid",
+    "status": "injured",
+    "injury_type": "Cruciate ligament tear",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:05.477Z"
+  },
+  {
+    "player_name": "Sergi Canós",
+    "team_name": "Valencia CF",
+    "status": "injured",
+    "injury_type": "Cruciate ligament tear",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:05.637Z"
+  },
+  {
+    "player_name": "Augusto Batalla",
+    "team_name": "Rayo Vallecano",
+    "status": "injured",
+    "injury_type": "Lower leg fracture",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:05.808Z"
+  },
+  {
+    "player_name": "Frenkie de Jong",
+    "team_name": "FC Barcelona",
+    "status": "injured",
+    "injury_type": "Knee medial ligament tear",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:05.978Z"
+  },
+  {
+    "player_name": "Álvaro Odriozola",
+    "team_name": "Real Sociedad",
+    "status": "injured",
+    "injury_type": "Cruciate ligament tear",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:06.148Z"
+  },
+  {
+    "player_name": "Diego López",
+    "team_name": "Valencia CF",
+    "status": "injured",
+    "injury_type": "Cruciate ligament tear",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:06.317Z"
+  },
+  {
+    "player_name": "Ferland Mendy",
+    "team_name": "Real Madrid",
+    "status": "injured",
+    "injury_type": "Tendon rupture",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:06.487Z"
+  },
+  {
+    "player_name": "Roony Bardghji",
+    "team_name": "FC Barcelona",
+    "status": "injured",
+    "injury_type": "Cruciate ligament tear",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:06.657Z"
+  },
+  {
+    "player_name": "Christantus Uche",
+    "team_name": "Getafe CF",
+    "status": "injured",
+    "injury_type": "Knee injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:06.837Z"
+  },
+  {
+    "player_name": "Michael Olise",
+    "team_name": null,
+    "status": "injured",
+    "injury_type": "Unknown",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:11.938Z"
+  },
+  {
+    "player_name": "Felix Agu",
+    "team_name": "SV Werder Bremen",
+    "status": "injured",
+    "injury_type": "muscular problems",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:12.410Z"
+  },
+  {
+    "player_name": "Warmed Omari",
+    "team_name": "Hamburger SV",
+    "status": "injured",
+    "injury_type": "Shoulder injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:12.845Z"
+  },
+  {
+    "player_name": "Fernando Dickes",
+    "team_name": "Hamburger SV",
+    "status": "injured",
+    "injury_type": "Shoulder injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:13.009Z"
+  },
+  {
+    "player_name": "Timo Hübers",
+    "team_name": "1.FC Köln",
+    "status": "injured",
+    "injury_type": "Knee injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:13.174Z"
+  },
+  {
+    "player_name": "Luis Seifert",
+    "team_name": "SV 07 Elversberg",
+    "status": "injured",
+    "injury_type": "Syndesmosis ligament tear",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:13.338Z"
+  },
+  {
+    "player_name": "Dan-Axel Zagadou",
+    "team_name": "VfB Stuttgart",
+    "status": "injured",
+    "injury_type": "Hamstring injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:13.527Z"
+  },
+  {
+    "player_name": "Ramon Hendriks",
+    "team_name": "VfB Stuttgart",
+    "status": "injured",
+    "injury_type": "muscular problems",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:13.698Z"
+  },
+  {
+    "player_name": "Luca Jaquez",
+    "team_name": "VfB Stuttgart",
+    "status": "injured",
+    "injury_type": "Fitness",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:13.867Z"
+  },
+  {
+    "player_name": "Leo Sauer",
+    "team_name": "VfB Stuttgart",
+    "status": "injured",
+    "injury_type": "Partial muscle tear",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:14.037Z"
+  },
+  {
+    "player_name": "Lorenz Assignon",
+    "team_name": "VfB Stuttgart",
+    "status": "injured",
+    "injury_type": "Shoulder injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:14.207Z"
+  },
+  {
+    "player_name": "Jeremy Arévalo",
+    "team_name": "VfB Stuttgart",
+    "status": "injured",
+    "injury_type": "Back problems",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:14.377Z"
+  },
+  {
+    "player_name": "Mitchell Weiser",
+    "team_name": "SV Werder Bremen",
+    "status": "injured",
+    "injury_type": "Fitness",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:14.557Z"
+  },
+  {
+    "player_name": "Niklas Stark",
+    "team_name": "SV Werder Bremen",
+    "status": "injured",
+    "injury_type": "muscular problems",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:14.727Z"
+  },
+  {
+    "player_name": "Alexander Røssing-Lelesiit",
+    "team_name": "Hamburger SV",
+    "status": "injured",
+    "injury_type": "Unknown",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:14.898Z"
+  },
+  {
+    "player_name": "Karl Hein",
+    "team_name": "SV Werder Bremen",
+    "status": "injured",
+    "injury_type": "muscular problems",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:15.069Z"
+  },
+  {
+    "player_name": "Eren Dinkçi",
+    "team_name": "SV Werder Bremen",
+    "status": "injured",
+    "injury_type": "muscular problems",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:15.237Z"
+  },
+  {
+    "player_name": "Keke Topp",
+    "team_name": "SV Werder Bremen",
+    "status": "injured",
+    "injury_type": "Cruciate ligament tear",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:15.418Z"
+  },
+  {
+    "player_name": "Oskar Wójcik",
+    "team_name": "SV Werder Bremen",
+    "status": "injured",
+    "injury_type": "muscular problems",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:15.590Z"
+  },
+  {
+    "player_name": "Dariusz Stalmach",
+    "team_name": "SV Werder Bremen",
+    "status": "injured",
+    "injury_type": "Shoulder injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:15.758Z"
+  },
+  {
+    "player_name": "Matheo Raab",
+    "team_name": "1.FC Union Berlin",
+    "status": "injured",
+    "injury_type": "Hand injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:15.920Z"
+  },
+  {
+    "player_name": "Timur Gayret",
+    "team_name": "SC Paderborn 07",
+    "status": "injured",
+    "injury_type": "Cruciate ligament tear",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:16.097Z"
+  },
+  {
+    "player_name": "Alexis Claude-Maurice",
+    "team_name": "FC Augsburg",
+    "status": "injured",
+    "injury_type": "Ankle problems",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:16.255Z"
+  },
+  {
+    "player_name": "Andrej Kramaric",
+    "team_name": "TSG 1899 Hoffenheim",
+    "status": "injured",
+    "injury_type": "Unknown",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:16.415Z"
+  },
+  {
+    "player_name": "Koki Machida",
+    "team_name": "TSG 1899 Hoffenheim",
+    "status": "injured",
+    "injury_type": "Inflammation of pubic bone",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:16.593Z"
+  },
+  {
+    "player_name": "Alexander Prass",
+    "team_name": "TSG 1899 Hoffenheim",
+    "status": "injured",
+    "injury_type": "Unknown",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:16.775Z"
+  },
+  {
+    "player_name": "Assan Ouédraogo",
+    "team_name": "RB Leipzig",
+    "status": "injured",
+    "injury_type": "Shoulder injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:16.950Z"
+  },
+  {
+    "player_name": "Timothy Chandler",
+    "team_name": "Eintracht Frankfurt",
+    "status": "injured",
+    "injury_type": "Unknown",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:17.132Z"
+  },
+  {
+    "player_name": "Sebastian Sebulonsen",
+    "team_name": "1.FC Köln",
+    "status": "injured",
+    "injury_type": "Hamstring injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:17.300Z"
+  },
+  {
+    "player_name": "Robert Andrich",
+    "team_name": "Bayer 04 Leverkusen",
+    "status": "injured",
+    "injury_type": "Unknown",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:17.477Z"
+  },
+  {
+    "player_name": "Nathan Tella",
+    "team_name": "Bayer 04 Leverkusen",
+    "status": "injured",
+    "injury_type": "muscular problems",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:17.637Z"
+  },
+  {
+    "player_name": "Eliesse Ben Seghir",
+    "team_name": "Bayer 04 Leverkusen",
+    "status": "injured",
+    "injury_type": "Unknown",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:17.807Z"
+  },
+  {
+    "player_name": "Montrell Culbreath",
+    "team_name": "Bayer 04 Leverkusen",
+    "status": "injured",
+    "injury_type": "Unknown",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:17.987Z"
+  },
+  {
+    "player_name": "Kennet Eichhorn",
+    "team_name": "Bayer 04 Leverkusen",
+    "status": "injured",
+    "injury_type": "Unknown",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:18.159Z"
+  },
+  {
+    "player_name": "Emre Can",
+    "team_name": "Borussia Dortmund",
+    "status": "injured",
+    "injury_type": "Cruciate ligament tear",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:18.347Z"
+  },
+  {
+    "player_name": "Nico Schlotterbeck",
+    "team_name": "Borussia Dortmund",
+    "status": "injured",
+    "injury_type": "Unknown",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:18.517Z"
+  },
+  {
+    "player_name": "Yukhym Konoplya",
+    "team_name": "Borussia Mönchengladbach",
+    "status": "injured",
+    "injury_type": "Unknown",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:18.697Z"
+  },
+  {
+    "player_name": "Tomas Cvancara",
+    "team_name": "Borussia Mönchengladbach",
+    "status": "injured",
+    "injury_type": "Unknown",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:18.868Z"
+  },
+  {
+    "player_name": "Jens Castrop",
+    "team_name": "Borussia Mönchengladbach",
+    "status": "injured",
+    "injury_type": "Unknown",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:19.037Z"
+  },
+  {
+    "player_name": "Fabio Chiarodia",
+    "team_name": "Borussia Mönchengladbach",
+    "status": "injured",
+    "injury_type": "Unknown",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:19.219Z"
+  },
+  {
+    "player_name": "Miro Muheim",
+    "team_name": "Hamburger SV",
+    "status": "injured",
+    "injury_type": "Adductor pain",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:19.387Z"
+  },
+  {
+    "player_name": "Nnamdi Collins",
+    "team_name": "Eintracht Frankfurt",
+    "status": "injured",
+    "injury_type": "Back problems",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:19.557Z"
+  },
+  {
+    "player_name": "Noël Aséko",
+    "team_name": "Eintracht Frankfurt",
+    "status": "injured",
+    "injury_type": "Knee problems",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:19.717Z"
+  },
+  {
+    "player_name": "Serge Gnabry",
+    "team_name": "Bayern Munich",
+    "status": "injured",
+    "injury_type": "Adductor injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:19.888Z"
+  },
+  {
+    "player_name": "Lennart Karl",
+    "team_name": "Bayern Munich",
+    "status": "injured",
+    "injury_type": "Muscle tear",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:20.057Z"
+  },
+  {
+    "player_name": "Kenan Karaman",
+    "team_name": "FC Schalke 04",
+    "status": "injured",
+    "injury_type": "Hip injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:20.230Z"
+  },
+  {
+    "player_name": "Adrian Gantenbein",
+    "team_name": "FC Schalke 04",
+    "status": "injured",
+    "injury_type": "Ankle injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:20.398Z"
+  },
+  {
+    "player_name": "Benedict Hollerbach",
+    "team_name": "1.FSV Mainz 05",
+    "status": "injured",
+    "injury_type": "Achilles tendon rupture",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:20.567Z"
+  },
+  {
+    "player_name": "Paul Nebel",
+    "team_name": "1.FSV Mainz 05",
+    "status": "injured",
+    "injury_type": "Adductor injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:20.737Z"
+  },
+  {
+    "player_name": "Eric Martel",
+    "team_name": "1.FSV Mainz 05",
+    "status": "injured",
+    "injury_type": "Inner ligament injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:20.907Z"
+  },
+  {
+    "player_name": "Silas",
+    "team_name": "1.FSV Mainz 05",
+    "status": "injured",
+    "injury_type": "Tibia and fibula fracture",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:21.177Z"
+  },
+  {
+    "player_name": "Jamal Musiala",
+    "team_name": "Bayern Munich",
+    "status": "injured",
+    "injury_type": "Rest",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:21.347Z"
+  },
+  {
+    "player_name": "Nyamekye Awortwie-Grant",
+    "team_name": "SC Paderborn 07",
+    "status": "injured",
+    "injury_type": "Unknown",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:21.527Z"
+  },
+  {
+    "player_name": "Dennis Seimen",
+    "team_name": "VfB Stuttgart",
+    "status": "injured",
+    "injury_type": "Hamstring injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:21.697Z"
+  },
+  {
+    "player_name": "Justin Diehl",
+    "team_name": "VfB Stuttgart",
+    "status": "injured",
+    "injury_type": "Hamstring injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:21.867Z"
+  },
+  {
+    "player_name": "Florent Muslija",
+    "team_name": "SC Freiburg",
+    "status": "injured",
+    "injury_type": "Cruciate ligament tear",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:22.037Z"
+  },
+  {
+    "player_name": "Christoph Baumgartner",
+    "team_name": "RB Leipzig",
+    "status": "injured",
+    "injury_type": "Unknown",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:22.207Z"
+  },
+  {
+    "player_name": "Lautaro Martínez",
+    "team_name": null,
+    "status": "injured",
+    "injury_type": "Unknown",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:25.078Z"
+  },
+  {
+    "player_name": "Alessio Romagnoli",
+    "team_name": "SS Lazio",
+    "status": "injured",
+    "injury_type": "Tendon irritation",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:25.257Z"
+  },
+  {
+    "player_name": "Duván Zapata",
+    "team_name": "Torino FC",
+    "status": "injured",
+    "injury_type": "Knee injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:25.427Z"
+  },
+  {
+    "player_name": "Filipe Bordon",
+    "team_name": "SS Lazio",
+    "status": "injured",
+    "injury_type": "Metatarsal fracture",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:25.587Z"
+  },
+  {
+    "player_name": "Gabriele Artistico",
+    "team_name": "SS Lazio",
+    "status": "injured",
+    "injury_type": "Calf problems",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:25.767Z"
+  },
+  {
+    "player_name": "Alessio Furlanetto",
+    "team_name": "SS Lazio",
+    "status": "injured",
+    "injury_type": "Cruciate ligament surgery",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:25.937Z"
+  },
+  {
+    "player_name": "Nuno Tavares",
+    "team_name": "SS Lazio",
+    "status": "injured",
+    "injury_type": "Inflammation in the knee",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:26.118Z"
+  },
+  {
+    "player_name": "Leonardo Colombo",
+    "team_name": "AC Monza",
+    "status": "injured",
+    "injury_type": "unknown injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:26.287Z"
+  },
+  {
+    "player_name": "Samuel Gigot",
+    "team_name": "SS Lazio",
+    "status": "injured",
+    "injury_type": "Back problems",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:26.457Z"
+  },
+  {
+    "player_name": "Danilo Cataldi",
+    "team_name": "SS Lazio",
+    "status": "injured",
+    "injury_type": "Inflammation of pubic bone",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:26.637Z"
+  },
+  {
+    "player_name": "Patric",
+    "team_name": "SS Lazio",
+    "status": "injured",
+    "injury_type": "unknown injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:26.817Z"
+  },
+  {
+    "player_name": "Patrick Ciurria",
+    "team_name": "AC Monza",
+    "status": "injured",
+    "injury_type": "unknown injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:26.997Z"
+  },
+  {
+    "player_name": "Federico Gatti",
+    "team_name": "Juventus FC",
+    "status": "injured",
+    "injury_type": "Ankle problems",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:27.177Z"
+  },
+  {
+    "player_name": "Hamed Traoré",
+    "team_name": "Genoa CFC",
+    "status": "injured",
+    "injury_type": "Adductor pain",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:27.357Z"
+  },
+  {
+    "player_name": "Daniel Boloca",
+    "team_name": "US Sassuolo",
+    "status": "injured",
+    "injury_type": "Arthroscopy",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:27.517Z"
+  },
+  {
+    "player_name": "Yael Trepy",
+    "team_name": "Cagliari Calcio",
+    "status": "injured",
+    "injury_type": "unknown injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:27.697Z"
+  },
+  {
+    "player_name": "Sebastiano Esposito",
+    "team_name": "Cagliari Calcio",
+    "status": "injured",
+    "injury_type": "Unknown",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:27.867Z"
+  },
+  {
+    "player_name": "Kamaldeen Sulemana",
+    "team_name": "Atalanta BC",
+    "status": "injured",
+    "injury_type": "Inner ligament injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:28.047Z"
+  },
+  {
+    "player_name": "Rafael Leão",
+    "team_name": "AC Milan",
+    "status": "injured",
+    "injury_type": "Hamstring injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:28.218Z"
+  },
+  {
+    "player_name": "Lorenzo Venturino",
+    "team_name": "Genoa CFC",
+    "status": "injured",
+    "injury_type": "Knee surgery",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:28.387Z"
+  },
+  {
+    "player_name": "Pasquale Mazzocchi",
+    "team_name": "SSC Napoli",
+    "status": "injured",
+    "injury_type": "Stress reaction of the bone",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:28.557Z"
+  },
+  {
+    "player_name": "Sebastian Walukiewicz",
+    "team_name": "US Sassuolo",
+    "status": "injured",
+    "injury_type": "Dead leg",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:28.737Z"
+  },
+  {
+    "player_name": "Djed Spence",
+    "team_name": "Inter Milan",
+    "status": "injured",
+    "injury_type": "Fitness",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:28.897Z"
+  },
+  {
+    "player_name": "Keinan Davis",
+    "team_name": "Udinese Calcio",
+    "status": "injured",
+    "injury_type": "Muscle fatigue",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:29.068Z"
+  },
+  {
+    "player_name": "Domenico Berardi",
+    "team_name": "US Sassuolo",
+    "status": "injured",
+    "injury_type": "Injury to the ankle",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:29.227Z"
+  },
+  {
+    "player_name": "Giorgio Scalvini",
+    "team_name": "Atalanta BC",
+    "status": "injured",
+    "injury_type": "Ankle sprain",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:29.397Z"
+  },
+  {
+    "player_name": "Charles De Ketelaere",
+    "team_name": "Atalanta BC",
+    "status": "injured",
+    "injury_type": "Adductor pain",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:29.567Z"
+  },
+  {
+    "player_name": "Honest Ahanor",
+    "team_name": "Atalanta BC",
+    "status": "injured",
+    "injury_type": "Adductor pain",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:29.737Z"
+  },
+  {
+    "player_name": "Tino Anjorin",
+    "team_name": "Torino FC",
+    "status": "injured",
+    "injury_type": "Hip bruise",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:29.907Z"
+  },
+  {
+    "player_name": "Idrissa Touré",
+    "team_name": "AC Monza",
+    "status": "injured",
+    "injury_type": "unknown injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:30.077Z"
+  },
+  {
+    "player_name": "Elias Havel",
+    "team_name": "Genoa CFC",
+    "status": "injured",
+    "injury_type": "Adductor pain",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:30.238Z"
+  },
+  {
+    "player_name": "Jeff Ekhator",
+    "team_name": "Juventus FC",
+    "status": "injured",
+    "injury_type": "muscular problems",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:30.417Z"
+  },
+  {
+    "player_name": "Matías Moreno",
+    "team_name": "Venezia FC",
+    "status": "injured",
+    "injury_type": "muscular problems",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:30.598Z"
+  },
+  {
+    "player_name": "Lorenzo Pellegrini",
+    "team_name": "AS Roma",
+    "status": "injured",
+    "injury_type": "Hamstring injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:30.767Z"
+  },
+  {
+    "player_name": "Santiago Gimenez",
+    "team_name": "AC Milan",
+    "status": "injured",
+    "injury_type": "Ankle sprain",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:30.957Z"
+  },
+  {
+    "player_name": "Giorgi Chakvetadze",
+    "team_name": "Udinese Calcio",
+    "status": "injured",
+    "injury_type": "Broken finger",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:31.127Z"
+  },
+  {
+    "player_name": "Pietro Pellegri",
+    "team_name": "Torino FC",
+    "status": "injured",
+    "injury_type": "Cruciate ligament tear",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:31.297Z"
+  },
+  {
+    "player_name": "Medon Berisha",
+    "team_name": "US Lecce",
+    "status": "injured",
+    "injury_type": "Torn thigh muscle",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:31.460Z"
+  },
+  {
+    "player_name": "Hans Nicolussi Caviglia",
+    "team_name": "Parma Calcio 1913",
+    "status": "injured",
+    "injury_type": "Unknown",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:31.627Z"
+  },
+  {
+    "player_name": "Fali Candé",
+    "team_name": "US Sassuolo",
+    "status": "injured",
+    "injury_type": "Cruciate ligament tear",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:31.787Z"
+  },
+  {
+    "player_name": "Gustav Isaksen",
+    "team_name": "SS Lazio",
+    "status": "injured",
+    "injury_type": "Inflammation of pubic bone",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:31.950Z"
+  },
+  {
+    "player_name": "Isak Hien",
+    "team_name": "Atalanta BC",
+    "status": "injured",
+    "injury_type": "Thigh problems",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:32.114Z"
+  },
+  {
+    "player_name": "Andrea Adorante",
+    "team_name": "Venezia FC",
+    "status": "injured",
+    "injury_type": "Back injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:32.274Z"
+  },
+  {
+    "player_name": "Jayden Addai",
+    "team_name": "Como 1907",
+    "status": "injured",
+    "injury_type": "Achilles tendon rupture",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:32.438Z"
+  },
+  {
+    "player_name": "Alessandro Zanoli",
+    "team_name": "Udinese Calcio",
+    "status": "injured",
+    "injury_type": "Cruciate ligament tear",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:32.609Z"
+  },
+  {
+    "player_name": "Edoardo Pieragnolo",
+    "team_name": "US Sassuolo",
+    "status": "injured",
+    "injury_type": "Cruciate ligament injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:32.820Z"
+  },
+  {
+    "player_name": "Luca Marianucci",
+    "team_name": "SSC Napoli",
+    "status": "injured",
+    "injury_type": "Inner ligament injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:32.983Z"
+  },
+  {
+    "player_name": "Fabiano Parisi",
+    "team_name": "ACF Fiorentina",
+    "status": "injured",
+    "injury_type": "Cruciate ligament injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:33.143Z"
+  },
+  {
+    "player_name": "Riyad Idrissi",
+    "team_name": "Cagliari Calcio",
+    "status": "injured",
+    "injury_type": "Cruciate ligament tear",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:33.308Z"
+  },
+  {
+    "player_name": "Marin Šverko",
+    "team_name": "Venezia FC",
+    "status": "injured",
+    "injury_type": "unknown injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:33.477Z"
+  },
+  {
+    "player_name": "Alessandro Buongiorno",
+    "team_name": "SSC Napoli",
+    "status": "injured",
+    "injury_type": "Knee surgery",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:33.647Z"
+  },
+  {
+    "player_name": "Matteo Pessina",
+    "team_name": "AC Monza",
+    "status": "injured",
+    "injury_type": "Knee injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:33.817Z"
+  },
+  {
+    "player_name": "Franco Israel",
+    "team_name": "Torino FC",
+    "status": "injured",
+    "injury_type": "Shoulder injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:33.998Z"
+  },
+  {
+    "player_name": "Ismaël Koné",
+    "team_name": "US Sassuolo",
+    "status": "injured",
+    "injury_type": "Tibia and fibula fracture",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:34.177Z"
+  },
+  {
+    "player_name": "Vitinha",
+    "team_name": null,
+    "status": "injured",
+    "injury_type": "Unknown",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:37.578Z"
+  },
+  {
+    "player_name": "Takumi Minamino",
+    "team_name": "AS Monaco",
+    "status": "injured",
+    "injury_type": "Cruciate ligament tear",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:37.857Z"
+  },
+  {
+    "player_name": "Mohammed Salisu",
+    "team_name": "AS Monaco",
+    "status": "injured",
+    "injury_type": "Cruciate ligament tear",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:38.137Z"
+  },
+  {
+    "player_name": "Bryan Okoh",
+    "team_name": "AJ Auxerre",
+    "status": "injured",
+    "injury_type": "Cruciate ligament tear",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:38.467Z"
+  },
+  {
+    "player_name": "Rafik Messali",
+    "team_name": "FC Toulouse",
+    "status": "injured",
+    "injury_type": "Injury to the ankle",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:38.748Z"
+  },
+  {
+    "player_name": "Laurent Abergel",
+    "team_name": "OGC Nice",
+    "status": "injured",
+    "injury_type": "Cruciate ligament tear",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:39.077Z"
+  },
+  {
+    "player_name": "Stephan Zagadou",
+    "team_name": "Le Havre AC",
+    "status": "injured",
+    "injury_type": "Cruciate ligament tear",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:39.367Z"
+  },
+  {
+    "player_name": "Jonathan Gradit",
+    "team_name": "RC Lens",
+    "status": "injured",
+    "injury_type": "Lower leg fracture",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:39.697Z"
+  },
+  {
+    "player_name": "Jhoanner Chávez",
+    "team_name": "RC Lens",
+    "status": "injured",
+    "injury_type": "Thigh problems",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:39.977Z"
+  },
+  {
+    "player_name": "Nidal Celik",
+    "team_name": "RC Lens",
+    "status": "injured",
+    "injury_type": "Meniscus injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:40.313Z"
+  },
+  {
+    "player_name": "Hamza Igamane",
+    "team_name": "LOSC Lille",
+    "status": "injured",
+    "injury_type": "Cruciate ligament tear",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:40.597Z"
+  },
+  {
+    "player_name": "Louis Mouton",
+    "team_name": "Angers SCO",
+    "status": "injured",
+    "injury_type": "Meniscus injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:40.797Z"
+  },
+  {
+    "player_name": "Marvin Senaya",
+    "team_name": "AJ Auxerre",
+    "status": "injured",
+    "injury_type": "Hamstring injury",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:40.967Z"
+  },
+  {
+    "player_name": "Samson Baidoo",
+    "team_name": "RC Lens",
+    "status": "injured",
+    "injury_type": "Dead leg",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:41.137Z"
+  },
+  {
+    "player_name": "Joaquín Panichelli",
+    "team_name": "RC Strasbourg Alsace",
+    "status": "injured",
+    "injury_type": "Unknown",
+    "expected_return": null,
+    "source": "transfermarkt",
+    "fetched_at": "2026-08-23T02:13:41.307Z"
+  }
+]
