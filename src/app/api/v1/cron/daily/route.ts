@@ -86,14 +86,14 @@ export async function GET(request: NextRequest) {
     // Step 3: Settle finished matches
     console.log("[DAILY CRON] Step 3/5: Settling finished matches...");
     await new Promise((resolve) => setTimeout(resolve, 5000));
-    const settleResult = await callInternal("/api/v1/cron/sync", "POST", { type: "settle" });
+    const settleResult = await callInternal("/api/v1/cron/settle", "POST");
     results.settle = settleResult;
     console.log(`[DAILY CRON] Settle completed in ${settleResult.duration}`);
 
     // Step 4: Learn from results
     console.log("[DAILY CRON] Step 4/5: Learning from results...");
     await new Promise((resolve) => setTimeout(resolve, 5000));
-    const learnResult = await callInternal("/api/v1/cron/sync", "POST", { type: "learn" });
+    const learnResult = await callInternal("/api/v1/cron/learn", "POST");
     results.learn = learnResult;
     console.log(`[DAILY CRON] Learn completed in ${learnResult.duration}`);
 
