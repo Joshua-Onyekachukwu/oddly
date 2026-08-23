@@ -194,6 +194,20 @@ def load_player_impacts():
         print("   ⚠️  player-team-impacts.json not found. Using defaults.")
         return {}
 
+def load_injury_impacts():
+    """Load team injury impact scores from local JSON file."""
+    print("\U0001f3ae Loading injury impact scores...")
+    
+    impact_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'team-injury-impact.json')
+    try:
+        with open(impact_path, 'r', encoding='utf-8') as f:
+            impacts = json.load(f)
+        print(f"   Loaded injury impacts for {len(impacts)} teams")
+        return impacts
+    except FileNotFoundError:
+        print("   ⚠️  team-injury-impact.json not found. Using defaults.")
+        return {}
+
 # ─── Feature Engineering ─────────────────────────────────────────────────
 
 def compute_team_form(matches, team_id, before_date, n_matches=10):
@@ -315,7 +329,7 @@ def compute_league_stats(matches, league_id, before_date):
         'league_btts_rate': btts / n,
     }
 
-def build_features(match, matches, odds_map, teams, strengths, player_impacts=None, team_names=None):
+def build_features(match, matches, odds_map, teams, strengths, player_impacts=None, injury_impacts=None, team_names=None):
     """Build feature vector for a single match."""
     home_id = match['home_team_id']
     away_id = match['away_team_id']
@@ -329,6 +343,8 @@ def build_features(match, matches, odds_map, teams, strengths, player_impacts=No
     away_name = team_names.get(away_id, '')
     home_pis = (player_impacts or {}).get(home_name, {})
     away_pis = (player_impacts or {}).get(away_name, {})
+    home_inj = (injury_impacts or {}).get(home_name, {})
+    away_inj = (injury_impacts or {}).get(away_name, {})
     
     # Team form
     home_form = compute_team_form(matches, home_id, kickoff, 10)
@@ -418,7 +434,7 @@ def build_features(match, matches, odds_map, teams, strengths, player_impacts=No
         'odds_away': away_odds,
         'market_overround': home_implied + draw_implied + away_implied - 100,
         
-        # Player Impact Score features (12 new features)
+        # Player Impact Score features (17 features)
         'home_pis': home_pis.get('player_impact_score', 5.0),
         'away_pis': away_pis.get('player_impact_score', 5.0),
         'pis_diff': home_pis.get('player_impact_score', 5.0) - away_pis.get('player_impact_score', 5.0),
@@ -436,6 +452,14 @@ def build_features(match, matches, odds_map, teams, strengths, player_impacts=No
         'home_1x2_pis_impact': home_pis.get('pis_1x2_impact', 0),
         'away_1x2_pis_impact': away_pis.get('pis_1x2_impact', 0),
         'pis_1x2_diff': home_pis.get('pis_1x2_impact', 0) - away_pis.get('pis_1x2_impact', 0),
+        
+        # Injury Impact features (6 new features)
+        'home_injury_impact': home_inj.get('injury_impact_per_match', 1.0),
+        'away_injury_impact': away_inj.get('injury_impact_per_match', 1.0),
+        'injury_diff': home_inj.get('injury_impact_per_match', 1.0) - away_inj.get('injury_impact_per_match', 1.0),
+        'home_injuries_per_match': home_inj.get('injuries_per_match', 2.0),
+        'away_injuries_per_match': away_inj.get('injuries_per_match', 2.0),
+        'injury_disadvantage': (home_inj.get('injury_impact_per_match', 1.0) - away_inj.get('injury_impact_per_match', 1.0)) * -1,  # Positive when away team is more injured
     }
     
     return features
@@ -666,6 +690,7 @@ def main():
     teams = load_teams(sb)
     strengths = compute_elo_ratings(matches)
     player_impacts = load_player_impacts()
+    injury_impacts = load_injury_impacts()
     
     # Build team name -> ID mapping for player impact lookup
     team_names = {}
@@ -704,7 +729,7 @@ def main():
         if match['home_score'] is None:
             continue
         
-        features = build_features(match, matches, odds_map, teams, strengths, player_impacts, team_names)
+        features = build_features(match, matches, odds_map, teams, strengths, player_impacts, injury_impacts, team_names)
         targets = compute_targets(match)
         
         feature_rows.append(features)
