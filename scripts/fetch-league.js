@@ -63,9 +63,16 @@ async function main() {
   }
   const leagueId = league[0].id;
 
-  // Get existing external IDs
-  const { data: existing } = await sb.from("fixtures").select("external_id").limit(50000);
-  const existingIds = new Set((existing || []).map((f) => f.external_id).filter(Boolean));
+  // Get existing external IDs (paginate through all)
+  const existingIds = new Set();
+  let offset = 0;
+  while (true) {
+    const { data: batch } = await sb.from("fixtures").select("external_id").range(offset, offset + 999);
+    if (!batch?.length) break;
+    batch.forEach((f) => { if (f.external_id) existingIds.add(f.external_id); });
+    if (batch.length < 1000) break;
+    offset += 1000;
+  }
   console.log(`Existing fixtures: ${existingIds.size}`);
 
   let totalNew = 0;

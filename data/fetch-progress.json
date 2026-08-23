@@ -75,5 +75,40 @@
     "dupes": 380,
     "fetched": 380,
     "ts": "2026-08-21T14:14:57.374Z"
+  },
+  "PD-2024": {
+    "done": true,
+    "stored": 0,
+    "dupes": 380,
+    "fetched": 380,
+    "ts": "2026-08-21T14:16:22.321Z"
+  },
+  "SA-2023": {
+    "done": true,
+    "stored": 0,
+    "dupes": 380,
+    "fetched": 380,
+    "ts": "2026-08-21T14:17:51.302Z"
+  },
+  "SA-2024": {
+    "done": true,
+    "stored": 0,
+    "dupes": 380,
+    "fetched": 380,
+    "ts": "2026-08-21T14:19:18.448Z"
+  },
+  "FL1-2023": {
+    "done": true,
+    "stored": 0,
+    "dupes": 306,
+    "fetched": 306,
+    "ts": "2026-08-21T14:20:40.011Z"
+  },
+  "FL1-2024": {
+    "done": true,
+    "stored": 0,
+    "dupes": 305,
+    "fetched": 305,
+    "ts": "2026-08-21T14:21:53.508Z"
   }
 }
