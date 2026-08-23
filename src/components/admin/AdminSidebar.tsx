@@ -7,6 +7,7 @@ import { useAuth } from "@/providers/AuthProvider";
 
 interface AdminSidebarProps {
   toggleActive: () => void;
+  isOpen?: boolean;
 }
 
 interface NavItem {
@@ -53,7 +54,7 @@ const ADMIN_NAV_GROUPS: NavGroup[] = [
   },
 ];
 
-const AdminSidebar: React.FC<AdminSidebarProps> = ({ toggleActive }) => {
+const AdminSidebar: React.FC<AdminSidebarProps> = ({ toggleActive, isOpen }) => {
   const pathname = usePathname();
   const { profile } = useAuth();
   const [expandedGroups, setExpandedGroups] = React.useState<Set<number>>(
@@ -80,13 +81,15 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ toggleActive }) => {
   return (
     <>
       {/* Mobile overlay */}
-      <div
-        className="fixed inset-0 bg-black/40 z-[6] xl:hidden transition-opacity duration-300"
-        onClick={toggleActive}
-      />
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-[6] xl:hidden transition-opacity duration-300"
+          onClick={toggleActive}
+        />
+      )}
 
       {/* Sidebar */}
-      <aside className="fixed top-0 left-0 h-screen w-[260px] bg-[#0A0F1C] border-r border-white/5 z-[7] flex flex-col transition-transform duration-300 xl:translate-x-0 -translate-x-full">
+      <aside className={`fixed top-0 left-0 h-screen w-[260px] bg-[#0A0F1C] border-r border-white/5 z-[7] flex flex-col transition-transform duration-300 xl:translate-x-0 ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
         {/* Logo + Admin badge */}
         <div className="h-[60px] flex items-center justify-between px-[20px] border-b border-white/5 flex-none">
           <Link href="/admin" className="flex items-center gap-[8px]">

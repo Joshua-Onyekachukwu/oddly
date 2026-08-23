@@ -37,7 +37,7 @@ export default function AdminLayoutClient({
 
   return (
     <div className="min-h-screen bg-[#F8F9FC]">
-      <AdminSidebar toggleActive={() => setSidebarOpen(!sidebarOpen)} />
+      <AdminSidebar toggleActive={() => setSidebarOpen(!sidebarOpen)} isOpen={sidebarOpen} />
 
       {/* Main content area */}
       <div className="xl:ml-[260px] min-h-screen flex flex-col">
