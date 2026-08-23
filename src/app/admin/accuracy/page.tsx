@@ -304,28 +304,28 @@ export default function AccuracyPage() {
         </div>
       )}
 
-      {/* Summary Stats */}
+      {/* Summary Stats — no duplicate accuracy, use commas */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-[12px] mb-[24px]">
         <StatCard
           label="Total Predictions"
-          value={loading ? "—" : String(totalPreds)}
+          value={loading ? "—" : totalPreds.toLocaleString()}
           icon="ri-target-line"
           color="bg-blue-50 text-blue-600"
         />
         <StatCard
           label="Settled"
-          value={loading ? "—" : String(settledPreds)}
+          value={loading ? "—" : settledPreds.toLocaleString()}
           icon="ri-check-double-line"
           color="bg-gray-100 text-gray-600"
         />
         <StatCard
-          label="Overall Accuracy"
-          value={loading ? "—" : settledPreds > 0 ? `${overallAccuracy}%` : "Awaiting results"}
-          icon="ri-percent-line"
-          color={overallAccuracy >= 65 ? "bg-green-50 text-green-600" : overallAccuracy >= 55 ? "bg-amber-50 text-amber-600" : "bg-red-50 text-red-600"}
+          label="Unsettled"
+          value={loading ? "—" : (totalPreds - settledPreds).toLocaleString()}
+          icon="ri-time-line"
+          color="bg-amber-50 text-amber-600"
         />
         <StatCard
-          label="High-Conf (65%+)"
+          label="Win Rate (ELITE)"
           value={loading ? "—" : highConfStats.total > 0 ? `${highConfStats.accuracy}%` : "Awaiting results"}
           icon="ri-shield-check-line"
           color={highConfStats.accuracy >= 70 ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-600"}
