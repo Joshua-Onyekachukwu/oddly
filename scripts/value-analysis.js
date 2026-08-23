@@ -34,21 +34,26 @@ function loadEnv() {
 const env = loadEnv();
 const sb = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
-// Map prediction market names to odds snapshot selection names
-const MARKET_MAP = {
-  "1X2_Home": { odds: "Home", label: "Home Win" },
-  "1X2_Draw": { odds: "Draw", label: "Draw" },
-  "1X2_Away": { odds: "Away", label: "Away Win" },
-  "DC_1X": { odds: "DC_1X", label: "Double Chance 1X" },
-  "DC_X2": { odds: "DC_X2", label: "Double Chance X2" },
-  "DNB_Home": { odds: "DNB_Home", label: "Home DNB" },
-  "DNB_Away": { odds: "DNB_Away", label: "Away DNB" },
-  "OU_Over_2.5": { odds: "OU_Over_2.5", label: "Over 2.5" },
-  "OU_Under_2.5": { odds: "OU_Under_2.5", label: "Under 2.5" },
-  "OU_Over_1.5": { odds: "OU_Over_1.5", label: "Over 1.5" },
-  "OU_Under_3.5": { odds: "OU_Under_3.5", label: "Under 3.5" },
-  "BTTS_Yes": { odds: "BTTS_Yes", label: "BTTS Yes" },
-  "BTTS_No": { odds: "BTTS_No", label: "BTTS No" },
+// Map prediction market+selection to odds market+selection
+// Odds API uses: 1X2 (Home/Draw/Away), match_result (home/away/draw),
+//   over_under_2.5 (over/under), Over/Under 2.5 (Over/Under), BTTS (Yes/No)
+// Predictions use: 1X2 (Home/Draw/Away), OU (Over_X.X/Under_X.X), BTTS (Yes/No)
+const ODDS_MATCH = {
+  // odds_market + odds_selection → prediction_market + prediction_selection
+  "1X2|Home": { pred: "1X2", sel: "Home" },
+  "1X2|Draw": { pred: "1X2", sel: "Draw" },
+  "1X2|Away": { pred: "1X2", sel: "Away" },
+  "match_result|home": { pred: "1X2", sel: "Home" },
+  "match_result|draw": { pred: "1X2", sel: "Draw" },
+  "match_result|away": { pred: "1X2", sel: "Away" },
+  "Over/Under 2.5|Over": { pred: "OU", sel: "Over_2.5" },
+  "Over/Under 2.5|Under": { pred: "OU", sel: "Under_2.5" },
+  "over_under_2.5|over": { pred: "OU", sel: "Over_2.5" },
+  "over_under_2.5|under": { pred: "OU", sel: "Under_2.5" },
+  "BTTS|Yes": { pred: "BTTS", sel: "Yes" },
+  "BTTS|No": { pred: "BTTS", sel: "No" },
+  "btts|yes": { pred: "BTTS", sel: "Yes" },
+  "btts|no": { pred: "BTTS", sel: "No" },
 };
 
 function clamp(v, lo = 0.01, hi = 0.99) { return Math.max(lo, Math.min(hi, v)); }
@@ -57,17 +62,26 @@ async function main() {
   console.log("📊 ODDLY Value Analysis: Model vs Bookmaker");
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   
-  // Load all upcoming predictions with odds
+  // First find fixtures that have odds (much smaller set)
+  const { data: oddsFixtures } = await sb
+    .from("odds_snapshots")
+    .select("fixture_id")
+    .limit(5000);
+  const oddsFixtureIds = [...new Set((oddsFixtures || []).map(o => o.fixture_id))];
+  console.log(`📋 ${oddsFixtureIds.length} fixtures with odds available`);
+  
+  // Load those fixtures
   const { data: fixtures } = await sb
     .from("fixtures")
     .select("id, home_team_id, away_team_id, kickoff_time, status, leagues(name)")
-    .eq("status", "scheduled")
+    .in("id", oddsFixtureIds)
     .order("kickoff_time", { ascending: true });
   
-  console.log(`📋 ${fixtures?.length || 0} upcoming fixtures`);
+  console.log(`📋 ${fixtures?.length || 0} fixtures loaded`);
   
-  // Load all predictions for these fixtures
   const fixtureIds = (fixtures || []).map(f => f.id);
+  
+  // Load predictions for these fixtures
   const { data: predictions } = await sb
     .from("predictions")
     .select("fixture_id, market, selection, model_probability, confidence_lower, confidence_upper, confidence_tier")
@@ -79,12 +93,19 @@ async function main() {
     .select("fixture_id, market, selection, odds")
     .in("fixture_id", fixtureIds);
   
-  // Build odds lookup
+  // Build odds lookup: fixture|pred_market|pred_selection → best odds
   const oddsMap = {};
   for (const o of oddsData || []) {
-    const key = `${o.fixture_id}|${o.selection}`;
-    if (!oddsMap[key]) oddsMap[key] = [];
-    oddsMap[key].push(o.odds);
+    const match = ODDS_MATCH[`${o.market}|${o.selection}`];
+    if (match) {
+      const key = `${o.fixture_id}|${match.pred}|${match.sel}`;
+      if (!oddsMap[key]) oddsMap[key] = [];
+      oddsMap[key].push(o.odds);
+    }
+    // Also store raw for fallback
+    const rawKey = `${o.fixture_id}|${o.market}|${o.selection}`;
+    if (!oddsMap[rawKey]) oddsMap[rawKey] = [];
+    oddsMap[rawKey].push(o.odds);
   }
   
   // Build teams lookup
@@ -105,6 +126,7 @@ async function main() {
   
   // Analyze value
   const allValues = [];
+  const seenPreds = new Set();
   let totalPredictions = 0;
   let valueCount = 0;
   
@@ -116,8 +138,15 @@ async function main() {
     
     for (const pred of preds) {
       totalPredictions++;
-      const oddsKey = `${fixture.id}|${pred.selection}`;
+      const dedupKey = `${fixture.id}|${pred.market}|${pred.selection}`;
+      if (seenPreds.has(dedupKey)) continue;
+      seenPreds.add(dedupKey);
+      
+      // Look up odds for this prediction
+      const oddsKey = `${fixture.id}|${pred.market}|${pred.selection}`;
       const oddsValues = oddsMap[oddsKey] || [];
+      
+      if (oddsValues.length === 0) continue;
       
       if (oddsValues.length === 0) continue;
       
