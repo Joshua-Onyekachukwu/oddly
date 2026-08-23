@@ -46,9 +46,31 @@ function formatKickoff(iso: string): string {
   }
 }
 
-const HeroBanner: React.FC<HeroBannerProps> = ({ crownJewel, stats }) => {
+const HeroBanner: React.FC<HeroBannerProps> = ({ crownJewel, stats: initialStats }) => {
   const { ref: heroRef, isVisible } = useScrollReveal({ threshold: 0.05 });
   const { ref: cardRef, isVisible: cardVisible } = useScrollReveal({ threshold: 0.1 });
+  const [stats, setStats] = React.useState(initialStats);
+
+  // Poll live stats every 60 seconds
+  React.useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await fetch("/api/v1/stats", { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          setStats((prev) => ({
+            ...prev,
+            totalFixturesToday: data.fixturesToday ?? prev.totalFixturesToday,
+            totalLeagues: data.totalLeagues > 0 ? data.totalLeagues : prev.totalLeagues,
+            totalPredictions: data.totalPredictions ?? prev.totalPredictions,
+          }));
+        }
+      } catch {}
+    };
+    fetchStats();
+    const interval = setInterval(fetchStats, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Use live data or fallbacks
   const cj = crownJewel;
