@@ -1,0 +1,14 @@
+{
+  "generated_at": "2026-08-23T03:02:36.288938",
+  "fixtures_analyzed": 216,
+  "total_edges": 193,
+  "elite": 188,
+  "high": 2,
+  "value": 3,
+  "minor": 0,
+  "top_edges": [
+    {
+      "fixture": "psv eindhoven vs groningen",
+      "market": "OU35",
+      "selection": "No",
+      "model_prob": 

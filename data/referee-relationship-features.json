@@ -1,0 +1,1816 @@
+{
+  "generatedAt": "2026-08-22T22:41:27.028Z",
+  "totalMatches": 14285,
+  "features": {
+    "teamRefereeDominance": [
+      {
+        "team": "Arsenal",
+        "referee": "S Barrott",
+        "matches": 8,
+        "winRate": 100,
+        "goalDiff": 2.3,
+        "signal": "DOMINANT"
+      },
+      {
+        "team": "Man City",
+        "referee": "D Coote",
+        "matches": 6,
+        "winRate": 100,
+        "goalDiff": 2.2,
+        "signal": "DOMINANT"
+      },
+      {
+        "team": "Liverpool",
+        "referee": "J Moss",
+        "matches": 12,
+        "winRate": 100,
+        "goalDiff": 2.4,
+        "signal": "DOMINANT"
+      },
+      {
+        "team": "Man City",
+        "referee": "L Mason",
+        "matches": 7,
+        "winRate": 100,
+        "goalDiff": 2.7,
+        "signal": "DOMINANT"
+      },
+      {
+        "team": "Man City",
+        "referee": "J Moss",
+        "matches": 11,
+        "winRate": 90.9,
+        "goalDiff": 2.5,
+        "signal": "DOMINANT"
+      },
+      {
+        "team": "Man City",
+        "referee": "K Friend",
+        "matches": 9,
+        "winRate": 88.9,
+        "goalDiff": 1.6,
+        "signal": "DOMINANT"
+      },
+      {
+        "team": "Man City",
+        "referee": "P Tierney",
+        "matches": 21,
+        "winRate": 85.7,
+        "goalDiff": 2.2,
+        "signal": "DOMINANT"
+      },
+      {
+        "team": "Arsenal",
+        "referee": "S Hooper",
+        "matches": 12,
+        "winRate": 83.3,
+        "goalDiff": 2,
+        "signal": "DOMINANT"
+      },
+      {
+        "team": "Man City",
+        "referee": "D England",
+        "matches": 12,
+        "winRate": 83.3,
+        "goalDiff": 1.4,
+        "signal": "DOMINANT"
+      },
+      {
+        "team": "Man City",
+        "referee": "C Pawson",
+        "matches": 16,
+        "winRate": 81.3,
+        "goalDiff": 1.8,
+        "signal": "DOMINANT"
+      },
+      {
+        "team": "Arsenal",
+        "referee": "J Gillett",
+        "matches": 10,
+        "winRate": 80,
+        "goalDiff": 1.9,
+        "signal": "DOMINANT"
+      },
+      {
+        "team": "Leeds",
+        "referee": "J Gillett",
+        "matches": 6,
+        "winRate": 0,
+        "goalDiff": -1.2,
+        "signal": "STRUGGLING"
+      },
+      {
+        "team": "Burnley",
+        "referee": "S Barrott",
+        "matches": 6,
+        "winRate": 0,
+        "goalDiff": -1.3,
+        "signal": "STRUGGLING"
+      },
+      {
+        "team": "Leeds",
+        "referee": "C Pawson",
+        "matches": 6,
+        "winRate": 0,
+        "goalDiff": -2.2,
+        "signal": "STRUGGLING"
+      },
+      {
+        "team": "Burnley",
+        "referee": "T Bramall",
+        "matches": 5,
+        "winRate": 0,
+        "goalDiff": -1.2,
+        "signal": "STRUGGLING"
+      },
+      {
+        "team": "Man City",
+        "referee": "R Jones",
+        "matches": 10,
+        "winRate": 80,
+        "goalDiff": 1.4,
+        "signal": "DOMINANT"
+      },
+      {
+        "team": "Everton",
+        "referee": "T Bramall",
+        "matches": 5,
+        "winRate": 0,
+        "goalDiff": -1,
+        "signal": "STRUGGLING"
+      },
+      {
+        "team": "Brentford",
+        "referee": "C Kavanagh",
+        "matches": 5,
+        "winRate": 0,
+        "goalDiff": -1.2,
+        "signal": "STRUGGLING"
+      },
+      {
+        "team": "Nott'm Forest",
+        "referee": "T Robinson",
+        "matches": 5,
+        "winRate": 80,
+        "goalDiff": 0.8,
+        "signal": "DOMINANT"
+      },
+      {
+        "team": "Everton",
+        "referee": "J Brooks",
+        "matches": 13,
+        "winRate": 0,
+        "goalDiff": -1.2,
+        "signal": "STRUGGLING"
+      },
+      {
+        "team": "Ipswich",
+        "referee": "M Salisbury",
+        "matches": 5,
+        "winRate": 0,
+        "goalDiff": -2.4,
+        "signal": "STRUGGLING"
+      },
+      {
+        "team": "Fulham",
+        "referee": "T Robinson",
+        "matches": 5,
+        "winRate": 0,
+        "goalDiff": -1,
+        "signal": "STRUGGLING"
+      },
+      {
+        "team": "Southampton",
+        "referee": "T Harrington",
+        "matches": 6,
+        "winRate": 0,
+        "goalDiff": -1.5,
+        "signal": "STRUGGLING"
+      },
+      {
+        "team": "Southampton",
+        "referee": "T Bramall",
+        "matches": 5,
+        "winRate": 0,
+        "goalDiff": -2.4,
+        "signal": "STRUGGLING"
+      },
+      {
+        "team": "Leicester",
+        "referee": "P Bankes",
+        "matches": 5,
+        "winRate": 80,
+        "goalDiff": 2,
+        "signal": "DOMINANT"
+      },
+      {
+        "team": "Sheffield United",
+        "referee": "G Scott",
+        "matches": 5,
+        "winRate": 0,
+        "goalDiff": -0.8,
+        "signal": "STRUGGLING"
+      },
+      {
+        "team": "Brentford",
+        "referee": "D Coote",
+        "matches": 6,
+        "winRate": 0,
+        "goalDiff": -1,
+        "signal": "STRUGGLING"
+      },
+      {
+        "team": "Burnley",
+        "referee": "A Marriner",
+        "matches": 8,
+        "winRate": 0,
+        "goalDiff": -1.8,
+        "signal": "STRUGGLING"
+      },
+      {
+        "team": "Watford",
+        "referee": "K Friend",
+        "matches": 6,
+        "winRate": 0,
+        "goalDiff": -1.3,
+        "signal": "STRUGGLING"
+      },
+      {
+        "team": "Norwich",
+        "referee": "S Hooper",
+        "matches": 7,
+        "winRate": 0,
+        "goalDiff": -1.3,
+        "signal": "STRUGGLING"
+      },
+      {
+        "team": "Watford",
+        "referee": "M Atkinson",
+        "matches": 7,
+        "winRate": 0,
+        "goalDiff": -1.1,
+        "signal": "STRUGGLING"
+      },
+      {
+        "team": "Norwich",
+        "referee": "C Kavanagh",
+        "matches": 5,
+        "winRate": 0,
+        "goalDiff": -2.6,
+        "signal": "STRUGGLING"
+      },
+      {
+        "team": "Fulham",
+        "referee": "A Marriner",
+        "matches": 5,
+        "winRate": 0,
+        "goalDiff": -1.2,
+        "signal": "STRUGGLING"
+      },
+      {
+        "team": "Chelsea",
+        "referee": "G Scott",
+        "matches": 5,
+        "winRate": 80,
+        "goalDiff": 1.6,
+        "signal": "DOMINANT"
+      },
+      {
+        "team": "Bournemouth",
+        "referee": "L Mason",
+        "matches": 7,
+        "winRate": 0,
+        "goalDiff": -1.9,
+        "signal": "STRUGGLING"
+      },
+      {
+        "team": "Liverpool",
+        "referee": "S Attwell",
+        "matches": 19,
+        "winRate": 78.9,
+        "goalDiff": 1.6,
+        "signal": "DOMINANT"
+      },
+      {
+        "team": "Aston Villa",
+        "referee": "J Brooks",
+        "matches": 9,
+        "winRate": 77.8,
+        "goalDiff": 1.6,
+        "signal": "DOMINANT"
+      },
+      {
+        "team": "Tottenham",
+        "referee": "G Scott",
+        "matches": 9,
+        "winRate": 77.8,
+        "goalDiff": 1,
+        "signal": "DOMINANT"
+      },
+      {
+        "team": "Arsenal",
+        "referee": "D England",
+        "matches": 8,
+        "winRate": 75,
+        "goalDiff": 1.4,
+        "signal": "DOMINANT"
+      },
+      {
+        "team": "Man City",
+        "referee": "A Marriner",
+        "matches": 16,
+        "winRate": 75,
+        "goalDiff": 1.9,
+        "signal": "DOMINANT"
+      },
+      {
+        "team": "Crystal Palace",
+        "referee": "D England",
+        "matches": 15,
+        "winRate": 6.7,
+        "goalDiff": -1,
+        "signal": "STRUGGLING"
+      },
+      {
+        "team": "Southampton",
+        "referee": "A Taylor",
+        "matches": 14,
+        "winRate": 7.1,
+        "goalDiff": -0.6,
+        "signal": "STRUGGLING"
+      },
+      {
+        "team": "Newcastle",
+        "referee": "A Marriner",
+        "matches": 14,
+        "winRate": 7.1,
+        "goalDiff": -0.7,
+        "signal": "STRUGGLING"
+      },
+      {
+        "team": "Liverpool",
+        "referee": "C Pawson",
+        "matches": 21,
+        "winRate": 71.4,
+        "goalDiff": 1.5,
+        "signal": "DOMINANT"
+      },
+      {
+        "team": "Arsenal",
+        "referee": "G Scott",
+        "matches": 7,
+        "winRate": 71.4,
+        "goalDiff": 1.7,
+        "signal": "DOMINANT"
+      },
+      {
+        "team": "Nott'm Forest",
+        "referee": "S Hooper",
+        "matches": 11,
+        "winRate": 9.1,
+        "goalDiff": -1.2,
+        "signal": "STRUGGLING"
+      },
+      {
+        "team": "Fulham",
+        "referee": "P Tierney",
+        "matches": 11,
+        "winRate": 9.1,
+        "goalDiff": -0.8,
+        "signal": "STRUGGLING"
+      },
+      {
+        "team": "Southampton",
+        "referee": "G Scott",
+        "matches": 11,
+        "winRate": 9.1,
+        "goalDiff": -1,
+        "signal": "STRUGGLING"
+      },
+      {
+        "team": "Brighton",
+        "referee": "M Dean",
+        "matches": 11,
+        "winRate": 9.1,
+        "goalDiff": -0.8,
+        "signal": "STRUGGLING"
+      },
+      {
+        "team": "Burnley",
+        "referee": "C Pawson",
+        "matches": 10,
+        "winRate": 10,
+        "goalDiff": -1.1,
+        "signal": "STRUGGLING"
+      }
+    ],
+    "teamRefereeCards": [
+      {
+        "team": "West Ham",
+        "referee": "S Barrott",
+        "matches": 6,
+        "avgYellow": 3.3,
+        "avgFouls": 11.3,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Aston Villa",
+        "referee": "J Brooks",
+        "matches": 9,
+        "avgYellow": 3.2,
+        "avgFouls": 12.1,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Tottenham",
+        "referee": "S Barrott",
+        "matches": 5,
+        "avgYellow": 3.2,
+        "avgFouls": 11.2,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Leeds",
+        "referee": "S Hooper",
+        "matches": 8,
+        "avgYellow": 3.1,
+        "avgFouls": 13.4,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Southampton",
+        "referee": "D Coote",
+        "matches": 8,
+        "avgYellow": 3.1,
+        "avgFouls": 15.3,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Burnley",
+        "referee": "D England",
+        "matches": 5,
+        "avgYellow": 3,
+        "avgFouls": 12,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Leeds",
+        "referee": "K Friend",
+        "matches": 6,
+        "avgYellow": 3,
+        "avgFouls": 12,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Bournemouth",
+        "referee": "T Bramall",
+        "matches": 8,
+        "avgYellow": 2.9,
+        "avgFouls": 12.5,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Nott'm Forest",
+        "referee": "R Jones",
+        "matches": 8,
+        "avgYellow": 2.9,
+        "avgFouls": 11.5,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Chelsea",
+        "referee": "J Brooks",
+        "matches": 8,
+        "avgYellow": 2.9,
+        "avgFouls": 9.8,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Wolves",
+        "referee": "J Brooks",
+        "matches": 7,
+        "avgYellow": 2.9,
+        "avgFouls": 10.4,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Arsenal",
+        "referee": "K Friend",
+        "matches": 6,
+        "avgYellow": 2.8,
+        "avgFouls": 9.2,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Everton",
+        "referee": "T Robinson",
+        "matches": 5,
+        "avgYellow": 2.8,
+        "avgFouls": 13.2,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Sheffield United",
+        "referee": "M Dean",
+        "matches": 5,
+        "avgYellow": 2.8,
+        "avgFouls": 12,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Everton",
+        "referee": "T Harrington",
+        "matches": 8,
+        "avgYellow": 2.8,
+        "avgFouls": 12.3,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Tottenham",
+        "referee": "J Gillett",
+        "matches": 15,
+        "avgYellow": 2.7,
+        "avgFouls": 10.9,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Man United",
+        "referee": "R Jones",
+        "matches": 11,
+        "avgYellow": 2.7,
+        "avgFouls": 12.5,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Watford",
+        "referee": "A Taylor",
+        "matches": 7,
+        "avgYellow": 2.7,
+        "avgFouls": 12.7,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Fulham",
+        "referee": "P Bankes",
+        "matches": 10,
+        "avgYellow": 2.7,
+        "avgFouls": 12.4,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Man City",
+        "referee": "D Coote",
+        "matches": 6,
+        "avgYellow": 0.3,
+        "avgFouls": 8.5,
+        "signal": "LENIENT"
+      },
+      {
+        "team": "Liverpool",
+        "referee": "J Moss",
+        "matches": 12,
+        "avgYellow": 0.3,
+        "avgFouls": 8.4,
+        "signal": "LENIENT"
+      },
+      {
+        "team": "Chelsea",
+        "referee": "S Hooper",
+        "matches": 9,
+        "avgYellow": 2.7,
+        "avgFouls": 10.9,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Bournemouth",
+        "referee": "J Gillett",
+        "matches": 6,
+        "avgYellow": 2.7,
+        "avgFouls": 14.2,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Fulham",
+        "referee": "D England",
+        "matches": 8,
+        "avgYellow": 2.6,
+        "avgFouls": 10.1,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "West Ham",
+        "referee": "T Bramall",
+        "matches": 5,
+        "avgYellow": 2.6,
+        "avgFouls": 12.2,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Fulham",
+        "referee": "J Gillett",
+        "matches": 5,
+        "avgYellow": 2.6,
+        "avgFouls": 10.4,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Southampton",
+        "referee": "T Bramall",
+        "matches": 5,
+        "avgYellow": 2.6,
+        "avgFouls": 12.6,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Chelsea",
+        "referee": "T Robinson",
+        "matches": 5,
+        "avgYellow": 2.6,
+        "avgFouls": 12.2,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Wolves",
+        "referee": "T Robinson",
+        "matches": 7,
+        "avgYellow": 2.6,
+        "avgFouls": 14.3,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Tottenham",
+        "referee": "S Attwell",
+        "matches": 16,
+        "avgYellow": 2.6,
+        "avgFouls": 11.3,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Fulham",
+        "referee": "C Kavanagh",
+        "matches": 11,
+        "avgYellow": 2.5,
+        "avgFouls": 10.3,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Wolves",
+        "referee": "S Attwell",
+        "matches": 15,
+        "avgYellow": 2.5,
+        "avgFouls": 11.8,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Burnley",
+        "referee": "S Barrott",
+        "matches": 6,
+        "avgYellow": 2.5,
+        "avgFouls": 10.2,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Leeds",
+        "referee": "C Pawson",
+        "matches": 6,
+        "avgYellow": 2.5,
+        "avgFouls": 13.5,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Liverpool",
+        "referee": "D England",
+        "matches": 10,
+        "avgYellow": 2.5,
+        "avgFouls": 11.1,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Brighton",
+        "referee": "T Robinson",
+        "matches": 6,
+        "avgYellow": 2.5,
+        "avgFouls": 8.7,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Crystal Palace",
+        "referee": "S Barrott",
+        "matches": 6,
+        "avgYellow": 2.5,
+        "avgFouls": 11.5,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Brentford",
+        "referee": "D Coote",
+        "matches": 6,
+        "avgYellow": 2.5,
+        "avgFouls": 12.7,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Tottenham",
+        "referee": "C Pawson",
+        "matches": 21,
+        "avgYellow": 2.5,
+        "avgFouls": 12.9,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Tottenham",
+        "referee": "R Jones",
+        "matches": 13,
+        "avgYellow": 2.5,
+        "avgFouls": 12.1,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Liverpool",
+        "referee": "K Friend",
+        "matches": 11,
+        "avgYellow": 0.5,
+        "avgFouls": 9.1,
+        "signal": "LENIENT"
+      },
+      {
+        "team": "Nott'm Forest",
+        "referee": "D England",
+        "matches": 9,
+        "avgYellow": 2.4,
+        "avgFouls": 12.2,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Tottenham",
+        "referee": "J Brooks",
+        "matches": 9,
+        "avgYellow": 2.4,
+        "avgFouls": 9.7,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Southampton",
+        "referee": "S Hooper",
+        "matches": 9,
+        "avgYellow": 2.4,
+        "avgFouls": 12.4,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Aston Villa",
+        "referee": "S Attwell",
+        "matches": 16,
+        "avgYellow": 2.4,
+        "avgFouls": 9.9,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Leicester",
+        "referee": "S Hooper",
+        "matches": 7,
+        "avgYellow": 0.6,
+        "avgFouls": 8.9,
+        "signal": "LENIENT"
+      },
+      {
+        "team": "Wolves",
+        "referee": "C Kavanagh",
+        "matches": 14,
+        "avgYellow": 2.4,
+        "avgFouls": 11.7,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Leicester",
+        "referee": "D Bond",
+        "matches": 7,
+        "avgYellow": 2.4,
+        "avgFouls": 11,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Everton",
+        "referee": "S Attwell",
+        "matches": 24,
+        "avgYellow": 2.4,
+        "avgFouls": 10.3,
+        "signal": "HEAVY CARDS"
+      },
+      {
+        "team": "Brighton",
+        "referee": "P Bankes",
+        "matches": 12,
+        "avgYellow": 2.4,
+        "avgFouls": 10.8,
+        "signal": "HEAVY CARDS"
+      }
+    ],
+    "teamRefereeGoals": [
+      {
+        "team": "Leeds",
+        "referee": "M Salisbury",
+        "matches": 5,
+        "avgGoals": 5,
+        "signal": "HIGH SCORING"
+      },
+      {
+        "team": "Tottenham",
+        "referee": "S Barrott",
+        "matches": 5,
+        "avgGoals": 4.4,
+        "signal": "HIGH SCORING"
+      },
+      {
+        "team": "Ipswich",
+        "referee": "M Salisbury",
+        "matches": 5,
+        "avgGoals": 4.4,
+        "signal": "HIGH SCORING"
+      },
+      {
+        "team": "Burnley",
+        "referee": "S Barrott",
+        "matches": 6,
+        "avgGoals": 4.33,
+        "signal": "HIGH SCORING"
+      },
+      {
+        "team": "Brentford",
+        "referee": "R Jones",
+        "matches": 6,
+        "avgGoals": 4.33,
+        "signal": "HIGH SCORING"
+      },
+      {
+        "team": "Tottenham",
+        "referee": "D England",
+        "matches": 6,
+        "avgGoals": 4.33,
+        "signal": "HIGH SCORING"
+      },
+      {
+        "team": "Southampton",
+        "referee": "D England",
+        "matches": 6,
+        "avgGoals": 4.33,
+        "signal": "HIGH SCORING"
+      },
+      {
+        "team": "Aston Villa",
+        "referee": "D England",
+        "matches": 9,
+        "avgGoals": 4.22,
+        "signal": "HIGH SCORING"
+      },
+      {
+        "team": "Nott'm Forest",
+        "referee": "T Robinson",
+        "matches": 5,
+        "avgGoals": 1.2,
+        "signal": "LOW SCORING"
+      },
+      {
+        "team": "Arsenal",
+        "referee": "A Madley",
+        "matches": 5,
+        "avgGoals": 1.2,
+        "signal": "LOW SCORING"
+      },
+      {
+        "team": "Tottenham",
+        "referee": "M Salisbury",
+        "matches": 5,
+        "avgGoals": 4.2,
+        "signal": "HIGH SCORING"
+      },
+      {
+        "team": "Burnley",
+        "referee": "D England",
+        "matches": 5,
+        "avgGoals": 4.2,
+        "signal": "HIGH SCORING"
+      },
+      {
+        "team": "Tottenham",
+        "referee": "D Coote",
+        "matches": 11,
+        "avgGoals": 4.18,
+        "signal": "HIGH SCORING"
+      },
+      {
+        "team": "Sunderland",
+        "referee": "S Attwell",
+        "matches": 5,
+        "avgGoals": 1.4,
+        "signal": "LOW SCORING"
+      },
+      {
+        "team": "Leeds",
+        "referee": "A Taylor",
+        "matches": 13,
+        "avgGoals": 3.92,
+        "signal": "HIGH SCORING"
+      },
+      {
+        "team": "Everton",
+        "referee": "T Harrington",
+        "matches": 8,
+        "avgGoals": 1.5,
+        "signal": "LOW SCORING"
+      },
+      {
+        "team": "Newcastle",
+        "referee": "K Friend",
+        "matches": 10,
+        "avgGoals": 3.9,
+        "signal": "HIGH SCORING"
+      },
+      {
+        "team": "Brentford",
+        "referee": "A Taylor",
+        "matches": 9,
+        "avgGoals": 3.89,
+        "signal": "HIGH SCORING"
+      },
+      {
+        "team": "Leicester",
+        "referee": "D England",
+        "matches": 8,
+        "avgGoals": 3.88,
+        "signal": "HIGH SCORING"
+      },
+      {
+        "team": "Man United",
+        "referee": "A Madley",
+        "matches": 8,
+        "avgGoals": 3.88,
+        "signal": "HIGH SCORING"
+      },
+      {
+        "team": "Chelsea",
+        "referee": "D England",
+        "matches": 7,
+        "avgGoals": 3.86,
+        "signal": "HIGH SCORING"
+      },
+      {
+        "team": "Aston Villa",
+        "referee": "S Barrott",
+        "matches": 7,
+        "avgGoals": 3.86,
+        "signal": "HIGH SCORING"
+      },
+      {
+        "team": "West Ham",
+        "referee": "M Salisbury",
+        "matches": 7,
+        "avgGoals": 3.86,
+        "signal": "HIGH SCORING"
+      },
+      {
+        "team": "Brighton",
+        "referee": "A Madley",
+        "matches": 14,
+        "avgGoals": 3.86,
+        "signal": "HIGH SCORING"
+      },
+      {
+        "team": "Burnley",
+        "referee": "S Attwell",
+        "matches": 7,
+        "avgGoals": 3.86,
+        "signal": "HIGH SCORING"
+      },
+      {
+        "team": "Everton",
+        "referee": "C Kavanagh",
+        "matches": 14,
+        "avgGoals": 1.57,
+        "signal": "LOW SCORING"
+      },
+      {
+        "team": "Norwich",
+        "referee": "S Hooper",
+        "matches": 7,
+        "avgGoals": 1.57,
+        "signal": "LOW SCORING"
+      },
+      {
+        "team": "Brentford",
+        "referee": "S Attwell",
+        "matches": 11,
+        "avgGoals": 3.82,
+        "signal": "HIGH SCORING"
+      },
+      {
+        "team": "Burnley",
+        "referee": "G Scott",
+        "matches": 10,
+        "avgGoals": 1.6,
+        "signal": "LOW SCORING"
+      },
+      {
+        "team": "West Ham",
+        "referee": "T Robinson",
+        "matches": 5,
+        "avgGoals": 3.8,
+        "signal": "HIGH SCORING"
+      },
+      {
+        "team": "Crystal Palace",
+        "referee": "P Bankes",
+        "matches": 8,
+        "avgGoals": 1.63,
+        "signal": "LOW SCORING"
+      },
+      {
+        "team": "Wolves",
+        "referee": "D England",
+        "matches": 8,
+        "avgGoals": 3.75,
+        "signal": "HIGH SCORING"
+      },
+      {
+        "team": "Liverpool",
+        "referee": "J Moss",
+        "matches": 12,
+        "avgGoals": 3.75,
+        "signal": "HIGH SCORING"
+      },
+      {
+        "team": "Brighton",
+        "referee": "D England",
+        "matches": 12,
+        "avgGoals": 1.67,
+        "signal": "LOW SCORING"
+      },
+      {
+        "team": "Crystal Palace",
+        "referee": "J Gillett",
+        "matches": 7,
+        "avgGoals": 3.71,
+        "signal": "HIGH SCORING"
+      },
+      {
+        "team": "Newcastle",
+        "referee": "T Bramall",
+        "matches": 7,
+        "avgGoals": 3.71,
+        "signal": "HIGH SCORING"
+      },
+      {
+        "team": "Norwich",
+        "referee": "A Madley",
+        "matches": 7,
+        "avgGoals": 3.71,
+        "signal": "HIGH SCORING"
+      },
+      {
+        "team": "Tottenham",
+        "referee": "S Hooper",
+        "matches": 13,
+        "avgGoals": 3.69,
+        "signal": "HIGH SCORING"
+      },
+      {
+        "team": "Leeds",
+        "referee": "P Tierney",
+        "matches": 13,
+        "avgGoals": 3.69,
+        "signal": "HIGH SCORING"
+      },
+      {
+        "team": "Liverpool",
+        "referee": "A Madley",
+        "matches": 16,
+        "avgGoals": 3.69,
+        "signal": "HIGH SCORING"
+      },
+      {
+        "team": "Man City",
+        "referee": "C Pawson",
+        "matches": 16,
+        "avgGoals": 3.69,
+        "signal": "HIGH SCORING"
+      },
+      {
+        "team": "Wolves",
+        "referee": "J Brooks",
+        "matches": 7,
+        "avgGoals": 1.71,
+        "signal": "LOW SCORING"
+      },
+      {
+        "team": "Crystal Palace",
+        "referee": "J Brooks",
+        "matches": 7,
+        "avgGoals": 1.71,
+        "signal": "LOW SCORING"
+      },
+      {
+        "team": "Brighton",
+        "referee": "J Gillett",
+        "matches": 6,
+        "avgGoals": 3.67,
+        "signal": "HIGH SCORING"
+      },
+      {
+        "team": "Wolves",
+        "referee": "G Scott",
+        "matches": 6,
+        "avgGoals": 3.67,
+        "signal": "HIGH SCORING"
+      },
+      {
+        "team": "Tottenham",
+        "referee": "A Taylor",
+        "matches": 26,
+        "avgGoals": 3.65,
+        "signal": "HIGH SCORING"
+      },
+      {
+        "team": "Sheffield United",
+        "referee": "D Coote",
+        "matches": 8,
+        "avgGoals": 1.75,
+        "signal": "LOW SCORING"
+      },
+      {
+        "team": "Leicester",
+        "referee": "M Atkinson",
+        "matches": 8,
+        "avgGoals": 1.75,
+        "signal": "LOW SCORING"
+      },
+      {
+        "team": "Liverpool",
+        "referee": "S Hooper",
+        "matches": 14,
+        "avgGoals": 3.64,
+        "signal": "HIGH SCORING"
+      },
+      {
+        "team": "Man United",
+        "referee": "A Taylor",
+        "matches": 33,
+        "avgGoals": 3.64,
+        "signal": "HIGH SCORING"
+      }
+    ],
+    "teamRefereeDraws": [
+      {
+        "team": "Southampton",
+        "referee": "R Jones",
+        "matches": 9,
+        "drawRate": 55.6,
+        "signal": "DRAW PRONE"
+      },
+      {
+        "team": "Southampton",
+        "referee": "S Hooper",
+        "matches": 9,
+        "drawRate": 55.6,
+        "signal": "DRAW PRONE"
+      },
+      {
+        "team": "Brighton",
+        "referee": "S Hooper",
+        "matches": 17,
+        "drawRate": 52.9,
+        "signal": "DRAW PRONE"
+      },
+      {
+        "team": "Bournemouth",
+        "referee": "T Bramall",
+        "matches": 8,
+        "drawRate": 50,
+        "signal": "DRAW PRONE"
+      },
+      {
+        "team": "Everton",
+        "referee": "D England",
+        "matches": 12,
+        "drawRate": 50,
+        "signal": "DRAW PRONE"
+      },
+      {
+        "team": "West Ham",
+        "referee": "P Bankes",
+        "matches": 12,
+        "drawRate": 50,
+        "signal": "DRAW PRONE"
+      },
+      {
+        "team": "Leeds",
+        "referee": "S Hooper",
+        "matches": 8,
+        "drawRate": 50,
+        "signal": "DRAW PRONE"
+      },
+      {
+        "team": "Southampton",
+        "referee": "A Taylor",
+        "matches": 14,
+        "drawRate": 50,
+        "signal": "DRAW PRONE"
+      },
+      {
+        "team": "Newcastle",
+        "referee": "G Scott",
+        "matches": 8,
+        "drawRate": 50,
+        "signal": "DRAW PRONE"
+      },
+      {
+        "team": "Chelsea",
+        "referee": "M Dean",
+        "matches": 8,
+        "drawRate": 50,
+        "signal": "DRAW PRONE"
+      },
+      {
+        "team": "Arsenal",
+        "referee": "J Gillett",
+        "matches": 10,
+        "drawRate": 0,
+        "signal": "DECISIVE"
+      },
+      {
+        "team": "Chelsea",
+        "referee": "S Hooper",
+        "matches": 9,
+        "drawRate": 0,
+        "signal": "DECISIVE"
+      },
+      {
+        "team": "Fulham",
+        "referee": "P Bankes",
+        "matches": 10,
+        "drawRate": 0,
+        "signal": "DECISIVE"
+      },
+      {
+        "team": "Nott'm Forest",
+        "referee": "J Gillett",
+        "matches": 8,
+        "drawRate": 0,
+        "signal": "DECISIVE"
+      },
+      {
+        "team": "Arsenal",
+        "referee": "S Barrott",
+        "matches": 8,
+        "drawRate": 0,
+        "signal": "DECISIVE"
+      },
+      {
+        "team": "Newcastle",
+        "referee": "J Brooks",
+        "matches": 8,
+        "drawRate": 0,
+        "signal": "DECISIVE"
+      },
+      {
+        "team": "Chelsea",
+        "referee": "J Brooks",
+        "matches": 8,
+        "drawRate": 0,
+        "signal": "DECISIVE"
+      },
+      {
+        "team": "Wolves",
+        "referee": "D England",
+        "matches": 8,
+        "drawRate": 0,
+        "signal": "DECISIVE"
+      },
+      {
+        "team": "Southampton",
+        "referee": "M Oliver",
+        "matches": 11,
+        "drawRate": 0,
+        "signal": "DECISIVE"
+      },
+      {
+        "team": "Southampton",
+        "referee": "M Salisbury",
+        "matches": 8,
+        "drawRate": 0,
+        "signal": "DECISIVE"
+      },
+      {
+        "team": "West Ham",
+        "referee": "M Atkinson",
+        "matches": 14,
+        "drawRate": 0,
+        "signal": "DECISIVE"
+      },
+      {
+        "team": "Burnley",
+        "referee": "M Atkinson",
+        "matches": 9,
+        "drawRate": 0,
+        "signal": "DECISIVE"
+      },
+      {
+        "team": "Southampton",
+        "referee": "M Atkinson",
+        "matches": 8,
+        "drawRate": 0,
+        "signal": "DECISIVE"
+      },
+      {
+        "team": "Liverpool",
+        "referee": "J Moss",
+        "matches": 12,
+        "drawRate": 0,
+        "signal": "DECISIVE"
+      },
+      {
+        "team": "Man City",
+        "referee": "K Friend",
+        "matches": 9,
+        "drawRate": 0,
+        "signal": "DECISIVE"
+      },
+      {
+        "team": "Man City",
+        "referee": "A Marriner",
+        "matches": 16,
+        "drawRate": 0,
+        "signal": "DECISIVE"
+      },
+      {
+        "team": "Leicester",
+        "referee": "J Moss",
+        "matches": 8,
+        "drawRate": 0,
+        "signal": "DECISIVE"
+      },
+      {
+        "team": "Tottenham",
+        "referee": "M Dean",
+        "matches": 10,
+        "drawRate": 0,
+        "signal": "DECISIVE"
+      },
+      {
+        "team": "Crystal Palace",
+        "referee": "D England",
+        "matches": 15,
+        "drawRate": 46.7,
+        "signal": "DRAW PRONE"
+      },
+      {
+        "team": "Man City",
+        "referee": "S Hooper",
+        "matches": 13,
+        "drawRate": 46.2,
+        "signal": "DRAW PRONE"
+      },
+      {
+        "team": "Crystal Palace",
+        "referee": "T Bramall",
+        "matches": 11,
+        "drawRate": 45.5,
+        "signal": "DRAW PRONE"
+      },
+      {
+        "team": "Brighton",
+        "referee": "M Dean",
+        "matches": 11,
+        "drawRate": 45.5,
+        "signal": "DRAW PRONE"
+      },
+      {
+        "team": "Nott'm Forest",
+        "referee": "D England",
+        "matches": 9,
+        "drawRate": 44.4,
+        "signal": "DRAW PRONE"
+      },
+      {
+        "team": "Brighton",
+        "referee": "A Taylor",
+        "matches": 18,
+        "drawRate": 44.4,
+        "signal": "DRAW PRONE"
+      },
+      {
+        "team": "Chelsea",
+        "referee": "J Gillett",
+        "matches": 9,
+        "drawRate": 44.4,
+        "signal": "DRAW PRONE"
+      },
+      {
+        "team": "Brighton",
+        "referee": "A Marriner",
+        "matches": 9,
+        "drawRate": 44.4,
+        "signal": "DRAW PRONE"
+      },
+      {
+        "team": "Chelsea",
+        "referee": "S Attwell",
+        "matches": 25,
+        "drawRate": 44,
+        "signal": "DRAW PRONE"
+      },
+      {
+        "team": "Newcastle",
+        "referee": "A Taylor",
+        "matches": 22,
+        "drawRate": 4.5,
+        "signal": "DECISIVE"
+      },
+      {
+        "team": "Tottenham",
+        "referee": "C Pawson",
+        "matches": 21,
+        "drawRate": 4.8,
+        "signal": "DECISIVE"
+      },
+      {
+        "team": "Newcastle",
+        "referee": "S Attwell",
+        "matches": 21,
+        "drawRate": 4.8,
+        "signal": "DECISIVE"
+      },
+      {
+        "team": "Brentford",
+        "referee": "S Hooper",
+        "matches": 14,
+        "drawRate": 42.9,
+        "signal": "DRAW PRONE"
+      },
+      {
+        "team": "Leicester",
+        "referee": "C Pawson",
+        "matches": 19,
+        "drawRate": 5.3,
+        "signal": "DECISIVE"
+      },
+      {
+        "team": "Man City",
+        "referee": "C Pawson",
+        "matches": 16,
+        "drawRate": 6.3,
+        "signal": "DECISIVE"
+      },
+      {
+        "team": "Brighton",
+        "referee": "D England",
+        "matches": 12,
+        "drawRate": 41.7,
+        "signal": "DRAW PRONE"
+      },
+      {
+        "team": "Tottenham",
+        "referee": "J Gillett",
+        "matches": 15,
+        "drawRate": 6.7,
+        "signal": "DECISIVE"
+      },
+      {
+        "team": "Crystal Palace",
+        "referee": "P Tierney",
+        "matches": 17,
+        "drawRate": 41.2,
+        "signal": "DRAW PRONE"
+      },
+      {
+        "team": "Liverpool",
+        "referee": "S Hooper",
+        "matches": 14,
+        "drawRate": 7.1,
+        "signal": "DECISIVE"
+      },
+      {
+        "team": "Brentford",
+        "referee": "D England",
+        "matches": 14,
+        "drawRate": 7.1,
+        "signal": "DECISIVE"
+      },
+      {
+        "team": "Everton",
+        "referee": "P Tierney",
+        "matches": 14,
+        "drawRate": 7.1,
+        "signal": "DECISIVE"
+      },
+      {
+        "team": "Man City",
+        "referee": "M Dean",
+        "matches": 13,
+        "drawRate": 7.7,
+        "signal": "DECISIVE"
+      }
+    ],
+    "extremeMatchups": [
+      {
+        "home_team": "Man United",
+        "away_team": "Newcastle",
+        "referee": "A Taylor",
+        "matches": 3,
+        "homeWinPct": 100,
+        "drawPct": 0,
+        "awayWinPct": 0,
+        "avgGoals": 3.7
+      },
+      {
+        "home_team": "Chelsea",
+        "away_team": "Newcastle",
+        "referee": "P Tierney",
+        "matches": 3,
+        "homeWinPct": 0,
+        "drawPct": 0,
+        "awayWinPct": 100,
+        "avgGoals": 2.3
+      },
+      {
+        "home_team": "Southampton",
+        "away_team": "Everton",
+        "referee": "A Madley",
+        "matches": 3,
+        "homeWinPct": 100,
+        "drawPct": 0,
+        "awayWinPct": 0,
+        "avgGoals": 2.3
+      },
+      {
+        "home_team": "Burnley",
+        "away_team": "Newcastle",
+        "referee": "A Taylor",
+        "matches": 3,
+        "homeWinPct": 0,
+        "drawPct": 0,
+        "awayWinPct": 100,
+        "avgGoals": 3.7
+      },
+      {
+        "home_team": "Arsenal",
+        "away_team": "Liverpool",
+        "referee": "M Oliver",
+        "matches": 3,
+        "homeWinPct": 100,
+        "drawPct": 0,
+        "awayWinPct": 0,
+        "avgGoals": 5
+      },
+      {
+        "home_team": "Wolves",
+        "away_team": "Tottenham",
+        "referee": "S Attwell",
+        "matches": 4,
+        "homeWinPct": 0,
+        "drawPct": 0,
+        "awayWinPct": 100,
+        "avgGoals": 3.3
+      },
+      {
+        "home_team": "Liverpool",
+        "away_team": "Leicester",
+        "referee": "C Kavanagh",
+        "matches": 3,
+        "homeWinPct": 100,
+        "drawPct": 0,
+        "awayWinPct": 0,
+        "avgGoals": 2.7
+      },
+      {
+        "home_team": "Tottenham",
+        "away_team": "Burnley",
+        "referee": "K Friend",
+        "matches": 3,
+        "homeWinPct": 100,
+        "drawPct": 0,
+        "awayWinPct": 0,
+        "avgGoals": 3.3
+      },
+      {
+        "home_team": "Man City",
+        "away_team": "Leicester",
+        "referee": "M Dean",
+        "matches": 3,
+        "homeWinPct": 100,
+        "drawPct": 0,
+        "awayWinPct": 0,
+        "avgGoals": 2.7
+      },
+      {
+        "home_team": "Wolves",
+        "away_team": "Arsenal",
+        "referee": "M Oliver",
+        "matches": 5,
+        "homeWinPct": 0,
+        "drawPct": 20,
+        "awayWinPct": 80,
+        "avgGoals": 1.8
+      },
+      {
+        "home_team": "Chelsea",
+        "away_team": "Man City",
+        "referee": "A Taylor",
+        "matches": 4,
+        "homeWinPct": 0,
+        "drawPct": 25,
+        "awayWinPct": 75,
+        "avgGoals": 4.3
+      },
+      {
+        "home_team": "Man United",
+        "away_team": "Liverpool",
+        "referee": "A Taylor",
+        "matches": 4,
+        "homeWinPct": 0,
+        "drawPct": 25,
+        "awayWinPct": 75,
+        "avgGoals": 4.5
+      },
+      {
+        "home_team": "Man City",
+        "away_team": "Liverpool",
+        "referee": "C Kavanagh",
+        "matches": 3,
+        "homeWinPct": 67,
+        "drawPct": 33,
+        "awayWinPct": 0,
+        "avgGoals": 2.3
+      },
+      {
+        "home_team": "Fulham",
+        "away_team": "Liverpool",
+        "referee": "C Pawson",
+        "matches": 3,
+        "homeWinPct": 0,
+        "drawPct": 33,
+        "awayWinPct": 67,
+        "avgGoals": 3.7
+      },
+      {
+        "home_team": "Brighton",
+        "away_team": "Bournemouth",
+        "referee": "P Tierney",
+        "matches": 3,
+        "homeWinPct": 67,
+        "drawPct": 33,
+        "awayWinPct": 0,
+        "avgGoals": 2.3
+      },
+      {
+        "home_team": "Liverpool",
+        "away_team": "Brentford",
+        "referee": "S Attwell",
+        "matches": 3,
+        "homeWinPct": 67,
+        "drawPct": 33,
+        "awayWinPct": 0,
+        "avgGoals": 4
+      },
+      {
+        "home_team": "Newcastle",
+        "away_team": "West Ham",
+        "referee": "C Pawson",
+        "matches": 3,
+        "homeWinPct": 0,
+        "drawPct": 33,
+        "awayWinPct": 67,
+        "avgGoals": 4
+      },
+      {
+        "home_team": "Tottenham",
+        "away_team": "Chelsea",
+        "referee": "A Taylor",
+        "matches": 3,
+        "homeWinPct": 0,
+        "drawPct": 33,
+        "awayWinPct": 67,
+        "avgGoals": 4.3
+      },
+      {
+        "home_team": "Arsenal",
+        "away_team": "Aston Villa",
+        "referee": "C Kavanagh",
+        "matches": 3,
+        "homeWinPct": 67,
+        "drawPct": 33,
+        "awayWinPct": 0,
+        "avgGoals": 2
+      },
+      {
+        "home_team": "Man United",
+        "away_team": "Arsenal",
+        "referee": "A Taylor",
+        "matches": 3,
+        "homeWinPct": 67,
+        "drawPct": 33,
+        "awayWinPct": 0,
+        "avgGoals": 3.7
+      },
+      {
+        "home_team": "Everton",
+        "away_team": "Wolves",
+        "referee": "C Pawson",
+        "matches": 3,
+        "homeWinPct": 0,
+        "drawPct": 33,
+        "awayWinPct": 67,
+        "avgGoals": 2.7
+      },
+      {
+        "home_team": "Brighton",
+        "away_team": "West Ham",
+        "referee": "A Taylor",
+        "matches": 3,
+        "homeWinPct": 0,
+        "drawPct": 33,
+        "awayWinPct": 67,
+        "avgGoals": 2.7
+      },
+      {
+        "home_team": "Arsenal",
+        "away_team": "Crystal Palace",
+        "referee": "P Tierney",
+        "matches": 3,
+        "homeWinPct": 67,
+        "drawPct": 33,
+        "awayWinPct": 0,
+        "avgGoals": 3.3
+      },
+      {
+        "home_team": "Liverpool",
+        "away_team": "Tottenham",
+        "referee": "P Tierney",
+        "matches": 3,
+        "homeWinPct": 67,
+        "drawPct": 33,
+        "awayWinPct": 0,
+        "avgGoals": 5.7
+      },
+      {
+        "home_team": "Everton",
+        "away_team": "Man United",
+        "referee": "J Moss",
+        "matches": 3,
+        "homeWinPct": 67,
+        "drawPct": 33,
+        "awayWinPct": 0,
+        "avgGoals": 3.3
+      },
+      {
+        "home_team": "Liverpool",
+        "away_team": "Man United",
+        "referee": "M Atkinson",
+        "matches": 3,
+        "homeWinPct": 67,
+        "drawPct": 33,
+        "awayWinPct": 0,
+        "avgGoals": 3.3
+      },
+      {
+        "home_team": "Everton",
+        "away_team": "Chelsea",
+        "referee": "K Friend",
+        "matches": 3,
+        "homeWinPct": 67,
+        "drawPct": 33,
+        "awayWinPct": 0,
+        "avgGoals": 1.7
+      },
+      {
+        "home_team": "Leicester",
+        "away_team": "Arsenal",
+        "referee": "C Kavanagh",
+        "matches": 3,
+        "homeWinPct": 67,
+        "drawPct": 33,
+        "awayWinPct": 0,
+        "avgGoals": 2.7
+      },
+      {
+        "home_team": "Arsenal",
+        "away_team": "Tottenham",
+        "referee": "M Oliver",
+        "matches": 4,
+        "homeWinPct": 75,
+        "drawPct": 0,
+        "awayWinPct": 25,
+        "avgGoals": 4
+      },
+      {
+        "home_team": "Man United",
+        "away_team": "Leeds",
+        "referee": "P Tierney",
+        "matches": 4,
+        "homeWinPct": 25,
+        "drawPct": 0,
+        "awayWinPct": 75,
+        "avgGoals": 4.3
+      }
+    ]
+  }
+}

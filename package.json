@@ -45,7 +45,8 @@
     "analyze:deep-relationships": "node scripts/analyze-deep-relationships.js",
     "scrape:web-data": "node scripts/scrape-web-data.js",
     "analyze:referees": "node scripts/analyze-referees.js",
-    "pipeline": "echo 'Running full pipeline...' && npm run sync:fixtures && npm run self-learn"
+    "sync:football-data": "node scripts/sync-football-data-org.js",
+    "pipeline": "echo 'Running full pipeline...' && npm run sync:fixtures && npm run sync:football-data && npm run self-learn"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",
