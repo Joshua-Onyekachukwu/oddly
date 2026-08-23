@@ -1,7 +1,7 @@
 {
-  "trained_at": "2026-08-23T01:37:14.197124",
+  "trained_at": "2026-08-23T01:47:16.512Z",
   "total_matches": 10403,
-  "total_features": 68,
+  "total_features": 95,
   "feature_names": [
     "home_form_points",
     "home_form_goals_for",
@@ -74,130 +74,111 @@
   ],
   "markets": {
     "1X2": {
-      "accuracy": 0.5045651129264777,
-      "brier": 0.5771257281303406,
-      "log_loss": 0.9939920902252197,
+      "accuracy": 0.495,
+      "xgb_accuracy": 0.484,
+      "lgb_accuracy": 0.486,
+      "brier": 0,
+      "log_loss": 0,
       "samples": 10403,
       "top_features": [
-        "elo_diff",
-        "home_attack",
-        "away_attack",
-        "away_squad_depth",
-        "home_elo",
-        "home_defense",
-        "pis_diff",
-        "away_defense",
-        "away_injury_impact",
-        "home_top_player_goals"
-      ]
-    },
-    "OU25": {
-      "accuracy": 0.5555021624219125,
-      "brier": 0.2501072883605957,
-      "log_loss": 0.6956300735473633,
-      "samples": 10403,
-      "top_features": [
-        "home_attack",
-        "away_attack",
-        "away_defense",
-        "home_attack_pis",
-        "home_defense_pis",
-        "home_defense",
-        "h2h_draws",
-        "elo_diff",
-        "home_form_conceded_per_match",
+        "attack_diff",
+        "defense_diff",
+        "attack_x_defense",
+        "odds_x_elo",
         "pis_1x2_diff"
       ]
     },
-    "OU15": {
-      "accuracy": 0.7741470446900529,
-      "brier": 0.17353348433971405,
-      "log_loss": 0.5329576730728149,
+    "OU25": {
+      "accuracy": 0.561,
+      "xgb_accuracy": 0.537,
+      "lgb_accuracy": 0.555,
+      "brier": 0,
+      "log_loss": 0,
       "samples": 10403,
       "top_features": [
         "home_attack",
-        "away_shot_accuracy_pis",
-        "away_squad_depth",
-        "away_defense",
-        "home_attack_pis",
-        "home_top_player_goals",
         "away_attack",
-        "home_defense",
-        "pis_diff",
-        "h2h_home_wins"
+        "home_top_goals",
+        "away_defense",
+        "attack_x_defense"
+      ]
+    },
+    "OU15": {
+      "accuracy": 0.787,
+      "xgb_accuracy": 0.78,
+      "lgb_accuracy": 0.785,
+      "brier": 0,
+      "log_loss": 0,
+      "samples": 10403,
+      "top_features": [
+        "away_squad_depth",
+        "home_attack",
+        "home_top_goals",
+        "away_inj_per_match",
+        "away_attack"
       ]
     },
     "OU35": {
-      "accuracy": 0.679961556943777,
-      "brier": 0.21559397876262665,
-      "log_loss": 0.6265079975128174,
+      "accuracy": 0.695,
+      "xgb_accuracy": 0.673,
+      "lgb_accuracy": 0.685,
+      "brier": 0,
+      "log_loss": 0,
       "samples": 10403,
       "top_features": [
-        "away_injury_impact",
         "home_attack",
         "home_attack_pis",
-        "league_avg_goals",
-        "away_defense",
-        "home_1x2_pis_impact",
-        "away_attack",
-        "home_defense",
-        "away_top_player_goals",
-        "home_shot_accuracy_pis"
+        "away_pis_1x2",
+        "away_inj_per_match",
+        "away_attack"
       ]
     },
     "BTTS": {
-      "accuracy": 0.5420470927438732,
-      "brier": 0.25142011046409607,
-      "log_loss": 0.6975379586219788,
+      "accuracy": 0.563,
+      "xgb_accuracy": 0.53,
+      "lgb_accuracy": 0.536,
+      "brier": 0,
+      "log_loss": 0,
       "samples": 10403,
       "top_features": [
-        "home_shot_accuracy_pis",
-        "away_attack",
-        "away_defense",
-        "home_top_player_goals",
-        "home_defense",
-        "home_attack_pis",
-        "home_attack",
         "home_pis",
-        "away_form_wins",
-        "home_injuries_per_match"
+        "home_pis_1x2",
+        "home_shot_acc_pis",
+        "away_pis_1x2",
+        "home_squad_depth"
       ]
     },
     "DC_HX": {
-      "accuracy": 0.7174435367611726,
-      "brier": 0.19298797845840454,
-      "log_loss": 0.5675957202911377,
+      "accuracy": 0.715,
+      "xgb_accuracy": 0.701,
+      "lgb_accuracy": 0.705,
+      "brier": 0,
+      "log_loss": 0,
       "samples": 10403,
       "top_features": [
+        "attack_diff",
+        "defense_diff",
+        "attack_x_defense",
         "elo_diff",
-        "away_squad_depth",
-        "home_elo",
-        "away_attack",
-        "away_pis",
-        "away_defense",
-        "home_attack",
-        "home_defense",
-        "away_shot_accuracy_pis",
-        "away_attack_pis"
+        "away_top_goals"
       ]
     },
     "DC_AX": {
-      "accuracy": 0.6583373378183566,
-      "brier": 0.2159425914287567,
-      "log_loss": 0.6228278279304504,
+      "accuracy": 0.65,
+      "xgb_accuracy": 0.654,
+      "lgb_accuracy": 0.654,
+      "brier": 0,
+      "log_loss": 0,
       "samples": 10403,
       "top_features": [
+        "attack_diff",
+        "defense_diff",
+        "attack_x_defense",
         "elo_diff",
-        "home_attack",
-        "home_elo",
-        "home_squad_depth",
-        "home_defense_pis",
-        "away_squad_depth",
-        "away_defense",
-        "away_attack",
-        "home_defense",
-        "pis_diff"
+        "elo_x_attack"
       ]
     }
-  }
+  },
+  "model_type": "stacked_ensemble_xgb_lgb",
+  "smart_selection_accuracy": 0.816
 }
