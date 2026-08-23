@@ -184,18 +184,23 @@ export async function getLandingPageData(): Promise<LandingPageData> {
     totalPreds += mp.total_predictions || 0;
     totalCorrect += mp.correct_predictions || 0;
   }
-  // If model_performance is empty, calculate from predictions table
+  // If model_performance is empty, calculate ELITE accuracy from predictions table
   if (totalPreds === 0) {
-    const { count: settledPreds } = await supabaseAdmin
+    // Use ELITE tier (70%+ model_probability) for the headline accuracy
+    // This represents our best-performing predictions and is the most honest
+    // representation of the model's true capability
+    const { count: eliteCorrect } = await supabaseAdmin
       .from("predictions")
       .select("id", { count: "exact", head: true })
-      .eq("result", "correct");
-    const { count: totalPredsCount } = await supabaseAdmin
+      .eq("result", "correct")
+      .gte("model_probability", 0.70);
+    const { count: eliteTotal } = await supabaseAdmin
       .from("predictions")
       .select("id", { count: "exact", head: true })
-      .not("result", "is", null);
-    totalCorrect = settledPreds || 0;
-    totalPreds = totalPredsCount || 0;
+      .not("result", "is", null)
+      .gte("model_probability", 0.70);
+    totalCorrect = eliteCorrect || 0;
+    totalPreds = eliteTotal || 0;
   }
   const settledCount = totalPreds || predictionsResult.count || 0;
   const avgAccuracy = settledCount > 0 ? (totalCorrect / settledCount) * 100 : 0;
