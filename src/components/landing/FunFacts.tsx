@@ -24,8 +24,29 @@ function formatNumber(n: number): string {
   return "0";
 }
 
-const FunFacts: React.FC<FunFactsProps> = ({ stats }) => {
+const FunFacts: React.FC<FunFactsProps> = ({ stats: initialStats }) => {
   const { ref, isVisible } = useScrollReveal({ threshold: 0.1 });
+  const [stats, setStats] = React.useState(initialStats);
+
+  // Poll live stats every 60 seconds
+  React.useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await fetch("/api/v1/stats", { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          setStats((prev) => ({
+            ...prev,
+            totalPredictions: data.totalPredictions ?? prev.totalPredictions,
+            totalLeagues: data.totalLeagues > 0 ? data.totalLeagues : prev.totalLeagues,
+          }));
+        }
+      } catch {}
+    };
+    fetchStats();
+    const interval = setInterval(fetchStats, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Build facts from live data with fallbacks
   const factsData = [
