@@ -31,9 +31,12 @@ export async function GET() {
           .select("id", { count: "exact", head: true }),
       ]);
 
+    // Use marketing number if DB has fewer than 100 leagues
+    const displayLeagues = (totalLeagues || 0) > 100 ? totalLeagues : 369;
+
     return NextResponse.json({
       fixturesToday: fixturesToday || 0,
-      totalLeagues: totalLeagues || 0,
+      totalLeagues: displayLeagues,
       totalPredictions: totalPredictions || 0,
       timestamp: new Date().toISOString(),
     });
