@@ -110,39 +110,33 @@ const LEAGUES = [
 function parseInjuryPage(html) {
   const injuries = [];
 
-  // Transfermarkt injury table rows have class "items"
-  const rows = extractAll(html, '<tr class="', '</tr>');
+  // Find all player names, teams, and injury types in the HTML stream
+  const nameRegex = /<a[^>]*title="([^"]+)"[^>]*href="\/[^/]+\/profil\/spieler\/\d+"/g;
+  const teamRegex = /<a[^>]*title="([^"]+)"[^>]*href="\/[^/]+\/startseite\/verein\/\d+"/g;
+  const injuryRegex = /<td[^>]*class="links"[^>]*>([^<]+)<\/td>/gi;
+  const returnRegex = /(\d{1,2}\.\d{1,2}\.\d{4})/g;
 
-  for (const row of rows) {
-    try {
-      // Extract player name
-      const nameMatch = row.match(/class="hauptlink"[^>]*>[\s\S]*?<a[^>]*>([^<]+)<\/a>/);
-      const playerName = nameMatch ? stripTags(nameMatch[1]).trim() : null;
+  const names = [], teams = [], injuries_raw = [], returns = [];
+  let m;
+  while ((m = nameRegex.exec(html)) !== null) names.push({ pos: m.index, name: m[1].trim() });
+  while ((m = teamRegex.exec(html)) !== null) teams.push({ pos: m.index, team: m[1].trim() });
+  while ((m = injuryRegex.exec(html)) !== null) injuries_raw.push({ pos: m.index, type: m[1].trim() });
+  while ((m = returnRegex.exec(html)) !== null) returns.push({ pos: m.index, date: m[1] });
 
-      // Extract team
-      const teamMatch = row.match(/class="hauptlink"[^>]*>[\s\S]*?<a[^>]*href="\/([^/]+)\/startseite\/page\/1"/);
-      const team = teamMatch ? teamMatch[1].replace(/-/g, " ") : null;
+  // Match each player to the nearest team and injury type after their position
+  for (const player of names) {
+    const team = teams.find(t => t.pos > player.pos && t.pos < player.pos + 500);
+    const inj = injuries_raw.find(i => i.pos > player.pos && i.pos < player.pos + 500);
+    const ret = returns.find(r => r.pos > player.pos && r.pos < player.pos + 1000);
 
-      // Extract injury type
-      const injuryMatch = row.match(/class="hauptlink"[^>]*>[\s\S]*?<td[^>]*>([^<]*(?:injury|suspension|knee|ankle|muscle|hamstring|ACL|calf|groin|thigh|back|shoulder|foot|head|illness|cold|fitness)[^<]*)<\/td>/i);
-      const injuryType = injuryMatch ? stripTags(injuryMatch[1]).trim() : "Unknown";
-
-      // Extract expected return
-      const returnMatch = row.match(/(\d{1,2}\/\d{1,2}\/\d{4})/);
-      const expectedReturn = returnMatch ? returnMatch[1] : null;
-
-      if (playerName) {
-        injuries.push({
-          playerName,
-          team: team ? team.split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ") : null,
-          injuryType,
-          expectedReturn,
-          status: injuryType.toLowerCase().includes("suspension") ? "suspended" : "injured",
-        });
-      }
-    } catch (e) {
-      // Skip malformed rows
-    }
+    const injuryType = inj ? inj.type.trim() : "Unknown";
+    injuries.push({
+      playerName: player.name,
+      team: team ? team.team : null,
+      injuryType,
+      expectedReturn: ret ? ret.date : null,
+      status: injuryType.toLowerCase().includes("suspension") ? "suspended" : "injured",
+    });
   }
 
   return injuries;
@@ -157,16 +151,18 @@ async function main() {
   if (DRY_RUN) console.log("   ⚠️  DRY RUN MODE");
   console.log("");
 
-  // Ensure player_availability table exists
+  // Check if player_availability table exists
+  let dbAvailable = true;
   const { error: tblErr } = await supabase.from("player_availability").select("id").limit(1);
   if (tblErr) {
-    console.log("❌ player_availability table doesn't exist.");
-    console.log("   Run supabase/create-injury-table.sql first.");
-    return;
+    console.log("⚠️  player_availability table not found — storing locally.");
+    console.log("   Run supabase/create-player-availability.sql to enable DB storage.");
+    dbAvailable = false;
   }
 
   let totalInjuries = 0;
   let totalInserted = 0;
+  const localInjuries = [];
 
   for (const league of LEAGUES) {
     await sleep(2500); // Rate limit: 1 request per 2.5 seconds
@@ -224,18 +220,31 @@ async function main() {
           teamId = dbTeam?.[0]?.id || null;
         }
 
-        const { error } = await supabase.from("player_availability").upsert({
-          player_name: inj.playerName,
-          team_id: teamId,
-          team_name: inj.team,
-          status: inj.status,
-          injury_type: inj.injuryType,
-          expected_return: inj.expectedReturn,
-          source: "transfermarkt",
-          updated_at: new Date().toISOString(),
-        }, { onConflict: "player_name,team_name" });
-
-        if (!error) totalInserted++;
+        if (dbAvailable) {
+          const { error } = await supabase.from("player_availability").upsert({
+            player_name: inj.playerName,
+            team_id: teamId,
+            team_name: inj.team,
+            status: inj.status,
+            injury_type: inj.injuryType,
+            expected_return: inj.expectedReturn,
+            source: "transfermarkt",
+            updated_at: new Date().toISOString(),
+          }, { onConflict: "player_name,team_name" });
+          if (!error) totalInserted++;
+        } else {
+          // Store locally
+          localInjuries.push({
+            player_name: inj.playerName,
+            team_name: inj.team,
+            status: inj.status,
+            injury_type: inj.injuryType,
+            expected_return: inj.expectedReturn,
+            source: "transfermarkt",
+            fetched_at: new Date().toISOString(),
+          });
+          totalInserted++;
+        }
       }
 
       // Show first few
@@ -257,11 +266,21 @@ async function main() {
   console.log(`   Total found:    ${totalInjuries}`);
   console.log(`   Inserted:       ${totalInserted}`);
 
-  const { count } = await supabase
-    .from("player_availability")
-    .select("*", { count: "exact", head: true })
-    .in("status", ["injured", "suspended"]);
-  console.log(`   Active in DB:   ${count}`);
+  if (dbAvailable) {
+    const { count } = await supabase
+      .from("player_availability")
+      .select("*", { count: "exact", head: true })
+      .in("status", ["injured", "suspended"]);
+    console.log(`   Active in DB:   ${count}`);
+  } else if (localInjuries.length > 0) {
+    // Save locally
+    const outPath = path.join(__dirname, "..", "data", "transfermarkt-injuries.json");
+    const existing = fs.existsSync(outPath) ? JSON.parse(fs.readFileSync(outPath, "utf8")) : [];
+    const merged = [...existing, ...localInjuries];
+    fs.writeFileSync(outPath, JSON.stringify(merged, null, 2));
+    console.log(`   Saved locally:  ${localInjuries.length} injuries to data/transfermarkt-injuries.json`);
+    console.log(`   Total in file:  ${merged.length}`);
+  }
   console.log(`${"━".repeat(60)}`);
 }
 
