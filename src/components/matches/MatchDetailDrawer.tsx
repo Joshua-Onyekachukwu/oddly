@@ -251,9 +251,29 @@ export function MatchDetailDrawer({ fixtureId, onClose }: MatchDetailProps) {
     return () => { document.body.style.overflow = ""; };
   }, []);
 
-  const mainPred = data?.predictions?.find((p) => p.market === "1X2");
-  const overUnderPreds = data?.predictions?.filter((p) => p.market === "over_under") || [];
-  const bttsPred = data?.predictions?.find((p) => p.market === "btts");
+  // Group all predictions by market type
+  const predsByMarket: Record<string, Array<{market: string, selection: string, model_probability: number, confidence_lower?: number | null, confidence_upper?: number | null}>> = {};
+  for (const p of data?.predictions || []) {
+    const key = p.market;
+    if (!predsByMarket[key]) predsByMarket[key] = [];
+    predsByMarket[key].push(p);
+  }
+  // Sort markets: 1X2 first, then BTTS, OU, DC, DNB, HomeGoals, AwayGoals
+  const marketOrder = ["1X2", "BTTS", "OU", "DC", "DNB", "HomeGoals", "AwayGoals"];
+  const sortedMarkets = Object.keys(predsByMarket).sort((a, b) => {
+    const ai = marketOrder.indexOf(a);
+    const bi = marketOrder.indexOf(b);
+    if (ai >= 0 && bi >= 0) return ai - bi;
+    if (ai >= 0) return -1;
+    if (bi >= 0) return 1;
+    return a.localeCompare(b);
+  });
+  const MARKET_LABELS: Record<string, string> = {
+    "1X2": "Match Result", "BTTS": "Both Teams To Score",
+    "OU": "Over/Under Goals", "DC": "Double Chance",
+    "DNB": "Draw No Bet", "HomeGoals": "Home Team Goals",
+    "AwayGoals": "Away Team Goals",
+  };
 
   // Group odds by bookmaker
   const oddsByBookmaker: Record<string, Record<string, number>> = {};
@@ -353,66 +373,61 @@ export function MatchDetailDrawer({ fixtureId, onClose }: MatchDetailProps) {
               </div>
             </div>
 
-            {/* Model Predictions */}
+            {/* Model Predictions — All 24 Markets */}
             {data.predictions && data.predictions.length > 0 && (
               <div className="mb-[20px]">
-                <h3 className="text-[12px] font-semibold text-[#0A0F1C] mb-[10px] uppercase tracking-wider">
-                  Model Predictions
-                </h3>
-                <div className="bg-gray-50 rounded-[12px] p-[14px] space-y-[10px]">
-                  {/* 1X2 */}
-                  {mainPred && (
-                    <div>
-                      <div className="flex items-center justify-between mb-[6px]">
-                        <span className="text-[11px] font-medium text-gray-500">Match Result</span>
-                        <span className="text-[13px] font-mono-data font-bold text-[#0A0F1C]">
-                          {mainPred.selection} — {Math.round(mainPred.model_probability * 100)}%
-                        </span>
+                <div className="flex items-center justify-between mb-[10px]">
+                  <h3 className="text-[12px] font-semibold text-[#0A0F1C] uppercase tracking-wider">
+                    Model Predictions
+                  </h3>
+                  <span className="text-[10px] text-gray-400">
+                    {data.predictions.length} markets
+                  </span>
+                </div>
+                <div className="space-y-[12px]">
+                  {sortedMarkets.map((market) => {
+                    const preds = predsByMarket[market];
+                    const label = MARKET_LABELS[market] || market;
+                    return (
+                      <div key={market} className="bg-gray-50 rounded-[12px] p-[14px]">
+                        <h4 className="text-[11px] font-semibold text-gray-500 mb-[8px] uppercase tracking-wider">
+                          {label}
+                        </h4>
+                        <div className="space-y-[6px]">
+                          {preds.sort((a, b) => b.model_probability - a.model_probability).map((pred) => {
+                            const prob = Math.round(pred.model_probability * 100);
+                            const tier = prob >= 70 ? "ELITE" : prob >= 60 ? "HIGH" : "MEDIUM";
+                            return (
+                              <div key={pred.selection} className="flex items-center gap-[8px]">
+                                <span className="text-[11px] font-medium text-[#0A0F1C] w-[100px] truncate">
+                                  {pred.selection.replace(/_/g, " ")}
+                                </span>
+                                <div className="flex-1 bg-gray-200 rounded-full h-[3px]">
+                                  <div
+                                    className={`h-[3px] rounded-full transition-all duration-500 ${
+                                      prob >= 70 ? "bg-[#1B2A4A]" : prob >= 55 ? "bg-[#1B2A4A]/60" : "bg-[#1B2A4A]/30"
+                                    }`}
+                                    style={{ width: `${prob}%` }}
+                                  />
+                                </div>
+                                <span className={`text-[12px] font-mono font-bold w-[40px] text-right ${
+                                  prob >= 70 ? "text-[#0A0F1C]" : "text-gray-500"
+                                }`}>
+                                  {prob}%
+                                </span>
+                                <span className={`text-[8px] font-bold px-[4px] py-[1px] rounded ${
+                                  tier === "ELITE" ? "bg-[#F59E0B]/10 text-[#D97706]" :
+                                  tier === "HIGH" ? "bg-[#10B981]/10 text-[#059669]" : "bg-gray-100 text-gray-400"
+                                }`}>
+                                  {tier}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-[3px]">
-                        <div
-                          className="bg-[#1B2A4A] h-[3px] rounded-full transition-all duration-500"
-                          style={{ width: `${mainPred.model_probability * 100}%` }}
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Over/Under */}
-                  {overUnderPreds.map((pred) => (
-                    <div key={pred.selection}>
-                      <div className="flex items-center justify-between mb-[6px]">
-                        <span className="text-[11px] font-medium text-gray-500">{pred.selection.replace("_", " ").toUpperCase()}</span>
-                        <span className="text-[13px] font-mono-data font-bold text-[#0A0F1C]">
-                          {Math.round(pred.model_probability * 100)}%
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-[3px]">
-                        <div
-                          className="bg-[#1B2A4A] h-[3px] rounded-full transition-all duration-500"
-                          style={{ width: `${pred.model_probability * 100}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-
-                  {/* BTTS */}
-                  {bttsPred && (
-                    <div>
-                      <div className="flex items-center justify-between mb-[6px]">
-                        <span className="text-[11px] font-medium text-gray-500">Both Teams to Score</span>
-                        <span className="text-[13px] font-mono-data font-bold text-[#0A0F1C]">
-                          {Math.round(bttsPred.model_probability * 100)}%
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-[3px]">
-                        <div
-                          className="bg-[#1B2A4A] h-[3px] rounded-full transition-all duration-500"
-                          style={{ width: `${bttsPred.model_probability * 100}%` }}
-                        />
-                      </div>
-                    </div>
-                  )}
+                    );
+                  })}
                 </div>
               </div>
             )}

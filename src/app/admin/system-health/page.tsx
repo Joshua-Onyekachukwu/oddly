@@ -154,7 +154,8 @@ export default function SystemHealthPage() {
     const lastSync = lastOdds.data?.[0]?.snapshot_time || null;
     const lastPredTime = lastPred.data?.[0]?.created_at || null;
 
-    // Check if sync is recent (within 48 hours)
+    // Health thresholds: sync within 7 days is healthy for free tier (500 req/month)
+    // Predictions within 24 hours is healthy
     const syncAge = lastSync ? now.getTime() - new Date(lastSync).getTime() : Infinity;
     const predAge = lastPredTime ? now.getTime() - new Date(lastPredTime).getTime() : Infinity;
 
@@ -167,7 +168,9 @@ export default function SystemHealthPage() {
       lastSyncTime: lastSync,
       lastPredictTime: lastPredTime,
       lastSettleTime: null,
-      syncHealthy: syncAge < 48 * 3600000,
+      // Sync healthy if within 7 days (free tier = 500 req/month)
+      syncHealthy: syncAge < 7 * 24 * 3600000,
+      // Predictions healthy if within 48 hours
       predictHealthy: predAge < 48 * 3600000,
       cronNextRun: nextCron.toISOString(),
       dailySyncEnabled: true,
