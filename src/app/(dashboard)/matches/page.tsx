@@ -184,7 +184,7 @@ export default function TodayMatchesPage() {
     <div>
       <PageHeader
         title="Today's Matches"
-        description="AI-powered predictions for today's fixtures across 360+ leagues."
+        description="AI-powered predictions for today's fixtures across 26+ leagues."
       />
 
       <FilterBar
