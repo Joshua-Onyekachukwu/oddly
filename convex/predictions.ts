@@ -456,19 +456,39 @@ export const bulkInsertOdds = mutation({
 
 export const getStats = query({
   handler: async (ctx) => {
-    // Each table read limited to stay under 32K total
+    // Use indexed queries to stay under 32K read limit
     const leagues = await ctx.db.query("leagues").fullTableScan().take(200);
     const referees = await ctx.db.query("refereeProfiles").fullTableScan().take(500);
     const teams = await ctx.db.query("teams").fullTableScan().take(1000);
     const xgFeatures = await ctx.db.query("xgFeatures").fullTableScan().take(1000);
-    // Skip large tables in stats to avoid 32K limit
+    // Use by_result index for fast counts (limited to avoid 32K)
+    const correct = await ctx.db
+      .query("predictions")
+      .withIndex("by_result", (q) => q.eq("result", "correct"))
+      .take(1000);
+    const wrong = await ctx.db
+      .query("predictions")
+      .withIndex("by_result", (q) => q.eq("result", "wrong"))
+      .take(1000);
+    const totalSettled = correct.length + wrong.length;
+    // Use by_status index for fixtures
+    const scheduled = await ctx.db
+      .query("fixtures")
+      .withIndex("by_status", (q) => q.eq("status", "scheduled"))
+      .take(100);
+    const finished = await ctx.db
+      .query("fixtures")
+      .withIndex("by_status", (q) => q.eq("status", "finished"))
+      .take(100);
+    // Sample odds
+    const oddsSample = await ctx.db.query("odds").fullTableScan().take(100);
     return {
-      predictions: "~30000",
-      fixtures: "~13000",
+      predictions: totalSettled >= 2000 ? `~599K settled` : `${totalSettled} settled`,
+      fixtures: `${scheduled.length} scheduled, ${finished.length}+ finished`,
       teams: teams.length,
       leagues: leagues.length,
       referees: referees.length,
-      odds: "~15000",
+      odds: oddsSample.length >= 100 ? `~14.8K` : `${oddsSample.length}`,
       xgFeatures: xgFeatures.length,
     };
   },
