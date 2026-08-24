@@ -1,0 +1,15 @@
+{
+  "timestamp": "2026-08-24T13:14:05.762Z",
+  "trainSize": 8577,
+  "testSize": 2145,
+  "poisson": {
+    "accuracy": 1,
+    "logLoss": 1.0559228971206578,
+    "brier": 0.21146766879611148,
+    "total": 2145
+  },
+  "xgboost": {
+    "accuracy": 0,
+    "total": 91
+  }
+}

@@ -1,0 +1,116 @@
+{
+  "timestamp": "2026-08-24T13:35:29.260Z",
+  "trainSize": 8577,
+  "testSize": 2145,
+  "baseline": {
+    "accuracy": 0.6293706293706294,
+    "logLoss": 1.7041740706017674
+  },
+  "referee": {
+    "accuracy": 0.6293706293706294,
+    "logLoss": 1.7041740706017674
+  },
+  "improvement": 0,
+  "featureImportance": [
+    {
+      "name": "h2h_home_wins",
+      "baseline": 1724.4002412124355,
+      "referee": 1724.4002412124355
+    },
+    {
+      "name": "ppg_diff",
+      "baseline": 374.726076537174,
+      "referee": 374.726076537174
+    },
+    {
+      "name": "away_ppg",
+      "baseline": 266.30124450283637,
+      "referee": 266.30124450283637
+    },
+    {
+      "name": "away_ga",
+      "baseline": 199.38602316400483,
+      "referee": 199.38602316400483
+    },
+    {
+      "name": "ga_diff",
+      "baseline": 194.52008188365033,
+      "referee": 194.52008188365033
+    },
+    {
+      "name": "defense_diff",
+      "baseline": 194.52008188365033,
+      "referee": 194.52008188365033
+    },
+    {
+      "name": "gf_diff",
+      "baseline": 159.8172172516246,
+      "referee": 159.8172172516246
+    },
+    {
+      "name": "attack_diff",
+      "baseline": 159.8172172516246,
+      "referee": 159.8172172516246
+    },
+    {
+      "name": "away_gf",
+      "baseline": 156.26625800047526,
+      "referee": 156.26625800047526
+    },
+    {
+      "name": "combined_goals",
+      "baseline": 152.71529874936024,
+      "referee": 152.71529874936024
+    },
+    {
+      "name": "elo_diff",
+      "baseline": 109.22185025123609,
+      "referee": 109.22185025123609
+    },
+    {
+      "name": "home_ppg",
+      "baseline": 108.42483203461121,
+      "referee": 108.42483203461121
+    },
+    {
+      "name": "away_wins",
+      "baseline": 103.79280198980436,
+      "referee": 103.79280198980436
+    },
+    {
+      "name": "away_losses",
+      "baseline": 78.04931037170635,
+      "referee": 78.04931037170635
+    },
+    {
+      "name": "home_draws",
+      "baseline": 67.78117972823102,
+      "referee": 67.78117972823102
+    },
+    {
+      "name": "home_losses",
+      "baseline": 61.995393981817934,
+      "referee": 61.995393981817934
+    },
+    {
+      "name": "elo_away",
+      "baseline": 57.1017729628072,
+      "referee": 57.1017729628072
+    },
+    {
+      "name": "elo_home",
+      "baseline": 52.1200772883263,
+      "referee": 52.1200772883263
+    },
+    {
+      "name": "away_draws",
+      "baseline": 45.07716146655954,
+      "referee": 45.07716146655954
+    },
+    {
+      "name": "away_cs",
+      "baseline": 36.679113802806825,
+      "referee": 36.679113802806825
+    }
+  ]
+}

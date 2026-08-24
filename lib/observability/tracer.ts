@@ -61,8 +61,7 @@ async function flushTraces() {
 
   const batch = traceBuffer.splice(0, BUFFER_SIZE);
   try {
-    // Store in CockroachDB (observability table)
-    // For now, just log to console — can add table later
+    // Log failed traces to console (can add Convex audit log later)
     for (const trace of batch) {
       if (trace.status === "failed") {
         console.error(`[TRACE] ${trace.service}/${trace.operation} FAILED: ${trace.error} (${trace.duration_ms}ms)`);

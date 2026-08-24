@@ -278,9 +278,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Archive settled predictions to CockroachDB
+    // Archive settled predictions to Convex (non-blocking)
     let archived = 0;
-    if (settled > 0 && process.env.COCKROACHDB_URL) {
+    if (settled > 0 && process.env.CONVEX_URL) {
       try {
         const origin = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
         const archiveRes = await fetch(`${origin}/api/v1/cron/archive`, {
@@ -291,7 +291,7 @@ export async function POST(request: NextRequest) {
         if (archiveRes.ok) {
           const archiveData = await archiveRes.json();
           archived = archiveData.archived || 0;
-          console.log(`[SETTLE] Archived ${archived} predictions to CockroachDB`);
+          console.log(`[SETTLE] Archived ${archived} predictions to Convex`);
         }
       } catch (archiveErr) {
         console.error('[SETTLE] Archive warning (non-blocking):', archiveErr);
