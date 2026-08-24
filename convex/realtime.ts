@@ -200,15 +200,12 @@ export const getLiveStats = query({
 export const getSettlementByMarket = query({
   handler: async (ctx) => {
     const markets = [
-      "home_win",
-      "draw",
-      "away_win",
-      "over_2_5",
-      "under_2_5",
-      "btts_yes",
-      "btts_no",
-      "over_1_5",
-      "under_3_5",
+      "home_win", "draw", "away_win",
+      "over_2_5", "under_2_5",
+      "btts_yes", "btts_no",
+      "over_1_5", "under_3_5",
+      "home", "away", "draw",
+      "1x2",
     ];
 
     const results = [];
@@ -217,12 +214,9 @@ export const getSettlementByMarket = query({
       const correct = await ctx.db
         .query("predictions")
         .withIndex("by_market", (q) => q.eq("market", market))
-        .take(1000);
+        .take(2000);
 
-      // Count correct within this market
-      const totalCorrect = correct.filter(
-        (p) => p.result === "correct",
-      ).length;
+      const totalCorrect = correct.filter((p) => p.result === "correct").length;
       const totalWrong = correct.filter((p) => p.result === "wrong").length;
       const total = totalCorrect + totalWrong;
 
@@ -237,5 +231,166 @@ export const getSettlementByMarket = query({
     }
 
     return results.sort((a, b) => b.total - a.total);
+  },
+});
+
+// ─── Accuracy Dashboard Queries ─────────────────────────────
+
+/**
+ * Get calibration buckets for accuracy analysis.
+ * Buckets predictions by confidence level and measures actual accuracy.
+ */
+export const getCalibrationBuckets = query({
+  handler: async (ctx) => {
+    const correct = await ctx.db
+      .query("predictions")
+      .withIndex("by_result", (q) => q.eq("result", "correct"))
+      .take(2000);
+
+    const wrong = await ctx.db
+      .query("predictions")
+      .withIndex("by_result", (q) => q.eq("result", "wrong"))
+      .take(2000);
+
+    const all = [...correct, ...wrong];
+
+    const buckets = [
+      { range: "50-59%", min: 0.50, max: 0.59, total: 0, correct: 0 },
+      { range: "60-64%", min: 0.60, max: 0.64, total: 0, correct: 0 },
+      { range: "65-69%", min: 0.65, max: 0.69, total: 0, correct: 0 },
+      { range: "70-74%", min: 0.70, max: 0.74, total: 0, correct: 0 },
+      { range: "75-79%", min: 0.75, max: 0.79, total: 0, correct: 0 },
+      { range: "80-84%", min: 0.80, max: 0.84, total: 0, correct: 0 },
+      { range: "85-89%", min: 0.85, max: 0.89, total: 0, correct: 0 },
+      { range: "90%+", min: 0.90, max: 1.0, total: 0, correct: 0 },
+    ];
+
+    for (const p of all) {
+      for (const b of buckets) {
+        if (p.modelProbability >= b.min && p.modelProbability <= b.max) {
+          b.total++;
+          if (p.result === "correct") b.correct++;
+          break;
+        }
+      }
+    }
+
+    return buckets.map((b) => ({
+      range: b.range,
+      total: b.total,
+      correct: b.correct,
+      accuracy: b.total > 0 ? Math.round((b.correct / b.total) * 1000) / 10 : 0,
+      avgPredicted: b.total > 0 ? Math.round(((b.min + b.max) / 2) * 100) : 0,
+    }));
+  },
+});
+
+/**
+ * Get daily accuracy stats for the last 14 days.
+ */
+export const getDailyStats = query({
+  handler: async (ctx) => {
+    const correct = await ctx.db
+      .query("predictions")
+      .withIndex("by_result", (q) => q.eq("result", "correct"))
+      .take(2000);
+
+    const wrong = await ctx.db
+      .query("predictions")
+      .withIndex("by_result", (q) => q.eq("result", "wrong"))
+      .take(2000);
+
+    const all = [...correct, ...wrong];
+
+    // Group by date (settledAt or created_at)
+    const dailyMap: Record<string, { correct: number; total: number }> = {};
+    for (const p of all) {
+      const date = (p.settledAt || "").slice(0, 10);
+      if (!date) continue;
+      if (!dailyMap[date]) dailyMap[date] = { correct: 0, total: 0 };
+      dailyMap[date].total++;
+      if (p.result === "correct") dailyMap[date].correct++;
+    }
+
+    return Object.entries(dailyMap)
+      .map(([date, stats]) => ({
+        date,
+        total: stats.total,
+        correct: stats.correct,
+        accuracy: stats.total > 0 ? Math.round((stats.correct / stats.total) * 1000) / 10 : 0,
+      }))
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .slice(0, 14);
+  },
+});
+
+/**
+ * Get high-confidence (ELITE) accuracy stats.
+ */
+export const getHighConfidenceStats = query({
+  args: {
+    threshold: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const threshold = args.threshold ?? 0.65;
+
+    const correct = await ctx.db
+      .query("predictions")
+      .withIndex("by_result", (q) => q.eq("result", "correct"))
+      .take(2000);
+
+    const wrong = await ctx.db
+      .query("predictions")
+      .withIndex("by_result", (q) => q.eq("result", "wrong"))
+      .take(2000);
+
+    const all = [...correct, ...wrong];
+    const highConf = all.filter((p) => p.modelProbability >= threshold);
+    const highConfCorrect = highConf.filter((p) => p.result === "correct");
+
+    return {
+      total: highConf.length,
+      correct: highConfCorrect.length,
+      accuracy: highConf.length > 0 ? Math.round((highConfCorrect.length / highConf.length) * 1000) / 10 : 0,
+      threshold,
+    };
+  },
+});
+
+/**
+ * Get paginated settlement feed with all details.
+ */
+export const getSettlementFeed = query({
+  args: {
+    limit: v.optional(v.number()),
+    offset: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit ?? 50, 100);
+    const offset = args.offset ?? 0;
+
+    const correct = await ctx.db
+      .query("predictions")
+      .withIndex("by_result", (q) => q.eq("result", "correct"))
+      .take(offset + limit + 100);
+
+    const wrong = await ctx.db
+      .query("predictions")
+      .withIndex("by_result", (q) => q.eq("result", "wrong"))
+      .take(offset + limit + 100);
+
+    const all = [...correct, ...wrong]
+      .sort((a, b) => {
+        if (a.settledAt && b.settledAt) {
+          return b.settledAt.localeCompare(a.settledAt);
+        }
+        return 0;
+      });
+
+    return {
+      items: all.slice(offset, offset + limit),
+      total: all.length,
+      hasMore: all.length > offset + limit,
+    };
   },
 });
