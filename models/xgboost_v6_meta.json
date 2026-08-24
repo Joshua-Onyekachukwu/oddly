@@ -1,0 +1,15 @@
+{
+  "version": "v6.0",
+  "experiment": "A",
+  "features": [
+    "model_probability"
+  ],
+  "te_acc": 0.6853759507076153,
+  "te_ll": 0.6025184392929077,
+  "te_brier": 0.2068857103586197,
+  "cal_err": 0.022512629389641388,
+  "importance": {
+    "model_probability": 1.0
+  },
+  "trained_at": "2026-08-24T15:58:31.384131"
+}
