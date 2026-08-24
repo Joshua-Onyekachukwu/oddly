@@ -119,7 +119,23 @@ def load_aux():
                 inj[t].append(i)
         except: pass
     print(f"  Injuries: {len(inj)} teams")
-    return xg, inj
+    # Market consensus features
+    mc = {}
+    p = DATA_DIR / "market-consensus.json"
+    if p.exists():
+        try:
+            mc = json.loads(p.read_text()).get("features", {})
+            print(f"  Market consensus: {len(mc)} fixtures")
+        except: pass
+    # CLV features
+    clv = {}
+    p = DATA_DIR / "clv-features.json"
+    if p.exists():
+        try:
+            clv = json.loads(p.read_text()).get("features", {})
+            print(f"  CLV features: {len(clv)} fixtures")
+        except: pass
+    return xg, inj, mc, clv
 
 class Tracker:
     def __init__(self):
@@ -168,7 +184,7 @@ def find_xg(name, xg_data):
             if kn.lower() == name.lower(): return v
     return None
 
-def build_features(preds, fixts, teams, leagues, odds, xg, injuries):
+def build_features(preds, fixts, teams, leagues, odds, xg, injuries, mc, clv):
     print("Building tracker...")
     t0 = time.time()
     tracker = Tracker()
@@ -223,6 +239,21 @@ def build_features(preds, fixts, teams, leagues, odds, xg, injuries):
             "draw_implied": (1/np.mean(odds.get(fid,{}).get("Draw",[99]))) if odds.get(fid,{}).get("Draw") else 0,
             "away_implied": (1/np.mean(odds.get(fid,{}).get("Away",[99]))) if odds.get(fid,{}).get("Away") else 0,
             "has_odds": 1 if odds.get(fid) else 0,
+            # Market consensus features
+            "true_home": mc.get(fid, {}).get("true_home", 0),
+            "true_draw": mc.get(fid, {}).get("true_draw", 0),
+            "true_away": mc.get(fid, {}).get("true_away", 0),
+            "overround": mc.get(fid, {}).get("overround", 0),
+            "market_confidence": mc.get(fid, {}).get("market_confidence", 0),
+            "bookmaker_count": mc.get(fid, {}).get("bookmaker_count", 0),
+            # CLV features
+            "clv_home": clv.get(fid, {}).get("clv_home", 0),
+            "clv_draw": clv.get(fid, {}).get("clv_draw", 0),
+            "clv_away": clv.get(fid, {}).get("clv_away", 0),
+            "sharp_money": clv.get(fid, {}).get("sharp_money", 0),
+            "closing_implied_home": clv.get(fid, {}).get("closing_implied_home", 0),
+            "closing_implied_draw": clv.get(fid, {}).get("closing_implied_draw", 0),
+            "closing_implied_away": clv.get(fid, {}).get("closing_implied_away", 0),
         })
         if (i+1) % 5000 == 0: print(f"  {i+1}/{len(preds)}...")
     print(f"  {len(rows)} rows in {time.time()-t0:.0f}s")
@@ -233,6 +264,8 @@ B = ["elo_diff","home_ppg","away_ppg","ppg_diff","home_gs","home_gc","away_gs","
 X = ["home_xg","away_xg","home_xga","away_xga","xg_diff","xga_diff","has_xg"]
 I = ["home_inj","away_inj","inj_diff"]
 O = ["home_odds","draw_odds","away_odds","home_implied","draw_implied","away_implied","has_odds"]
+M = ["true_home","true_draw","true_away","overround","market_confidence","bookmaker_count"]
+C = ["clv_home","clv_draw","clv_away","sharp_money","closing_implied_home","closing_implied_draw","closing_implied_away"]
 EXPS = {
     "A":("Baseline",["model_probability"]),
     "B":("Basic",B),
@@ -241,6 +274,8 @@ EXPS = {
     "E":("Basic+xG+Odds",B+X+O),
     "F":("All XGB",B+X+I+O),
     "G":("All LGB",B+X+I+O),
+    "H":("+Market",B+X+I+O+M),
+    "I":("+Market+CLV",B+X+I+O+M+C),
 }
 
 def run_exp(name, features, tr, va, te, lgbm=False):
@@ -278,8 +313,8 @@ def main():
     p=argparse.ArgumentParser(); p.add_argument("--quick",action="store_true"); a=p.parse_args()
     print("="*70+"\n  ODDLY XGBoost v6.0\n"+"="*70)
     preds,fixts,teams,leagues,odds=load_data(quick=a.quick)
-    xg,inj=load_aux()
-    df=build_features(preds,fixts,teams,leagues,odds,xg,inj)
+    xg,inj,mc,clv=load_aux()
+    df=build_features(preds,fixts,teams,leagues,odds,xg,inj,mc,clv)
     if len(df)<100: print("Not enough data"); return
     print(f"\nDataset: {len(df)} rows, {df['label'].mean():.1%} positive")
     df_s=df.sort_values("created_at").reset_index(drop=True)
