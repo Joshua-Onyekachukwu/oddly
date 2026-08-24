@@ -1,0 +1,261 @@
+{
+  "trained_at": "2026-08-24T09:26:27.000Z",
+  "leagues": {
+    "Premier League": {
+      "weights": [
+        0.208927718127967,
+        0.2223462435985224,
+        -0.29652472231712723,
+        0.28195748948831706,
+        -0.13788304775989657,
+        0.40071305777846067,
+        -0.4101367139108546,
+        0.09327058433261222,
+        -0.08796236781624114,
+        0.04799090527916842,
+        -0.03006911808265905
+      ],
+      "bias": -0.09915042413860532,
+      "accuracy": 66,
+      "training_samples": 700,
+      "validation_samples": 300,
+      "feature_names": [
+        "eloDiff",
+        "homePPG",
+        "awayPPG",
+        "attackVsDefense",
+        "awayAttackVsHomeDefense",
+        "homeCleanSheet",
+        "awayCleanSheet",
+        "homeWinRate",
+        "awayWinRate",
+        "h2hHomeAdv",
+        "expectedTotalGoals"
+      ]
+    },
+    "La Liga": {
+      "weights": [
+        0.21863467916920926,
+        0.22397346885501462,
+        -0.39840808235024666,
+        0.3087624714162952,
+        -0.13305653989435703,
+        0.46974397681520574,
+        -0.5351551628375462,
+        0.09835991527959605,
+        -0.10465300691973525,
+        -0.05205120483284625,
+        -0.035859853709862874
+      ],
+      "bias": -0.11770577301654613,
+      "accuracy": 72,
+      "training_samples": 700,
+      "validation_samples": 300,
+      "feature_names": [
+        "eloDiff",
+        "homePPG",
+        "awayPPG",
+        "attackVsDefense",
+        "awayAttackVsHomeDefense",
+        "homeCleanSheet",
+        "awayCleanSheet",
+        "homeWinRate",
+        "awayWinRate",
+        "h2hHomeAdv",
+        "expectedTotalGoals"
+      ]
+    },
+    "Bundesliga": {
+      "weights": [
+        0.17728952550033214,
+        0.15038124278776405,
+        -0.23801269057927765,
+        0.3057709580339451,
+        -0.18634325985447192,
+        0.36318180040896897,
+        -0.3336064585009383,
+        0.0616476961880819,
+        -0.06510311385035188,
+        0.15561943989204038,
+        -0.032203675306217504
+      ],
+      "bias": -0.0639293654018702,
+      "accuracy": 71,
+      "training_samples": 641,
+      "validation_samples": 276,
+      "feature_names": [
+        "eloDiff",
+        "homePPG",
+        "awayPPG",
+        "attackVsDefense",
+        "awayAttackVsHomeDefense",
+        "homeCleanSheet",
+        "awayCleanSheet",
+        "homeWinRate",
+        "awayWinRate",
+        "h2hHomeAdv",
+        "expectedTotalGoals"
+      ]
+    },
+    "Serie A": {
+      "weights": [
+        0.26107125297125633,
+        0.13365685381024592,
+        -0.27648029587600154,
+        0.3258754726909758,
+        -0.20078309277845469,
+        0.37161819435928883,
+        -0.411878148458379,
+        0.05360520341688425,
+        -0.08992193243652179,
+        0.07701205480511665,
+        -0.0467668543483856
+      ],
+      "bias": -0.08439615721878799,
+      "accuracy": 66.3,
+      "training_samples": 700,
+      "validation_samples": 300,
+      "feature_names": [
+        "eloDiff",
+        "homePPG",
+        "awayPPG",
+        "attackVsDefense",
+        "awayAttackVsHomeDefense",
+        "homeCleanSheet",
+        "awayCleanSheet",
+        "homeWinRate",
+        "awayWinRate",
+        "h2hHomeAdv",
+        "expectedTotalGoals"
+      ]
+    },
+    "Ligue 1": {
+      "weights": [
+        0.2508078173499446,
+        0.23151367356626132,
+        -0.2557255491858618,
+        0.2581782863343215,
+        -0.18002125503202349,
+        0.29962430255515937,
+        -0.2924891556894539,
+        0.09407019155965064,
+        -0.07135929351684361,
+        0.16693896497045715,
+        -0.04181399583679754
+      ],
+      "bias": -0.050482345853655367,
+      "accuracy": 65.7,
+      "training_samples": 645,
+      "validation_samples": 277,
+      "feature_names": [
+        "eloDiff",
+        "homePPG",
+        "awayPPG",
+        "attackVsDefense",
+        "awayAttackVsHomeDefense",
+        "homeCleanSheet",
+        "awayCleanSheet",
+        "homeWinRate",
+        "awayWinRate",
+        "h2hHomeAdv",
+        "expectedTotalGoals"
+      ]
+    },
+    "Eredivisie": {
+      "weights": [
+        0.23223652987696639,
+        0.2659745057891192,
+        -0.2651830319925009,
+        0.30120333831481133,
+        -0.25599635400775883,
+        0.39790531916482885,
+        -0.4412427786776691,
+        0.09425578483306234,
+        -0.0694154800130458,
+        0.07932063645141864,
+        -0.06246262425423119
+      ],
+      "bias": -0.07216206597952392,
+      "accuracy": 66.7,
+      "training_samples": 657,
+      "validation_samples": 282,
+      "feature_names": [
+        "eloDiff",
+        "homePPG",
+        "awayPPG",
+        "attackVsDefense",
+        "awayAttackVsHomeDefense",
+        "homeCleanSheet",
+        "awayCleanSheet",
+        "homeWinRate",
+        "awayWinRate",
+        "h2hHomeAdv",
+        "expectedTotalGoals"
+      ]
+    },
+    "Championship": {
+      "weights": [
+        0.11724286891892106,
+        0.10453281674618213,
+        -0.243547176544846,
+        0.1524403763843778,
+        -0.09428396941565727,
+        0.25671948791942384,
+        -0.2517955547060656,
+        0.05480241737014314,
+        -0.09828334761356002,
+        0.07149335650359169,
+        -0.0057710992131389
+      ],
+      "bias": -0.038610416440721086,
+      "accuracy": 65.3,
+      "training_samples": 700,
+      "validation_samples": 300,
+      "feature_names": [
+        "eloDiff",
+        "homePPG",
+        "awayPPG",
+        "attackVsDefense",
+        "awayAttackVsHomeDefense",
+        "homeCleanSheet",
+        "awayCleanSheet",
+        "homeWinRate",
+        "awayWinRate",
+        "h2hHomeAdv",
+        "expectedTotalGoals"
+      ]
+    },
+    "Primeira Liga": {
+      "weights": [
+        0.29187087642785425,
+        0.18826562640648578,
+        -0.41285867441499113,
+        0.34400611857899893,
+        -0.1487984785325234,
+        0.42215267515113486,
+        -0.38136126964579947,
+        0.08360186027451176,
+        -0.14006558962471352,
+        -0.032899161576634285,
+        0.005795813980753956
+      ],
+      "bias": -0.07712897763022589,
+      "accuracy": 72.7,
+      "training_samples": 656,
+      "validation_samples": 282,
+      "feature_names": [
+        "eloDiff",
+        "homePPG",
+        "awayPPG",
+        "attackVsDefense",
+        "awayAttackVsHomeDefense",
+        "homeCleanSheet",
+        "awayCleanSheet",
+        "homeWinRate",
+        "awayWinRate",
+        "h2hHomeAdv",
+        "expectedTotalGoals"
+      ]
+    }
+  }
+}
