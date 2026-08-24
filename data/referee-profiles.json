@@ -1,548 +1,2081 @@
 [
   {
-    "name": "A Taylor",
-    "matches": 30,
-    "homeWinPct": 0.23333333333333334,
-    "drawPct": 0.23333333333333334,
-    "awayWinPct": 0.5333333333333333,
-    "avgGoals": 3.6,
-    "avgYellow": 2.933333333333333,
-    "avgRed": 0.2,
-    "avgFouls": 21.366666666666667,
-    "bttsPct": 0.6666666666666666,
-    "over25Pct": 0.7333333333333333,
-    "homeBias": -0.22666666666666668
-  },
-  {
-    "name": "A Kitchen",
-    "matches": 29,
-    "homeWinPct": 0.41379310344827586,
-    "drawPct": 0.41379310344827586,
-    "awayWinPct": 0.1724137931034483,
-    "avgGoals": 1.7241379310344827,
-    "avgYellow": 3.2413793103448274,
-    "avgRed": 0.034482758620689655,
-    "avgFouls": 25.03448275862069,
-    "bttsPct": 0.3448275862068966,
-    "over25Pct": 0.2413793103448276,
-    "homeBias": -0.046206896551724164
-  },
-  {
     "name": "D Webb",
-    "matches": 29,
-    "homeWinPct": 0.5172413793103449,
-    "drawPct": 0.2413793103448276,
-    "awayWinPct": 0.2413793103448276,
-    "avgGoals": 2.586206896551724,
-    "avgYellow": 2.7241379310344827,
-    "avgRed": 0.034482758620689655,
-    "avgFouls": 21.103448275862068,
-    "bttsPct": 0.4482758620689655,
-    "over25Pct": 0.5172413793103449,
-    "homeBias": 0.05724137931034484
-  },
-  {
-    "name": "O Langford",
-    "matches": 29,
-    "homeWinPct": 0.3103448275862069,
-    "drawPct": 0.27586206896551724,
-    "awayWinPct": 0.41379310344827586,
-    "avgGoals": 2.6206896551724137,
-    "avgYellow": 3.5517241379310347,
-    "avgRed": 0.1724137931034483,
-    "avgFouls": 22.655172413793103,
-    "bttsPct": 0.4827586206896552,
-    "over25Pct": 0.41379310344827586,
-    "homeBias": -0.1496551724137931
-  },
-  {
-    "name": "J Busby",
-    "matches": 27,
-    "homeWinPct": 0.48148148148148145,
-    "drawPct": 0.2222222222222222,
-    "awayWinPct": 0.2962962962962963,
-    "avgGoals": 2.6666666666666665,
-    "avgYellow": 3.074074074074074,
-    "avgRed": 0.07407407407407407,
-    "avgFouls": 21.333333333333332,
-    "bttsPct": 0.5555555555555556,
-    "over25Pct": 0.5185185185185185,
-    "homeBias": 0.021481481481481435
-  },
-  {
-    "name": "S Hooper",
-    "matches": 26,
-    "homeWinPct": 0.46153846153846156,
-    "drawPct": 0.2692307692307692,
-    "awayWinPct": 0.2692307692307692,
-    "avgGoals": 2.6538461538461537,
-    "avgYellow": 4.730769230769231,
-    "avgRed": 0.07692307692307693,
-    "avgFouls": 19.884615384615383,
-    "bttsPct": 0.5769230769230769,
-    "over25Pct": 0.46153846153846156,
-    "homeBias": 0.001538461538461544
-  },
-  {
-    "name": "R Jones",
-    "matches": 25,
-    "homeWinPct": 0.2,
-    "drawPct": 0.44,
-    "awayWinPct": 0.36,
-    "avgGoals": 2.68,
-    "avgYellow": 4.2,
-    "avgRed": 0.16,
-    "avgFouls": 25.16,
-    "bttsPct": 0.64,
-    "over25Pct": 0.52,
-    "homeBias": -0.26
-  },
-  {
-    "name": "C Pawson",
-    "matches": 25,
-    "homeWinPct": 0.48,
-    "drawPct": 0.24,
-    "awayWinPct": 0.28,
-    "avgGoals": 2.52,
-    "avgYellow": 4.08,
-    "avgRed": 0.2,
-    "avgFouls": 22.72,
-    "bttsPct": 0.48,
-    "over25Pct": 0.48,
-    "homeBias": 0.019999999999999962
-  },
-  {
-    "name": "M Oliver",
-    "matches": 25,
-    "homeWinPct": 0.28,
-    "drawPct": 0.32,
-    "awayWinPct": 0.4,
-    "avgGoals": 2.72,
-    "avgYellow": 4.32,
-    "avgRed": 0.2,
-    "avgFouls": 23.16,
-    "bttsPct": 0.6,
-    "over25Pct": 0.52,
-    "homeBias": -0.18
-  },
-  {
-    "name": "T Harrington",
-    "matches": 25,
-    "homeWinPct": 0.48,
-    "drawPct": 0.2,
-    "awayWinPct": 0.32,
-    "avgGoals": 2.92,
-    "avgYellow": 4.08,
-    "avgRed": 0.2,
-    "avgFouls": 22.96,
-    "bttsPct": 0.6,
-    "over25Pct": 0.6,
-    "homeBias": 0.019999999999999962
-  },
-  {
-    "name": "P Bankes",
-    "matches": 25,
-    "homeWinPct": 0.56,
-    "drawPct": 0.08,
-    "awayWinPct": 0.36,
-    "avgGoals": 3.12,
-    "avgYellow": 3.72,
-    "avgRed": 0.12,
-    "avgFouls": 19.84,
-    "bttsPct": 0.64,
-    "over25Pct": 0.68,
-    "homeBias": 0.10000000000000003
-  },
-  {
-    "name": "G Ward",
-    "matches": 25,
-    "homeWinPct": 0.56,
-    "drawPct": 0.24,
-    "awayWinPct": 0.2,
-    "avgGoals": 2.08,
-    "avgYellow": 3.6,
-    "avgRed": 0.28,
-    "avgFouls": 22,
-    "bttsPct": 0.48,
-    "over25Pct": 0.4,
-    "homeBias": 0.10000000000000003
-  },
-  {
-    "name": "J Bell",
-    "matches": 25,
-    "homeWinPct": 0.36,
-    "drawPct": 0.44,
-    "awayWinPct": 0.2,
-    "avgGoals": 2.6,
-    "avgYellow": 3.96,
-    "avgRed": 0.16,
-    "avgFouls": 22.12,
-    "bttsPct": 0.56,
-    "over25Pct": 0.44,
-    "homeBias": -0.10000000000000003
-  },
-  {
-    "name": "D Whitestone",
-    "matches": 25,
-    "homeWinPct": 0.4,
-    "drawPct": 0.32,
-    "awayWinPct": 0.28,
-    "avgGoals": 2.24,
-    "avgYellow": 3.32,
-    "avgRed": 0.04,
-    "avgFouls": 23.12,
-    "bttsPct": 0.48,
-    "over25Pct": 0.36,
-    "homeBias": -0.06
-  },
-  {
-    "name": "S Barrott",
-    "matches": 24,
-    "homeWinPct": 0.4166666666666667,
-    "drawPct": 0.125,
-    "awayWinPct": 0.4583333333333333,
-    "avgGoals": 3,
-    "avgYellow": 4.625,
-    "avgRed": 0.041666666666666664,
-    "avgFouls": 21.625,
-    "bttsPct": 0.5416666666666666,
-    "over25Pct": 0.625,
-    "homeBias": -0.043333333333333335
-  },
-  {
-    "name": "C Kavanagh",
-    "matches": 24,
-    "homeWinPct": 0.3333333333333333,
-    "drawPct": 0.4166666666666667,
-    "awayWinPct": 0.25,
-    "avgGoals": 2.3333333333333335,
-    "avgYellow": 4,
-    "avgRed": 0.20833333333333334,
-    "avgFouls": 21.041666666666668,
-    "bttsPct": 0.5416666666666666,
-    "over25Pct": 0.375,
-    "homeBias": -0.1266666666666667
-  },
-  {
-    "name": "S Allison",
-    "matches": 24,
-    "homeWinPct": 0.4583333333333333,
-    "drawPct": 0.20833333333333334,
-    "awayWinPct": 0.3333333333333333,
-    "avgGoals": 2.125,
-    "avgYellow": 4.166666666666667,
-    "avgRed": 0.08333333333333333,
-    "avgFouls": 22.833333333333332,
-    "bttsPct": 0.3333333333333333,
-    "over25Pct": 0.20833333333333334,
-    "homeBias": -0.0016666666666667052
-  },
-  {
-    "name": "M Donohue",
-    "matches": 24,
-    "homeWinPct": 0.5,
-    "drawPct": 0.25,
-    "awayWinPct": 0.25,
-    "avgGoals": 2.2083333333333335,
-    "avgYellow": 3.7916666666666665,
-    "avgRed": 0.2916666666666667,
-    "avgFouls": 22.583333333333332,
-    "bttsPct": 0.5416666666666666,
-    "over25Pct": 0.5,
-    "homeBias": 0.03999999999999998
-  },
-  {
-    "name": "S Martin",
-    "matches": 24,
-    "homeWinPct": 0.5,
-    "drawPct": 0.20833333333333334,
-    "awayWinPct": 0.2916666666666667,
-    "avgGoals": 2.4166666666666665,
-    "avgYellow": 3.75,
-    "avgRed": 0.041666666666666664,
-    "avgFouls": 25.708333333333332,
-    "bttsPct": 0.3333333333333333,
-    "over25Pct": 0.4166666666666667,
-    "homeBias": 0.03999999999999998
-  },
-  {
-    "name": "T Robinson",
-    "matches": 23,
-    "homeWinPct": 0.30434782608695654,
-    "drawPct": 0.4782608695652174,
-    "awayWinPct": 0.21739130434782608,
-    "avgGoals": 2.8260869565217392,
-    "avgYellow": 4.217391304347826,
-    "avgRed": 0.13043478260869565,
-    "avgFouls": 23.91304347826087,
-    "bttsPct": 0.6086956521739131,
-    "over25Pct": 0.5217391304347826,
-    "homeBias": -0.15565217391304348
-  },
-  {
-    "name": "D Bond",
-    "matches": 23,
-    "homeWinPct": 0.5652173913043478,
-    "drawPct": 0.21739130434782608,
-    "awayWinPct": 0.21739130434782608,
-    "avgGoals": 3.1739130434782608,
-    "avgYellow": 3.608695652173913,
-    "avgRed": 0.13043478260869565,
-    "avgFouls": 22.26086956521739,
-    "bttsPct": 0.6086956521739131,
-    "over25Pct": 0.6521739130434783,
-    "homeBias": 0.10521739130434776
-  },
-  {
-    "name": "S Attwell",
-    "matches": 23,
-    "homeWinPct": 0.30434782608695654,
-    "drawPct": 0.30434782608695654,
-    "awayWinPct": 0.391304347826087,
-    "avgGoals": 2.869565217391304,
-    "avgYellow": 4,
-    "avgRed": 0.13043478260869565,
-    "avgFouls": 20.782608695652176,
-    "bttsPct": 0.5217391304347826,
-    "over25Pct": 0.6086956521739131,
-    "homeBias": -0.15565217391304348
+    "matches": 129,
+    "homeWinPct": 0.4418604651162791,
+    "drawPct": 0.2558139534883721,
+    "awayWinPct": 0.3023255813953488,
+    "avgGoals": 2.705426356589147,
+    "avgYellow": 3.13953488372093,
+    "avgRed": 0.11627906976744186,
+    "avgFouls": 20.34108527131783,
+    "bttsPct": 0.5658914728682171,
+    "over25Pct": 0.5193798449612403,
+    "homeBias": -0.018139534883720942,
+    "leagues": [
+      "E0",
+      "E1",
+      "E3",
+      "E2"
+    ]
   },
   {
     "name": "J Smith",
-    "matches": 23,
-    "homeWinPct": 0.5217391304347826,
-    "drawPct": 0.21739130434782608,
-    "awayWinPct": 0.2608695652173913,
-    "avgGoals": 2.608695652173913,
-    "avgYellow": 4.130434782608695,
-    "avgRed": 0.08695652173913043,
-    "avgFouls": 21.26086956521739,
-    "bttsPct": 0.5217391304347826,
-    "over25Pct": 0.4782608695652174,
-    "homeBias": 0.061739130434782574
+    "matches": 127,
+    "homeWinPct": 0.48031496062992124,
+    "drawPct": 0.2283464566929134,
+    "awayWinPct": 0.29133858267716534,
+    "avgGoals": 2.6929133858267718,
+    "avgYellow": 3.874015748031496,
+    "avgRed": 0.14173228346456693,
+    "avgFouls": 22.62992125984252,
+    "bttsPct": 0.5354330708661418,
+    "over25Pct": 0.5039370078740157,
+    "homeBias": 0.02031496062992122,
+    "leagues": [
+      "E0",
+      "E1",
+      "E2",
+      "E3"
+    ]
   },
   {
-    "name": "L Smith",
-    "matches": 22,
-    "homeWinPct": 0.5454545454545454,
-    "drawPct": 0.3181818181818182,
-    "awayWinPct": 0.13636363636363635,
-    "avgGoals": 2.772727272727273,
-    "avgYellow": 3.272727272727273,
-    "avgRed": 0.09090909090909091,
-    "avgFouls": 23.772727272727273,
-    "bttsPct": 0.5909090909090909,
-    "over25Pct": 0.45454545454545453,
-    "homeBias": 0.0854545454545454
+    "name": "J Busby",
+    "matches": 125,
+    "homeWinPct": 0.392,
+    "drawPct": 0.24,
+    "awayWinPct": 0.368,
+    "avgGoals": 2.496,
+    "avgYellow": 3.52,
+    "avgRed": 0.072,
+    "avgFouls": 21.048,
+    "bttsPct": 0.48,
+    "over25Pct": 0.456,
+    "homeBias": -0.068,
+    "leagues": [
+      "E1",
+      "E2",
+      "E3"
+    ]
   },
   {
-    "name": "A Madley",
-    "matches": 22,
-    "homeWinPct": 0.4090909090909091,
-    "drawPct": 0.3181818181818182,
-    "awayWinPct": 0.2727272727272727,
-    "avgGoals": 2.727272727272727,
-    "avgYellow": 4.318181818181818,
-    "avgRed": 0.045454545454545456,
-    "avgFouls": 23.40909090909091,
-    "bttsPct": 0.5454545454545454,
-    "over25Pct": 0.45454545454545453,
-    "homeBias": -0.050909090909090904
+    "name": "O Langford",
+    "matches": 122,
+    "homeWinPct": 0.4180327868852459,
+    "drawPct": 0.21311475409836064,
+    "awayWinPct": 0.36885245901639346,
+    "avgGoals": 2.4098360655737703,
+    "avgYellow": 3.5901639344262297,
+    "avgRed": 0.11475409836065574,
+    "avgFouls": 21.360655737704917,
+    "bttsPct": 0.47540983606557374,
+    "over25Pct": 0.4426229508196721,
+    "homeBias": -0.0419672131147541,
+    "leagues": [
+      "E1",
+      "E3",
+      "E2"
+    ]
   },
   {
-    "name": "M Salisbury",
-    "matches": 21,
-    "homeWinPct": 0.47619047619047616,
-    "drawPct": 0.047619047619047616,
-    "awayWinPct": 0.47619047619047616,
-    "avgGoals": 3.4285714285714284,
-    "avgYellow": 2.9523809523809526,
-    "avgRed": 0.19047619047619047,
-    "avgFouls": 22.523809523809526,
-    "bttsPct": 0.47619047619047616,
-    "over25Pct": 0.6666666666666666,
-    "homeBias": 0.016190476190476144
+    "name": "S Martin",
+    "matches": 122,
+    "homeWinPct": 0.5409836065573771,
+    "drawPct": 0.1885245901639344,
+    "awayWinPct": 0.27049180327868855,
+    "avgGoals": 2.721311475409836,
+    "avgYellow": 3.8442622950819674,
+    "avgRed": 0.09016393442622951,
+    "avgFouls": 23.78688524590164,
+    "bttsPct": 0.4344262295081967,
+    "over25Pct": 0.5245901639344263,
+    "homeBias": 0.08098360655737707,
+    "leagues": [
+      "E1",
+      "E2",
+      "E3"
+    ]
   },
   {
-    "name": "T Bramall",
-    "matches": 21,
-    "homeWinPct": 0.6190476190476191,
-    "drawPct": 0.14285714285714285,
-    "awayWinPct": 0.23809523809523808,
-    "avgGoals": 2.761904761904762,
-    "avgYellow": 3.3333333333333335,
-    "avgRed": 0.2857142857142857,
-    "avgFouls": 20.761904761904763,
-    "bttsPct": 0.42857142857142855,
-    "over25Pct": 0.5714285714285714,
-    "homeBias": 0.15904761904761905
+    "name": "G Ward",
+    "matches": 121,
+    "homeWinPct": 0.5041322314049587,
+    "drawPct": 0.23140495867768596,
+    "awayWinPct": 0.2644628099173554,
+    "avgGoals": 2.4545454545454546,
+    "avgYellow": 3.7520661157024793,
+    "avgRed": 0.12396694214876033,
+    "avgFouls": 20.859504132231404,
+    "bttsPct": 0.5041322314049587,
+    "over25Pct": 0.49586776859504134,
+    "homeBias": 0.044132231404958644,
+    "leagues": [
+      "E1",
+      "E2",
+      "E3"
+    ]
   },
   {
-    "name": "T Nield",
-    "matches": 21,
-    "homeWinPct": 0.5238095238095238,
-    "drawPct": 0.23809523809523808,
-    "awayWinPct": 0.23809523809523808,
-    "avgGoals": 2.5714285714285716,
-    "avgYellow": 3.761904761904762,
-    "avgRed": 0.09523809523809523,
-    "avgFouls": 24.428571428571427,
-    "bttsPct": 0.5714285714285714,
-    "over25Pct": 0.6190476190476191,
-    "homeBias": 0.06380952380952382
+    "name": "M Donohue",
+    "matches": 121,
+    "homeWinPct": 0.45454545454545453,
+    "drawPct": 0.256198347107438,
+    "awayWinPct": 0.2892561983471074,
+    "avgGoals": 2.3884297520661155,
+    "avgYellow": 4.082644628099174,
+    "avgRed": 0.15702479338842976,
+    "avgFouls": 23.214876033057852,
+    "bttsPct": 0.47107438016528924,
+    "over25Pct": 0.4628099173553719,
+    "homeBias": -0.00545454545454549,
+    "leagues": [
+      "E1",
+      "E0",
+      "E2",
+      "E3"
+    ]
   },
   {
-    "name": "J Gillett",
-    "matches": 20,
-    "homeWinPct": 0.4,
-    "drawPct": 0.1,
-    "awayWinPct": 0.5,
-    "avgGoals": 3,
-    "avgYellow": 4,
-    "avgRed": 0,
-    "avgFouls": 22,
-    "bttsPct": 0.55,
-    "over25Pct": 0.45,
-    "homeBias": -0.06
+    "name": "B Speedie",
+    "matches": 121,
+    "homeWinPct": 0.4214876033057851,
+    "drawPct": 0.2231404958677686,
+    "awayWinPct": 0.35537190082644626,
+    "avgGoals": 2.322314049586777,
+    "avgYellow": 3.3057851239669422,
+    "avgRed": 0.10743801652892562,
+    "avgFouls": 22.694214876033058,
+    "bttsPct": 0.4132231404958678,
+    "over25Pct": 0.4214876033057851,
+    "homeBias": -0.03851239669421491,
+    "leagues": [
+      "E1",
+      "E2",
+      "E3"
+    ]
   },
   {
-    "name": "D England",
-    "matches": 20,
-    "homeWinPct": 0.4,
-    "drawPct": 0.2,
-    "awayWinPct": 0.4,
-    "avgGoals": 3.25,
-    "avgYellow": 4.4,
-    "avgRed": 0.2,
-    "avgFouls": 23.1,
-    "bttsPct": 0.55,
-    "over25Pct": 0.5,
-    "homeBias": -0.06
+    "name": "S Oldham",
+    "matches": 118,
+    "homeWinPct": 0.4915254237288136,
+    "drawPct": 0.2288135593220339,
+    "awayWinPct": 0.2796610169491525,
+    "avgGoals": 2.788135593220339,
+    "avgYellow": 3.135593220338983,
+    "avgRed": 0.13559322033898305,
+    "avgFouls": 20.338983050847457,
+    "bttsPct": 0.5084745762711864,
+    "over25Pct": 0.4745762711864407,
+    "homeBias": 0.03152542372881356,
+    "leagues": [
+      "E2",
+      "E3",
+      "E1"
+    ]
   },
   {
-    "name": "R Madley",
-    "matches": 20,
-    "homeWinPct": 0.5,
-    "drawPct": 0.3,
-    "awayWinPct": 0.2,
-    "avgGoals": 2,
-    "avgYellow": 3.9,
-    "avgRed": 0.1,
-    "avgFouls": 22.15,
-    "bttsPct": 0.5,
-    "over25Pct": 0.35,
-    "homeBias": 0.03999999999999998
-  },
-  {
-    "name": "J Brooks",
-    "matches": 19,
-    "homeWinPct": 0.7368421052631579,
-    "drawPct": 0.15789473684210525,
-    "awayWinPct": 0.10526315789473684,
-    "avgGoals": 2.8947368421052633,
-    "avgYellow": 5.105263157894737,
-    "avgRed": 0.05263157894736842,
-    "avgFouls": 22.263157894736842,
-    "bttsPct": 0.5263157894736842,
-    "over25Pct": 0.5789473684210527,
-    "homeBias": 0.27684210526315783
-  },
-  {
-    "name": "A Davies",
-    "matches": 19,
-    "homeWinPct": 0.3684210526315789,
-    "drawPct": 0.21052631578947367,
-    "awayWinPct": 0.42105263157894735,
-    "avgGoals": 2.3157894736842106,
-    "avgYellow": 3.210526315789474,
-    "avgRed": 0,
-    "avgFouls": 20,
-    "bttsPct": 0.42105263157894735,
-    "over25Pct": 0.42105263157894735,
-    "homeBias": -0.0915789473684211
-  },
-  {
-    "name": "J Linington",
-    "matches": 19,
-    "homeWinPct": 0.3157894736842105,
-    "drawPct": 0.3157894736842105,
-    "awayWinPct": 0.3684210526315789,
-    "avgGoals": 2.473684210526316,
-    "avgYellow": 3.9473684210526314,
-    "avgRed": 0.05263157894736842,
-    "avgFouls": 20.105263157894736,
-    "bttsPct": 0.5789473684210527,
-    "over25Pct": 0.5789473684210527,
-    "homeBias": -0.1442105263157895
-  },
-  {
-    "name": "A Backhouse",
-    "matches": 17,
-    "homeWinPct": 0.4117647058823529,
-    "drawPct": 0.47058823529411764,
-    "awayWinPct": 0.11764705882352941,
-    "avgGoals": 2.5294117647058822,
-    "avgYellow": 3.5294117647058822,
-    "avgRed": 0.17647058823529413,
-    "avgFouls": 20.058823529411764,
-    "bttsPct": 0.5294117647058824,
-    "over25Pct": 0.4117647058823529,
-    "homeBias": -0.0482352941176471
-  },
-  {
-    "name": "L Doughty",
-    "matches": 15,
-    "homeWinPct": 0.4,
-    "drawPct": 0.4666666666666667,
-    "awayWinPct": 0.13333333333333333,
-    "avgGoals": 2.4,
-    "avgYellow": 4.333333333333333,
-    "avgRed": 0.13333333333333333,
-    "avgFouls": 23.8,
-    "bttsPct": 0.6,
-    "over25Pct": 0.4,
-    "homeBias": -0.06
+    "name": "D Whitestone",
+    "matches": 117,
+    "homeWinPct": 0.4017094017094017,
+    "drawPct": 0.21367521367521367,
+    "awayWinPct": 0.38461538461538464,
+    "avgGoals": 2.393162393162393,
+    "avgYellow": 3.1709401709401708,
+    "avgRed": 0.05982905982905983,
+    "avgFouls": 20.52991452991453,
+    "bttsPct": 0.49572649572649574,
+    "over25Pct": 0.48717948717948717,
+    "homeBias": -0.058290598290598294,
+    "leagues": [
+      "E1",
+      "E2",
+      "E3"
+    ]
   },
   {
     "name": "B Toner",
-    "matches": 13,
-    "homeWinPct": 0.46153846153846156,
-    "drawPct": 0.38461538461538464,
-    "awayWinPct": 0.15384615384615385,
-    "avgGoals": 2.6923076923076925,
-    "avgYellow": 4.615384615384615,
-    "avgRed": 0.15384615384615385,
-    "avgFouls": 26.23076923076923,
-    "bttsPct": 0.6923076923076923,
-    "over25Pct": 0.5384615384615384,
-    "homeBias": 0.001538461538461544
+    "matches": 117,
+    "homeWinPct": 0.4358974358974359,
+    "drawPct": 0.21367521367521367,
+    "awayWinPct": 0.3504273504273504,
+    "avgGoals": 2.658119658119658,
+    "avgYellow": 3.9914529914529915,
+    "avgRed": 0.1452991452991453,
+    "avgFouls": 24.555555555555557,
+    "bttsPct": 0.5128205128205128,
+    "over25Pct": 0.5128205128205128,
+    "homeBias": -0.024102564102564117,
+    "leagues": [
+      "E1",
+      "E2",
+      "E3"
+    ]
   },
   {
     "name": "W Finnie",
-    "matches": 13,
-    "homeWinPct": 0.46153846153846156,
-    "drawPct": 0.38461538461538464,
-    "awayWinPct": 0.15384615384615385,
-    "avgGoals": 2.8461538461538463,
-    "avgYellow": 4.384615384615385,
-    "avgRed": 0.07692307692307693,
-    "avgFouls": 21.46153846153846,
-    "bttsPct": 0.6153846153846154,
-    "over25Pct": 0.6153846153846154,
-    "homeBias": 0.001538461538461544
+    "matches": 117,
+    "homeWinPct": 0.4700854700854701,
+    "drawPct": 0.2564102564102564,
+    "awayWinPct": 0.27350427350427353,
+    "avgGoals": 2.623931623931624,
+    "avgYellow": 3.017094017094017,
+    "avgRed": 0.1111111111111111,
+    "avgFouls": 21.384615384615383,
+    "bttsPct": 0.5213675213675214,
+    "over25Pct": 0.5299145299145299,
+    "homeBias": 0.01008547008547006,
+    "leagues": [
+      "E1",
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "S Barrott",
+    "matches": 116,
+    "homeWinPct": 0.3448275862068966,
+    "drawPct": 0.2413793103448276,
+    "awayWinPct": 0.41379310344827586,
+    "avgGoals": 2.8706896551724137,
+    "avgYellow": 3.5775862068965516,
+    "avgRed": 0.07758620689655173,
+    "avgFouls": 21.344827586206897,
+    "bttsPct": 0.5862068965517241,
+    "over25Pct": 0.5689655172413793,
+    "homeBias": -0.11517241379310345,
+    "leagues": [
+      "E0",
+      "E1",
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "A Taylor",
+    "matches": 116,
+    "homeWinPct": 0.3448275862068966,
+    "drawPct": 0.27586206896551724,
+    "awayWinPct": 0.3793103448275862,
+    "avgGoals": 3.2413793103448274,
+    "avgYellow": 3.7327586206896552,
+    "avgRed": 0.15517241379310345,
+    "avgFouls": 20.560344827586206,
+    "bttsPct": 0.6120689655172413,
+    "over25Pct": 0.6293103448275862,
+    "homeBias": -0.11517241379310345,
+    "leagues": [
+      "E0",
+      "E1"
+    ]
+  },
+  {
+    "name": "T Robinson",
+    "matches": 115,
+    "homeWinPct": 0.48695652173913045,
+    "drawPct": 0.2782608695652174,
+    "awayWinPct": 0.23478260869565218,
+    "avgGoals": 2.6695652173913045,
+    "avgYellow": 4.208695652173913,
+    "avgRed": 0.14782608695652175,
+    "avgFouls": 22.713043478260868,
+    "bttsPct": 0.4956521739130435,
+    "over25Pct": 0.46956521739130436,
+    "homeBias": 0.026956521739130435,
+    "leagues": [
+      "E0",
+      "E1",
+      "E2"
+    ]
+  },
+  {
+    "name": "S Mather",
+    "matches": 115,
+    "homeWinPct": 0.4608695652173913,
+    "drawPct": 0.24347826086956523,
+    "awayWinPct": 0.2956521739130435,
+    "avgGoals": 2.634782608695652,
+    "avgYellow": 4.026086956521739,
+    "avgRed": 0.2782608695652174,
+    "avgFouls": 21.547826086956523,
+    "bttsPct": 0.5130434782608696,
+    "over25Pct": 0.48695652173913045,
+    "homeBias": 0.0008695652173912882,
+    "leagues": [
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "R Joyce",
+    "matches": 113,
+    "homeWinPct": 0.39823008849557523,
+    "drawPct": 0.2831858407079646,
+    "awayWinPct": 0.3185840707964602,
+    "avgGoals": 2.6283185840707963,
+    "avgYellow": 3.743362831858407,
+    "avgRed": 0.22123893805309736,
+    "avgFouls": 22.486725663716815,
+    "bttsPct": 0.504424778761062,
+    "over25Pct": 0.5132743362831859,
+    "homeBias": -0.06176991150442479,
+    "leagues": [
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "L Doughty",
+    "matches": 112,
+    "homeWinPct": 0.30357142857142855,
+    "drawPct": 0.38392857142857145,
+    "awayWinPct": 0.3125,
+    "avgGoals": 2.6607142857142856,
+    "avgYellow": 4.196428571428571,
+    "avgRed": 0.125,
+    "avgFouls": 22.196428571428573,
+    "bttsPct": 0.5625,
+    "over25Pct": 0.48214285714285715,
+    "homeBias": -0.15642857142857147,
+    "leagues": [
+      "E1",
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "D Drysdale",
+    "matches": 112,
+    "homeWinPct": 0.4017857142857143,
+    "drawPct": 0.26785714285714285,
+    "awayWinPct": 0.33035714285714285,
+    "avgGoals": 2.5714285714285716,
+    "avgYellow": 3.169642857142857,
+    "avgRed": 0.11607142857142858,
+    "avgFouls": 20.785714285714285,
+    "bttsPct": 0.5089285714285714,
+    "over25Pct": 0.5178571428571429,
+    "homeBias": -0.05821428571428572,
+    "leagues": [
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "S Hooper",
+    "matches": 111,
+    "homeWinPct": 0.4864864864864865,
+    "drawPct": 0.25225225225225223,
+    "awayWinPct": 0.26126126126126126,
+    "avgGoals": 2.981981981981982,
+    "avgYellow": 4.009009009009009,
+    "avgRed": 0.05405405405405406,
+    "avgFouls": 21.27027027027027,
+    "bttsPct": 0.5405405405405406,
+    "over25Pct": 0.5405405405405406,
+    "homeBias": 0.026486486486486494,
+    "leagues": [
+      "E0",
+      "E1",
+      "E3"
+    ]
+  },
+  {
+    "name": "C Brook",
+    "matches": 110,
+    "homeWinPct": 0.509090909090909,
+    "drawPct": 0.21818181818181817,
+    "awayWinPct": 0.2727272727272727,
+    "avgGoals": 2.4909090909090907,
+    "avgYellow": 4.1,
+    "avgRed": 0.13636363636363635,
+    "avgFouls": 23.318181818181817,
+    "bttsPct": 0.42727272727272725,
+    "over25Pct": 0.4090909090909091,
+    "homeBias": 0.04909090909090902,
+    "leagues": [
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "A Kitchen",
+    "matches": 109,
+    "homeWinPct": 0.3944954128440367,
+    "drawPct": 0.3486238532110092,
+    "awayWinPct": 0.25688073394495414,
+    "avgGoals": 2.3211009174311927,
+    "avgYellow": 2.908256880733945,
+    "avgRed": 0.08256880733944955,
+    "avgFouls": 21.55045871559633,
+    "bttsPct": 0.5045871559633027,
+    "over25Pct": 0.3577981651376147,
+    "homeBias": -0.0655045871559633,
+    "leagues": [
+      "E0",
+      "E1",
+      "E3",
+      "E2"
+    ]
+  },
+  {
+    "name": "D Rock",
+    "matches": 109,
+    "homeWinPct": 0.44036697247706424,
+    "drawPct": 0.28440366972477066,
+    "awayWinPct": 0.27522935779816515,
+    "avgGoals": 2.623853211009174,
+    "avgYellow": 3.614678899082569,
+    "avgRed": 0.23853211009174313,
+    "avgFouls": 23.59633027522936,
+    "bttsPct": 0.47706422018348627,
+    "over25Pct": 0.45871559633027525,
+    "homeBias": -0.019633027522935775,
+    "leagues": [
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "S Allison",
+    "matches": 107,
+    "homeWinPct": 0.411214953271028,
+    "drawPct": 0.24299065420560748,
+    "awayWinPct": 0.34579439252336447,
+    "avgGoals": 2.439252336448598,
+    "avgYellow": 3.6542056074766354,
+    "avgRed": 0.102803738317757,
+    "avgFouls": 22.121495327102803,
+    "bttsPct": 0.48598130841121495,
+    "over25Pct": 0.411214953271028,
+    "homeBias": -0.04878504672897199,
+    "leagues": [
+      "E0",
+      "E1",
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "A Davies",
+    "matches": 107,
+    "homeWinPct": 0.3925233644859813,
+    "drawPct": 0.2803738317757009,
+    "awayWinPct": 0.32710280373831774,
+    "avgGoals": 2.205607476635514,
+    "avgYellow": 3.336448598130841,
+    "avgRed": 0.04672897196261682,
+    "avgFouls": 19.69158878504673,
+    "bttsPct": 0.4672897196261682,
+    "over25Pct": 0.40186915887850466,
+    "homeBias": -0.06747663551401872,
+    "leagues": [
+      "E1",
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "S Stockbridge",
+    "matches": 106,
+    "homeWinPct": 0.36792452830188677,
+    "drawPct": 0.27358490566037735,
+    "awayWinPct": 0.3584905660377358,
+    "avgGoals": 2.7641509433962264,
+    "avgYellow": 3.8679245283018866,
+    "avgRed": 0.14150943396226415,
+    "avgFouls": 22.849056603773583,
+    "bttsPct": 0.5377358490566038,
+    "over25Pct": 0.4811320754716981,
+    "homeBias": -0.09207547169811325,
+    "leagues": [
+      "E2",
+      "E3",
+      "E1"
+    ]
+  },
+  {
+    "name": "O Yates",
+    "matches": 106,
+    "homeWinPct": 0.44339622641509435,
+    "drawPct": 0.2358490566037736,
+    "awayWinPct": 0.32075471698113206,
+    "avgGoals": 2.7452830188679247,
+    "avgYellow": 3.8773584905660377,
+    "avgRed": 0.1509433962264151,
+    "avgFouls": 21.32075471698113,
+    "bttsPct": 0.49056603773584906,
+    "over25Pct": 0.5377358490566038,
+    "homeBias": -0.016603773584905668,
+    "leagues": [
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "M Oliver",
+    "matches": 105,
+    "homeWinPct": 0.4666666666666667,
+    "drawPct": 0.20952380952380953,
+    "awayWinPct": 0.3238095238095238,
+    "avgGoals": 3.019047619047619,
+    "avgYellow": 3.447619047619048,
+    "avgRed": 0.17142857142857143,
+    "avgFouls": 21.6,
+    "bttsPct": 0.6,
+    "over25Pct": 0.5619047619047619,
+    "homeBias": 0.006666666666666654,
+    "leagues": [
+      "E0"
+    ]
+  },
+  {
+    "name": "T Reeves",
+    "matches": 105,
+    "homeWinPct": 0.47619047619047616,
+    "drawPct": 0.19047619047619047,
+    "awayWinPct": 0.3333333333333333,
+    "avgGoals": 2.4952380952380953,
+    "avgYellow": 3.238095238095238,
+    "avgRed": 0.18095238095238095,
+    "avgFouls": 22.457142857142856,
+    "bttsPct": 0.47619047619047616,
+    "over25Pct": 0.42857142857142855,
+    "homeBias": 0.016190476190476144,
+    "leagues": [
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "J Linington",
+    "matches": 103,
+    "homeWinPct": 0.5339805825242718,
+    "drawPct": 0.21359223300970873,
+    "awayWinPct": 0.2524271844660194,
+    "avgGoals": 2.3106796116504853,
+    "avgYellow": 4.106796116504855,
+    "avgRed": 0.1262135922330097,
+    "avgFouls": 21.368932038834952,
+    "bttsPct": 0.44660194174757284,
+    "over25Pct": 0.4563106796116505,
+    "homeBias": 0.07398058252427181,
+    "leagues": [
+      "E1",
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "A Backhouse",
+    "matches": 102,
+    "homeWinPct": 0.46078431372549017,
+    "drawPct": 0.2647058823529412,
+    "awayWinPct": 0.27450980392156865,
+    "avgGoals": 2.5980392156862746,
+    "avgYellow": 3.7254901960784315,
+    "avgRed": 0.10784313725490197,
+    "avgFouls": 20.833333333333332,
+    "bttsPct": 0.5,
+    "over25Pct": 0.5,
+    "homeBias": 0.0007843137254901489,
+    "leagues": [
+      "E1",
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "R Madley",
+    "matches": 101,
+    "homeWinPct": 0.39603960396039606,
+    "drawPct": 0.33663366336633666,
+    "awayWinPct": 0.26732673267326734,
+    "avgGoals": 2.732673267326733,
+    "avgYellow": 3.910891089108911,
+    "avgRed": 0.16831683168316833,
+    "avgFouls": 21.801980198019802,
+    "bttsPct": 0.5841584158415841,
+    "over25Pct": 0.5247524752475248,
+    "homeBias": -0.06396039603960396,
+    "leagues": [
+      "E1",
+      "E2",
+      "E3",
+      "E0"
+    ]
+  },
+  {
+    "name": "C Breakspear",
+    "matches": 101,
+    "homeWinPct": 0.46534653465346537,
+    "drawPct": 0.2079207920792079,
+    "awayWinPct": 0.32673267326732675,
+    "avgGoals": 2.702970297029703,
+    "avgYellow": 4.267326732673268,
+    "avgRed": 0.16831683168316833,
+    "avgFouls": 24.801980198019802,
+    "bttsPct": 0.48514851485148514,
+    "over25Pct": 0.5346534653465347,
+    "homeBias": 0.005346534653465351,
+    "leagues": [
+      "E2",
+      "E3",
+      "E1"
+    ]
+  },
+  {
+    "name": "K Stroud",
+    "matches": 100,
+    "homeWinPct": 0.44,
+    "drawPct": 0.29,
+    "awayWinPct": 0.27,
+    "avgGoals": 2.55,
+    "avgYellow": 4.7,
+    "avgRed": 0.13,
+    "avgFouls": 23.3,
+    "bttsPct": 0.52,
+    "over25Pct": 0.46,
+    "homeBias": -0.020000000000000018,
+    "leagues": [
+      "E1",
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "R Jones",
+    "matches": 99,
+    "homeWinPct": 0.4444444444444444,
+    "drawPct": 0.2727272727272727,
+    "awayWinPct": 0.2828282828282828,
+    "avgGoals": 2.878787878787879,
+    "avgYellow": 4.040404040404041,
+    "avgRed": 0.09090909090909091,
+    "avgFouls": 22.98989898989899,
+    "bttsPct": 0.5959595959595959,
+    "over25Pct": 0.5656565656565656,
+    "homeBias": -0.0155555555555556,
+    "leagues": [
+      "E0",
+      "E1"
+    ]
+  },
+  {
+    "name": "T Nield",
+    "matches": 98,
+    "homeWinPct": 0.4897959183673469,
+    "drawPct": 0.23469387755102042,
+    "awayWinPct": 0.2755102040816326,
+    "avgGoals": 2.4285714285714284,
+    "avgYellow": 3.7142857142857144,
+    "avgRed": 0.08163265306122448,
+    "avgFouls": 22.510204081632654,
+    "bttsPct": 0.5306122448979592,
+    "over25Pct": 0.47959183673469385,
+    "homeBias": 0.029795918367346907,
+    "leagues": [
+      "E1",
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "C Pawson",
+    "matches": 97,
+    "homeWinPct": 0.4329896907216495,
+    "drawPct": 0.21649484536082475,
+    "awayWinPct": 0.35051546391752575,
+    "avgGoals": 2.731958762886598,
+    "avgYellow": 4.103092783505154,
+    "avgRed": 0.1134020618556701,
+    "avgFouls": 22.701030927835053,
+    "bttsPct": 0.4845360824742268,
+    "over25Pct": 0.5154639175257731,
+    "homeBias": -0.02701030927835052,
+    "leagues": [
+      "E0",
+      "E1"
+    ]
+  },
+  {
+    "name": "J Bell",
+    "matches": 96,
+    "homeWinPct": 0.3541666666666667,
+    "drawPct": 0.3020833333333333,
+    "awayWinPct": 0.34375,
+    "avgGoals": 2.4791666666666665,
+    "avgYellow": 3.5625,
+    "avgRed": 0.17708333333333334,
+    "avgFouls": 21.59375,
+    "bttsPct": 0.4895833333333333,
+    "over25Pct": 0.40625,
+    "homeBias": -0.10583333333333333,
+    "leagues": [
+      "E1",
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "S Purkiss",
+    "matches": 96,
+    "homeWinPct": 0.3854166666666667,
+    "drawPct": 0.3229166666666667,
+    "awayWinPct": 0.2916666666666667,
+    "avgGoals": 2.5104166666666665,
+    "avgYellow": 3.9479166666666665,
+    "avgRed": 0.2708333333333333,
+    "avgFouls": 22.09375,
+    "bttsPct": 0.5520833333333334,
+    "over25Pct": 0.4479166666666667,
+    "homeBias": -0.07458333333333333,
+    "leagues": [
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "P Howard",
+    "matches": 96,
+    "homeWinPct": 0.3125,
+    "drawPct": 0.2916666666666667,
+    "awayWinPct": 0.3958333333333333,
+    "avgGoals": 2.625,
+    "avgYellow": 3.28125,
+    "avgRed": 0.11458333333333333,
+    "avgFouls": 21.489583333333332,
+    "bttsPct": 0.5416666666666666,
+    "over25Pct": 0.5,
+    "homeBias": -0.14750000000000002,
+    "leagues": [
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "L Swabey",
+    "matches": 96,
+    "homeWinPct": 0.375,
+    "drawPct": 0.22916666666666666,
+    "awayWinPct": 0.3958333333333333,
+    "avgGoals": 2.5104166666666665,
+    "avgYellow": 3.8333333333333335,
+    "avgRed": 0.15625,
+    "avgFouls": 23.135416666666668,
+    "bttsPct": 0.5,
+    "over25Pct": 0.5208333333333334,
+    "homeBias": -0.08500000000000002,
+    "leagues": [
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "A Madley",
+    "matches": 94,
+    "homeWinPct": 0.4787234042553192,
+    "drawPct": 0.22340425531914893,
+    "awayWinPct": 0.2978723404255319,
+    "avgGoals": 3,
+    "avgYellow": 3.5638297872340425,
+    "avgRed": 0.10638297872340426,
+    "avgFouls": 22.72340425531915,
+    "bttsPct": 0.5319148936170213,
+    "over25Pct": 0.5851063829787234,
+    "homeBias": 0.018723404255319154,
+    "leagues": [
+      "E0",
+      "E1",
+      "E3"
+    ]
+  },
+  {
+    "name": "T Bramall",
+    "matches": 93,
+    "homeWinPct": 0.5053763440860215,
+    "drawPct": 0.24731182795698925,
+    "awayWinPct": 0.24731182795698925,
+    "avgGoals": 2.5591397849462365,
+    "avgYellow": 3.6344086021505375,
+    "avgRed": 0.17204301075268819,
+    "avgFouls": 22.258064516129032,
+    "bttsPct": 0.5053763440860215,
+    "over25Pct": 0.4838709677419355,
+    "homeBias": 0.04537634408602148,
+    "leagues": [
+      "E0",
+      "E1",
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "J Simpson",
+    "matches": 93,
+    "homeWinPct": 0.3655913978494624,
+    "drawPct": 0.3010752688172043,
+    "awayWinPct": 0.3333333333333333,
+    "avgGoals": 2.774193548387097,
+    "avgYellow": 3.774193548387097,
+    "avgRed": 0.13978494623655913,
+    "avgFouls": 23.591397849462364,
+    "bttsPct": 0.6129032258064516,
+    "over25Pct": 0.5053763440860215,
+    "homeBias": -0.09440860215053765,
+    "leagues": [
+      "E1",
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "C Kavanagh",
+    "matches": 90,
+    "homeWinPct": 0.35555555555555557,
+    "drawPct": 0.2777777777777778,
+    "awayWinPct": 0.36666666666666664,
+    "avgGoals": 2.7555555555555555,
+    "avgYellow": 3.6444444444444444,
+    "avgRed": 0.14444444444444443,
+    "avgFouls": 20.955555555555556,
+    "bttsPct": 0.5777777777777777,
+    "over25Pct": 0.5111111111111111,
+    "homeBias": -0.10444444444444445,
+    "leagues": [
+      "E0",
+      "E1",
+      "E3"
+    ]
+  },
+  {
+    "name": "D Bond",
+    "matches": 89,
+    "homeWinPct": 0.5617977528089888,
+    "drawPct": 0.24719101123595505,
+    "awayWinPct": 0.19101123595505617,
+    "avgGoals": 2.651685393258427,
+    "avgYellow": 3.831460674157303,
+    "avgRed": 0.12359550561797752,
+    "avgFouls": 21.303370786516854,
+    "bttsPct": 0.5168539325842697,
+    "over25Pct": 0.4943820224719101,
+    "homeBias": 0.10179775280898878,
+    "leagues": [
+      "E0",
+      "E1",
+      "E3",
+      "E2"
+    ]
+  },
+  {
+    "name": "S Attwell",
+    "matches": 89,
+    "homeWinPct": 0.550561797752809,
+    "drawPct": 0.1797752808988764,
+    "awayWinPct": 0.2696629213483146,
+    "avgGoals": 2.9775280898876404,
+    "avgYellow": 3.764044943820225,
+    "avgRed": 0.11235955056179775,
+    "avgFouls": 20.179775280898877,
+    "bttsPct": 0.449438202247191,
+    "over25Pct": 0.550561797752809,
+    "homeBias": 0.09056179775280898,
+    "leagues": [
+      "E0",
+      "E1"
+    ]
+  },
+  {
+    "name": "G Eltringham",
+    "matches": 88,
+    "homeWinPct": 0.36363636363636365,
+    "drawPct": 0.3522727272727273,
+    "awayWinPct": 0.2840909090909091,
+    "avgGoals": 2.3181818181818183,
+    "avgYellow": 3.840909090909091,
+    "avgRed": 0.18181818181818182,
+    "avgFouls": 22.25,
+    "bttsPct": 0.48863636363636365,
+    "over25Pct": 0.4431818181818182,
+    "homeBias": -0.09636363636363637,
+    "leagues": [
+      "E1",
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "C Hicks",
+    "matches": 87,
+    "homeWinPct": 0.40229885057471265,
+    "drawPct": 0.22988505747126436,
+    "awayWinPct": 0.367816091954023,
+    "avgGoals": 2.689655172413793,
+    "avgYellow": 3.1494252873563218,
+    "avgRed": 0.13793103448275862,
+    "avgFouls": 23.839080459770116,
+    "bttsPct": 0.5057471264367817,
+    "over25Pct": 0.4827586206896552,
+    "homeBias": -0.05770114942528737,
+    "leagues": [
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "D Bourne",
+    "matches": 86,
+    "homeWinPct": 0.38372093023255816,
+    "drawPct": 0.27906976744186046,
+    "awayWinPct": 0.3372093023255814,
+    "avgGoals": 2.5,
+    "avgYellow": 3.9069767441860463,
+    "avgRed": 0.16279069767441862,
+    "avgFouls": 22.74418604651163,
+    "bttsPct": 0.4883720930232558,
+    "over25Pct": 0.45348837209302323,
+    "homeBias": -0.07627906976744186,
+    "leagues": [
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "N Walsh",
+    "matches": 85,
+    "homeWinPct": 0.4823529411764706,
+    "drawPct": 0.2235294117647059,
+    "awayWinPct": 0.29411764705882354,
+    "avgGoals": 3.023529411764706,
+    "avgYellow": 4.035294117647059,
+    "avgRed": 0.23529411764705882,
+    "avgFouls": 23.941176470588236,
+    "bttsPct": 0.5529411764705883,
+    "over25Pct": 0.5529411764705883,
+    "homeBias": 0.022352941176470575,
+    "leagues": [
+      "SC0"
+    ]
+  },
+  {
+    "name": "D England",
+    "matches": 84,
+    "homeWinPct": 0.47619047619047616,
+    "drawPct": 0.27380952380952384,
+    "awayWinPct": 0.25,
+    "avgGoals": 3.119047619047619,
+    "avgYellow": 4.357142857142857,
+    "avgRed": 0.11904761904761904,
+    "avgFouls": 22.273809523809526,
+    "bttsPct": 0.5714285714285714,
+    "over25Pct": 0.5476190476190477,
+    "homeBias": 0.016190476190476144,
+    "leagues": [
+      "E0",
+      "E1"
+    ]
+  },
+  {
+    "name": "P Tierney",
+    "matches": 84,
+    "homeWinPct": 0.4166666666666667,
+    "drawPct": 0.21428571428571427,
+    "awayWinPct": 0.36904761904761907,
+    "avgGoals": 3.0833333333333335,
+    "avgYellow": 3.738095238095238,
+    "avgRed": 0.11904761904761904,
+    "avgFouls": 21.583333333333332,
+    "bttsPct": 0.47619047619047616,
+    "over25Pct": 0.5833333333333334,
+    "homeBias": -0.043333333333333335,
+    "leagues": [
+      "E0",
+      "E1"
+    ]
+  },
+  {
+    "name": "P Bankes",
+    "matches": 83,
+    "homeWinPct": 0.4819277108433735,
+    "drawPct": 0.21686746987951808,
+    "awayWinPct": 0.30120481927710846,
+    "avgGoals": 2.6867469879518073,
+    "avgYellow": 4.204819277108434,
+    "avgRed": 0.07228915662650602,
+    "avgFouls": 21.337349397590362,
+    "bttsPct": 0.6024096385542169,
+    "over25Pct": 0.5542168674698795,
+    "homeBias": 0.02192771084337347,
+    "leagues": [
+      "E0",
+      "E1"
+    ]
+  },
+  {
+    "name": "A Herczeg",
+    "matches": 82,
+    "homeWinPct": 0.4268292682926829,
+    "drawPct": 0.21951219512195122,
+    "awayWinPct": 0.35365853658536583,
+    "avgGoals": 2.475609756097561,
+    "avgYellow": 3.317073170731707,
+    "avgRed": 0.08536585365853659,
+    "avgFouls": 24.073170731707318,
+    "bttsPct": 0.47560975609756095,
+    "over25Pct": 0.45121951219512196,
+    "homeBias": -0.0331707317073171,
+    "leagues": [
+      "E1",
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "J Gillett",
+    "matches": 81,
+    "homeWinPct": 0.3950617283950617,
+    "drawPct": 0.1728395061728395,
+    "awayWinPct": 0.43209876543209874,
+    "avgGoals": 3.246913580246914,
+    "avgYellow": 3.4814814814814814,
+    "avgRed": 0.08641975308641975,
+    "avgFouls": 19.950617283950617,
+    "bttsPct": 0.5925925925925926,
+    "over25Pct": 0.654320987654321,
+    "homeBias": -0.06493827160493831,
+    "leagues": [
+      "E0",
+      "E1"
+    ]
+  },
+  {
+    "name": "J Brooks",
+    "matches": 81,
+    "homeWinPct": 0.5061728395061729,
+    "drawPct": 0.2962962962962963,
+    "awayWinPct": 0.19753086419753085,
+    "avgGoals": 2.567901234567901,
+    "avgYellow": 4.234567901234568,
+    "avgRed": 0.09876543209876543,
+    "avgFouls": 21.97530864197531,
+    "bttsPct": 0.5061728395061729,
+    "over25Pct": 0.4567901234567901,
+    "homeBias": 0.04617283950617285,
+    "leagues": [
+      "E0",
+      "E1",
+      "E3"
+    ]
+  },
+  {
+    "name": "T Kirk",
+    "matches": 81,
+    "homeWinPct": 0.5061728395061729,
+    "drawPct": 0.19753086419753085,
+    "awayWinPct": 0.2962962962962963,
+    "avgGoals": 2.691358024691358,
+    "avgYellow": 4.08641975308642,
+    "avgRed": 0.09876543209876543,
+    "avgFouls": 23.037037037037038,
+    "bttsPct": 0.5061728395061729,
+    "over25Pct": 0.48148148148148145,
+    "homeBias": 0.04617283950617285,
+    "leagues": [
+      "E1",
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "J Beaton",
+    "matches": 81,
+    "homeWinPct": 0.5432098765432098,
+    "drawPct": 0.2222222222222222,
+    "awayWinPct": 0.2345679012345679,
+    "avgGoals": 2.876543209876543,
+    "avgYellow": 3.888888888888889,
+    "avgRed": 0.16049382716049382,
+    "avgFouls": 22.444444444444443,
+    "bttsPct": 0.5679012345679012,
+    "over25Pct": 0.6296296296296297,
+    "homeBias": 0.08320987654320983,
+    "leagues": [
+      "SC0"
+    ]
+  },
+  {
+    "name": "M Coy",
+    "matches": 80,
+    "homeWinPct": 0.425,
+    "drawPct": 0.25,
+    "awayWinPct": 0.325,
+    "avgGoals": 2.8625,
+    "avgYellow": 2.9875,
+    "avgRed": 0.1,
+    "avgFouls": 20.725,
+    "bttsPct": 0.6625,
+    "over25Pct": 0.5875,
+    "homeBias": -0.03500000000000003,
+    "leagues": [
+      "E1",
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "M Salisbury",
+    "matches": 79,
+    "homeWinPct": 0.4810126582278481,
+    "drawPct": 0.16455696202531644,
+    "awayWinPct": 0.35443037974683544,
+    "avgGoals": 2.949367088607595,
+    "avgYellow": 3.518987341772152,
+    "avgRed": 0.20253164556962025,
+    "avgFouls": 22.354430379746834,
+    "bttsPct": 0.5063291139240507,
+    "over25Pct": 0.6075949367088608,
+    "homeBias": 0.02101265822784809,
+    "leagues": [
+      "E0",
+      "E1",
+      "E3"
+    ]
+  },
+  {
+    "name": "L Smith",
+    "matches": 79,
+    "homeWinPct": 0.5063291139240507,
+    "drawPct": 0.27848101265822783,
+    "awayWinPct": 0.21518987341772153,
+    "avgGoals": 2.6962025316455698,
+    "avgYellow": 3.5822784810126582,
+    "avgRed": 0.11392405063291139,
+    "avgFouls": 22.417721518987342,
+    "bttsPct": 0.5316455696202531,
+    "over25Pct": 0.5189873417721519,
+    "homeBias": 0.04632911392405065,
+    "leagues": [
+      "E0",
+      "E1",
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "S Gill",
+    "matches": 79,
+    "homeWinPct": 0.569620253164557,
+    "drawPct": 0.17721518987341772,
+    "awayWinPct": 0.25316455696202533,
+    "avgGoals": 3.050632911392405,
+    "avgYellow": 3.6582278481012658,
+    "avgRed": 0.12658227848101267,
+    "avgFouls": 22.645569620253166,
+    "bttsPct": 0.5316455696202531,
+    "over25Pct": 0.569620253164557,
+    "homeBias": 0.10962025316455698,
+    "leagues": [
+      "E1",
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "N Hair",
+    "matches": 79,
+    "homeWinPct": 0.4050632911392405,
+    "drawPct": 0.26582278481012656,
+    "awayWinPct": 0.3291139240506329,
+    "avgGoals": 2.607594936708861,
+    "avgYellow": 3.848101265822785,
+    "avgRed": 0.17721518987341772,
+    "avgFouls": 22.734177215189874,
+    "bttsPct": 0.4936708860759494,
+    "over25Pct": 0.4430379746835443,
+    "homeBias": -0.05493670886075952,
+    "leagues": [
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "D Robertson",
+    "matches": 78,
+    "homeWinPct": 0.4358974358974359,
+    "drawPct": 0.21794871794871795,
+    "awayWinPct": 0.34615384615384615,
+    "avgGoals": 2.782051282051282,
+    "avgYellow": 3.5,
+    "avgRed": 0.19230769230769232,
+    "avgFouls": 21.025641025641026,
+    "bttsPct": 0.3974358974358974,
+    "over25Pct": 0.5256410256410257,
+    "homeBias": -0.024102564102564117,
+    "leagues": [
+      "SC0"
+    ]
+  },
+  {
+    "name": "M Edwards",
+    "matches": 75,
+    "homeWinPct": 0.48,
+    "drawPct": 0.25333333333333335,
+    "awayWinPct": 0.26666666666666666,
+    "avgGoals": 2.8533333333333335,
+    "avgYellow": 3.3866666666666667,
+    "avgRed": 0.09333333333333334,
+    "avgFouls": 20.506666666666668,
+    "bttsPct": 0.56,
+    "over25Pct": 0.5333333333333333,
+    "homeBias": 0.019999999999999962,
+    "leagues": [
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "D Coote",
+    "matches": 74,
+    "homeWinPct": 0.43243243243243246,
+    "drawPct": 0.24324324324324326,
+    "awayWinPct": 0.32432432432432434,
+    "avgGoals": 2.635135135135135,
+    "avgYellow": 4.283783783783784,
+    "avgRed": 0.12162162162162163,
+    "avgFouls": 23.364864864864863,
+    "bttsPct": 0.4864864864864865,
+    "over25Pct": 0.5405405405405406,
+    "homeBias": -0.027567567567567564,
+    "leagues": [
+      "E0",
+      "E1"
+    ]
+  },
+  {
+    "name": "T Harrington",
+    "matches": 72,
+    "homeWinPct": 0.4305555555555556,
+    "drawPct": 0.2222222222222222,
+    "awayWinPct": 0.3472222222222222,
+    "avgGoals": 3.0277777777777777,
+    "avgYellow": 3.6805555555555554,
+    "avgRed": 0.1111111111111111,
+    "avgFouls": 21.416666666666668,
+    "bttsPct": 0.6111111111111112,
+    "over25Pct": 0.5833333333333334,
+    "homeBias": -0.02944444444444444,
+    "leagues": [
+      "E0",
+      "E1",
+      "E3"
+    ]
+  },
+  {
+    "name": "M Woods",
+    "matches": 71,
+    "homeWinPct": 0.4647887323943662,
+    "drawPct": 0.3380281690140845,
+    "awayWinPct": 0.19718309859154928,
+    "avgGoals": 2.1690140845070425,
+    "avgYellow": 3.676056338028169,
+    "avgRed": 0.15492957746478872,
+    "avgFouls": 24.366197183098592,
+    "bttsPct": 0.43661971830985913,
+    "over25Pct": 0.36619718309859156,
+    "homeBias": 0.004788732394366169,
+    "leagues": [
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "T Parsons",
+    "matches": 70,
+    "homeWinPct": 0.42857142857142855,
+    "drawPct": 0.2857142857142857,
+    "awayWinPct": 0.2857142857142857,
+    "avgGoals": 2.585714285714286,
+    "avgYellow": 4.714285714285714,
+    "avgRed": 0.14285714285714285,
+    "avgFouls": 24.314285714285713,
+    "bttsPct": 0.5571428571428572,
+    "over25Pct": 0.4714285714285714,
+    "homeBias": -0.03142857142857147,
+    "leagues": [
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "K Clancy",
+    "matches": 69,
+    "homeWinPct": 0.5072463768115942,
+    "drawPct": 0.21739130434782608,
+    "awayWinPct": 0.2753623188405797,
+    "avgGoals": 2.739130434782609,
+    "avgYellow": 4.159420289855072,
+    "avgRed": 0.18840579710144928,
+    "avgFouls": 23.057971014492754,
+    "bttsPct": 0.5797101449275363,
+    "over25Pct": 0.5507246376811594,
+    "homeBias": 0.047246376811594215,
+    "leagues": [
+      "SC0"
+    ]
+  },
+  {
+    "name": "A Young",
+    "matches": 68,
+    "homeWinPct": 0.35294117647058826,
+    "drawPct": 0.22058823529411764,
+    "awayWinPct": 0.4264705882352941,
+    "avgGoals": 2.588235294117647,
+    "avgYellow": 4.279411764705882,
+    "avgRed": 0.17647058823529413,
+    "avgFouls": 21.323529411764707,
+    "bttsPct": 0.5147058823529411,
+    "over25Pct": 0.5294117647058824,
+    "homeBias": -0.10705882352941176,
+    "leagues": [
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "P Wright",
+    "matches": 66,
+    "homeWinPct": 0.5303030303030303,
+    "drawPct": 0.3333333333333333,
+    "awayWinPct": 0.13636363636363635,
+    "avgGoals": 2.393939393939394,
+    "avgYellow": 3.4545454545454546,
+    "avgRed": 0.12121212121212122,
+    "avgFouls": 20.803030303030305,
+    "bttsPct": 0.5151515151515151,
+    "over25Pct": 0.3939393939393939,
+    "homeBias": 0.07030303030303026,
+    "leagues": [
+      "E3",
+      "E2"
+    ]
+  },
+  {
+    "name": "A Woolmer",
+    "matches": 64,
+    "homeWinPct": 0.34375,
+    "drawPct": 0.3125,
+    "awayWinPct": 0.34375,
+    "avgGoals": 2.09375,
+    "avgYellow": 3.234375,
+    "avgRed": 0.09375,
+    "avgFouls": 23.15625,
+    "bttsPct": 0.46875,
+    "over25Pct": 0.40625,
+    "homeBias": -0.11625000000000002,
+    "leagues": [
+      "E1",
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "D Dickinson",
+    "matches": 62,
+    "homeWinPct": 0.45161290322580644,
+    "drawPct": 0.20967741935483872,
+    "awayWinPct": 0.3387096774193548,
+    "avgGoals": 2.8870967741935485,
+    "avgYellow": 4.096774193548387,
+    "avgRed": 0.16129032258064516,
+    "avgFouls": 22.306451612903224,
+    "bttsPct": 0.5,
+    "over25Pct": 0.5967741935483871,
+    "homeBias": -0.008387096774193581,
+    "leagues": [
+      "SC0"
+    ]
+  },
+  {
+    "name": "S McLean",
+    "matches": 57,
+    "homeWinPct": 0.42105263157894735,
+    "drawPct": 0.22807017543859648,
+    "awayWinPct": 0.3508771929824561,
+    "avgGoals": 2.8771929824561404,
+    "avgYellow": 2.9649122807017543,
+    "avgRed": 0.15789473684210525,
+    "avgFouls": 20.771929824561404,
+    "bttsPct": 0.45614035087719296,
+    "over25Pct": 0.47368421052631576,
+    "homeBias": -0.038947368421052675,
+    "leagues": [
+      "SC0"
+    ]
+  },
+  {
+    "name": "G Scott",
+    "matches": 56,
+    "homeWinPct": 0.42857142857142855,
+    "drawPct": 0.32142857142857145,
+    "awayWinPct": 0.25,
+    "avgGoals": 2.7142857142857144,
+    "avgYellow": 3.4464285714285716,
+    "avgRed": 0.21428571428571427,
+    "avgFouls": 21.214285714285715,
+    "bttsPct": 0.5,
+    "over25Pct": 0.5178571428571429,
+    "homeBias": -0.03142857142857147,
+    "leagues": [
+      "E2",
+      "E3",
+      "E0",
+      "E1"
+    ]
+  },
+  {
+    "name": "W Collum",
+    "matches": 56,
+    "homeWinPct": 0.42857142857142855,
+    "drawPct": 0.17857142857142858,
+    "awayWinPct": 0.39285714285714285,
+    "avgGoals": 2.8392857142857144,
+    "avgYellow": 3.357142857142857,
+    "avgRed": 0.21428571428571427,
+    "avgFouls": 24.214285714285715,
+    "bttsPct": 0.4642857142857143,
+    "over25Pct": 0.5178571428571429,
+    "homeBias": -0.03142857142857147,
+    "leagues": [
+      "SC0"
+    ]
+  },
+  {
+    "name": "J Oldham",
+    "matches": 55,
+    "homeWinPct": 0.4909090909090909,
+    "drawPct": 0.23636363636363636,
+    "awayWinPct": 0.2727272727272727,
+    "avgGoals": 2.1454545454545455,
+    "avgYellow": 3.981818181818182,
+    "avgRed": 0.2,
+    "avgFouls": 24.672727272727272,
+    "bttsPct": 0.4727272727272727,
+    "over25Pct": 0.4,
+    "homeBias": 0.030909090909090886,
+    "leagues": [
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "R Lewis",
+    "matches": 53,
+    "homeWinPct": 0.4528301886792453,
+    "drawPct": 0.2641509433962264,
+    "awayWinPct": 0.2830188679245283,
+    "avgGoals": 2.509433962264151,
+    "avgYellow": 3.547169811320755,
+    "avgRed": 0.11320754716981132,
+    "avgFouls": 23.528301886792452,
+    "bttsPct": 0.5094339622641509,
+    "over25Pct": 0.5094339622641509,
+    "homeBias": -0.0071698113207547265,
+    "leagues": [
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "A Haines",
+    "matches": 53,
+    "homeWinPct": 0.3584905660377358,
+    "drawPct": 0.32075471698113206,
+    "awayWinPct": 0.32075471698113206,
+    "avgGoals": 2.69811320754717,
+    "avgYellow": 3.0754716981132075,
+    "avgRed": 0.09433962264150944,
+    "avgFouls": 19.50943396226415,
+    "bttsPct": 0.5660377358490566,
+    "over25Pct": 0.5094339622641509,
+    "homeBias": -0.1015094339622642,
+    "leagues": [
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "S Tallis",
+    "matches": 48,
+    "homeWinPct": 0.3333333333333333,
+    "drawPct": 0.3125,
+    "awayWinPct": 0.3541666666666667,
+    "avgGoals": 2.4583333333333335,
+    "avgYellow": 4.083333333333333,
+    "avgRed": 0.0625,
+    "avgFouls": 21.041666666666668,
+    "bttsPct": 0.5208333333333334,
+    "over25Pct": 0.5208333333333334,
+    "homeBias": -0.1266666666666667,
+    "leagues": [
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "R Welch",
+    "matches": 48,
+    "homeWinPct": 0.4375,
+    "drawPct": 0.2916666666666667,
+    "awayWinPct": 0.2708333333333333,
+    "avgGoals": 2.3541666666666665,
+    "avgYellow": 3.7916666666666665,
+    "avgRed": 0.0625,
+    "avgFouls": 21.083333333333332,
+    "bttsPct": 0.4583333333333333,
+    "over25Pct": 0.375,
+    "homeBias": -0.02250000000000002,
+    "leagues": [
+      "E0",
+      "E1",
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "A Chilowicz",
+    "matches": 47,
+    "homeWinPct": 0.3829787234042553,
+    "drawPct": 0.19148936170212766,
+    "awayWinPct": 0.425531914893617,
+    "avgGoals": 2.425531914893617,
+    "avgYellow": 3.297872340425532,
+    "avgRed": 0.1702127659574468,
+    "avgFouls": 23.29787234042553,
+    "bttsPct": 0.48936170212765956,
+    "over25Pct": 0.48936170212765956,
+    "homeBias": -0.0770212765957447,
+    "leagues": [
+      "E2",
+      "E3",
+      "E1"
+    ]
+  },
+  {
+    "name": "E Duckworth",
+    "matches": 46,
+    "homeWinPct": 0.4782608695652174,
+    "drawPct": 0.1956521739130435,
+    "awayWinPct": 0.32608695652173914,
+    "avgGoals": 2.5434782608695654,
+    "avgYellow": 4.108695652173913,
+    "avgRed": 0.1956521739130435,
+    "avgFouls": 22.5,
+    "bttsPct": 0.34782608695652173,
+    "over25Pct": 0.45652173913043476,
+    "homeBias": 0.018260869565217386,
+    "leagues": [
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "M Corlett",
+    "matches": 45,
+    "homeWinPct": 0.4888888888888889,
+    "drawPct": 0.2222222222222222,
+    "awayWinPct": 0.28888888888888886,
+    "avgGoals": 2.6444444444444444,
+    "avgYellow": 4.644444444444445,
+    "avgRed": 0.15555555555555556,
+    "avgFouls": 21.755555555555556,
+    "bttsPct": 0.6,
+    "over25Pct": 0.5777777777777777,
+    "homeBias": 0.028888888888888853,
+    "leagues": [
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "M MacDermid",
+    "matches": 45,
+    "homeWinPct": 0.5555555555555556,
+    "drawPct": 0.15555555555555556,
+    "awayWinPct": 0.28888888888888886,
+    "avgGoals": 2.911111111111111,
+    "avgYellow": 3.6,
+    "avgRed": 0.2,
+    "avgFouls": 19.57777777777778,
+    "bttsPct": 0.4222222222222222,
+    "over25Pct": 0.5777777777777777,
+    "homeBias": 0.09555555555555556,
+    "leagues": [
+      "SC0"
+    ]
+  },
+  {
+    "name": "C Boyeson",
+    "matches": 44,
+    "homeWinPct": 0.2727272727272727,
+    "drawPct": 0.2727272727272727,
+    "awayWinPct": 0.45454545454545453,
+    "avgGoals": 2.590909090909091,
+    "avgYellow": 4.045454545454546,
+    "avgRed": 0.18181818181818182,
+    "avgFouls": 24.59090909090909,
+    "bttsPct": 0.5454545454545454,
+    "over25Pct": 0.4772727272727273,
+    "homeBias": -0.1872727272727273,
+    "leagues": [
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "D Munro",
+    "matches": 43,
+    "homeWinPct": 0.4186046511627907,
+    "drawPct": 0.27906976744186046,
+    "awayWinPct": 0.3023255813953488,
+    "avgGoals": 2.7906976744186047,
+    "avgYellow": 3.9767441860465116,
+    "avgRed": 0.13953488372093023,
+    "avgFouls": 22.488372093023255,
+    "bttsPct": 0.627906976744186,
+    "over25Pct": 0.5581395348837209,
+    "homeBias": -0.0413953488372093,
+    "leagues": [
+      "SC0"
+    ]
+  },
+  {
+    "name": "S Jackson",
+    "matches": 42,
+    "homeWinPct": 0.3333333333333333,
+    "drawPct": 0.2619047619047619,
+    "awayWinPct": 0.40476190476190477,
+    "avgGoals": 2.5714285714285716,
+    "avgYellow": 3.9285714285714284,
+    "avgRed": 0.11904761904761904,
+    "avgFouls": 20.666666666666668,
+    "bttsPct": 0.38095238095238093,
+    "over25Pct": 0.47619047619047616,
+    "homeBias": -0.1266666666666667,
+    "leagues": [
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "S Simpson",
+    "matches": 41,
+    "homeWinPct": 0.4878048780487805,
+    "drawPct": 0.2682926829268293,
+    "awayWinPct": 0.24390243902439024,
+    "avgGoals": 2.8292682926829267,
+    "avgYellow": 4.097560975609756,
+    "avgRed": 0.3170731707317073,
+    "avgFouls": 25.73170731707317,
+    "bttsPct": 0.5121951219512195,
+    "over25Pct": 0.4634146341463415,
+    "homeBias": 0.027804878048780457,
+    "leagues": [
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "J Miles",
+    "matches": 40,
+    "homeWinPct": 0.4,
+    "drawPct": 0.275,
+    "awayWinPct": 0.325,
+    "avgGoals": 2.9,
+    "avgYellow": 3.975,
+    "avgRed": 0.125,
+    "avgFouls": 23.45,
+    "bttsPct": 0.575,
+    "over25Pct": 0.65,
+    "homeBias": -0.06,
+    "leagues": [
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "A Marriner",
+    "matches": 40,
+    "homeWinPct": 0.3,
+    "drawPct": 0.225,
+    "awayWinPct": 0.475,
+    "avgGoals": 3.125,
+    "avgYellow": 3.425,
+    "avgRed": 0.125,
+    "avgFouls": 18.9,
+    "bttsPct": 0.6,
+    "over25Pct": 0.6,
+    "homeBias": -0.16000000000000003,
+    "leagues": [
+      "E0",
+      "E1"
+    ]
+  },
+  {
+    "name": "C Pollard",
+    "matches": 39,
+    "homeWinPct": 0.48717948717948717,
+    "drawPct": 0.2564102564102564,
+    "awayWinPct": 0.2564102564102564,
+    "avgGoals": 2.3076923076923075,
+    "avgYellow": 3.358974358974359,
+    "avgRed": 0.10256410256410256,
+    "avgFouls": 21.743589743589745,
+    "bttsPct": 0.3333333333333333,
+    "over25Pct": 0.358974358974359,
+    "homeBias": 0.02717948717948715,
+    "leagues": [
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "A Muir",
+    "matches": 39,
+    "homeWinPct": 0.48717948717948717,
+    "drawPct": 0.20512820512820512,
+    "awayWinPct": 0.3076923076923077,
+    "avgGoals": 2.769230769230769,
+    "avgYellow": 3.717948717948718,
+    "avgRed": 0.15384615384615385,
+    "avgFouls": 26.17948717948718,
+    "bttsPct": 0.4358974358974359,
+    "over25Pct": 0.5384615384615384,
+    "homeBias": 0.02717948717948715,
+    "leagues": [
+      "SC0"
+    ]
+  },
+  {
+    "name": "E Anderson",
+    "matches": 38,
+    "homeWinPct": 0.5,
+    "drawPct": 0.13157894736842105,
+    "awayWinPct": 0.3684210526315789,
+    "avgGoals": 2.3684210526315788,
+    "avgYellow": 3.736842105263158,
+    "avgRed": 0.21052631578947367,
+    "avgFouls": 22.63157894736842,
+    "bttsPct": 0.47368421052631576,
+    "over25Pct": 0.42105263157894735,
+    "homeBias": 0.03999999999999998,
+    "leagues": [
+      "SC0"
+    ]
+  },
+  {
+    "name": "B Madden",
+    "matches": 38,
+    "homeWinPct": 0.3684210526315789,
+    "drawPct": 0.42105263157894735,
+    "awayWinPct": 0.21052631578947367,
+    "avgGoals": 2.4473684210526314,
+    "avgYellow": 2.710526315789474,
+    "avgRed": 0.18421052631578946,
+    "avgFouls": 23.86842105263158,
+    "bttsPct": 0.5789473684210527,
+    "over25Pct": 0.4473684210526316,
+    "homeBias": -0.0915789473684211,
+    "leagues": [
+      "E2",
+      "E3",
+      "SC0"
+    ]
+  },
+  {
+    "name": "G Irvine",
+    "matches": 36,
+    "homeWinPct": 0.4166666666666667,
+    "drawPct": 0.16666666666666666,
+    "awayWinPct": 0.4166666666666667,
+    "avgGoals": 2.5833333333333335,
+    "avgYellow": 2.888888888888889,
+    "avgRed": 0.2222222222222222,
+    "avgFouls": 21.36111111111111,
+    "bttsPct": 0.3888888888888889,
+    "over25Pct": 0.6111111111111112,
+    "homeBias": -0.043333333333333335,
+    "leagues": [
+      "SC0"
+    ]
+  },
+  {
+    "name": "C Steven",
+    "matches": 36,
+    "homeWinPct": 0.4166666666666667,
+    "drawPct": 0.3888888888888889,
+    "awayWinPct": 0.19444444444444445,
+    "avgGoals": 2.9166666666666665,
+    "avgYellow": 4.361111111111111,
+    "avgRed": 0.25,
+    "avgFouls": 21.444444444444443,
+    "bttsPct": 0.5833333333333334,
+    "over25Pct": 0.5833333333333334,
+    "homeBias": -0.043333333333333335,
+    "leagues": [
+      "SC0"
+    ]
+  },
+  {
+    "name": "D Handley",
+    "matches": 35,
+    "homeWinPct": 0.42857142857142855,
+    "drawPct": 0.2571428571428571,
+    "awayWinPct": 0.3142857142857143,
+    "avgGoals": 2.142857142857143,
+    "avgYellow": 3.8857142857142857,
+    "avgRed": 0.2571428571428571,
+    "avgFouls": 23.428571428571427,
+    "bttsPct": 0.4,
+    "over25Pct": 0.34285714285714286,
+    "homeBias": -0.03142857142857147,
+    "leagues": [
+      "E2",
+      "E3"
+    ]
   },
   {
     "name": "F Hallam",
-    "matches": 13,
-    "homeWinPct": 0.3076923076923077,
-    "drawPct": 0.46153846153846156,
+    "matches": 34,
+    "homeWinPct": 0.4411764705882353,
+    "drawPct": 0.2647058823529412,
+    "awayWinPct": 0.29411764705882354,
+    "avgGoals": 2.323529411764706,
+    "avgYellow": 3.5294117647058822,
+    "avgRed": 0.029411764705882353,
+    "avgFouls": 25.11764705882353,
+    "bttsPct": 0.5,
+    "over25Pct": 0.4117647058823529,
+    "homeBias": -0.01882352941176474,
+    "leagues": [
+      "E1",
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "B Atkinson",
+    "matches": 34,
+    "homeWinPct": 0.38235294117647056,
+    "drawPct": 0.20588235294117646,
+    "awayWinPct": 0.4117647058823529,
+    "avgGoals": 3.3823529411764706,
+    "avgYellow": 4.588235294117647,
+    "avgRed": 0.23529411764705882,
+    "avgFouls": 22.470588235294116,
+    "bttsPct": 0.5588235294117647,
+    "over25Pct": 0.6176470588235294,
+    "homeBias": -0.07764705882352946,
+    "leagues": [
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "C Graham",
+    "matches": 34,
+    "homeWinPct": 0.47058823529411764,
+    "drawPct": 0.3235294117647059,
+    "awayWinPct": 0.20588235294117646,
+    "avgGoals": 2.764705882352941,
+    "avgYellow": 4.764705882352941,
+    "avgRed": 0.23529411764705882,
+    "avgFouls": 26.38235294117647,
+    "bttsPct": 0.5588235294117647,
+    "over25Pct": 0.5882352941176471,
+    "homeBias": 0.01058823529411762,
+    "leagues": [
+      "SC0"
+    ]
+  },
+  {
+    "name": "D Middleton",
+    "matches": 32,
+    "homeWinPct": 0.40625,
+    "drawPct": 0.3125,
+    "awayWinPct": 0.28125,
+    "avgGoals": 2.53125,
+    "avgYellow": 3.53125,
+    "avgRed": 0.15625,
+    "avgFouls": 20.15625,
+    "bttsPct": 0.5625,
+    "over25Pct": 0.46875,
+    "homeBias": -0.05375000000000002,
+    "leagues": [
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "R Ricardo",
+    "matches": 30,
+    "homeWinPct": 0.43333333333333335,
+    "drawPct": 0.26666666666666666,
+    "awayWinPct": 0.3,
+    "avgGoals": 2.6666666666666665,
+    "avgYellow": 4.166666666666667,
+    "avgRed": 0.13333333333333333,
+    "avgFouls": 22.333333333333332,
+    "bttsPct": 0.5333333333333333,
+    "over25Pct": 0.5,
+    "homeBias": -0.026666666666666672,
+    "leagues": [
+      "E1",
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "C Napier",
+    "matches": 30,
+    "homeWinPct": 0.4666666666666667,
+    "drawPct": 0.36666666666666664,
+    "awayWinPct": 0.16666666666666666,
+    "avgGoals": 2.6333333333333333,
+    "avgYellow": 3.466666666666667,
+    "avgRed": 0.3333333333333333,
+    "avgFouls": 25.133333333333333,
+    "bttsPct": 0.5666666666666667,
+    "over25Pct": 0.4666666666666667,
+    "homeBias": 0.006666666666666654,
+    "leagues": [
+      "SC0"
+    ]
+  },
+  {
+    "name": "M Dean",
+    "matches": 27,
+    "homeWinPct": 0.37037037037037035,
+    "drawPct": 0.2962962962962963,
+    "awayWinPct": 0.3333333333333333,
+    "avgGoals": 2.740740740740741,
+    "avgYellow": 3.2222222222222223,
+    "avgRed": 0.07407407407407407,
+    "avgFouls": 19.48148148148148,
+    "bttsPct": 0.6296296296296297,
+    "over25Pct": 0.5185185185185185,
+    "homeBias": -0.08962962962962967,
+    "leagues": [
+      "E0",
+      "E1"
+    ]
+  },
+  {
+    "name": "E Bell",
+    "matches": 26,
+    "homeWinPct": 0.5769230769230769,
+    "drawPct": 0.19230769230769232,
     "awayWinPct": 0.23076923076923078,
-    "avgGoals": 1.6153846153846154,
-    "avgYellow": 3.6923076923076925,
+    "avgGoals": 2.730769230769231,
+    "avgYellow": 4.3076923076923075,
+    "avgRed": 0.19230769230769232,
+    "avgFouls": 24.384615384615383,
+    "bttsPct": 0.5,
+    "over25Pct": 0.5384615384615384,
+    "homeBias": 0.11692307692307685,
+    "leagues": [
+      "E1",
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "J Moss",
+    "matches": 26,
+    "homeWinPct": 0.6153846153846154,
+    "drawPct": 0.11538461538461539,
+    "awayWinPct": 0.2692307692307692,
+    "avgGoals": 2.8461538461538463,
+    "avgYellow": 2.4615384615384617,
+    "avgRed": 0.15384615384615385,
+    "avgFouls": 18,
+    "bttsPct": 0.4230769230769231,
+    "over25Pct": 0.5769230769230769,
+    "homeBias": 0.1553846153846154,
+    "leagues": [
+      "E0",
+      "E1"
+    ]
+  },
+  {
+    "name": "M Atkinson",
+    "matches": 26,
+    "homeWinPct": 0.5384615384615384,
+    "drawPct": 0.15384615384615385,
+    "awayWinPct": 0.3076923076923077,
+    "avgGoals": 3.0384615384615383,
+    "avgYellow": 2.4615384615384617,
     "avgRed": 0.07692307692307693,
-    "avgFouls": 27.076923076923077,
-    "bttsPct": 0.38461538461538464,
-    "over25Pct": 0.15384615384615385,
-    "homeBias": -0.1523076923076923
+    "avgFouls": 15.615384615384615,
+    "bttsPct": 0.5769230769230769,
+    "over25Pct": 0.6538461538461539,
+    "homeBias": 0.07846153846153842,
+    "leagues": [
+      "E0"
+    ]
+  },
+  {
+    "name": "C Sarginson",
+    "matches": 26,
+    "homeWinPct": 0.38461538461538464,
+    "drawPct": 0.38461538461538464,
+    "awayWinPct": 0.23076923076923078,
+    "avgGoals": 2.1923076923076925,
+    "avgYellow": 3.4615384615384617,
+    "avgRed": 0.07692307692307693,
+    "avgFouls": 21.307692307692307,
+    "bttsPct": 0.46153846153846156,
+    "over25Pct": 0.3076923076923077,
+    "homeBias": -0.07538461538461538,
+    "leagues": [
+      "E2",
+      "E3"
+    ]
+  },
+  {
+    "name": "K Friend",
+    "matches": 25,
+    "homeWinPct": 0.4,
+    "drawPct": 0.24,
+    "awayWinPct": 0.36,
+    "avgGoals": 2.8,
+    "avgYellow": 3.92,
+    "avgRed": 0.08,
+    "avgFouls": 19.92,
+    "bttsPct": 0.44,
+    "over25Pct": 0.52,
+    "homeBias": -0.06,
+    "leagues": [
+      "E0",
+      "E1",
+      "E2"
+    ]
+  },
+  {
+    "name": "J Durkin",
+    "matches": 22,
+    "homeWinPct": 0.36363636363636365,
+    "drawPct": 0.18181818181818182,
+    "awayWinPct": 0.45454545454545453,
+    "avgGoals": 2.1818181818181817,
+    "avgYellow": 4.2272727272727275,
+    "avgRed": 0.22727272727272727,
+    "avgFouls": 22.727272727272727,
+    "bttsPct": 0.5,
+    "over25Pct": 0.4090909090909091,
+    "homeBias": -0.09636363636363637,
+    "leagues": [
+      "E2",
+      "E3"
+    ]
   }
 ]
