@@ -36,7 +36,7 @@ const plans = [
     features: [
       "Everything in Free",
       "Unlimited predictions",
-      "All 360+ leagues",
+      "All 26+ leagues",
       "Value bet detection",
       "Accumulator builder (unlimited legs)",
       "AI analyst (50 queries/day)",

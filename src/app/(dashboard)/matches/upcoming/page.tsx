@@ -341,7 +341,7 @@ export default function UpcomingMatchesPage() {
           Upcoming Matches
         </h1>
         <p className="text-[14px] text-gray-500">
-          AI-powered predictions for upcoming fixtures across 360+ leagues.
+          AI-powered predictions for upcoming fixtures across 26+ leagues.
         </p>
       </div>
 

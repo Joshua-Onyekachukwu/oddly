@@ -6,7 +6,7 @@ export const metadata: Metadata = {
     template: "%s | ODDLY",
   },
   description:
-    "AI-powered football prediction platform with 90%+ ELITE accuracy. Value bet detection, accumulator builder, and Crown Jewel daily picks across 360+ leagues.",
+    "AI-powered football prediction platform with 90%+ ELITE accuracy. Value bet detection, accumulator builder, and Crown Jewel daily picks across 26+ leagues.",
   keywords: ["football predictions", "betting tips", "value bets", "accumulator", "AI predictions", "sports betting", "football AI"],
   openGraph: {
     title: "ODDLY — Oddly accurate.",

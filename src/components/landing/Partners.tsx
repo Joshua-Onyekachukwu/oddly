@@ -39,8 +39,7 @@ const Partners: React.FC = () => {
           .from("leagues")
           .select("id, name, country, logo")
           .eq("is_active", true)
-          .order("priority", { ascending: true })
-          .limit(12);
+          .order("priority", { ascending: true });
 
         if (data && data.length > 0) {
           setLeagues(data);
@@ -60,7 +59,7 @@ const Partners: React.FC = () => {
       <div className="container sm:max-w-[540px] md:max-w-[720px] lg:max-w-[960px] xl:max-w-[1200px] mx-auto px-[16px]">
         <div {...getScrollRevealClasses(isVisible, 0)} className="text-center mb-[32px]">
           <span className="text-[13px] text-gray-400 font-medium">
-            Tracked across 12+ leagues worldwide
+            Tracked across 26+ leagues worldwide
           </span>
         </div>
 
