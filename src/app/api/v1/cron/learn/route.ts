@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
       const key = `${bucket}-${bucket + 10}`;
       if (!buckets[key]) buckets[key] = { predicted: [], actual: [] };
       buckets[key].predicted.push(p.model_probability);
-      buckets[key].actual.push(p.is_correct ? 1 : 0);
+      buckets[key].actual.push(p.result === "correct" ? 1 : 0);
     }
 
     const calibration = Object.entries(buckets).map(([range, data]) => ({
