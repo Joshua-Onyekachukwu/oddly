@@ -10,8 +10,12 @@
  */
 
 const { createClient } = require("@supabase/supabase-js");
+const { loadRefereeData, getRefereeFeatures } = require("./referee-features");
 const fs = require("fs");
 const path = require("path");
+
+// Load referee data
+const refStats = loadRefereeData();
 
 // ─── Env ─────────────────────────────────────────────────────────────────
 function loadEnv() {
@@ -269,11 +273,15 @@ class TrackerB {
     const h2h = this.getH2H(home, away);
     const eloDiff = (this.elo[home] || 1500) - (this.elo[away] || 1500);
 
-    // Poisson lambdas
+    // Get referee features
+    const refFeatures = getRefereeFeatures(home, away);
+
+    // Poisson lambdas (referee-adjusted)
+    const refGoalAdj = refFeatures.avgGoals / 2.6;
     const baseHL = hs.homeGF * (as.awayGA / 1.3);
     const baseAL = as.awayGF * (hs.homeGA / 1.3);
-    const hL = clamp(baseHL * (1 + eloDiff * 0.0003), 0.3, 4.5);
-    const aL = clamp(baseAL * (1 - eloDiff * 0.0003), 0.3, 4.5);
+    const hL = clamp(baseHL * refGoalAdj * (1 + eloDiff * 0.0003), 0.3, 4.5);
+    const aL = clamp(baseAL * refGoalAdj * (1 - eloDiff * 0.0003), 0.3, 4.5);
     const grid = poissonGoals(hL, aL);
     const poissonMarkets = computeMarkets(grid);
 
@@ -301,6 +309,18 @@ class TrackerB {
     z += as.awayWinRate * rw.awayWinRate;
     z += (hs.streak * 0.05 - as.streak * 0.03) * (rw.streak / 0.05);
     z += (h2h.h2hHomeWins - 0.4) * rw.h2hHomeWins;
+
+    // Referee features
+    z += refFeatures.homeBias * 0.15;
+    const yellowEffect = (refFeatures.yellowPerMatch - 3.5) * -0.02;
+    z += yellowEffect * 0.3;
+    if (refFeatures.homeTeamRef.matches >= 3) {
+      z += (refFeatures.homeTeamRef.winRate - 0.46) * 0.08;
+    }
+    if (refFeatures.awayTeamRef.matches >= 3) {
+      z += (0.30 - refFeatures.awayTeamRef.winRate) * 0.08;
+    }
+
     const regHome = sigmoid(z);
 
     // Draw prob
