@@ -416,6 +416,64 @@ export const insertRefereeMatch = mutation({
   },
 });
 
+export const bulkInsertRefereeMatches = mutation({
+  args: {
+    matches: v.array(v.object({
+      refereeName: v.string(),
+      matchDate: v.string(),
+      homeTeam: v.string(),
+      awayTeam: v.string(),
+      homeGoals: v.number(),
+      awayGoals: v.number(),
+      yellowCards: v.optional(v.number()),
+      redCards: v.optional(v.number()),
+      fouls: v.optional(v.number()),
+      league: v.optional(v.string()),
+      season: v.optional(v.string()),
+    })),
+  },
+  handler: async (ctx, args) => {
+    let ok = 0, fail = 0;
+    for (const m of args.matches) {
+      try {
+        const clean = Object.fromEntries(
+          Object.entries(m).map(([k, v]) => [k, v === null ? undefined : v])
+        );
+        await ctx.db.insert("refereeMatches", clean);
+        ok++;
+      } catch { fail++; }
+    }
+    return { ok, fail };
+  },
+});
+
+export const bulkInsertRefFeatureProfiles = mutation({
+  args: {
+    profiles: v.array(v.object({
+      refereeName: v.string(),
+      matchesOfficiated: v.number(),
+      homeWinRate: v.optional(v.number()),
+      avgGoals: v.optional(v.number()),
+      avgCards: v.optional(v.number()),
+      homeBias: v.optional(v.number()),
+      features: v.any(),
+    })),
+  },
+  handler: async (ctx, args) => {
+    let ok = 0, fail = 0;
+    for (const p of args.profiles) {
+      try {
+        const clean = Object.fromEntries(
+          Object.entries(p).map(([k, v]) => [k, v === null ? undefined : v])
+        );
+        await ctx.db.insert("refereeFeatureProfiles", clean);
+        ok++;
+      } catch { fail++; }
+    }
+    return { ok, fail };
+  },
+});
+
 export const insertAuditLog = mutation({
   args: {
     action: v.string(),
@@ -461,6 +519,8 @@ export const getStats = query({
     const referees = await ctx.db.query("refereeProfiles").fullTableScan().take(500);
     const teams = await ctx.db.query("teams").fullTableScan().take(1000);
     const xgFeatures = await ctx.db.query("xgFeatures").fullTableScan().take(1000);
+    const refereeMatches = await ctx.db.query("refereeMatches").fullTableScan().take(1000);
+    const refFeatureProfiles = await ctx.db.query("refereeFeatureProfiles").fullTableScan().take(200);
     // Use by_result index for fast counts (limited to avoid 32K)
     const correct = await ctx.db
       .query("predictions")
@@ -488,8 +548,47 @@ export const getStats = query({
       teams: teams.length,
       leagues: leagues.length,
       referees: referees.length,
+      refereeMatches: refereeMatches.length >= 1000 ? `~9.7K` : `${refereeMatches.length}`,
+      refFeatureProfiles: refFeatureProfiles.length,
       odds: oddsSample.length >= 100 ? `~14.8K` : `${oddsSample.length}`,
       xgFeatures: xgFeatures.length,
     };
+  },
+});
+
+export const getRefereeFeatureProfile = query({
+  args: { name: v.string() },
+  handler: async (ctx, args) => {
+    const results = await ctx.db
+      .query("refereeFeatureProfiles")
+      .withIndex("by_name", (q) => q.eq("refereeName", args.name))
+      .take(1);
+    return results[0] || null;
+  },
+});
+
+export const getRefereeMatches = query({
+  args: {
+    refereeName: v.string(),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const results = await ctx.db
+      .query("refereeMatches")
+      .withIndex("by_referee", (q) => q.eq("refereeName", args.refereeName))
+      .order("desc")
+      .take(args.limit ?? 50);
+    return results;
+  },
+});
+
+export const getTopReferees = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const results = await ctx.db
+      .query("refereeFeatureProfiles")
+      .order("desc")
+      .take(args.limit ?? 20);
+    return results;
   },
 });
