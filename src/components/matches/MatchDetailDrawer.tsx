@@ -38,6 +38,10 @@ interface FixtureDetail {
   home_recent?: Array<{ gf: number; ga: number; opp: string; isHome: boolean; date: string }>;
   away_recent?: Array<{ gf: number; ga: number; opp: string; isHome: boolean; date: string }>;
   h2h?: Array<{ home: string; away: string; hg: number; ag: number; date: string }>;
+  home_form_stats?: { w: number; d: number; l: number; gf: number; ga: number; pts: number; ppg: number };
+  away_form_stats?: { w: number; d: number; l: number; gf: number; ga: number; pts: number; ppg: number };
+  home_injuries?: Array<{ player_name: string; team_name: string; injury_type: string; status: string; expected_return: string }>;
+  away_injuries?: Array<{ player_name: string; team_name: string; injury_type: string; status: string; expected_return: string }>;
   home_xg?: { avg_xg: number; avg_goals: number; avg_shots: number; avg_on_target: number } | null;
   away_xg?: { avg_xg: number; avg_goals: number; avg_shots: number; avg_on_target: number } | null;
 }
@@ -183,6 +187,31 @@ export function MatchDetailDrawer({ fixtureId, onClose }: MatchDetailProps) {
       // Compute form string (W/D/L)
       const formStr = (recent: any[]) => recent.map(m => m.gf > m.ga ? "W" : m.gf < m.ga ? "L" : "D").join("");
 
+      // Compute form stats
+      const formStats = (recent: any[]) => {
+        if (!recent || recent.length === 0) return { w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0, ppg: 0 };
+        const w = recent.filter(m => m.gf > m.ga).length;
+        const d = recent.filter(m => m.gf === m.ga).length;
+        const l = recent.filter(m => m.gf < m.ga).length;
+        const gf = recent.reduce((s, m) => s + (m.gf || 0), 0);
+        const ga = recent.reduce((s, m) => s + (m.ga || 0), 0);
+        const pts = w * 3 + d;
+        return { w, d, l, gf, ga, pts, ppg: +(pts / recent.length).toFixed(1) };
+      };
+
+      // Load injury data
+      let homeInjuries: any[] = [];
+      let awayInjuries: any[] = [];
+      try {
+        const injRes = await fetch("/data/premier-injuries.json");
+        if (injRes.ok) {
+          const injData = await injRes.json();
+          const injuries = injData.injuries || [];
+          homeInjuries = injuries.filter((i: any) => i.team_name === homeTeamName || (homeTeamName && i.team_name.toLowerCase().includes(homeTeamName.toLowerCase().split(" ")[0])));
+          awayInjuries = injuries.filter((i: any) => i.team_name === awayTeamName || (awayTeamName && i.team_name.toLowerCase().includes(awayTeamName.toLowerCase().split(" ")[0])));
+        }
+      } catch {}
+
       setData({
         ...fixture,
         home_team_name: homeTeamName || "TBD",
@@ -196,6 +225,10 @@ export function MatchDetailDrawer({ fixtureId, onClose }: MatchDetailProps) {
         away_form: formStr(awayRecent),
         home_recent: homeRecent,
         away_recent: awayRecent,
+        home_form_stats: formStats(homeRecent),
+        away_form_stats: formStats(awayRecent),
+        home_injuries: homeInjuries,
+        away_injuries: awayInjuries,
         h2h,
         home_xg: homeXg,
         away_xg: awayXg,
@@ -404,9 +437,19 @@ export function MatchDetailDrawer({ fixtureId, onClose }: MatchDetailProps) {
                         }`}>{r}</span>
                       ))}
                     </div>
-                    <span className="text-[10px] text-gray-400">
-                      {data.home_recent?.filter(m => m.gf > m.ga).length || 0}W {data.home_recent?.filter(m => m.gf === m.ga).length || 0}D {data.home_recent?.filter(m => m.gf < m.ga).length || 0}L
-                    </span>
+                    <div className="flex items-center gap-[8px] mt-[4px]">
+                      <span className="text-[10px] text-gray-400">
+                        {data.home_form_stats?.w || 0}W {data.home_form_stats?.d || 0}D {data.home_form_stats?.l || 0}L
+                      </span>
+                      <span className="text-[10px] text-gray-300">•</span>
+                      <span className="text-[10px] text-gray-400">
+                        GF:{data.home_form_stats?.gf || 0} GA:{data.home_form_stats?.ga || 0}
+                      </span>
+                      <span className="text-[10px] text-gray-300">•</span>
+                      <span className="text-[10px] font-semibold text-[#0A0F1C]">
+                        {data.home_form_stats?.ppg || 0} PPG
+                      </span>
+                    </div>
                   </div>
                   {/* Away form */}
                   <div className="bg-gray-50 rounded-[12px] p-[12px]">
@@ -421,9 +464,19 @@ export function MatchDetailDrawer({ fixtureId, onClose }: MatchDetailProps) {
                         }`}>{r}</span>
                       ))}
                     </div>
-                    <span className="text-[10px] text-gray-400">
-                      {data.away_recent?.filter(m => m.gf > m.ga).length || 0}W {data.away_recent?.filter(m => m.gf === m.ga).length || 0}D {data.away_recent?.filter(m => m.gf < m.ga).length || 0}L
-                    </span>
+                    <div className="flex items-center gap-[8px] mt-[4px]">
+                      <span className="text-[10px] text-gray-400">
+                        {data.away_form_stats?.w || 0}W {data.away_form_stats?.d || 0}D {data.away_form_stats?.l || 0}L
+                      </span>
+                      <span className="text-[10px] text-gray-300">•</span>
+                      <span className="text-[10px] text-gray-400">
+                        GF:{data.away_form_stats?.gf || 0} GA:{data.away_form_stats?.ga || 0}
+                      </span>
+                      <span className="text-[10px] text-gray-300">•</span>
+                      <span className="text-[10px] font-semibold text-[#0A0F1C]">
+                        {data.away_form_stats?.ppg || 0} PPG
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -451,6 +504,69 @@ export function MatchDetailDrawer({ fixtureId, onClose }: MatchDetailProps) {
                       </span>
                     </div>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {/* Injuries & Suspensions */}
+            {((data.home_injuries && data.home_injuries.length > 0) || (data.away_injuries && data.away_injuries.length > 0)) && (
+              <div className="mb-[20px]">
+                <h3 className="text-[12px] font-semibold text-[#0A0F1C] mb-[10px] uppercase tracking-wider">
+                  Injuries & Suspensions
+                </h3>
+                <div className="grid grid-cols-2 gap-[10px]">
+                  {/* Home injuries */}
+                  <div className="bg-gray-50 rounded-[12px] p-[12px]">
+                    <div className="flex items-center gap-[8px] mb-[8px]">
+                      <TeamLogo logo={data.home_team_logo} name={data.home_team_name || ""} size={20} />
+                      <span className="text-[11px] font-semibold text-[#0A0F1C] truncate">{data.home_team_name}</span>
+                    </div>
+                    {data.home_injuries && data.home_injuries.length > 0 ? (
+                      <div className="space-y-[4px]">
+                        {data.home_injuries.slice(0, 5).map((inj: any, i: number) => (
+                          <div key={i} className="flex items-center gap-[6px]">
+                            <span className={`w-[6px] h-[6px] rounded-full flex-none ${
+                              inj.status === "injured" ? "bg-[#EF4444]" :
+                              inj.status === "suspended" ? "bg-[#F59E0B]" : "bg-[#94A3B8]"
+                            }`} />
+                            <span className="text-[10px] text-gray-600 truncate flex-1">{inj.player_name}</span>
+                            <span className="text-[9px] text-gray-400 flex-none">{inj.injury_type}</span>
+                          </div>
+                        ))}
+                        {data.home_injuries.length > 5 && (
+                          <span className="text-[9px] text-gray-400">+{data.home_injuries.length - 5} more</span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-[10px] text-gray-400">No known absences</span>
+                    )}
+                  </div>
+                  {/* Away injuries */}
+                  <div className="bg-gray-50 rounded-[12px] p-[12px]">
+                    <div className="flex items-center gap-[8px] mb-[8px]">
+                      <TeamLogo logo={data.away_team_logo} name={data.away_team_name || ""} size={20} />
+                      <span className="text-[11px] font-semibold text-[#0A0F1C] truncate">{data.away_team_name}</span>
+                    </div>
+                    {data.away_injuries && data.away_injuries.length > 0 ? (
+                      <div className="space-y-[4px]">
+                        {data.away_injuries.slice(0, 5).map((inj: any, i: number) => (
+                          <div key={i} className="flex items-center gap-[6px]">
+                            <span className={`w-[6px] h-[6px] rounded-full flex-none ${
+                              inj.status === "injured" ? "bg-[#EF4444]" :
+                              inj.status === "suspended" ? "bg-[#F59E0B]" : "bg-[#94A3B8]"
+                            }`} />
+                            <span className="text-[10px] text-gray-600 truncate flex-1">{inj.player_name}</span>
+                            <span className="text-[9px] text-gray-400 flex-none">{inj.injury_type}</span>
+                          </div>
+                        ))}
+                        {data.away_injuries.length > 5 && (
+                          <span className="text-[9px] text-gray-400">+{data.away_injuries.length - 5} more</span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-[10px] text-gray-400">No known absences</span>
+                    )}
+                  </div>
                 </div>
               </div>
             )}

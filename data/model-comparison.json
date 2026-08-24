@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-08-24T03:45:20.023Z",
+  "timestamp": "2026-08-24T04:30:18.649Z",
   "matches_compared": 10672,
   "v3_0": {
     "accuracy": 90.9,
@@ -10,7 +10,7 @@
   "v5_1": {
     "accuracy": 92.1,
     "brier": null,
-    "correct": 9828,
+    "correct": 9830,
     "total": 10672
   },
   "market_comparison": [
