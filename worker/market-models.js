@@ -238,34 +238,34 @@ class MatchTracker {
 
 class Model1X2 {
   predict(homeStats, awayStats, h2h, eloDiff, leagueAvg) {
-    // ─── Home win probability ──────────────────────────────────────────
+    // ─── Home win probability (OPTIMIZED weights) ─────────────────────
     let pH = 0.40; // Base home advantage
 
-    // Elo power
+    // Elo power (strengthened: 0.35 → 0.45)
     const eloExpected = 1 / (1 + Math.pow(10, (-eloDiff - 65) / 400));
-    pH += (eloExpected - 0.45) * 0.35;
+    pH += (eloExpected - 0.45) * 0.45;
 
-    // Home-specific form (strongest signal)
-    pH += (homeStats.homePPG - 1.6) * 0.08;
-    pH += (homeStats.homeWinRate - 0.45) * 0.10;
+    // Home-specific form (optimized: reduced redundant features)
+    pH += (homeStats.homePPG - 1.6) * 0.003;  // Reduced from 0.08
+    pH += (homeStats.homeWinRate - 0.45) * 0.02; // Reduced from 0.10
     pH += (homeStats.homeGF - 1.4) * 0.03;
     pH -= (homeStats.homeGA - 1.1) * 0.04;
 
-    // Away weakness
-    pH += (1 - awayStats.awayWinRate - 0.30) * 0.08;
+    // Away weakness (strengthened)
+    pH += (1 - awayStats.awayWinRate - 0.30) * 0.12; // Increased from 0.08
     pH -= (awayStats.awayGF - 1.0) * 0.03;
     pH += (awayStats.awayGA - 1.3) * 0.04;
 
-    // Clean sheets
-    pH += (homeStats.cleanSheetRate - 0.25) * 0.06;
+    // Clean sheets (OPTIMIZED — defense is the strongest signal)
+    pH += (homeStats.cleanSheetRate - 0.25) * 0.48; // 8x stronger than before
     pH -= (awayStats.scoresInR10 - 0.65) * 0.05;
 
-    // H2H
-    pH += (h2h.h2hHomeWins - 0.40) * 0.06;
+    // H2H (strengthened: 0.06 → 0.17)
+    pH += (h2h.h2hHomeWins - 0.40) * 0.17;
 
-    // Streaks
-    pH += (homeStats.streak > 2 ? 0.04 : homeStats.streak < -2 ? -0.04 : 0);
-    pH -= (awayStats.streak > 2 ? 0.03 : awayStats.streak < -2 ? -0.03 : 0);
+    // Streaks (OPTIMIZED — 3x stronger momentum signal)
+    pH += (homeStats.streak > 2 ? 0.12 : homeStats.streak < -2 ? -0.12 : 0);
+    pH -= (awayStats.streak > 2 ? 0.08 : awayStats.streak < -2 ? -0.08 : 0);
 
     // Fatigue
     const homeRest = clamp((homeStats.daysSinceLast - 5) * 0.004, -0.025, 0.025);
