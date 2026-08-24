@@ -34,9 +34,10 @@ export async function POST(request: NextRequest) {
     // 1. Compute accuracy by market
     const { data: settledPreds } = await supabaseAdmin
       .from("predictions")
-      .select("market, selection, model_probability, is_correct, fixture_id")
-      .not("is_correct", "is", null)
-      .gte("settled_at", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
+      .select("market, selection, model_probability, result, fixture_id")
+      .not("result", "is", null)
+      .neq("result", "pending")
+      .gte("settled_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
 
     if (!settledPreds || settledPreds.length === 0) {
       return NextResponse.json({
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
       const mkt = p.market || "unknown";
       if (!marketStats[mkt]) marketStats[mkt] = { total: 0, correct: 0, probabilities: [] };
       marketStats[mkt].total++;
-      if (p.is_correct) marketStats[mkt].correct++;
+      if (p.result === "correct") marketStats[mkt].correct++;
       if (p.model_probability) marketStats[mkt].probabilities.push(p.model_probability);
     }
 
@@ -76,18 +77,18 @@ export async function POST(request: NextRequest) {
 
     // 3. Overall metrics
     const totalPreds = settledPreds.length;
-    const totalCorrect = settledPreds.filter(p => p.is_correct).length;
+    const totalCorrect = settledPreds.filter(p => p.result === "correct").length;
     const overallAccuracy = totalCorrect / totalPreds;
 
     // High-confidence accuracy
     const highConf = settledPreds.filter(p => (p.model_probability || 0) >= 0.7);
-    const highConfCorrect = highConf.filter(p => p.is_correct).length;
+    const highConfCorrect = highConf.filter(p => p.result === "correct").length;
     const highConfAccuracy = highConf.length > 0 ? highConfCorrect / highConf.length : 0;
 
     // Brier score
     const brier = settledPreds.reduce((sum, p) => {
       const prob = p.model_probability || 0.5;
-      const actual = p.is_correct ? 1 : 0;
+      const actual = p.result === "correct" ? 1 : 0;
       return sum + Math.pow(prob - actual, 2);
     }, 0) / totalPreds;
 
