@@ -126,6 +126,16 @@ function findXGProfile(teamName) {
   return null;
 }
 
+// ─── Odds Features ─────────────────────────────────────────────────────
+let oddsFeatures = {};
+try {
+  const oddsRaw = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "data", "odds-features.json"), "utf8"));
+  oddsFeatures = oddsRaw.features || {};
+  console.log(`   📊 Loaded odds features for ${Object.keys(oddsFeatures).length} fixtures`);
+} catch {
+  console.log("   ⚠️  No odds features found — using model-only predictions");
+}
+
 // ─── Poisson Model ──────────────────────────────────────────────────────
 function poissonProb(lambda, k) {
   if (lambda <= 0) return k === 0 ? 1 : 0;
@@ -681,6 +691,10 @@ class EnhancedTracker {
       xgOverperformance: homeXGDiff - awayXGDiff,
     };
 
+    // Look up odds features for this fixture pair
+    // (will be set by main loop before calling getFeatures)
+    const fixtureOdds = this._currentFixtureOdds || null;
+
     return {
       homeLambda,
       awayLambda,
@@ -692,6 +706,7 @@ class EnhancedTracker {
         awayGD,
         hf,
         af,
+        oddsFeatures: fixtureOdds,
       },
     };
   }
@@ -794,6 +809,9 @@ async function main() {
     const away = fixture.away?.canonical_name;
     if (!home || !away) continue;
 
+    // Set odds features for this fixture
+    tracker._currentFixtureOdds = oddsFeatures[fixture.id] || null;
+
     const {
       homeLambda,
       awayLambda,
@@ -841,12 +859,39 @@ async function main() {
     const regProb = regressionProb(features, refFeatures);
 
     // Ensemble: combine all three
-    const ensembleMarkets = ensembleCombine(
+    let ensembleMarkets = ensembleCombine(
       poissonMarkets,
       eloProb,
       regProb,
       features
     );
+
+    // ─── Odds Blending ──────────────────────────────────────────────
+    // When odds are available, blend model with market probabilities
+    if (features.oddsFeatures) {
+      const of = features.oddsFeatures;
+      // Blend 1X2
+      if (of.true_home && of.true_draw && of.true_away) {
+        const bookmakerCount = of.bookmaker_count || 1;
+        const consensus = (of.home_consensus + of.draw_consensus + of.away_consensus) / 3;
+        const marketWeight = Math.min(0.35, 0.1 + (bookmakerCount * 0.05) + (consensus * 0.15));
+        const modelWeight = 1 - marketWeight;
+        ensembleMarkets["1X2_Home"] = clamp(ensembleMarkets["1X2_Home"] * modelWeight + of.true_home * marketWeight);
+        ensembleMarkets["1X2_Draw"] = clamp(ensembleMarkets["1X2_Draw"] * modelWeight + of.true_draw * marketWeight);
+        ensembleMarkets["1X2_Away"] = clamp(ensembleMarkets["1X2_Away"] * modelWeight + of.true_away * marketWeight);
+        // Normalize to sum to 1
+        const total = ensembleMarkets["1X2_Home"] + ensembleMarkets["1X2_Draw"] + ensembleMarkets["1X2_Away"];
+        ensembleMarkets["1X2_Home"] /= total;
+        ensembleMarkets["1X2_Draw"] /= total;
+        ensembleMarkets["1X2_Away"] /= total;
+      }
+      // Blend BTTS (use market BTTS if available)
+      if (of.true_btts_yes) {
+        const bw = Math.min(0.3, 0.1 + (of.bookmaker_count || 1) * 0.05);
+        ensembleMarkets["BTTS_Yes"] = clamp(ensembleMarkets["BTTS_Yes"] * (1 - bw) + of.true_btts_yes * bw);
+        ensembleMarkets["BTTS_No"] = clamp(1 - ensembleMarkets["BTTS_Yes"]);
+      }
+    }
 
     // Find best market
     let bestMarket = null;
