@@ -16,6 +16,31 @@ const { createClient } = require("@supabase/supabase-js");
 const fs = require("fs");
 const path = require("path");
 
+// ─── Isotonic Calibration ────────────────────────────────────────────────
+let calibrator = null;
+try {
+  const calPath = path.join(__dirname, "..", "models", "isotonic-calibrator.json");
+  calibrator = JSON.parse(fs.readFileSync(calPath, "utf8"));
+  console.log(`[calibrator] Loaded isotonic calibrator (${calibrator.dataset_size} samples)`);
+} catch {
+  console.log("[calibrator] No isotonic calibrator found — using raw probabilities");
+}
+
+function applyCalibration(rawProb) {
+  if (!calibrator || !calibrator.calibrator) return rawProb;
+  const { x_thresholds, y_thresholds } = calibrator.calibrator;
+  if (!x_thresholds || !y_thresholds || x_thresholds.length < 2) return rawProb;
+  // Linear interpolation on isotonic thresholds
+  for (let i = 0; i < x_thresholds.length - 1; i++) {
+    if (rawProb >= x_thresholds[i] && rawProb <= x_thresholds[i + 1]) {
+      const t = (rawProb - x_thresholds[i]) / (x_thresholds[i + 1] - x_thresholds[i]);
+      return Math.max(0.01, Math.min(0.99, y_thresholds[i] + t * (y_thresholds[i + 1] - y_thresholds[i])));
+    }
+  }
+  // Clip to range
+  return rawProb < x_thresholds[0] ? y_thresholds[0] : y_thresholds[y_thresholds.length - 1];
+}
+
 // ─── Env ─────────────────────────────────────────────────────────────────
 function loadEnv() {
   const envPath = path.join(__dirname, "..", ".env.local");
@@ -933,14 +958,17 @@ async function main() {
     // Find best market
     let bestMarket = null;
     let bestProb = 0;
+    let bestRawProb = 0;
     for (const [mk, prob] of Object.entries(ensembleMarkets)) {
-      if (prob > bestProb) {
-        bestProb = prob;
+      const cal = applyCalibration(prob);
+      if (cal > bestProb) {
+        bestProb = cal;
+        bestRawProb = prob;
         bestMarket = mk;
       }
     }
 
-    // Confidence tier
+    // Confidence tier (based on calibrated probability)
     const tier =
       bestProb >= 0.70
         ? "ELITE"
@@ -961,12 +989,14 @@ async function main() {
         : mk.split("_")
             .slice(1)
             .join("_");
+      const calibratedProb = applyCalibration(prob);
       predictions.push({
         fixture_id: fixture.id,
         market: mk.split("_")[0],
         selection,
-        model_probability: Math.round(prob * 10000) / 10000,
-        model_version: "v5.0-ensemble",
+        model_probability: Math.round(calibratedProb * 10000) / 10000,
+        raw_probability: Math.round(prob * 10000) / 10000,
+        model_version: calibrator ? "v5.1-ensemble-calibrated" : "v5.0-ensemble",
       });
     }
 

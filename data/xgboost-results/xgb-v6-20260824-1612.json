@@ -1,0 +1,467 @@
+{
+  "timestamp": "2026-08-24T16:12:12.277949",
+  "dataset": {
+    "rows": 103868,
+    "train": 62320,
+    "val": 20774,
+    "test": 20774,
+    "pos_rate": 0.3332980321176878
+  },
+  "experiments": [
+    {
+      "name": "A",
+      "features": [
+        "model_probability"
+      ],
+      "n_feat": 1,
+      "tr_size": 62320,
+      "va_size": 20774,
+      "te_size": 20774,
+      "time_s": 5.3,
+      "tr_acc": 0.6921213093709885,
+      "tr_ll": 0.5970569849014282,
+      "va_acc": 0.6920670068354674,
+      "va_ll": 0.5992903709411621,
+      "te_acc": 0.6866275151631848,
+      "te_ll": 0.6020690202713013,
+      "te_brier": 0.20669396221637726,
+      "cal_err": 0.021537016149783185,
+      "importance": {
+        "model_probability": 1.0
+      },
+      "tiers": {
+        "elite_70": {
+          "count": 137,
+          "acc": 0.6642335766423357,
+          "cov": 0.006594781938962164
+        },
+        "high_60": {
+          "count": 1118,
+          "acc": 0.6529516994633273,
+          "cov": 0.05381727158948686
+        }
+      },
+      "cal_curve": {
+        "frac": [
+          0.1737120211360634,
+          0.25626003968628935,
+          0.36281041792852814,
+          0.4508807588075881,
+          0.5264367816091954,
+          0.6513761467889908,
+          0.6642335766423357
+        ],
+        "pred": [
+          0.16272647038121835,
+          0.2652925937159756,
+          0.34204681463165043,
+          0.44583957498958765,
+          0.5482268104608031,
+          0.6522411781227431,
+          0.7465147376060486
+        ]
+      }
+    },
+    {
+      "name": "B",
+      "features": [
+        "elo_diff",
+        "home_ppg",
+        "away_ppg",
+        "ppg_diff",
+        "home_gs",
+        "home_gc",
+        "away_gs",
+        "away_gc",
+        "home_wr",
+        "away_wr",
+        "home_cs",
+        "away_cs",
+        "home_hppg",
+        "away_appg",
+        "hppg_diff",
+        "streak_diff",
+        "h2h_home"
+      ],
+      "n_feat": 17,
+      "tr_size": 62320,
+      "va_size": 20774,
+      "te_size": 20774,
+      "time_s": 4.4,
+      "tr_acc": 0.6667682926829268,
+      "tr_ll": 0.6364457607269287,
+      "va_acc": 0.6663617984018485,
+      "va_ll": 0.6367254257202148,
+      "te_acc": 0.6668431693462983,
+      "te_ll": 0.6363934278488159,
+      "te_brier": 0.2221641093492508,
+      "cal_err": 7.94249078107101e-05,
+      "importance": {
+        "home_wr": 0.07009405642747879,
+        "hppg_diff": 0.06291034817695618,
+        "away_wr": 0.06212222948670387,
+        "home_hppg": 0.06154949218034744,
+        "away_appg": 0.061139289289712906,
+        "streak_diff": 0.06055857241153717,
+        "ppg_diff": 0.059461452066898346,
+        "elo_diff": 0.05927106365561485,
+        "away_cs": 0.059209272265434265,
+        "away_gc": 0.05783303827047348
+      },
+      "tiers": {},
+      "cal_curve": {
+        "frac": [
+          0.3331568306537017
+        ],
+        "pred": [
+          0.33323625556151243
+        ]
+      }
+    },
+    {
+      "name": "C",
+      "features": [
+        "elo_diff",
+        "home_ppg",
+        "away_ppg",
+        "ppg_diff",
+        "home_gs",
+        "home_gc",
+        "away_gs",
+        "away_gc",
+        "home_wr",
+        "away_wr",
+        "home_cs",
+        "away_cs",
+        "home_hppg",
+        "away_appg",
+        "hppg_diff",
+        "streak_diff",
+        "h2h_home",
+        "home_xg",
+        "away_xg",
+        "home_xga",
+        "away_xga",
+        "xg_diff",
+        "xga_diff",
+        "has_xg"
+      ],
+      "n_feat": 24,
+      "tr_size": 62320,
+      "va_size": 20774,
+      "te_size": 20774,
+      "time_s": 3.4,
+      "tr_acc": 0.6667682926829268,
+      "tr_ll": 0.6364448070526123,
+      "va_acc": 0.6663617984018485,
+      "va_ll": 0.6367253065109253,
+      "te_acc": 0.6668431693462983,
+      "te_ll": 0.6363918781280518,
+      "te_brier": 0.2221633791923523,
+      "cal_err": 7.122081794191937e-05,
+      "importance": {
+        "away_xga": 0.05573297291994095,
+        "xga_diff": 0.05349407345056534,
+        "home_xg": 0.0529358945786953,
+        "has_xg": 0.04817550629377365,
+        "xg_diff": 0.04683835431933403,
+        "home_hppg": 0.04541425779461861,
+        "ppg_diff": 0.04411332309246063,
+        "away_appg": 0.04327592998743057,
+        "home_wr": 0.04245477542281151,
+        "hppg_diff": 0.04120754078030586
+      },
+      "tiers": {},
+      "cal_curve": {
+        "frac": [
+          0.3331568306537017
+        ],
+        "pred": [
+          0.33322805147164364
+        ]
+      }
+    },
+    {
+      "name": "D",
+      "features": [
+        "elo_diff",
+        "home_ppg",
+        "away_ppg",
+        "ppg_diff",
+        "home_gs",
+        "home_gc",
+        "away_gs",
+        "away_gc",
+        "home_wr",
+        "away_wr",
+        "home_cs",
+        "away_cs",
+        "home_hppg",
+        "away_appg",
+        "hppg_diff",
+        "streak_diff",
+        "h2h_home",
+        "home_xg",
+        "away_xg",
+        "home_xga",
+        "away_xga",
+        "xg_diff",
+        "xga_diff",
+        "has_xg",
+        "home_inj",
+        "away_inj",
+        "inj_diff"
+      ],
+      "n_feat": 27,
+      "tr_size": 62320,
+      "va_size": 20774,
+      "te_size": 20774,
+      "time_s": 4.3,
+      "tr_acc": 0.6667682926829268,
+      "tr_ll": 0.6364446878433228,
+      "va_acc": 0.6663617984018485,
+      "va_ll": 0.6367254257202148,
+      "te_acc": 0.6668431693462983,
+      "te_ll": 0.6363917589187622,
+      "te_brier": 0.2221633642911911,
+      "cal_err": 7.218517570373173e-05,
+      "importance": {
+        "home_inj": 0.05885729193687439,
+        "xga_diff": 0.05478496477007866,
+        "away_inj": 0.05088507756590843,
+        "away_xga": 0.046707041561603546,
+        "xg_diff": 0.042017754167318344,
+        "ppg_diff": 0.041483666747808456,
+        "has_xg": 0.03979566693305969,
+        "home_hppg": 0.039550792425870895,
+        "home_xg": 0.03872714564204216,
+        "away_appg": 0.038318488746881485
+      },
+      "tiers": {},
+      "cal_curve": {
+        "frac": [
+          0.3331568306537017
+        ],
+        "pred": [
+          0.33322901582940545
+        ]
+      }
+    },
+    {
+      "name": "E",
+      "features": [
+        "elo_diff",
+        "home_ppg",
+        "away_ppg",
+        "ppg_diff",
+        "home_gs",
+        "home_gc",
+        "away_gs",
+        "away_gc",
+        "home_wr",
+        "away_wr",
+        "home_cs",
+        "away_cs",
+        "home_hppg",
+        "away_appg",
+        "hppg_diff",
+        "streak_diff",
+        "h2h_home",
+        "home_xg",
+        "away_xg",
+        "home_xga",
+        "away_xga",
+        "xg_diff",
+        "xga_diff",
+        "has_xg",
+        "home_odds",
+        "draw_odds",
+        "away_odds",
+        "home_implied",
+        "draw_implied",
+        "away_implied",
+        "has_odds"
+      ],
+      "n_feat": 31,
+      "tr_size": 62320,
+      "va_size": 20774,
+      "te_size": 20774,
+      "time_s": 2.3,
+      "tr_acc": 0.6667682926829268,
+      "tr_ll": 0.6364445686340332,
+      "va_acc": 0.6663617984018485,
+      "va_ll": 0.6367260813713074,
+      "te_acc": 0.6668431693462983,
+      "te_ll": 0.6363918781280518,
+      "te_brier": 0.22216340899467468,
+      "cal_err": 6.755054444634867e-05,
+      "importance": {
+        "xga_diff": 0.06326953321695328,
+        "xg_diff": 0.05040004849433899,
+        "away_xga": 0.04909408092498779,
+        "home_xga": 0.04770880192518234,
+        "has_xg": 0.043706122785806656,
+        "home_hppg": 0.04332044720649719,
+        "home_xg": 0.04277334362268448,
+        "away_cs": 0.04252280667424202,
+        "home_wr": 0.04165599122643471,
+        "elo_diff": 0.04161873832345009
+      },
+      "tiers": {},
+      "cal_curve": {
+        "frac": [
+          0.3331568306537017
+        ],
+        "pred": [
+          0.33322438119814807
+        ]
+      }
+    },
+    {
+      "name": "F",
+      "features": [
+        "elo_diff",
+        "home_ppg",
+        "away_ppg",
+        "ppg_diff",
+        "home_gs",
+        "home_gc",
+        "away_gs",
+        "away_gc",
+        "home_wr",
+        "away_wr",
+        "home_cs",
+        "away_cs",
+        "home_hppg",
+        "away_appg",
+        "hppg_diff",
+        "streak_diff",
+        "h2h_home",
+        "home_xg",
+        "away_xg",
+        "home_xga",
+        "away_xga",
+        "xg_diff",
+        "xga_diff",
+        "has_xg",
+        "home_inj",
+        "away_inj",
+        "inj_diff",
+        "home_odds",
+        "draw_odds",
+        "away_odds",
+        "home_implied",
+        "draw_implied",
+        "away_implied",
+        "has_odds"
+      ],
+      "n_feat": 34,
+      "tr_size": 62320,
+      "va_size": 20774,
+      "te_size": 20774,
+      "time_s": 2.1,
+      "tr_acc": 0.6667682926829268,
+      "tr_ll": 0.6364449262619019,
+      "va_acc": 0.6663617984018485,
+      "va_ll": 0.6367252469062805,
+      "te_acc": 0.6668431693462983,
+      "te_ll": 0.6363926529884338,
+      "te_brier": 0.22216378152370453,
+      "cal_err": 6.046883752558463e-05,
+      "importance": {
+        "home_inj": 0.07214131206274033,
+        "xga_diff": 0.04658938944339752,
+        "home_xg": 0.046112120151519775,
+        "away_inj": 0.046055153012275696,
+        "has_xg": 0.042694106698036194,
+        "home_wr": 0.042109016329050064,
+        "away_xg": 0.041323501616716385,
+        "xg_diff": 0.04002299904823303,
+        "away_xga": 0.040001098066568375,
+        "home_xga": 0.03896100074052811
+      },
+      "tiers": {},
+      "cal_curve": {
+        "frac": [
+          0.3331568306537017
+        ],
+        "pred": [
+          0.3332172994912273
+        ]
+      }
+    },
+    {
+      "name": "G",
+      "features": [
+        "elo_diff",
+        "home_ppg",
+        "away_ppg",
+        "ppg_diff",
+        "home_gs",
+        "home_gc",
+        "away_gs",
+        "away_gc",
+        "home_wr",
+        "away_wr",
+        "home_cs",
+        "away_cs",
+        "home_hppg",
+        "away_appg",
+        "hppg_diff",
+        "streak_diff",
+        "h2h_home",
+        "home_xg",
+        "away_xg",
+        "home_xga",
+        "away_xga",
+        "xg_diff",
+        "xga_diff",
+        "has_xg",
+        "home_inj",
+        "away_inj",
+        "inj_diff",
+        "home_odds",
+        "draw_odds",
+        "away_odds",
+        "home_implied",
+        "draw_implied",
+        "away_implied",
+        "has_odds"
+      ],
+      "n_feat": 34,
+      "tr_size": 62320,
+      "va_size": 20774,
+      "te_size": 20774,
+      "time_s": 8.6,
+      "tr_acc": 0.6667682926829268,
+      "tr_ll": 0.636442754822877,
+      "va_acc": 0.6663617984018485,
+      "va_ll": 0.6367258472517799,
+      "te_acc": 0.6668431693462983,
+      "te_ll": 0.6363917817803489,
+      "te_brier": 0.22216336834866973,
+      "cal_err": 7.538906084292307e-05,
+      "importance": {
+        "elo_diff": 4,
+        "away_gs": 4,
+        "home_ppg": 3,
+        "ppg_diff": 3,
+        "home_cs": 3,
+        "home_gc": 2,
+        "away_gc": 2,
+        "away_appg": 2,
+        "home_gs": 1,
+        "away_cs": 1
+      },
+      "tiers": {},
+      "cal_curve": {
+        "frac": [
+          0.3331568306537017
+        ],
+        "pred": [
+          0.33323221971454464
+        ]
+      }
+    }
+  ]
+}
