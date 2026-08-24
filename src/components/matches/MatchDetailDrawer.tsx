@@ -148,7 +148,7 @@ export function MatchDetailDrawer({ fixtureId, onClose }: MatchDetailProps) {
         }));
       }
 
-      // Get xG data from StatsBomb
+      // Get xG data from StatsBomb + Understat
       let homeXg = null;
       let awayXg = null;
       try {
@@ -159,6 +159,26 @@ export function MatchDetailDrawer({ fixtureId, onClose }: MatchDetailProps) {
           awayXg = xgData.features?.[awayTeamName] || null;
         }
       } catch {}
+      // Fall back to Understat xG if StatsBomb doesn't have the team
+      if (!homeXg || !awayXg) {
+        try {
+          const uRes = await fetch("/data/understat-xg.json");
+          if (uRes.ok) {
+            const uData = await uRes.json();
+            const teams = uData.teams || {};
+            const findU = (name: string) => {
+              const lower = name.toLowerCase();
+              for (const [key, feat] of Object.entries(teams) as [string, any][]) {
+                const keyName = key.split(/_EPL_|_La_liga_|_Bundesliga_|_Serie_A_|_Ligue_1_/)[0].toLowerCase();
+                if (keyName === lower) return feat;
+              }
+              return null;
+            };
+            if (!homeXg && homeTeamName) homeXg = findU(homeTeamName);
+            if (!awayXg && awayTeamName) awayXg = findU(awayTeamName);
+          }
+        } catch {}
+      }
 
       // Compute form string (W/D/L)
       const formStr = (recent: any[]) => recent.map(m => m.gf > m.ga ? "W" : m.gf < m.ga ? "L" : "D").join("");

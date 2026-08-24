@@ -44,14 +44,86 @@ function sigmoid(x) {
   return 1 / (1 + Math.exp(-x));
 }
 
-// ─── StatsBomb xG Data ──────────────────────────────────────────────────
-let xgData = {};
+// ─── xG Data (StatsBomb + Understat) ──────────────────────────────────────
+let xgData = {};    // StatsBomb (narrow but deep)
+let understatTeams = {};  // Understat (broad coverage: 484 teams)
+let understatMatches = []; // Match-level xG from Understat
+
 try {
   const raw = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "data", "statsbomb-xg.json"), "utf8"));
   xgData = raw.features || {};
   console.log(`   📊 Loaded StatsBomb xG for ${Object.keys(xgData).length} teams`);
 } catch {
   console.log("   ⚠️  No StatsBomb xG data found — using goal-based estimates");
+}
+
+try {
+  const uRaw = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "data", "understat-xg.json"), "utf8"));
+  understatTeams = uRaw.teams || {};
+  understatMatches = uRaw.matches || [];
+  console.log(`   ⚽ Loaded Understat xG for ${Object.keys(understatTeams).length} teams, ${understatMatches.length} matches`);
+} catch {
+  console.log("   ⚠️  No Understat xG data found — using StatsBomb/goal estimates only");
+}
+
+// Common team name aliases for lookup
+const TEAM_ALIASES = {
+  'psg': 'Paris Saint Germain',
+  'paris saint-germain': 'Paris Saint Germain',
+  'paris saint germain': 'Paris Saint Germain',
+  'man utd': 'Manchester United',
+  'man united': 'Manchester United',
+  'man u': 'Manchester United',
+  'man city': 'Manchester City',
+  'ac milan': 'AC Milan',
+  'inter milan': 'Internazionale',
+  'inter': 'Internazionale',
+  'internazionale': 'Internazionale',
+  'juve': 'Juventus',
+  'barca': 'Barcelona',
+  'real madrid': 'Real Madrid',
+  'bayern munich': 'Bayern Munich',
+  'bayern': 'Bayern Munich',
+  'bayern munchen': 'Bayern Munich',
+  'atletico madrid': 'Atletico Madrid',
+  'atletico': 'Atletico Madrid',
+  'sporting cp': 'Sporting CP',
+  'sporting': 'Sporting CP',
+  'lyon': 'Olympique Lyonnais',
+  'marseille': 'Olympique de Marseille',
+  'leverkusen': 'Bayer Leverkusen',
+  'dortmund': 'Borussia Dortmund',
+  'leipzig': 'RB Leipzig',
+  'monaco': 'Monaco',
+  'lille': 'Lille',
+};
+
+// Unified xG lookup: prefer StatsBomb, fall back to Understat
+function findXGProfile(teamName) {
+  if (!teamName) return null;
+  // Try StatsBomb first (deeper per-match data)
+  if (xgData[teamName]) return { ...xgData[teamName], source: 'statsbomb' };
+  // Resolve aliases
+  const tn = (TEAM_ALIASES[teamName.toLowerCase()] || teamName).toLowerCase();
+  // Also try StatsBomb with resolved name
+  if (xgData[tn.charAt(0).toUpperCase() + tn.slice(1)]) return { ...xgData[tn.charAt(0).toUpperCase() + tn.slice(1)], source: 'statsbomb' };
+  // Try Understat (broader coverage, uses latest season)
+  let bestMatch = null;
+  for (const [key, feat] of Object.entries(understatTeams)) {
+    const keyName = key.split(/_EPL_|_La_liga_|_Bundesliga_|_Serie_A_|_Ligue_1_|_Eredivisie_|_Primeira_Liga_|_Championship_/)[0];
+    const kn = keyName.toLowerCase();
+    if (kn === tn) {
+      if (!bestMatch || feat.season > bestMatch.season) bestMatch = feat;
+      continue;
+    }
+    const shortWords = tn.split(/\s+/);
+    const longWords = kn.split(/\s+/);
+    if (shortWords.length <= longWords.length && shortWords.every(w => longWords.some(lw => lw.includes(w) || w.includes(lw)))) {
+      if (!bestMatch || feat.season > bestMatch.season) bestMatch = feat;
+    }
+  }
+  if (bestMatch) return { ...bestMatch, source: 'understat' };
+  return null;
 }
 
 // ─── Poisson Model ──────────────────────────────────────────────────────
@@ -168,10 +240,9 @@ const REG_WEIGHTS = {
   awayXGDiff: -0.05,
   shotsDiff: 0.003,
   bigChancesDiff: 0.02,
-};
-
-function regressionProb(features) {
+};function regressionProb(features, refFeatures) {
   let z = REG_WEIGHTS.intercept;
+
   z += features.eloDiff * REG_WEIGHTS.eloDiff;
   z += features.homePPG * REG_WEIGHTS.homePPG;
   z += features.awayPPG * REG_WEIGHTS.awayPPG;
@@ -191,6 +262,23 @@ function regressionProb(features) {
   z += (features.awayXGDiff || 0) * REG_WEIGHTS.awayXGDiff;
   z += (features.shotsDiff || 0) * REG_WEIGHTS.shotsDiff;
   z += (features.bigChancesDiff || 0) * REG_WEIGHTS.bigChancesDiff;
+
+  // ─── Referee Features ────────────────────────────────────────────
+  if (refFeatures) {
+    // Home bias: positive = ref favors home team
+    z += refFeatures.homeBias * 0.15;
+    // Card strictness: strict refs → fewer goals → less likely home win
+    const yellowEffect = (refFeatures.yellowPerMatch - 3.5) * -0.02;
+    z += yellowEffect * 0.3;
+    // Team-specific referee history
+    if (refFeatures.homeTeamRef.matches >= 3) {
+      z += (refFeatures.homeTeamRef.winRate - 0.46) * 0.08;
+    }
+    if (refFeatures.awayTeamRef.matches >= 3) {
+      z += (0.30 - refFeatures.awayTeamRef.winRate) * 0.08;
+    }
+  }
+
   return sigmoid(z);
 }
 
@@ -494,13 +582,20 @@ class EnhancedTracker {
     const homeGD = (lt[home]?.gf || 0) - (lt[home]?.ga || 0);
     const awayGD = (lt[away]?.gf || 0) - (lt[away]?.ga || 0);
 
-    // ─── xG adjustments from StatsBomb ─────────────────────────────
-    const homeXGData = xgData[home] || null;
-    const awayXGData = xgData[away] || null;
+    // ─── xG adjustments (Understat + StatsBomb) ──────────────────
+    const homeXGData = findXGProfile(home);
+    const awayXGData = findXGProfile(away);
     const homeXG = homeXGData?.avg_xg || null;
     const awayXG = awayXGData?.avg_xg || null;
-    const homeXGDiff = homeXGData ? homeXG - homeXGData.avg_goals : 0;
-    const awayXGDiff = awayXGData ? awayXG - awayXGData.avg_goals : 0;
+    const homeXGDiff = homeXGData ? homeXG - (homeXGData.avg_goals || homeXGData.total_scored / Math.max(homeXGData.matches, 1)) : 0;
+    const awayXGDiff = awayXGData ? awayXG - (awayXGData.avg_goals || awayXGData.total_scored / Math.max(awayXGData.matches, 1)) : 0;
+    // Understat-specific features
+    const homeXGA = homeXGData?.avg_xga || null;
+    const awayXGA = awayXGData?.avg_xga || null;
+    const homeXGLast5 = homeXGData?.xg_last5 || homeXG;
+    const awayXGLast5 = awayXGData?.xg_last5 || awayXG;
+    const homePPDA = homeXGData?.avg_ppda || null;
+    const awayPPDA = awayXGData?.avg_ppda || null;
 
     // ─── Poisson lambdas with xG adjustment ───────────────────────
     const baseHomeLambda =
@@ -508,19 +603,42 @@ class EnhancedTracker {
     const baseAwayLambda =
       af.awayGoalsFor * (hf.homeGoalsAgainst / 1.3);
 
-    // If xG available, blend it with goal-based estimate (60% xG, 40% goals)
+    // Blend xG with goal-based estimate, using Understat's home/away splits
     let homeLambda, awayLambda;
     if (homeXG && awayXG) {
+      // Use Understat home/away splits when available (more accurate)
+      const hXGHome = homeXGData?.home_xg || homeXG;
+      const aXGAway = awayXGData?.away_xg || awayXG;
+      const hXGDefHome = homeXGData?.home_xga || homeXGData?.avg_xga || baseHomeLambda;
+      const aXGDefAway = awayXGData?.away_xga || awayXGData?.avg_xga || baseAwayLambda;
+      
+      // Home team: attack (home xG) vs defense (away xGA)
       homeLambda = clamp(
-        homeXG * 0.6 + baseHomeLambda * 0.4,
-        0.3,
-        4.5
+        (hXGHome * 0.55 + baseHomeLambda * 0.3 + (aXGDefAway > 0 ? aXGDefAway : baseHomeLambda) * 0.15) * 1.05,
+        0.3, 4.5
       );
+      // Away team: attack (away xG) vs defense (home xGA)
       awayLambda = clamp(
-        awayXG * 0.6 + baseAwayLambda * 0.4,
-        0.3,
-        4.5
+        (aXGAway * 0.55 + baseAwayLambda * 0.3 + (hXGDefHome > 0 ? hXGDefHome : baseAwayLambda) * 0.15) * 0.95,
+        0.3, 4.5
       );
+      
+      // Apply recent form adjustment (last 5 matches xG trend)
+      if (homeXGLast5 && homeXGLast5 > 0) {
+        const homeFormRatio = homeXGLast5 / Math.max(homeXG, 0.1);
+        homeLambda *= clamp(homeFormRatio, 0.85, 1.15);
+      }
+      if (awayXGLast5 && awayXGLast5 > 0) {
+        const awayFormRatio = awayXGLast5 / Math.max(awayXG, 0.1);
+        awayLambda *= clamp(awayFormRatio, 0.85, 1.15);
+      }
+      
+      // PPDA pressing intensity adjustment
+      if (homePPDA && awayPPDA && homePPDA > 0 && awayPPDA > 0) {
+        const pressingEdge = (1 / homePPDA - 1 / awayPPDA) * 5;
+        homeLambda *= clamp(1 + pressingEdge * 0.3, 0.9, 1.1);
+        awayLambda *= clamp(1 - pressingEdge * 0.3, 0.9, 1.1);
+      }
     } else {
       homeLambda = clamp(baseHomeLambda * (1 + eloDiff * 0.0003), 0.3, 4.5);
       awayLambda = clamp(baseAwayLambda * (1 - eloDiff * 0.0003), 0.3, 4.5);
@@ -546,10 +664,21 @@ class EnhancedTracker {
       awayXG: awayXG || af.awayGoalsFor,
       homeXGDiff,
       awayXGDiff,
+      // Understat-specific features
+      homeXGA: homeXGA || 0,
+      awayXGA: awayXGA || 0,
+      homeXGLast5: homeXGLast5 || 0,
+      awayXGLast5: awayXGLast5 || 0,
+      xgHomeAttackVsAwayDef: (homeXG || 0) - (awayXGA || 0),
+      xgAwayAttackVsHomeDef: (awayXG || 0) - (homeXGA || 0),
+      ppdaDiff: (homePPDA && awayPPDA) ? (awayPPDA - homePPDA) * 0.01 : 0,
+      deepDiff: (homeXGData?.avg_deep || 0) - (awayXGData?.avg_deep || 0),
       shotsDiff: (homeXGData?.avg_shots || 10) - (awayXGData?.avg_shots || 10),
       bigChancesDiff:
         (homeXGData?.avg_big_chances || 1) -
         (awayXGData?.avg_big_chances || 1),
+      xgNpxgRatio: (homeXGData?.npxg_ratio || 1) - (awayXGData?.npxg_ratio || 1),
+      xgOverperformance: homeXGDiff - awayXGDiff,
     };
 
     return {
@@ -671,8 +800,16 @@ async function main() {
       features,
     } = tracker.getFeatures(home, away, fixture.league_id);
 
-    // Model 1: Poisson
-    const grid = poissonGoals(homeLambda, awayLambda);
+    // Get referee features for this match
+    const refFeatures = getRefereeFeatures(home, away);
+
+    // Adjust Poisson lambdas by referee goal tendency
+    const refGoalAdj = refFeatures.avgGoals / 2.6;
+    const adjHomeLambda = clamp(homeLambda * refGoalAdj, 0.3, 4.5);
+    const adjAwayLambda = clamp(awayLambda * refGoalAdj, 0.3, 4.5);
+
+    // Model 1: Poisson (referee-adjusted)
+    const grid = poissonGoals(adjHomeLambda, adjAwayLambda);
     const poissonMarkets = computeMarkets(grid);
 
     // Model 2: Elo
@@ -681,8 +818,8 @@ async function main() {
       tracker.elo[away] || 1500
     );
 
-    // Model 3: Regression
-    const regProb = regressionProb(features);
+    // Model 3: Regression (with referee features)
+    const regProb = regressionProb(features, refFeatures);
 
     // Ensemble: combine all three
     const ensembleMarkets = ensembleCombine(
