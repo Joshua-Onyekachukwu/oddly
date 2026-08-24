@@ -46,7 +46,14 @@
     "scrape:web-data": "node scripts/scrape-web-data.js",
     "analyze:referees": "node scripts/analyze-referees.js",
     "sync:football-data": "node scripts/sync-football-data-org.js",
-    "pipeline": "echo 'Running full pipeline...' && npm run sync:fixtures && npm run sync:football-data && npm run self-learn"
+    "pipeline": "echo 'Running full pipeline...' && npm run sync:fixtures && npm run sync:football-data && npm run self-learn",
+    "feature:sync": "node worker/feature-store-sync.js",
+    "feature:sync:dry": "node worker/feature-store-sync.js --dry-run",
+    "predict:v2": "node worker/predict-v2.js",
+    "betting-agent": "node worker/betting-agent.js",
+    "betting-agent:find": "node worker/betting-agent.js find",
+    "betting-agent:analyze": "node worker/betting-agent.js analyze",
+    "betting-agent:betslip": "node worker/betting-agent.js betslip"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",
