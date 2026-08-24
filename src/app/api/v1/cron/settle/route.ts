@@ -121,24 +121,58 @@ function predictMatch(hs: ReturnType<SimpleTracker["getTeamStats"]>, as: ReturnT
 
 function checkPrediction(pred: Record<string, any>, market: string, selection: string, homeScore: number, awayScore: number): boolean {
   const total = homeScore + awayScore;
-  switch (market) {
-    case "1X2": return (selection === "home" && homeScore > awayScore) || (selection === "draw" && homeScore === awayScore) || (selection === "away" && homeScore < awayScore);
-    case "ou_over_0.5": return total > 0.5;
-    case "ou_under_4.5": return total < 4.5;
-    case "ou_over_1.5": return total > 1.5;
-    case "ou_under_3.5": return total < 3.5;
-    case "ou_over_2.5": return total > 2.5;
-    case "ou_under_2.5": return total < 2.5;
-    case "btts": return (selection === "yes") ? (homeScore > 0 && awayScore > 0) : !(homeScore > 0 && awayScore > 0);
-    case "dc_1x": return homeScore >= awayScore;
-    case "dc_x2": return homeScore <= awayScore;
-    case "smart_selection": {
-      const ss = pred["smart_selection"];
-      if (!ss) return false;
-      return checkPrediction(pred, ss.market, ss.selection, homeScore, awayScore);
-    }
-    default: return false;
+  const homeWin = homeScore > awayScore;
+  const draw = homeScore === awayScore;
+  const awayWin = homeScore < awayScore;
+  const bothScore = homeScore > 0 && awayScore > 0;
+
+  // Normalize selection to lowercase
+  const sel = (selection || "").toLowerCase();
+
+  // 1X2
+  if (market === "1X2") {
+    return (sel === "home" && homeWin) || (sel === "draw" && draw) || (sel === "away" && awayWin);
   }
+
+  // Over/Under
+  if (market === "ou_over_0.5" || selection === "Over_0.5") return total > 0.5;
+  if (market === "ou_under_0.5" || selection === "Under_0.5") return total < 0.5;
+  if (market === "ou_over_1.5" || selection === "Over_1.5") return total > 1.5;
+  if (market === "ou_under_1.5" || selection === "Under_1.5") return total < 1.5;
+  if (market === "ou_over_2.5" || selection === "Over_2.5") return total > 2.5;
+  if (market === "ou_under_2.5" || selection === "Under_2.5") return total < 2.5;
+  if (market === "ou_over_3.5" || selection === "Over_3.5") return total > 3.5;
+  if (market === "ou_under_3.5" || selection === "Under_3.5") return total < 3.5;
+  if (market === "ou_over_4.5" || selection === "Over_4.5") return total > 4.5;
+  if (market === "ou_under_4.5" || selection === "Under_4.5") return total < 4.5;
+
+  // BTTS
+  if (market === "btts") return sel === "yes" ? bothScore : !bothScore;
+
+  // Double Chance
+  if (market === "dc_1x") return homeScore >= awayScore;
+  if (market === "dc_x2") return homeScore <= awayScore;
+  if (market === "dc_12") return homeScore !== awayScore;
+
+  // Draw No Bet
+  if (market === "dnb_home") return homeWin;
+  if (market === "dnb_away") return awayWin;
+
+  // Team Goals
+  if (market === "homegoals_over_0.5") return homeScore > 0.5;
+  if (market === "homegoals_over_1.5") return homeScore > 1.5;
+  if (market === "awaygoals_over_0.5") return awayScore > 0.5;
+  if (market === "awaygoals_over_1.5") return awayScore > 1.5;
+
+  // Smart selection (fallback)
+  if (market === "smart_selection") {
+    const ss = pred["smart_selection"];
+    if (!ss) return false;
+    return checkPrediction(pred, ss.market, ss.selection, homeScore, awayScore);
+  }
+
+  // If we can't determine the result, mark as void
+  return false;
 }
 
 // ─── POST /api/v1/cron/settle ───────────────────────────────────────────
@@ -177,11 +211,11 @@ export async function POST(request: NextRequest) {
     const fixtureIds = fixtures.map(f => f.id);
     const { data: existingPreds } = await supabaseAdmin
       .from("predictions")
-      .select("id, fixture_id, market, selection, model_probability, is_correct")
+      .select("id, fixture_id, market, selection, model_probability, result")
       .in("fixture_id", fixtureIds);
 
-    // Group predictions by fixture
-    const predByFixture: Record<string, Array<{id: string, market: string, selection: string, model_probability: number, is_correct: boolean | null}>> = {};
+    // Group predictions by fixture (only pending ones)
+    const predByFixture: Record<string, Array<{id: string, market: string, selection: string, model_probability: number, result: string | null}>> = {};
     for (const p of existingPreds || []) {
       if (!predByFixture[p.fixture_id]) predByFixture[p.fixture_id] = [];
       predByFixture[p.fixture_id].push(p);
@@ -227,7 +261,7 @@ export async function POST(request: NextRequest) {
       pred["smart_selection"] = { market: smartMarket, selection: smartSelection, probability: bestProb };
 
       for (const p of preds) {
-        if (p.is_correct !== null) continue; // Already settled
+        if (p.result && p.result !== "pending") continue; // Already settled
         const isCorrect = checkPrediction(pred, p.market, p.selection, homeScore, awayScore);
         settled++;
         if (isCorrect) correct++;
@@ -235,8 +269,12 @@ export async function POST(request: NextRequest) {
 
         await supabaseAdmin
           .from("predictions")
-          .update({ is_correct: isCorrect, settled_at: new Date().toISOString() })
-          .eq("id", p.id);
+          .update({
+            result: isCorrect ? "correct" : "wrong",
+            settled_at: new Date().toISOString(),
+          })
+          .eq("id", p.id)
+          .eq("result", "pending"); // Safety: only update pending predictions
       }
     }
 
@@ -244,7 +282,8 @@ export async function POST(request: NextRequest) {
     let archived = 0;
     if (settled > 0 && process.env.COCKROACHDB_URL) {
       try {
-        const archiveRes = await fetch(`${origin || ''}/api/v1/cron/archive`, {
+        const origin = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
+        const archiveRes = await fetch(`${origin}/api/v1/cron/archive`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ limit: Math.min(settled * 2, 500) }),
