@@ -279,6 +279,37 @@ export const upsertTeam = mutation({
   },
 });
 
+export const bulkUpsertTeams = mutation({
+  args: {
+    teams: v.array(
+      v.object({
+        canonicalName: v.string(),
+        country: v.optional(v.string()),
+        logo: v.optional(v.string()),
+        eloRating: v.number(),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    let inserted = 0;
+    let updated = 0;
+    for (const team of args.teams) {
+      const existing = await ctx.db
+        .query("teams")
+        .withIndex("by_name", (q) => q.eq("canonicalName", team.canonicalName))
+        .first();
+      if (existing) {
+        await ctx.db.patch(existing._id, team);
+        updated++;
+      } else {
+        await ctx.db.insert("teams", team);
+        inserted++;
+      }
+    }
+    return { inserted, updated, total: inserted + updated };
+  },
+});
+
 export const upsertLeague = mutation({
   args: {
     externalId: v.number(),
