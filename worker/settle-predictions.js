@@ -253,7 +253,7 @@ async function main() {
   for (const t of teams || []) teamMap[t.id] = t.canonical_name;
   console.log(`   Loaded ${Object.keys(teamMap).length} team names`);
 
-  // Load StatsBomb xG features for cross-reference
+  // Load xG features (StatsBomb + Understat)
   let xgData = {};
   try {
     const xgPath = path.join(__dirname, "..", "data", "statsbomb-xg.json");
@@ -263,14 +263,38 @@ async function main() {
   } catch (err) {
     console.log(`   ⚠️  No xG data: ${err.message}`);
   }
-  // Build name lookup for xG
+  // Load Understat xG (broader coverage)
+  let understatTeams = {};
+  try {
+    const uPath = path.join(__dirname, "..", "data", "understat-xg.json");
+    const uRaw = JSON.parse(fs.readFileSync(uPath, "utf8"));
+    understatTeams = uRaw.teams || {};
+    console.log(`   Loaded Understat xG for ${Object.keys(understatTeams).length} teams`);
+  } catch (err) {
+    console.log(`   ⚠️  No Understat xG: ${err.message}`);
+  }
+  // Build name lookup for xG (StatsBomb first, Understat fallback)
   const xgLookup = {};
   for (const [name, features] of Object.entries(xgData)) {
     xgLookup[name.toLowerCase()] = features;
   }
+  // Add Understat teams as fallback
+  for (const [key, feat] of Object.entries(understatTeams)) {
+    const name = key.split(/_EPL_|_La_liga_|_Bundesliga_|_Serie_A_|_Ligue_1_/)[0].toLowerCase();
+    if (!xgLookup[name]) xgLookup[name] = feat;
+  }
+  const TEAM_ALIASES = {
+    'psg': 'Paris Saint Germain', 'man utd': 'Manchester United',
+    'man united': 'Manchester United', 'man city': 'Manchester City',
+    'inter milan': 'Internazionale', 'inter': 'Internazionale',
+    'barca': 'Barcelona', 'bayern': 'Bayern Munich',
+    'leverkusen': 'Bayer Leverkusen', 'dortmund': 'Borussia Dortmund',
+    'atletico': 'Atletico Madrid', 'sporting cp': 'Sporting CP',
+  };
   function findXG(teamName) {
     if (!teamName) return null;
-    const lower = teamName.toLowerCase();
+    const resolved = TEAM_ALIASES[teamName.toLowerCase()] || teamName;
+    const lower = resolved.toLowerCase();
     if (xgLookup[lower]) return xgLookup[lower];
     for (const [key, val] of Object.entries(xgLookup)) {
       if (lower.includes(key) || key.includes(lower)) return val;

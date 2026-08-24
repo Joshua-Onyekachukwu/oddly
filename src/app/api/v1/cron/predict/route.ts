@@ -12,7 +12,7 @@ import * as path from "path";
 
 function clamp(v: number, lo = 0.01, hi = 0.99) { return Math.max(lo, Math.min(hi, v)); }
 
-// ─── StatsBomb xG Data ──────────────────────────────────────────────────
+// ─── xG Data (StatsBomb + Understat) ──────────────────────────────────────
 let xgLookup: Record<string, any> = {};
 try {
   const xgPath = path.join(process.cwd(), "data", "statsbomb-xg.json");
@@ -21,15 +21,41 @@ try {
   for (const [name, feat] of Object.entries(features)) {
     xgLookup[name.toLowerCase()] = feat;
   }
-  console.log(`[PREDICT] Loaded xG for ${Object.keys(xgLookup).length} teams`);
+  console.log(`[PREDICT] Loaded StatsBomb xG for ${Object.keys(xgLookup).length} teams`);
 } catch {
-  console.log("[PREDICT] No xG data — using form-only estimates");
+  console.log("[PREDICT] No StatsBomb xG data");
 }
+// Load Understat xG (broader coverage: 484 teams)
+try {
+  const uPath = path.join(process.cwd(), "data", "understat-xg.json");
+  const uRaw = JSON.parse(fs.readFileSync(uPath, "utf8"));
+  const teams = uRaw.teams || {};
+  let added = 0;
+  for (const [key, feat] of Object.entries(teams) as [string, any][]) {
+    const name = key.split(/_EPL_|_La_liga_|_Bundesliga_|_Serie_A_|_Ligue_1_/)[0].toLowerCase();
+    if (!xgLookup[name]) { xgLookup[name] = feat; added++; }
+  }
+  console.log(`[PREDICT] Loaded Understat xG: ${added} new teams (total: ${Object.keys(xgLookup).length})`);
+} catch {
+  console.log("[PREDICT] No Understat xG data");
+}
+
+const TEAM_ALIASES: Record<string, string> = {
+  'psg': 'Paris Saint Germain', 'man utd': 'Manchester United',
+  'man united': 'Manchester United', 'man city': 'Manchester City',
+  'inter milan': 'Internazionale', 'inter': 'Internazionale',
+  'barca': 'Barcelona', 'bayern': 'Bayern Munich',
+  'leverkusen': 'Bayer Leverkusen', 'dortmund': 'Borussia Dortmund',
+  'atletico': 'Atletico Madrid', 'sporting cp': 'Sporting CP',
+};
 
 function findXG(teamName: string): any {
   if (!teamName) return null;
-  const lower = teamName.toLowerCase();
+  const resolved = TEAM_ALIASES[teamName.toLowerCase()] || teamName;
+  const lower = resolved.toLowerCase();
   if (xgLookup[lower]) return xgLookup[lower];
+  const cap = lower.charAt(0).toUpperCase() + lower.slice(1);
+  if (xgLookup[cap]) return xgLookup[cap];
   for (const [key, val] of Object.entries(xgLookup)) {
     if (lower.includes(key) || key.includes(lower)) return val;
   }
