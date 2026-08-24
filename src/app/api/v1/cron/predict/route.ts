@@ -7,7 +7,40 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || ""
 );
 
+import * as fs from "fs";
+import * as path from "path";
+
 function clamp(v: number, lo = 0.01, hi = 0.99) { return Math.max(lo, Math.min(hi, v)); }
+
+// ─── StatsBomb xG Data ──────────────────────────────────────────────────
+let xgLookup: Record<string, any> = {};
+try {
+  const xgPath = path.join(process.cwd(), "data", "statsbomb-xg.json");
+  const raw = JSON.parse(fs.readFileSync(xgPath, "utf8"));
+  const features = raw.features || {};
+  for (const [name, feat] of Object.entries(features)) {
+    xgLookup[name.toLowerCase()] = feat;
+  }
+  console.log(`[PREDICT] Loaded xG for ${Object.keys(xgLookup).length} teams`);
+} catch {
+  console.log("[PREDICT] No xG data — using form-only estimates");
+}
+
+function findXG(teamName: string): any {
+  if (!teamName) return null;
+  const lower = teamName.toLowerCase();
+  if (xgLookup[lower]) return xgLookup[lower];
+  for (const [key, val] of Object.entries(xgLookup)) {
+    if (lower.includes(key) || key.includes(lower)) return val;
+  }
+  const words = lower.split(/\s+/);
+  for (const [key, val] of Object.entries(xgLookup)) {
+    const keyWords = key.split(/\s+/);
+    const overlap = words.filter(w => keyWords.some(kw => kw.includes(w) || w.includes(kw)));
+    if (overlap.length >= 2) return val;
+  }
+  return null;
+}
 
 // ─── Poisson Model ───────────────────────────────────────────────────────
 function poissonProb(lambda: number, k: number): number {
@@ -151,20 +184,40 @@ async function runPredictionPipeline() {
     const aGC = aHist.length > 0 ? aHist.slice(-5).reduce((s, m) => s + m.ga, 0) / Math.min(aHist.length, 5) : 1.2;
     const eloDiff = (eloMap[home] || 1500) - (eloMap[away] || 1500);
 
-    // Enhanced formula
-    let prob = 0.5 + (eloDiff - 150) * 0.001;
-    prob += (hPPG - 1.5) * 0.08;
-    prob -= (aPPG - 1.5) * 0.08;
+    // xG lookup
+    const homeXG = findXG(home);
+    const awayXG = findXG(away);
+
+    // Optimized formula (from coordinate descent optimization)
+    let prob = 0.5 + (eloDiff - 100) * 0.0018;
+    prob += (hPPG - 1.6) * 0.003;
+    prob -= (aPPG - 1.2) * 0.06;
     prob += (hGS - 1.3) * 0.04;
     prob -= (aGS - 1.3) * 0.04;
-    prob -= (hGC - 1.2) * 0.03;
-    prob += (aGC - 1.2) * 0.03;
+    prob -= (hGC - 1.2) * 0.04;
+    prob += (aGC - 1.2) * 0.04;
+    if (homeXG) prob += (homeXG.home_avg_xg || homeXG.avg_xg || 0) * 0.08;
+    if (awayXG) prob -= (awayXG.away_avg_xg || awayXG.avg_xg || 0) * 0.08;
     if (eloDiff > 200) prob += 0.10;
     prob = clamp(prob);
 
-    // Poisson lambdas
-    const hL = clamp(hGS * 1.1 * (aGC / 1.3) * (1 + eloDiff * 0.0004), 0.3, 4.5);
-    const aL = clamp(aGS * 0.9 * (hGC / 1.3) * (1 - eloDiff * 0.0004), 0.3, 4.5);
+    // Poisson lambdas (blend xG when available)
+    const baseHL = hGS * 1.1 * (aGC / 1.3);
+    const baseAL = aGS * 0.9 * (hGC / 1.3);
+    let hL: number, aL: number;
+    if (homeXG && awayXG) {
+      hL = clamp((homeXG.home_avg_xg || homeXG.avg_xg) * 0.6 + baseHL * 0.4, 0.3, 4.5);
+      aL = clamp((awayXG.away_avg_xg || awayXG.avg_xg) * 0.6 + baseAL * 0.4, 0.3, 4.5);
+    } else if (homeXG) {
+      hL = clamp((homeXG.home_avg_xg || homeXG.avg_xg) * 0.5 + baseHL * 0.5, 0.3, 4.5);
+      aL = clamp(baseAL, 0.3, 4.5);
+    } else if (awayXG) {
+      hL = clamp(baseHL, 0.3, 4.5);
+      aL = clamp((awayXG.away_avg_xg || awayXG.avg_xg) * 0.5 + baseAL * 0.5, 0.3, 4.5);
+    } else {
+      hL = clamp(baseHL * (1 + eloDiff * 0.0004), 0.3, 4.5);
+      aL = clamp(baseAL * (1 - eloDiff * 0.0004), 0.3, 4.5);
+    }
     const grid = poissonGoals(hL, aL);
     const markets = computeMarkets(grid);
 
@@ -182,7 +235,7 @@ async function runPredictionPipeline() {
         market: mk.split("_")[0],
         selection: mk.split("_").slice(1).join("_"),
         model_probability: Math.round(pr * 10000) / 10000,
-        model_version: "v3.0-cron",
+        model_version: homeXG || awayXG ? "v5.1-xg-cron" : "v5.1-cron",
       });
     }
   }
