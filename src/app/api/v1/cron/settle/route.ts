@@ -240,6 +240,25 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Archive settled predictions to CockroachDB
+    let archived = 0;
+    if (settled > 0 && process.env.COCKROACHDB_URL) {
+      try {
+        const archiveRes = await fetch(`${origin || ''}/api/v1/cron/archive`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ limit: Math.min(settled * 2, 500) }),
+        });
+        if (archiveRes.ok) {
+          const archiveData = await archiveRes.json();
+          archived = archiveData.archived || 0;
+          console.log(`[SETTLE] Archived ${archived} predictions to CockroachDB`);
+        }
+      } catch (archiveErr) {
+        console.error('[SETTLE] Archive warning (non-blocking):', archiveErr);
+      }
+    }
+
     const duration = Date.now() - startTime;
     console.log(`[SETTLE] Done: ${settled} settled, ${correct} correct, ${incorrect} incorrect (${duration}ms)`);
 
