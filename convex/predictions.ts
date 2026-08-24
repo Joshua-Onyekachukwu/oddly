@@ -428,6 +428,30 @@ export const insertAuditLog = mutation({
   },
 });
 
+export const bulkInsertOdds = mutation({
+  args: {
+    odds: v.array(
+      v.object({
+        fixtureId: v.string(),
+        bookmaker: v.string(),
+        market: v.string(),
+        selection: v.string(),
+        odds: v.number(),
+        impliedProb: v.number(),
+        timestamp: v.string(),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    let count = 0;
+    for (const o of args.odds) {
+      await ctx.db.insert("odds", o);
+      count++;
+    }
+    return { count };
+  },
+});
+
 // ─── Stats Query ────────────────────────────────────────────────
 
 export const getStats = query({

@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
       { dataset: "Historical Predictions", supabase: true, convex: true, sourceOfTruth: "Convex" },
       { dataset: "xG Features", supabase: false, convex: true, sourceOfTruth: "Convex" },
       { dataset: "Referee Profiles", supabase: false, convex: true, sourceOfTruth: "Convex" },
-      { dataset: "Odds Snapshots", supabase: true, convex: false, sourceOfTruth: "Supabase" },
+      { dataset: "Odds Snapshots", supabase: true, convex: true, sourceOfTruth: "Hybrid" },
       { dataset: "User Accumulators", supabase: true, convex: false, sourceOfTruth: "Supabase" },
     ];
 
