@@ -803,10 +803,29 @@ async function main() {
     // Get referee features for this match
     const refFeatures = getRefereeFeatures(home, away);
 
-    // Adjust Poisson lambdas by referee goal tendency
-    const refGoalAdj = refFeatures.avgGoals / 2.6;
-    const adjHomeLambda = clamp(homeLambda * refGoalAdj, 0.3, 4.5);
-    const adjAwayLambda = clamp(awayLambda * refGoalAdj, 0.3, 4.5);
+    // Referee-adjusted Poisson lambdas
+    let adjHomeLambda = homeLambda;
+    let adjAwayLambda = awayLambda;
+    if (refFeatures.hasProfile && refFeatures.referee) {
+      // 1) League-wide goal tendency
+      const refGoalAdj = refFeatures.avgGoals / 2.6;
+      adjHomeLambda = clamp(homeLambda * refGoalAdj, 0.3, 4.5);
+      adjAwayLambda = clamp(awayLambda * refGoalAdj, 0.3, 4.5);
+      // 2) Team-specific referee history (if 3+ matches each)
+      const hMatches = refFeatures.homeTeamRef?.matches || 0;
+      const aMatches = refFeatures.awayTeamRef?.matches || 0;
+      if (hMatches >= 3 && aMatches >= 3) {
+        const hRefStr = (refFeatures.homeTeamRef.winRate - 0.46);
+        const aRefStr = (refFeatures.awayTeamRef.winRate - 0.30);
+        const strDiff = hRefStr - aRefStr;
+        adjHomeLambda = clamp(adjHomeLambda * (1 + strDiff * 0.25), 0.3, 4.5);
+        adjAwayLambda = clamp(adjAwayLambda * (1 - strDiff * 0.25), 0.3, 4.5);
+      }
+      // 3) Referee home bias
+      const homeBiasAdj = 1 + (refFeatures.homeBias - 0.46) * 0.15;
+      adjHomeLambda = clamp(adjHomeLambda * homeBiasAdj, 0.3, 4.5);
+      adjAwayLambda = clamp(adjAwayLambda / homeBiasAdj, 0.3, 4.5);
+    }
 
     // Model 1: Poisson (referee-adjusted)
     const grid = poissonGoals(adjHomeLambda, adjAwayLambda);
