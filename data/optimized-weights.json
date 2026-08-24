@@ -1,0 +1,49 @@
+{
+  "timestamp": "2026-08-24T03:23:39.341Z",
+  "matches_analyzed": 10722,
+  "train_size": 8537,
+  "validation_size": 2135,
+  "baseline": {
+    "train_brier": 0.20566994598836913,
+    "val_brier": 0.21074736954026924,
+    "train_accuracy": 0.49572449338175,
+    "val_accuracy": 0.4740046838407494
+  },
+  "optimized": {
+    "train_brier": 0.200670996563467,
+    "val_brier": 0.2042370589037707,
+    "train_accuracy": 0.5073210729764555,
+    "val_accuracy": 0.48805620608899297
+  },
+  "improvement": {
+    "brier_reduction": 0.00651031063649854,
+    "accuracy_gain": 0.014051522248243575
+  },
+  "optimized_reg_weights": {
+    "intercept": -0.5887499999999998,
+    "eloDiff": 0.0036749999999999994,
+    "homePPG": 0.00249999999999998,
+    "awayPPG": -0.12249999999999989,
+    "homeGoalsFor": 0.09375000000000003,
+    "homeGoalsAgainst": -0.17125000000000004,
+    "awayGoalsFor": 0.07375,
+    "awayGoalsAgainst": -0.17375000000000002,
+    "cleanSheetRate": 0.48125000000000007,
+    "homeWinRate": 0.022500000000000034,
+    "awayWinRate": -0.12249999999999989,
+    "streak": 0.13375000000000004,
+    "fatigue": 0.02,
+    "h2hHomeWins": 0.17375000000000002,
+    "homeXG": 0.13375000000000004,
+    "awayXG": -0.10124999999999998,
+    "homeXGDiff": 0.06,
+    "awayXGDiff": -0.05,
+    "shotsDiff": 0.003,
+    "bigChancesDiff": 0.02
+  },
+  "optimized_ensemble_weights": {
+    "wPoisson": 0.1650028291899614,
+    "wElo": 0.40256482814102745,
+    "wReg": 0.4324323426690111
+  }
+}

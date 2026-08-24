@@ -145,23 +145,26 @@ function eloWinProb(eloH, eloA, homeAdvantage = 65) {
 // ─── Regression Model (Logistic) ────────────────────────────────────────
 // Learned weights from historical calibration
 const REG_WEIGHTS = {
-  intercept: -0.12,
-  eloDiff: 0.0018, // per Elo point
-  homePPG: 0.15,
-  awayPPG: -0.15,
-  homeGoalsFor: 0.08,
-  homeGoalsAgainst: -0.1,
-  awayGoalsFor: 0.06,
-  awayGoalsAgainst: -0.08,
-  cleanSheetRate: 0.2,
-  homeWinRate: 0.18,
-  awayWinRate: -0.15,
-  streak: 0.04,
+  // Optimized via coordinate descent on 10,722 historical matches
+  // Val Brier: 0.204237 (was 0.210747) — 3.1% improvement
+  // Val Accuracy: 48.8% (was 47.4%) — +1.4%
+  intercept: -0.5887,
+  eloDiff: 0.0037,         // ↑ Elo matters more than we thought (was 0.0018)
+  homePPG: 0.0025,          // ↓ Redundant with Elo (was 0.15)
+  awayPPG: -0.1225,
+  homeGoalsFor: 0.0938,
+  homeGoalsAgainst: -0.1713, // ↑ Defense matters more (was -0.1)
+  awayGoalsFor: 0.0738,
+  awayGoalsAgainst: -0.1738, // ↑ Away defense matters more (was -0.08)
+  cleanSheetRate: 0.4813,    // ↑↑ Defensive strength is KEY (was 0.2)
+  homeWinRate: 0.0225,       // ↓ Redundant with Elo+PPG (was 0.18)
+  awayWinRate: -0.1225,
+  streak: 0.1338,            // ↑↑ Momentum signal is strong (was 0.04)
   fatigue: 0.02,
-  h2hHomeWins: 0.08,
-  homeXG: 0.12, // StatsBomb xG adjustment
-  awayXG: -0.1,
-  homeXGDiff: 0.06, // xG - actual goals (finishing quality)
+  h2hHomeWins: 0.1738,       // ↑↑ H2H matters more (was 0.08)
+  homeXG: 0.1338,            // StatsBomb xG adjustment
+  awayXG: -0.1012,
+  homeXGDiff: 0.06,          // xG - actual goals (finishing quality)
   awayXGDiff: -0.05,
   shotsDiff: 0.003,
   bigChancesDiff: 0.02,
@@ -194,9 +197,10 @@ function regressionProb(features) {
 // ─── Ensemble Combiner ──────────────────────────────────────────────────
 // Weights learned from calibration (Poisson best for totals, Elo best for 1X2)
 const ENSEMBLE_WEIGHTS = {
-  // For 1X2 (home win probability)
-  x12: { poisson: 0.25, elo: 0.35, regression: 0.40 },
-  // For totals (over/under)
+  // Optimized: shifted toward regression + Elo (Poisson less important)
+  // 1X2: Poisson 0.17 (was 0.25), Elo 0.40 (was 0.35), Regression 0.43 (was 0.40)
+  x12: { poisson: 0.17, elo: 0.40, regression: 0.43 },
+  // For totals (over/under) — Poisson still dominant for goal totals
   totals: { poisson: 0.55, elo: 0.15, regression: 0.30 },
   // For BTTS
   btts: { poisson: 0.50, elo: 0.10, regression: 0.40 },
