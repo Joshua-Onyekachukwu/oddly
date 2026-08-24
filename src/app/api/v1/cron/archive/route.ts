@@ -1,8 +1,8 @@
 /**
  * POST /api/v1/cron/archive
  * 
- * Archives settled predictions from Supabase to CockroachDB.
- * Idempotent: skips IDs already in CockroachDB.
+ * Archives settled predictions from Supabase to Convex.
+ * Idempotent: skips IDs already in Convex.
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -10,23 +10,39 @@ import { createClient } from "@supabase/supabase-js";
 
 export const dynamic = "force-dynamic";
 
-function loadCockroach() {
-  const url = process.env.COCKROACHDB_URL;
-  if (!url) return null;
-  
-  const { Pool } = require("pg");
-  return new Pool({
-    connectionString: url,
-    ssl: { rejectUnauthorized: false },
-    max: 3,
-    connectionTimeoutMillis: 5000,
-  });
+const CONVEX_URL = process.env.CONVEX_URL || "https://limitless-mole-387.convex.cloud";
+const CONVEX_ACCESS_TOKEN = process.env.CONVEX_ACCESS_TOKEN;
+
+async function convexQuery(functionName: string, args: Record<string, any> = {}) {
+  if (!CONVEX_URL) return null;
+  try {
+    const res = await fetch(`${CONVEX_URL}/api/query`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path: functionName, args, format: "json" }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.value ?? data;
+  } catch {
+    return null;
+  }
 }
 
-function esc(v: any): string {
-  if (v === null || v === undefined) return "NULL";
-  if (typeof v === "number") return String(v);
-  return "'" + String(v).replace(/'/g, "''") + "'";
+async function convexMutation(functionName: string, args: Record<string, any> = {}) {
+  if (!CONVEX_URL) return null;
+  try {
+    const res = await fetch(`${CONVEX_URL}/api/mutation`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path: functionName, args, format: "json" }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.value ?? data;
+  } catch {
+    return null;
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -36,17 +52,12 @@ export async function POST(request: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY || ""
     );
 
-    const cockroach = loadCockroach();
-    if (!cockroach) {
-      return NextResponse.json({ error: "CockroachDB not configured" }, { status: 503 });
+    if (!CONVEX_URL) {
+      return NextResponse.json({ error: "Convex not configured" }, { status: 503 });
     }
 
     const body = await request.json().catch(() => ({}));
     const limit = body.limit || 500;
-
-    // Get IDs already in CockroachDB
-    const { rows: existing } = await cockroach.query("SELECT id FROM cockroach_predictions");
-    const existingIds = new Set(existing.map((r: any) => r.id));
 
     // Get newly settled predictions from Supabase
     const { data: settled } = await supabase
@@ -57,62 +68,44 @@ export async function POST(request: NextRequest) {
       .limit(limit * 2);
 
     if (!settled || settled.length === 0) {
-      await cockroach.end();
       return NextResponse.json({ archived: 0, message: "No settled predictions to archive" });
     }
 
-    // Filter out already archived
-    const newRows = settled.filter((p) => !existingIds.has(p.id));
-
-    if (newRows.length === 0) {
-      await cockroach.end();
-      return NextResponse.json({ archived: 0, message: "All already archived" });
-    }
-
-    // Batch insert
-    const BATCH = 200;
+    // Archive to Convex in batches
+    const BATCH = 100; // Convex mutations have size limits
     let archived = 0;
 
-    for (let i = 0; i < newRows.length; i += BATCH) {
-      const batch = newRows.slice(i, i + BATCH);
-      const values = batch
-        .map(
-          (p) =>
-            "(" +
-            [
-              esc(p.id),
-              esc(p.fixture_id),
-              esc(p.market),
-              esc(p.selection),
-              p.model_probability || 0,
-              p.confidence_lower || 0,
-              p.confidence_upper || 0,
-              esc(p.model_version || "v5.1"),
-              esc(p.result),
-              esc(p.settled_at),
-              esc(p.created_at),
-            ].join(",") +
-            ")"
-        )
-        .join(",");
+    for (let i = 0; i < settled.length; i += BATCH) {
+      const batch = settled.slice(i, i + BATCH);
 
-      try {
-        await cockroach.query(
-          "INSERT INTO cockroach_predictions (id,fixture_id,market,selection,model_probability,confidence_lower,confidence_upper,model_version,result,settled_at,created_at) VALUES " +
-            values
-        );
+      // Use batch archive mutation
+      const result = await convexMutation("predictions:archiveBatch", {
+        predictions: batch.map((p) => ({
+          fixtureId: p.fixture_id || "",
+          market: p.market,
+          selection: p.selection,
+          modelProbability: p.model_probability || 0,
+          modelVersion: p.model_version || "v4.0-settle",
+          result: p.result,
+          settledAt: p.settled_at,
+        })),
+      });
+
+      if (result) {
         archived += batch.length;
-      } catch (e: any) {
-        console.error("[ARCHIVE] Batch error:", e.message?.slice(0, 80));
       }
     }
 
-    await cockroach.end();
+    // Log audit trail
+    await convexMutation("predictions:insertAuditLog", {
+      action: "archive_predictions",
+      rowsAffected: archived,
+      details: { source: "supabase", limit, batchCount: Math.ceil(settled.length / BATCH) },
+    });
 
     return NextResponse.json({
       archived,
-      total: newRows.length,
-      skipped: newRows.length - archived,
+      total: settled.length,
       timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
@@ -125,6 +118,6 @@ export async function GET() {
   return NextResponse.json({
     status: "ready",
     endpoint: "POST /api/v1/cron/archive",
-    description: "Archives settled predictions from Supabase to CockroachDB",
+    description: "Archives settled predictions from Supabase to Convex",
   });
 }

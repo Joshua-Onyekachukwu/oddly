@@ -53,13 +53,21 @@
     "betting-agent": "node worker/betting-agent.js",
     "betting-agent:find": "node worker/betting-agent.js find",
     "betting-agent:analyze": "node worker/betting-agent.js analyze",
-    "betting-agent:betslip": "node worker/betting-agent.js betslip"
+    "betting-agent:betslip": "node worker/betting-agent.js betslip",
+    "migrate:convex": "node worker/migrate-to-convex.js",
+    "migrate:convex:dry": "node worker/migrate-to-convex.js --dry-run",
+    "migrate:convex:teams": "node worker/migrate-to-convex.js --type=teams",
+    "migrate:convex:leagues": "node worker/migrate-to-convex.js --type=leagues",
+    "migrate:convex:referees": "node worker/migrate-to-convex.js --type=referees",
+    "migrate:convex:xg": "node worker/migrate-to-convex.js --type=xg",
+    "migrate:convex:predictions": "node worker/migrate-to-convex.js --type=predictions"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",
     "@supabase/supabase-js": "^2.49.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "convex": "^1.45.0",
     "date-fns": "^4.1.0",
     "lucide-react": "^1.33.0",
     "material-symbols": "^0.31.2",
