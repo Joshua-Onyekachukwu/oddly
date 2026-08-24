@@ -37,20 +37,35 @@ export default function PredictionsPage() {
   const [picks, setPicks] = useState<GoldenPick[]>([]);
   const [loading, setLoading] = useState(true);
   const [tierFilter, setTierFilter] = useState<"ELITE" | "HIGH" | "ALL">("ELITE");
+  const [leagueFilter, setLeagueFilter] = useState<string>("ALL");
+  const [dateRange, setDateRange] = useState<"today" | "week" | "month" | "all">("week");
   const [stats, setStats] = useState({ elite: 0, high: 0, total: 0 });
   const [expandedMatch, setExpandedMatch] = useState<string | null>(null);
+  const [availableLeagues, setAvailableLeagues] = useState<string[]>([]);
 
   const fetchPicks = useCallback(async () => {
     const supabase = createClient();
-    const now = new Date().toISOString();
-    const weekEnd = new Date(Date.now() + 7 * 86400000).toISOString();
+    const now = new Date();
+    let startDate = now.toISOString();
+    let endDate: string | null = null;
+    if (dateRange === "today") {
+      const todayEnd = new Date(now);
+      todayEnd.setHours(23, 59, 59, 999);
+      endDate = todayEnd.toISOString();
+    } else if (dateRange === "week") {
+      endDate = new Date(now.getTime() + 7 * 86400000).toISOString();
+    } else if (dateRange === "month") {
+      endDate = new Date(now.getTime() + 30 * 86400000).toISOString();
+    }
 
-    const { data: fixtures } = await supabase
+    let fixtureQuery = supabase
       .from("fixtures")
       .select("id, kickoff_time, home_team_id, away_team_id, league_id")
-      .gte("kickoff_time", now)
-      .lte("kickoff_time", weekEnd)
+      .gte("kickoff_time", startDate)
       .order("kickoff_time", { ascending: true });
+    if (endDate) fixtureQuery = fixtureQuery.lte("kickoff_time", endDate);
+    fixtureQuery = fixtureQuery.limit(500);
+    const { data: fixtures } = await fixtureQuery;
 
     if (!fixtures || fixtures.length === 0) { setLoading(false); return; }
 
@@ -133,16 +148,19 @@ export default function PredictionsPage() {
       }
     }
 
+    const leagues = [...new Set(allPicks.map(p => p.league))].sort();
+    setAvailableLeagues(leagues);
     setStats({ elite: eliteCount, high: highCount, total: allPicks.length });
     setPicks(allPicks);
     setLoading(false);
-  }, []);
+  }, [dateRange]);
 
   useEffect(() => { fetchPicks(); }, [fetchPicks]);
 
   const filtered = picks.filter((p) => {
-    if (tierFilter === "ALL") return true;
-    return p.confidence_tier === tierFilter;
+    if (tierFilter !== "ALL" && p.confidence_tier !== tierFilter) return false;
+    if (leagueFilter !== "ALL" && p.league !== leagueFilter) return false;
+    return true;
   }).sort((a, b) => b.model_probability - a.model_probability);
 
   const grouped: Record<string, GoldenPick[]> = {};
@@ -193,8 +211,10 @@ export default function PredictionsPage() {
         ))}
       </div>
 
-      {/* Tier Tabs */}
-      <div className="flex gap-[4px] bg-gray-100/80 rounded-[12px] p-[4px] mb-[20px] w-fit">
+      {/* Filters Row */}
+      <div className="flex flex-wrap items-center gap-[8px] mb-[20px]">
+        {/* Tier Tabs */}
+        <div className="flex gap-[4px] bg-gray-100/80 rounded-[12px] p-[4px]">
         {(["ELITE", "HIGH", "ALL"] as const).map((t) => (
           <button
             key={t}
@@ -211,6 +231,43 @@ export default function PredictionsPage() {
             {t === "ELITE" ? <i className="ri-vip-crown-fill text-[10px]" /> : t === "HIGH" ? <i className="ri-check-double-line text-[10px]" /> : null}{" "}{t}
           </button>
         ))}
+      </div>
+
+        {/* League Filter */}
+        {availableLeagues.length > 1 && (
+          <select
+            value={leagueFilter}
+            onChange={(e) => setLeagueFilter(e.target.value)}
+            className="h-[34px] px-[12px] rounded-[9px] bg-white border border-gray-200 text-[12px] font-semibold text-[#0A0F1C] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/30 focus:border-[#6366F1] transition-all"
+          >
+            <option value="ALL">All Leagues ({availableLeagues.length})</option>
+            {availableLeagues.map(l => (
+              <option key={l} value={l}>{l}</option>
+            ))}
+          </select>
+        )}
+
+        {/* Date Range Picker */}
+        <div className="flex gap-[4px] bg-gray-100/80 rounded-[12px] p-[4px]">
+          {([
+            { key: "today" as const, label: "Today", icon: "ri-calendar-line" },
+            { key: "week" as const, label: "This Week", icon: "ri-calendar-event-line" },
+            { key: "month" as const, label: "This Month", icon: "ri-calendar-todo-line" },
+            { key: "all" as const, label: "All", icon: "ri-list-unordered" },
+          ]).map(({ key, label, icon }) => (
+            <button
+              key={key}
+              onClick={() => setDateRange(key)}
+              className={`px-[14px] py-[6px] rounded-[9px] text-[11px] font-semibold transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] ${
+                dateRange === key
+                  ? "bg-white text-[#0A0F1C] shadow-[0_1px_4px_rgba(0,0,0,0.06)]"
+                  : "text-gray-400 hover:text-gray-600 hover:bg-white/50"
+              }`}
+            >
+              <i className={`${icon} text-[10px] mr-[4px]`} />{label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Match Cards */}
