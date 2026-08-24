@@ -66,6 +66,33 @@ try {
   console.log("   ⚠️  No Understat xG data found — using StatsBomb/goal estimates only");
 }
 
+// ─── Injury Data ──────────────────────────────────────────────────────
+let injuryData = {};
+try {
+  const injRaw = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "data", "premier-injuries.json"), "utf8"));
+  const injuries = injRaw.injuries || [];
+  // Index by team name
+  for (const inj of injuries) {
+    const team = inj.team_name;
+    if (!injuryData[team]) injuryData[team] = [];
+    injuryData[team].push(inj);
+  }
+  console.log(`   🏥 Loaded injury data for ${Object.keys(injuryData).length} teams`);
+} catch {
+  console.log("   ⚠️  No injury data found");
+}
+
+function getInjuryImpact(teamName) {
+  if (!teamName) return { ruled_out: 0, suspended: 0, doubtful: 0, impact: 0 };
+  const injuries = injuryData[teamName] || [];
+  const ruled_out = injuries.filter(i => i.status === "injured").length;
+  const suspended = injuries.filter(i => i.status === "suspended").length;
+  const doubtful = injuries.filter(i => i.status && i.status.startsWith("doubtful")).length;
+  // Each ruled-out player reduces win probability by ~2-3%
+  const impact = -(ruled_out * 0.025 + suspended * 0.02 + doubtful * 0.01);
+  return { ruled_out, suspended, doubtful, impact };
+}
+
 // Common team name aliases for lookup
 const TEAM_ALIASES = {
   'psg': 'Paris Saint Germain',
@@ -287,6 +314,14 @@ const REG_WEIGHTS = {
     if (refFeatures.awayTeamRef.matches >= 3) {
       z += (0.30 - refFeatures.awayTeamRef.winRate) * 0.08;
     }
+  }
+
+  // ─── Injury Features ──────────────────────────────────────────────
+  if (features.homeInjuries || features.awayInjuries) {
+    const hInj = features.homeInjuries || { impact: 0 };
+    const aInj = features.awayInjuries || { impact: 0 };
+    // Injury disadvantage shifts z toward away team
+    z += hInj.impact + aInj.impact * -1;
   }
 
   return sigmoid(z);
@@ -707,6 +742,8 @@ class EnhancedTracker {
         hf,
         af,
         oddsFeatures: fixtureOdds,
+        homeInjuries: getInjuryImpact(home),
+        awayInjuries: getInjuryImpact(away),
       },
     };
   }
@@ -935,6 +972,31 @@ async function main() {
 
     totalPredictions++;
     if (tier === "ELITE") eliteCount++;
+
+    // ─── Push Notification for ELITE Picks ────────────────────────
+    if (tier === "ELITE" && bestProb >= 0.75) {
+      const notificationPayload = {
+        type: "elite_pick",
+        data: {
+          fixture_id: fixture.id,
+          match: `${home} vs ${away}`,
+          market: bestMarket,
+          selection: bestMarket.includes("Home") ? "Home" : bestMarket.includes("Away") ? "Away" : bestMarket.includes("Draw") ? "Draw" : bestMarket,
+          probability: bestProb,
+          tier,
+          edge: features.oddsFeatures ? bestProb - (features.oddsFeatures.true_home || 0.33) : null,
+          league: fixture.league?.name || "Unknown",
+          kickoff: fixture.kickoff_time,
+        },
+      };
+      // Store notification for API pickup
+      try {
+        const notifPath = path.join(__dirname, "..", "data", "pending-notifications.json");
+        const existing = fs.existsSync(notifPath) ? JSON.parse(fs.readFileSync(notifPath, "utf8")) : [];
+        existing.push({ ...notificationPayload.data, created_at: new Date().toISOString() });
+        fs.writeFileSync(notifPath, JSON.stringify(existing.slice(-50), null, 2));
+      } catch {}
+    }
 
     const matchLabel = `${home} vs ${away}`;
     const leagueLabel = fixture.league?.name || "?";
