@@ -1,0 +1,52 @@
+{
+  "migratedAt": "2026-08-24T23:55:52.825Z",
+  "totalMatches": 30340,
+  "withReferee": 9740,
+  "uniqueReferees": 177,
+  "matchesInserted": 9740,
+  "matchesFailed": 0,
+  "profilesBuilt": 147,
+  "profilesInserted": 147,
+  "topReferees": [
+    {
+      "name": "N Walsh",
+      "matches": 154
+    },
+    {
+      "name": "J Beaton",
+      "matches": 140
+    },
+    {
+      "name": "D Robertson",
+      "matches": 140
+    },
+    {
+      "name": "D Webb",
+      "matches": 129
+    },
+    {
+      "name": "J Smith",
+      "matches": 127
+    },
+    {
+      "name": "J Busby",
+      "matches": 125
+    },
+    {
+      "name": "O Langford",
+      "matches": 122
+    },
+    {
+      "name": "S Martin",
+      "matches": 122
+    },
+    {
+      "name": "G Ward",
+      "matches": 121
+    },
+    {
+      "name": "M Donohue",
+      "matches": 121
+    }
+  ]
+}
