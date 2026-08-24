@@ -40,9 +40,10 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "Intelligence",
     items: [
+      { label: "AI Betting Agent", href: "/betting-agent", icon: "ri-robot-2-line", badge: "New", badgeColor: "bg-emerald-50 text-emerald-600" },
       { label: "Build Accumulator", href: "/accumulator", icon: "ri-stack-line" },
       { label: "My Accumulators", href: "/accumulator/my-accumulators", icon: "ri-folder-3-line" },
-      { label: "AI Analyst", href: "/ai-chat", icon: "ri-robot-2-line", badge: "AI", badgeColor: "bg-blue-50 text-blue-600" },
+      { label: "AI Analyst", href: "/ai-chat", icon: "ri-chat-ai-line", badge: "AI", badgeColor: "bg-blue-50 text-blue-600" },
       { label: "Performance", href: "/performance", icon: "ri-line-chart-line" },
     ],
   },
