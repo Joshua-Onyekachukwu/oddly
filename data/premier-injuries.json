@@ -1,0 +1,583 @@
+{
+  "source": "premierinjuries.com",
+  "fetched_at": "2026-08-24T08:37:22.438Z",
+  "total": 64,
+  "injuries": [
+    {
+      "player_name": "Julian Araujo",
+      "team_name": "AFC Bournemouth",
+      "injury_type": "Thigh Injury",
+      "status": "injured",
+      "expected_return": "21/11/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.421Z"
+    },
+    {
+      "player_name": "Eli Kroupi",
+      "team_name": "AFC Bournemouth",
+      "injury_type": "Ankle/Foot Injury",
+      "status": "injured",
+      "expected_return": "07/11/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.435Z"
+    },
+    {
+      "player_name": "Amine Adli",
+      "team_name": "AFC Bournemouth",
+      "injury_type": "Calf/Shin/Heel Injury",
+      "status": "injured",
+      "expected_return": "20/09/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.435Z"
+    },
+    {
+      "player_name": "Ryan Christie",
+      "team_name": "AFC Bournemouth",
+      "injury_type": "Suspended",
+      "status": "suspended",
+      "expected_return": "29/08/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.436Z"
+    },
+    {
+      "player_name": "Julio Soler",
+      "team_name": "AFC Bournemouth",
+      "injury_type": "Other",
+      "status": "doubtful",
+      "expected_return": "29/08/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.436Z"
+    },
+    {
+      "player_name": "David Brooks",
+      "team_name": "AFC Bournemouth",
+      "injury_type": "Other",
+      "status": "doubtful",
+      "expected_return": "23/08/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.436Z"
+    },
+    {
+      "player_name": "Alvaro Rodriguez",
+      "team_name": "AFC Bournemouth",
+      "injury_type": "Other",
+      "status": "likely",
+      "expected_return": "23/08/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.436Z"
+    },
+    {
+      "player_name": "Juanlu Sanchez",
+      "team_name": "AFC Bournemouth",
+      "injury_type": "Other",
+      "status": "doubtful",
+      "expected_return": "23/08/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.436Z"
+    },
+    {
+      "player_name": "Veljko Milosavljevic",
+      "team_name": "AFC Bournemouth",
+      "injury_type": "Knee Injury",
+      "status": "injured",
+      "expected_return": "No Return Date",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.436Z"
+    },
+    {
+      "player_name": "Jurrien Timber",
+      "team_name": "Arsenal",
+      "injury_type": "Groin/Hip/Pelvic Injury",
+      "status": "injured",
+      "expected_return": "12/09/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.436Z"
+    },
+    {
+      "player_name": "Bruno Guimaraes",
+      "team_name": "Arsenal",
+      "injury_type": "Groin/Hip/Pelvic Injury",
+      "status": "doubtful",
+      "expected_return": "31/08/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.436Z"
+    },
+    {
+      "player_name": "William Saliba",
+      "team_name": "Arsenal",
+      "injury_type": "Lower Back Injury",
+      "status": "injured",
+      "expected_return": "No Return Date",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.436Z"
+    },
+    {
+      "player_name": "Amadou Onana",
+      "team_name": "Aston Villa",
+      "injury_type": "Knee Injury (ACL)",
+      "status": "injured",
+      "expected_return": "01/06/2027",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.436Z"
+    },
+    {
+      "player_name": "Brian Madjo",
+      "team_name": "Aston Villa",
+      "injury_type": "Ankle/Foot Injury",
+      "status": "injured",
+      "expected_return": "19/09/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.436Z"
+    },
+    {
+      "player_name": "Johan Manzambi",
+      "team_name": "Aston Villa",
+      "injury_type": "Knee Injury",
+      "status": "injured",
+      "expected_return": "05/09/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.436Z"
+    },
+    {
+      "player_name": "Leon Bailey",
+      "team_name": "Aston Villa",
+      "injury_type": "Muscular Injury",
+      "status": "injured",
+      "expected_return": "No Return Date",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.436Z"
+    },
+    {
+      "player_name": "Tammy Abraham",
+      "team_name": "Aston Villa",
+      "injury_type": "Groin/Hip/Pelvic Injury",
+      "status": "doubtful",
+      "expected_return": "No Return Date",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.436Z"
+    },
+    {
+      "player_name": "Joao Gomes",
+      "team_name": "Aston Villa",
+      "injury_type": "Suspended",
+      "status": "suspended",
+      "expected_return": "No Return Date",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.436Z"
+    },
+    {
+      "player_name": "Antoni Milambo",
+      "team_name": "Brentford",
+      "injury_type": "Knee Injury (ACL)",
+      "status": "injured",
+      "expected_return": "10/10/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.436Z"
+    },
+    {
+      "player_name": "Sepp van den Berg",
+      "team_name": "Brentford",
+      "injury_type": "Groin/Hip/Pelvic Injury",
+      "status": "injured",
+      "expected_return": "10/10/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.436Z"
+    },
+    {
+      "player_name": "Yankuba Minteh",
+      "team_name": "Brighton",
+      "injury_type": "Calf/Shin/Heel Injury",
+      "status": "injured",
+      "expected_return": "24/10/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.436Z"
+    },
+    {
+      "player_name": "Stefanos Tzimas",
+      "team_name": "Brighton",
+      "injury_type": "Knee Injury",
+      "status": "injured",
+      "expected_return": "12/09/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.436Z"
+    },
+    {
+      "player_name": "Matthew ORiley",
+      "team_name": "Brighton",
+      "injury_type": "Illness",
+      "status": "doubtful",
+      "expected_return": "23/08/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.436Z"
+    },
+    {
+      "player_name": "Ferdi Kadioglu",
+      "team_name": "Brighton",
+      "injury_type": "Knock",
+      "status": "doubtful",
+      "expected_return": "No Return Date",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.437Z"
+    },
+    {
+      "player_name": "Kaoru Mitoma",
+      "team_name": "Brighton",
+      "injury_type": "Thigh Injury",
+      "status": "doubtful",
+      "expected_return": "No Return Date",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.437Z"
+    },
+    {
+      "player_name": "Evan Ferguson",
+      "team_name": "Brighton",
+      "injury_type": "Ankle/Foot Injury",
+      "status": "injured",
+      "expected_return": "No Return Date",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.437Z"
+    },
+    {
+      "player_name": "Carlos Baleba",
+      "team_name": "Brighton",
+      "injury_type": "Ankle Ligament Injury",
+      "status": "injured",
+      "expected_return": "No Return Date",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.437Z"
+    },
+    {
+      "player_name": "Wesley Fofana",
+      "team_name": "Chelsea",
+      "injury_type": "Suspended",
+      "status": "suspended",
+      "expected_return": "06/09/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.437Z"
+    },
+    {
+      "player_name": "Jordan Henderson",
+      "team_name": "Chelsea",
+      "injury_type": "Wrist/Hand Injury",
+      "status": "injured",
+      "expected_return": "06/09/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.437Z"
+    },
+    {
+      "player_name": "Emmanuel Emegha",
+      "team_name": "Chelsea",
+      "injury_type": "Hamstring Strain",
+      "status": "injured",
+      "expected_return": "30/08/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.437Z"
+    },
+    {
+      "player_name": "Aaron Anselmino",
+      "team_name": "Chelsea",
+      "injury_type": "Knock",
+      "status": "doubtful",
+      "expected_return": "24/08/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.437Z"
+    },
+    {
+      "player_name": "Danny Welbeck",
+      "team_name": "Chelsea",
+      "injury_type": "Minor Issue",
+      "status": "likely",
+      "expected_return": "24/08/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.437Z"
+    },
+    {
+      "player_name": "Ismaila Sarr",
+      "team_name": "Crystal Palace",
+      "injury_type": "Groin Pain",
+      "status": "doubtful",
+      "expected_return": "28/08/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.437Z"
+    },
+    {
+      "player_name": "Chadi Riad",
+      "team_name": "Crystal Palace",
+      "injury_type": "Knee Injury",
+      "status": "injured",
+      "expected_return": "No Return Date",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.437Z"
+    },
+    {
+      "player_name": "Timothy Iroegbunam",
+      "team_name": "Everton",
+      "injury_type": "Groin/Hip/Pelvic Injury",
+      "status": "injured",
+      "expected_return": "11/10/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.437Z"
+    },
+    {
+      "player_name": "Christian Norgaard",
+      "team_name": "Everton",
+      "injury_type": "Not Fit",
+      "status": "doubtful",
+      "expected_return": "29/08/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.438Z"
+    },
+    {
+      "player_name": "Tom Cairney",
+      "team_name": "Fulham",
+      "injury_type": "Knee Surgery",
+      "status": "injured",
+      "expected_return": "17/10/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.438Z"
+    },
+    {
+      "player_name": "Joachim Andersen",
+      "team_name": "Fulham",
+      "injury_type": "Suspended (Red Card)",
+      "status": "suspended",
+      "expected_return": "30/08/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.438Z"
+    },
+    {
+      "player_name": "Conor Bradley",
+      "team_name": "Liverpool",
+      "injury_type": "Knee Injury",
+      "status": "injured",
+      "expected_return": "01/01/2027",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.438Z"
+    },
+    {
+      "player_name": "Hugo Ekitike",
+      "team_name": "Liverpool",
+      "injury_type": "Calf/Shin/Heel Injury",
+      "status": "injured",
+      "expected_return": "12/10/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.438Z"
+    },
+    {
+      "player_name": "Joe Gomez",
+      "team_name": "Liverpool",
+      "injury_type": "Muscle Injury",
+      "status": "injured",
+      "expected_return": "04/09/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.438Z"
+    },
+    {
+      "player_name": "Jayden Danns",
+      "team_name": "Liverpool",
+      "injury_type": "Thigh Injury",
+      "status": "injured",
+      "expected_return": "No Return Date",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.438Z"
+    },
+    {
+      "player_name": "Curtis Jones",
+      "team_name": "Liverpool",
+      "injury_type": "Groin/Hip/Pelvic Injury",
+      "status": "doubtful",
+      "expected_return": "No Return Date",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.438Z"
+    },
+    {
+      "player_name": "Giovanni Leoni",
+      "team_name": "Liverpool",
+      "injury_type": "ACL Tear",
+      "status": "injured",
+      "expected_return": "No Return Date",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.438Z"
+    },
+    {
+      "player_name": "Jeremy Doku",
+      "team_name": "Manchester City",
+      "injury_type": "Calf/Shin/Heel Injury",
+      "status": "injured",
+      "expected_return": "05/09/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.438Z"
+    },
+    {
+      "player_name": "Matthijs de Ligt",
+      "team_name": "Manchester United",
+      "injury_type": "Lower Back Injury",
+      "status": "injured",
+      "expected_return": "06/09/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.438Z"
+    },
+    {
+      "player_name": "Mason Mount",
+      "team_name": "Manchester United",
+      "injury_type": "Ankle/Foot Injury",
+      "status": "doubtful",
+      "expected_return": "30/08/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.438Z"
+    },
+    {
+      "player_name": "Manuel Ugarte",
+      "team_name": "Manchester United",
+      "injury_type": "Knee Surgery",
+      "status": "injured",
+      "expected_return": "No Return Date",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.438Z"
+    },
+    {
+      "player_name": "Thomas Heaton",
+      "team_name": "Manchester United",
+      "injury_type": "Knock",
+      "status": "doubtful",
+      "expected_return": "No Return Date",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.438Z"
+    },
+    {
+      "player_name": "Amad Diallo",
+      "team_name": "Manchester United",
+      "injury_type": "Training Niggle",
+      "status": "injured",
+      "expected_return": "No Return Date",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.438Z"
+    },
+    {
+      "player_name": "Joelinton",
+      "team_name": "Newcastle United",
+      "injury_type": "Groin/Hip/Pelvic Injury",
+      "status": "injured",
+      "expected_return": "14/09/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.438Z"
+    },
+    {
+      "player_name": "Valentino Livramento",
+      "team_name": "Newcastle United",
+      "injury_type": "Calf/Shin/Heel Injury",
+      "status": "doubtful",
+      "expected_return": "29/08/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.438Z"
+    },
+    {
+      "player_name": "Dan Burn",
+      "team_name": "Newcastle United",
+      "injury_type": "Ankle Ligament Injury",
+      "status": "injured",
+      "expected_return": "No Return Date",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.438Z"
+    },
+    {
+      "player_name": "William Osula",
+      "team_name": "Newcastle United",
+      "injury_type": "Ankle Injury",
+      "status": "doubtful",
+      "expected_return": "No Return Date",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.438Z"
+    },
+    {
+      "player_name": "Nicolo Savona",
+      "team_name": "Nottingham Forest",
+      "injury_type": "Knee Injury",
+      "status": "injured",
+      "expected_return": "11/10/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.438Z"
+    },
+    {
+      "player_name": "Ryan Yates",
+      "team_name": "Nottingham Forest",
+      "injury_type": "Not Available",
+      "status": "injured",
+      "expected_return": "05/09/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.438Z"
+    },
+    {
+      "player_name": "Simon Adingra",
+      "team_name": "Sunderland",
+      "injury_type": "Ankle/Foot Injury",
+      "status": "injured",
+      "expected_return": "12/09/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.438Z"
+    },
+    {
+      "player_name": "Xavi Simons",
+      "team_name": "Tottenham Hotspur",
+      "injury_type": "ACL Rupture",
+      "status": "injured",
+      "expected_return": "20/02/2027",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.438Z"
+    },
+    {
+      "player_name": "Wilson Odobert",
+      "team_name": "Tottenham Hotspur",
+      "injury_type": "ACL Rupture",
+      "status": "injured",
+      "expected_return": "28/11/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.438Z"
+    },
+    {
+      "player_name": "Mohammed Kudus",
+      "team_name": "Tottenham Hotspur",
+      "injury_type": "Thigh Injury",
+      "status": "injured",
+      "expected_return": "05/09/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.438Z"
+    },
+    {
+      "player_name": "Micky van de Ven",
+      "team_name": "Tottenham Hotspur",
+      "injury_type": "Knock",
+      "status": "doubtful",
+      "expected_return": "29/08/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.438Z"
+    },
+    {
+      "player_name": "Pedro Porro",
+      "team_name": "Tottenham Hotspur",
+      "injury_type": "Not Available",
+      "status": "doubtful",
+      "expected_return": "29/08/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.438Z"
+    },
+    {
+      "player_name": "Pape Matar Sarr",
+      "team_name": "Tottenham Hotspur",
+      "injury_type": "Thigh Injury",
+      "status": "doubtful",
+      "expected_return": "29/08/2026",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.438Z"
+    },
+    {
+      "player_name": "Dejan Kulusevski",
+      "team_name": "Tottenham Hotspur",
+      "injury_type": "Knee Injury",
+      "status": "injured",
+      "expected_return": "No Return Date",
+      "source": "premierinjuries.com",
+      "fetched_at": "2026-08-24T08:37:22.438Z"
+    }
+  ]
+}

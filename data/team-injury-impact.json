@@ -1,15 +1,43 @@
 {
   "Manchester United": {
     "team_name": "Manchester United",
-    "total_injuries": 206,
-    "injured_count": 206,
-    "suspended_count": 0,
-    "muscle_injuries": 95,
-    "impact_injuries": 0,
-    "injuries_per_match": 5.42,
-    "injury_impact_per_match": 7.92,
-    "win_probability_shift": -0.05,
-    "updated_at": "2026-08-23T00:29:24.974Z"
+    "total_injured": 5,
+    "ruled_out": 3,
+    "total_suspended": 0,
+    "total_doubtful": 2,
+    "impact_score": 6.333333333333333,
+    "players": [
+      {
+        "name": "Matthijs de Ligt",
+        "status": "injured",
+        "injury": "Lower Back Injury",
+        "impact": 5
+      },
+      {
+        "name": "Mason Mount",
+        "status": "doubtful_50",
+        "injury": "Ankle/Foot Injury",
+        "impact": 2
+      },
+      {
+        "name": "Manuel Ugarte",
+        "status": "injured",
+        "injury": "Knee Surgery",
+        "impact": 5
+      },
+      {
+        "name": "Thomas Heaton",
+        "status": "doubtful_25",
+        "injury": "Knock",
+        "impact": 2
+      },
+      {
+        "name": "Amad Diallo",
+        "status": "injured",
+        "injury": "Training Niggle",
+        "impact": 5
+      }
+    ]
   },
   "Ipswich": {
     "team_name": "Ipswich",
@@ -25,27 +53,77 @@
   },
   "Liverpool": {
     "team_name": "Liverpool",
-    "total_injuries": 92,
-    "injured_count": 92,
-    "suspended_count": 0,
-    "muscle_injuries": 52,
-    "impact_injuries": 0,
-    "injuries_per_match": 2.42,
-    "injury_impact_per_match": 3.79,
-    "win_probability_shift": -0.0379,
-    "updated_at": "2026-08-23T00:29:24.974Z"
+    "total_injured": 6,
+    "ruled_out": 5,
+    "total_suspended": 0,
+    "total_doubtful": 1,
+    "impact_score": 9,
+    "players": [
+      {
+        "name": "Conor Bradley",
+        "status": "injured",
+        "injury": "Knee Injury",
+        "impact": 5
+      },
+      {
+        "name": "Hugo Ekitike",
+        "status": "injured",
+        "injury": "Calf/Shin/Heel Injury",
+        "impact": 5
+      },
+      {
+        "name": "Joe Gomez",
+        "status": "injured",
+        "injury": "Muscle Injury",
+        "impact": 5
+      },
+      {
+        "name": "Jayden Danns",
+        "status": "injured",
+        "injury": "Thigh Injury",
+        "impact": 5
+      },
+      {
+        "name": "Curtis Jones",
+        "status": "doubtful_50",
+        "injury": "Groin/Hip/Pelvic Injury",
+        "impact": 2
+      },
+      {
+        "name": "Giovanni Leoni",
+        "status": "injured",
+        "injury": "ACL Tear",
+        "impact": 5
+      }
+    ]
   },
   "Arsenal": {
     "team_name": "Arsenal",
-    "total_injuries": 174,
-    "injured_count": 174,
-    "suspended_count": 0,
-    "muscle_injuries": 129,
-    "impact_injuries": 0,
-    "injuries_per_match": 4.58,
-    "injury_impact_per_match": 7.97,
-    "win_probability_shift": -0.05,
-    "updated_at": "2026-08-23T00:29:24.975Z"
+    "total_injured": 3,
+    "ruled_out": 2,
+    "total_suspended": 0,
+    "total_doubtful": 1,
+    "impact_score": 4,
+    "players": [
+      {
+        "name": "Jurrien Timber",
+        "status": "injured",
+        "injury": "Groin/Hip/Pelvic Injury",
+        "impact": 5
+      },
+      {
+        "name": "Bruno Guimaraes",
+        "status": "doubtful_25",
+        "injury": "Groin/Hip/Pelvic Injury",
+        "impact": 2
+      },
+      {
+        "name": "William Saliba",
+        "status": "injured",
+        "injury": "Lower Back Injury",
+        "impact": 5
+      }
+    ]
   },
   "Wolves": {
     "team_name": "Wolves",
@@ -61,27 +139,77 @@
   },
   "Everton": {
     "team_name": "Everton",
-    "total_injuries": 173,
-    "injured_count": 173,
-    "suspended_count": 0,
-    "muscle_injuries": 95,
-    "impact_injuries": 0,
-    "injuries_per_match": 4.55,
-    "injury_impact_per_match": 7.05,
-    "win_probability_shift": -0.05,
-    "updated_at": "2026-08-23T00:29:24.976Z"
+    "total_injured": 2,
+    "ruled_out": 1,
+    "total_suspended": 0,
+    "total_doubtful": 1,
+    "impact_score": 2.3333333333333335,
+    "players": [
+      {
+        "name": "Timothy Iroegbunam",
+        "status": "injured",
+        "injury": "Groin/Hip/Pelvic Injury",
+        "impact": 5
+      },
+      {
+        "name": "Christian Norgaard",
+        "status": "doubtful_25",
+        "injury": "Not Fit",
+        "impact": 2
+      }
+    ]
   },
   "Brighton": {
     "team_name": "Brighton",
-    "total_injuries": 225,
-    "injured_count": 225,
-    "suspended_count": 0,
-    "muscle_injuries": 91,
-    "impact_injuries": 0,
-    "injuries_per_match": 5.92,
-    "injury_impact_per_match": 8.32,
-    "win_probability_shift": -0.05,
-    "updated_at": "2026-08-23T00:29:24.976Z"
+    "total_injured": 7,
+    "ruled_out": 4,
+    "total_suspended": 0,
+    "total_doubtful": 3,
+    "impact_score": 8.666666666666666,
+    "players": [
+      {
+        "name": "Yankuba Minteh",
+        "status": "injured",
+        "injury": "Calf/Shin/Heel Injury",
+        "impact": 5
+      },
+      {
+        "name": "Stefanos Tzimas",
+        "status": "injured",
+        "injury": "Knee Injury",
+        "impact": 5
+      },
+      {
+        "name": "Matthew ORiley",
+        "status": "doubtful_25",
+        "injury": "Illness",
+        "impact": 2
+      },
+      {
+        "name": "Ferdi Kadioglu",
+        "status": "doubtful_50",
+        "injury": "Knock",
+        "impact": 2
+      },
+      {
+        "name": "Kaoru Mitoma",
+        "status": "doubtful_50",
+        "injury": "Thigh Injury",
+        "impact": 2
+      },
+      {
+        "name": "Evan Ferguson",
+        "status": "injured",
+        "injury": "Ankle/Foot Injury",
+        "impact": 5
+      },
+      {
+        "name": "Carlos Baleba",
+        "status": "injured",
+        "injury": "Ankle Ligament Injury",
+        "impact": 5
+      }
+    ]
   },
   "Newcastle": {
     "team_name": "Newcastle",
@@ -133,63 +261,149 @@
   },
   "Aston Villa": {
     "team_name": "Aston Villa",
-    "total_injuries": 96,
-    "injured_count": 96,
-    "suspended_count": 0,
-    "muscle_injuries": 35,
-    "impact_injuries": 0,
-    "injuries_per_match": 2.53,
-    "injury_impact_per_match": 3.45,
-    "win_probability_shift": -0.0345,
-    "updated_at": "2026-08-23T00:29:24.976Z"
+    "total_injured": 6,
+    "ruled_out": 4,
+    "total_suspended": 1,
+    "total_doubtful": 1,
+    "impact_score": 8.666666666666666,
+    "players": [
+      {
+        "name": "Amadou Onana",
+        "status": "injured",
+        "injury": "Knee Injury (ACL)",
+        "impact": 5
+      },
+      {
+        "name": "Brian Madjo",
+        "status": "injured",
+        "injury": "Ankle/Foot Injury",
+        "impact": 5
+      },
+      {
+        "name": "Johan Manzambi",
+        "status": "injured",
+        "injury": "Knee Injury",
+        "impact": 5
+      },
+      {
+        "name": "Leon Bailey",
+        "status": "injured",
+        "injury": "Muscular Injury",
+        "impact": 5
+      },
+      {
+        "name": "Tammy Abraham",
+        "status": "doubtful_50",
+        "injury": "Groin/Hip/Pelvic Injury",
+        "impact": 2
+      },
+      {
+        "name": "Joao Gomes",
+        "status": "suspended",
+        "injury": "Suspended",
+        "impact": 4
+      }
+    ]
   },
   "Brentford": {
     "team_name": "Brentford",
-    "total_injuries": 190,
-    "injured_count": 190,
-    "suspended_count": 0,
-    "muscle_injuries": 108,
-    "impact_injuries": 0,
-    "injuries_per_match": 5,
-    "injury_impact_per_match": 7.84,
-    "win_probability_shift": -0.05,
-    "updated_at": "2026-08-23T00:29:24.976Z"
+    "total_injured": 2,
+    "ruled_out": 2,
+    "total_suspended": 0,
+    "total_doubtful": 0,
+    "impact_score": 3.3333333333333335,
+    "players": [
+      {
+        "name": "Antoni Milambo",
+        "status": "injured",
+        "injury": "Knee Injury (ACL)",
+        "impact": 5
+      },
+      {
+        "name": "Sepp van den Berg",
+        "status": "injured",
+        "injury": "Groin/Hip/Pelvic Injury",
+        "impact": 5
+      }
+    ]
   },
   "Crystal Palace": {
     "team_name": "Crystal Palace",
-    "total_injuries": 157,
-    "injured_count": 157,
-    "suspended_count": 0,
-    "muscle_injuries": 75,
-    "impact_injuries": 0,
-    "injuries_per_match": 4.13,
-    "injury_impact_per_match": 6.11,
-    "win_probability_shift": -0.05,
-    "updated_at": "2026-08-23T00:29:24.976Z"
+    "total_injured": 2,
+    "ruled_out": 1,
+    "total_suspended": 0,
+    "total_doubtful": 1,
+    "impact_score": 2.3333333333333335,
+    "players": [
+      {
+        "name": "Ismaila Sarr",
+        "status": "doubtful_50",
+        "injury": "Groin Pain",
+        "impact": 2
+      },
+      {
+        "name": "Chadi Riad",
+        "status": "injured",
+        "injury": "Knee Injury",
+        "impact": 5
+      }
+    ]
   },
   "Chelsea": {
     "team_name": "Chelsea",
-    "total_injuries": 180,
-    "injured_count": 180,
-    "suspended_count": 0,
-    "muscle_injuries": 82,
-    "impact_injuries": 0,
-    "injuries_per_match": 4.74,
-    "injury_impact_per_match": 6.89,
-    "win_probability_shift": -0.05,
-    "updated_at": "2026-08-23T00:29:24.976Z"
+    "total_injured": 5,
+    "ruled_out": 2,
+    "total_suspended": 1,
+    "total_doubtful": 1,
+    "impact_score": 5.666666666666667,
+    "players": [
+      {
+        "name": "Wesley Fofana",
+        "status": "suspended",
+        "injury": "Suspended",
+        "impact": 4
+      },
+      {
+        "name": "Jordan Henderson",
+        "status": "injured",
+        "injury": "Wrist/Hand Injury",
+        "impact": 5
+      },
+      {
+        "name": "Emmanuel Emegha",
+        "status": "injured",
+        "injury": "Hamstring Strain",
+        "impact": 5
+      },
+      {
+        "name": "Aaron Anselmino",
+        "status": "doubtful_50",
+        "injury": "Knock",
+        "impact": 2
+      },
+      {
+        "name": "Danny Welbeck",
+        "status": "likely_75",
+        "injury": "Minor Issue",
+        "impact": 1
+      }
+    ]
   },
   "Manchester City": {
     "team_name": "Manchester City",
-    "total_injuries": 156,
-    "injured_count": 156,
-    "suspended_count": 0,
-    "muscle_injuries": 73,
-    "impact_injuries": 0,
-    "injuries_per_match": 4.11,
-    "injury_impact_per_match": 6.03,
-    "win_probability_shift": -0.05,
-    "updated_at": "2026-08-23T00:29:24.977Z"
+    "total_injured": 1,
+    "ruled_out": 1,
+    "total_suspended": 0,
+    "total_doubtful": 0,
+    "impact_score": 1.6666666666666667,
+    "players": [
+      {
+        "name": "Jeremy Doku",
+        "status": "injured",
+        "injury": "Calf/Shin/Heel Injury",
+        "impact": 5
+      }
+    ]
   },
   "Leicester": {
     "team_name": "Leicester",
@@ -217,27 +431,47 @@
   },
   "Nottingham Forest": {
     "team_name": "Nottingham Forest",
-    "total_injuries": 71,
-    "injured_count": 71,
-    "suspended_count": 0,
-    "muscle_injuries": 28,
-    "impact_injuries": 2,
-    "injuries_per_match": 1.87,
-    "injury_impact_per_match": 2.71,
-    "win_probability_shift": -0.0271,
-    "updated_at": "2026-08-23T00:29:24.977Z"
+    "total_injured": 2,
+    "ruled_out": 2,
+    "total_suspended": 0,
+    "total_doubtful": 0,
+    "impact_score": 3.3333333333333335,
+    "players": [
+      {
+        "name": "Nicolo Savona",
+        "status": "injured",
+        "injury": "Knee Injury",
+        "impact": 5
+      },
+      {
+        "name": "Ryan Yates",
+        "status": "injured",
+        "injury": "Not Available",
+        "impact": 5
+      }
+    ]
   },
   "Fulham": {
     "team_name": "Fulham",
-    "total_injuries": 101,
-    "injured_count": 101,
-    "suspended_count": 0,
-    "muscle_injuries": 45,
-    "impact_injuries": 0,
-    "injuries_per_match": 2.66,
-    "injury_impact_per_match": 3.84,
-    "win_probability_shift": -0.0384,
-    "updated_at": "2026-08-23T00:29:24.977Z"
+    "total_injured": 2,
+    "ruled_out": 1,
+    "total_suspended": 1,
+    "total_doubtful": 0,
+    "impact_score": 3,
+    "players": [
+      {
+        "name": "Tom Cairney",
+        "status": "injured",
+        "injury": "Knee Surgery",
+        "impact": 5
+      },
+      {
+        "name": "Joachim Andersen",
+        "status": "suspended",
+        "injury": "Suspended (Red Card)",
+        "impact": 4
+      }
+    ]
   },
   "Athletic Club": {
     "team_name": "Athletic Club",
@@ -1249,15 +1483,19 @@
   },
   "Sunderland": {
     "team_name": "Sunderland",
-    "total_injuries": 300,
-    "injured_count": 300,
-    "suspended_count": 0,
-    "muscle_injuries": 150,
-    "impact_injuries": 2,
-    "injuries_per_match": 7.89,
-    "injury_impact_per_match": 11.95,
-    "win_probability_shift": -0.05,
-    "updated_at": "2026-08-23T00:29:24.989Z"
+    "total_injured": 1,
+    "ruled_out": 1,
+    "total_suspended": 0,
+    "total_doubtful": 0,
+    "impact_score": 1.6666666666666667,
+    "players": [
+      {
+        "name": "Simon Adingra",
+        "status": "injured",
+        "injury": "Ankle/Foot Injury",
+        "impact": 5
+      }
+    ]
   },
   "Hull City": {
     "team_name": "Hull City",
@@ -1750,5 +1988,155 @@
     "injury_impact_per_match": 0.11,
     "win_probability_shift": -0.0011,
     "updated_at": "2026-08-23T00:29:24.994Z"
+  },
+  "AFC Bournemouth": {
+    "team_name": "AFC Bournemouth",
+    "total_injured": 9,
+    "ruled_out": 4,
+    "total_suspended": 1,
+    "total_doubtful": 3,
+    "impact_score": 10,
+    "players": [
+      {
+        "name": "Julian Araujo",
+        "status": "injured",
+        "injury": "Thigh Injury",
+        "impact": 5
+      },
+      {
+        "name": "Eli Kroupi",
+        "status": "injured",
+        "injury": "Ankle/Foot Injury",
+        "impact": 5
+      },
+      {
+        "name": "Amine Adli",
+        "status": "injured",
+        "injury": "Calf/Shin/Heel Injury",
+        "impact": 5
+      },
+      {
+        "name": "Ryan Christie",
+        "status": "suspended",
+        "injury": "Suspended",
+        "impact": 4
+      },
+      {
+        "name": "Julio Soler",
+        "status": "doubtful_25",
+        "injury": "Other",
+        "impact": 2
+      },
+      {
+        "name": "David Brooks",
+        "status": "doubtful_25",
+        "injury": "Other",
+        "impact": 2
+      },
+      {
+        "name": "Alvaro Rodriguez",
+        "status": "likely_75",
+        "injury": "Other",
+        "impact": 1
+      },
+      {
+        "name": "Juanlu Sanchez",
+        "status": "doubtful_50",
+        "injury": "Other",
+        "impact": 2
+      },
+      {
+        "name": "Veljko Milosavljevic",
+        "status": "injured",
+        "injury": "Knee Injury",
+        "impact": 5
+      }
+    ]
+  },
+  "Newcastle United": {
+    "team_name": "Newcastle United",
+    "total_injured": 4,
+    "ruled_out": 2,
+    "total_suspended": 0,
+    "total_doubtful": 2,
+    "impact_score": 4.666666666666667,
+    "players": [
+      {
+        "name": "Joelinton",
+        "status": "injured",
+        "injury": "Groin/Hip/Pelvic Injury",
+        "impact": 5
+      },
+      {
+        "name": "Valentino Livramento",
+        "status": "doubtful_25",
+        "injury": "Calf/Shin/Heel Injury",
+        "impact": 2
+      },
+      {
+        "name": "Dan Burn",
+        "status": "injured",
+        "injury": "Ankle Ligament Injury",
+        "impact": 5
+      },
+      {
+        "name": "William Osula",
+        "status": "doubtful_25",
+        "injury": "Ankle Injury",
+        "impact": 2
+      }
+    ]
+  },
+  "Tottenham Hotspur": {
+    "team_name": "Tottenham Hotspur",
+    "total_injured": 7,
+    "ruled_out": 4,
+    "total_suspended": 0,
+    "total_doubtful": 3,
+    "impact_score": 8.666666666666666,
+    "players": [
+      {
+        "name": "Xavi Simons",
+        "status": "injured",
+        "injury": "ACL Rupture",
+        "impact": 5
+      },
+      {
+        "name": "Wilson Odobert",
+        "status": "injured",
+        "injury": "ACL Rupture",
+        "impact": 5
+      },
+      {
+        "name": "Mohammed Kudus",
+        "status": "injured",
+        "injury": "Thigh Injury",
+        "impact": 5
+      },
+      {
+        "name": "Micky van de Ven",
+        "status": "doubtful_25",
+        "injury": "Knock",
+        "impact": 2
+      },
+      {
+        "name": "Pedro Porro",
+        "status": "doubtful_25",
+        "injury": "Not Available",
+        "impact": 2
+      },
+      {
+        "name": "Pape Matar Sarr",
+        "status": "doubtful_25",
+        "injury": "Thigh Injury",
+        "impact": 2
+      },
+      {
+        "name": "Dejan Kulusevski",
+        "status": "injured",
+        "injury": "Knee Injury",
+        "impact": 5
+      }
+    ]
   }
 }
