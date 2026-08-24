@@ -40,48 +40,73 @@ function calculateOutcome(
   const home = fixture.home_score;
   const away = fixture.away_score;
 
-  switch (prediction.market) {
-    case "h2h": {
-      const matchResult =
-        home > away ? "home" : home < away ? "away" : "draw";
-      return {
-        actualOutcome: prediction.selection === matchResult,
-        outcomeLabel: matchResult,
-      };
-    }
-    case "totals": {
-      const totalGoals = home + away;
-      const isOver = prediction.selection.toLowerCase().includes("over");
-      const isUnder = prediction.selection.toLowerCase().includes("under");
-      if (isOver) {
-        return { actualOutcome: totalGoals > 2.5, outcomeLabel: totalGoals > 2.5 ? "over" : "under" };
-      }
-      if (isUnder) {
-        return { actualOutcome: totalGoals < 2.5, outcomeLabel: totalGoals < 2.5 ? "under" : "over" };
-      }
-      return null;
-    }
-    case "btts": {
-      const bothScored = home > 0 && away > 0;
-      const isYes = prediction.selection.toLowerCase().includes("yes");
-      return {
-        actualOutcome: isYes ? bothScored : !bothScored,
-        outcomeLabel: bothScored ? "yes" : "no",
-      };
-    }
-    case "spreads": {
-      // Simplified spread handling
-      const goalDiff = home - away;
-      const isHome = prediction.selection.toLowerCase().includes("home");
-      const spread = 1; // Default spread
-      if (isHome) {
-        return { actualOutcome: goalDiff > spread, outcomeLabel: goalDiff > spread ? "cover" : "no_cover" };
-      }
-      return { actualOutcome: -goalDiff > spread, outcomeLabel: -goalDiff > spread ? "cover" : "no_cover" };
-    }
-    default:
-      return null;
+  // Match result labels
+  const matchResult = home > away ? "Home" : home < away ? "Away" : "Draw";
+  const totalGoals = home + away;
+  const bothScored = home > 0 && away > 0;
+  const goalDiff = home - away;
+
+  // Support both legacy and current market naming
+  const market = prediction.market.toLowerCase();
+  const selection = prediction.selection;
+
+  // 1X2 / Match Result / h2h
+  if (market === "1x2" || market === "match_result" || market === "h2h") {
+    return {
+      actualOutcome: selection === matchResult,
+      outcomeLabel: matchResult,
+    };
   }
+
+  // Over/Under totals
+  if (market.startsWith("ou_over") || market.startsWith("ou_under") || market === "totals") {
+    const isOver = selection.toLowerCase().includes("over") || market.includes("over");
+    const isUnder = selection.toLowerCase().includes("under") || market.includes("under");
+    // Extract line from market (e.g., "OU_Over_2.5" → 2.5)
+    const lineMatch = market.match(/(\d+\.?\d*)/);
+    const line = lineMatch ? parseFloat(lineMatch[1]) : 2.5;
+    if (isOver) {
+      return { actualOutcome: totalGoals > line, outcomeLabel: totalGoals > line ? "over" : "under" };
+    }
+    if (isUnder) {
+      return { actualOutcome: totalGoals < line, outcomeLabel: totalGoals < line ? "under" : "over" };
+    }
+  }
+
+  // BTTS
+  if (market === "btts" || market.includes("btts")) {
+    const isYes = selection.toLowerCase().includes("yes");
+    return {
+      actualOutcome: isYes ? bothScored : !bothScored,
+      outcomeLabel: bothScored ? "yes" : "no",
+    };
+  }
+
+  // Double Chance (DC)
+  if (market.startsWith("dc_")) {
+    if (market.includes("home") || market.includes("1x")) {
+      return { actualOutcome: home >= away, outcomeLabel: home >= away ? "hit" : "miss" };
+    }
+    if (market.includes("away") || market.includes("x2")) {
+      return { actualOutcome: away >= home, outcomeLabel: away >= home ? "hit" : "miss" };
+    }
+    if (market.includes("12")) {
+      return { actualOutcome: home !== away, outcomeLabel: home !== away ? "hit" : "miss" };
+    }
+  }
+
+  // Handicap / Spreads
+  if (market.startsWith("hc_") || market === "spreads") {
+    const handicapMatch = market.match(/(\d+\.?\d*)/);
+    const handicap = handicapMatch ? parseFloat(handicapMatch[1]) : 1;
+    const isHome = selection.toLowerCase().includes("home");
+    if (isHome) {
+      return { actualOutcome: goalDiff > handicap, outcomeLabel: goalDiff > handicap ? "cover" : "no_cover" };
+    }
+    return { actualOutcome: -goalDiff > handicap, outcomeLabel: -goalDiff > handicap ? "cover" : "no_cover" };
+  }
+
+  return null;
 }
 
 /**
@@ -172,29 +197,7 @@ export async function trackPredictionAccuracy(fixtureId?: string) {
         .update({ result: outcome.actualOutcome ? "correct" : "wrong" })
         .eq("id", prediction.id);
 
-      // Log to model_performance table
-      await supabase.from("model_performance").insert({
-        model_version: confidenceTier,
-        market: prediction.market,
-        league_id: fixture.league_id,
-        total_predictions: 1,
-        correct_predictions: outcome.actualOutcome ? 1 : 0,
-        brier_score: bs,
-        calibration_data: {
-          prediction_id: prediction.id,
-          fixture_id: fixture.id,
-          selection: prediction.selection,
-          predicted_probability: prediction.model_probability,
-          confidence_lower: prediction.confidence_lower,
-          confidence_upper: prediction.confidence_upper,
-          actual_outcome: outcome.actualOutcome,
-          outcome_label: outcome.outcomeLabel,
-          log_loss: ll,
-          kickoff_time: fixture.kickoff_time,
-        },
-      });
-
-      // Accumulate stats
+      // Accumulate stats (we batch the model_performance inserts below)
       totalTracked++;
       if (outcome.actualOutcome) totalCorrect++;
       totalLogLoss += ll;
@@ -214,6 +217,30 @@ export async function trackPredictionAccuracy(fixtureId?: string) {
   const accuracy = totalTracked > 0 ? (totalCorrect / totalTracked) * 100 : 0;
   const avgLogLoss = totalTracked > 0 ? totalLogLoss / totalTracked : 0;
   const avgBrier = totalTracked > 0 ? totalBrier / totalTracked : 0;
+
+  // Write aggregated model_performance records (one per market)
+  const perfRecords = Object.entries(performanceByMarket).map(([market, stats]) => ({
+    model_version: "v5.1",
+    market,
+    total_predictions: stats.total,
+    correct_predictions: stats.correct,
+    brier_score: Number((stats.brierSum / stats.total).toFixed(4)),
+    calibration_data: {
+      avg_log_loss: Number((stats.logLossSum / stats.total).toFixed(4)),
+      avg_brier: Number((stats.brierSum / stats.total).toFixed(4)),
+      accuracy_pct: Number(((stats.correct / stats.total) * 100).toFixed(1)),
+      tracked_at: new Date().toISOString(),
+    },
+  }));
+
+  if (perfRecords.length > 0) {
+    const { error: perfError } = await supabase.from("model_performance").insert(perfRecords);
+    if (perfError) {
+      console.error("[Model Tracking] Failed to write model_performance:", perfError.message);
+    } else {
+      console.log(`[Model Tracking] Wrote ${perfRecords.length} aggregated model_performance records`);
+    }
+  }
 
   console.log(`[Model Tracking] Tracked ${totalTracked} predictions: ${accuracy.toFixed(1)}% accuracy, ${avgLogLoss.toFixed(3)} avg log loss, ${avgBrier.toFixed(3)} avg Brier`);
 
