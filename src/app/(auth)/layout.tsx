@@ -52,7 +52,7 @@ export default function AuthLayout({
             {[
               { value: "58.9%", label: "ELITE accuracy" },
               { value: "7", label: "models" },
-              { value: "26+", label: "leagues" },
+              { value: "79+", label: "leagues" },
             ].map((stat, i) => (
               <div key={i}>
                 <span className="block text-[18px] font-bold text-white font-mono-data">

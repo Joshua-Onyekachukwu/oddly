@@ -214,6 +214,79 @@ export default function PricingPage() {
         </div>
       </section>
 
+      {/* Feature Comparison Table */}
+      <section className="pb-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-3xl font-bold text-oddly-navy text-center mb-4">
+            Compare Plans
+          </h2>
+          <p className="text-neutral-500 text-center text-sm mb-12">
+            See exactly what you get with each tier.
+          </p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b-2 border-neutral-200">
+                  <th className="text-left py-4 px-4 font-semibold text-neutral-600 w-[40%]">Feature</th>
+                  <th className="text-center py-4 px-4 font-semibold text-neutral-600">Free</th>
+                  <th className="text-center py-4 px-4 font-semibold text-oddly-orange">Premium</th>
+                  <th className="text-center py-4 px-4 font-semibold text-oddly-navy">Elite</th>
+                </tr>
+              </thead>
+              <tbody>
+                {([
+                  { feature: "Daily Predictions", free: "5 matches", premium: "Unlimited", elite: "Unlimited" },
+                  { feature: "Leagues Covered", free: "5 leagues", premium: "26+ leagues", elite: "26+ leagues" },
+                  { feature: "Accumulator Builder", free: "10-leg max", premium: "Unlimited legs", elite: "Unlimited legs" },
+                  { feature: "AI Analyst", free: "3 queries/day", premium: "50 queries/day", elite: "Unlimited" },
+                  { feature: "Value Bet Detection", free: false, premium: true, elite: true },
+                  { feature: "Crown Jewel Daily Pick", free: false, premium: false, elite: true },
+                  { feature: "Rollover Challenge", free: false, premium: true, elite: true },
+                  { feature: "Performance Analytics", free: false, premium: true, elite: true },
+                  { feature: "Weekly Reports", free: false, premium: true, elite: true },
+                  { feature: "API Access", free: false, premium: false, elite: true },
+                  { feature: "Custom Models", free: false, premium: false, elite: true },
+                  { feature: "Priority Support", free: false, premium: true, elite: true },
+                  { feature: "Early Access Features", free: false, premium: false, elite: true },
+                ]).map((row, i) => (
+                  <tr key={row.feature} className={`border-b border-neutral-100 ${i % 2 === 0 ? "bg-neutral-50/50" : ""}`}>
+                    <td className="py-3 px-4 font-medium text-neutral-700">{row.feature}</td>
+                    <td className="text-center py-3 px-4">
+                      {typeof row.free === "boolean" ? (
+                        row.free ? <span className="text-green-500 font-bold">✓</span> : <span className="text-neutral-300">—</span>
+                      ) : (
+                        <span className="text-neutral-600 text-xs">{row.free}</span>
+                      )}
+                    </td>
+                    <td className="text-center py-3 px-4">
+                      {typeof row.premium === "boolean" ? (
+                        row.premium ? <span className="text-green-500 font-bold">✓</span> : <span className="text-neutral-300">—</span>
+                      ) : (
+                        <span className="text-neutral-600 text-xs">{row.premium}</span>
+                      )}
+                    </td>
+                    <td className="text-center py-3 px-4">
+                      {typeof row.elite === "boolean" ? (
+                        row.elite ? <span className="text-green-500 font-bold">✓</span> : <span className="text-neutral-300">—</span>
+                      ) : (
+                        <span className="text-neutral-600 text-xs">{row.elite}</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+                {/* Price row */}
+                <tr className="border-t-2 border-neutral-200 bg-neutral-50">
+                  <td className="py-4 px-4 font-bold text-neutral-700">Price</td>
+                  <td className="text-center py-4 px-4"><span className="text-xl font-bold text-neutral-700">₦0</span></td>
+                  <td className="text-center py-4 px-4"><span className="text-xl font-bold text-oddly-orange">₦7,500</span><span className="text-neutral-400 text-xs">/mo</span></td>
+                  <td className="text-center py-4 px-4"><span className="text-xl font-bold text-oddly-navy">₦20,000</span><span className="text-neutral-400 text-xs">/mo</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
       {/* FAQ */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-3xl mx-auto">
