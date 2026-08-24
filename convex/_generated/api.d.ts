@@ -9,6 +9,7 @@
  */
 
 import type * as predictions from "../predictions.js";
+import type * as realtime from "../realtime.js";
 
 import type {
   ApiFromModules,
@@ -18,6 +19,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   predictions: typeof predictions;
+  realtime: typeof realtime;
 }>;
 
 /**
