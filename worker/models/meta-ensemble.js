@@ -20,6 +20,7 @@ const model1x2 = require("./market-1x2");
 const modelGoals = require("./market-goals");
 const modelBtts = require("./market-btts");
 const modelDc = require("./market-dc");
+const modelDraw = require("./market-draw");
 const crossSignals = require("./cross-model-signals");
 
 /**
@@ -36,6 +37,16 @@ function predictMatch(features, storeData = {}) {
 
   // 1X2 Model
   const result1x2 = model1x2.predict(features, weightConfig);
+
+  // Draw Model (dedicated draw prediction)
+  const drawResult = modelDraw.predict(features);
+  // Replace the crude 1X2 draw with the refined draw model output
+  const adjusted = modelDraw.adjustProbs(
+    result1x2.home, result1x2.draw, result1x2.away, drawResult.drawProb
+  );
+  result1x2.home = adjusted.home;
+  result1x2.draw = adjusted.draw;
+  result1x2.away = adjusted.away;
 
   // Goals Model
   const resultGoals = modelGoals.predict(features);
@@ -139,6 +150,11 @@ function predictMatch(features, storeData = {}) {
     // Model details
     models: {
       oneXtwo: result1x2,
+      draw: {
+        drawProb: drawResult.drawProb,
+        confidence: drawResult.confidence,
+        signals: drawResult.signals,
+      },
       goals: {
         homeLambda: resultGoals.homeLambda,
         awayLambda: resultGoals.awayLambda,

@@ -57,6 +57,18 @@ function dcTo1x2(dcOutput) {
 }
 
 /**
+ * Extract signals from the Draw model for other models.
+ */
+function drawToGoals(drawOutput) {
+  return {
+    likelyDraw: drawOutput.drawProb > 0.28,
+    veryLikelyDraw: drawOutput.drawProb > 0.33,
+    lowGoalExpectation: drawOutput.features?.lowScoringSignal > 0.6,
+    tightMatch: drawOutput.features?.tightMatchSignal > 0.7,
+  };
+}
+
+/**
  * Compute all cross-model signals from an initial round of predictions.
  * Call this after all models have made their first prediction.
  */
@@ -74,6 +86,9 @@ function computeSignals(modelOutputs) {
   }
   if (modelOutputs.dc) {
     signals.fromDc = dcTo1x2(modelOutputs.dc);
+  }
+  if (modelOutputs.draw) {
+    signals.fromDraw = drawToGoals(modelOutputs.draw);
   }
 
   return signals;
@@ -113,11 +128,25 @@ function refinePredictions(modelOutputs, signals) {
     refined.btts.bttsNo = 1 - refined.btts.bttsYes;
   }
 
-  // DC refinement from 1X2
-  if (signals.from1x2?.likelyDraw && refined.dc) {
-    // Likely draw → 1X and X2 both increase
-    refined.dc.dc1X = Math.min(0.99, refined.dc.dc1X * 1.02);
-    refined.dc.dcX2 = Math.min(0.99, refined.dc.dcX2 * 1.02);
+  // DC refinement from Draw model
+  if (signals.fromDraw?.likelyDraw && refined.dc) {
+    // Draw model says draw likely → 1X and X2 both increase
+    refined.dc.dc1X = Math.min(0.99, refined.dc.dc1X * 1.03);
+    refined.dc.dcX2 = Math.min(0.99, refined.dc.dcX2 * 1.03);
+  }
+
+  // BTTS refinement from Draw model
+  if (signals.fromDraw?.tightMatch && refined.btts) {
+    // Tight match → less likely both teams score
+    refined.btts.bttsYes *= 0.94;
+    refined.btts.bttsNo = 1 - refined.btts.bttsYes;
+  }
+
+  // Goals model refinement from Draw model
+  if (signals.fromDraw?.veryLikelyDraw && refined.goals) {
+    // Very likely draw → fewer total goals expected
+    refined.goals.over25 *= 0.95;
+    refined.goals.under25 = 1 - refined.goals.over25;
   }
 
   return refined;
