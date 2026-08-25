@@ -284,8 +284,23 @@ async function phasePredict(now: Date): Promise<PhaseResult> {
     const teamMap: Record<string, string> = {};
     for (const t of teams || []) teamMap[t.id] = t.canonical_name;
 
+    // IDEMPOTENCY: Check which fixtures already have pending predictions
+    const fixtureIds = fixtures.map((f) => f.id);
+    const { data: existingPreds } = await supabaseAdmin
+      .from("predictions")
+      .select("fixture_id")
+      .in("fixture_id", fixtureIds)
+      .eq("result", "pending");
+    const existingFixtureIds = new Set((existingPreds || []).map((p) => p.fixture_id));
+    if (existingFixtureIds.size > 0) {
+      console.log(`[PIPELINE] Skipping ${existingFixtureIds.size} fixtures with existing pending predictions`);
+    }
+
     const predictions: any[] = [];
     for (const fixture of fixtures) {
+      // IDEMPOTENCY: Skip fixtures that already have pending predictions
+      if (existingFixtureIds.has(fixture.id)) continue;
+
       const home = teamMap[fixture.home_team_id];
       const away = teamMap[fixture.away_team_id];
       if (!home || !away) continue;
