@@ -9,6 +9,7 @@ export interface LandingStats {
   avgAccuracy: number;
   totalFixturesToday: number;
   activeModels: number;
+  weeklyAccuracy?: number[];
 }
 
 /**

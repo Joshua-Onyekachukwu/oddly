@@ -26,6 +26,7 @@ export interface LandingPageData {
     avgAccuracy: number;
     totalFixturesToday: number;
     activeModels: number;
+    weeklyAccuracy?: number[];
   };
   upcomingFixtures: Array<{
     id: string;
@@ -236,20 +237,58 @@ export async function getLandingPageData(): Promise<LandingPageData> {
     };
   });
 
-  // Use actual league count or fallback to marketing number
+  // Generate weekly accuracy trend from daily accuracy view
+  let weeklyAccuracy: number[] = [];
+  try {
+    const { data: dailyAcc } = await supabaseAdmin
+      .from("mv_daily_accuracy")
+      .select("pred_date, accuracy")
+      .order("pred_date", { ascending: false })
+      .limit(12);
+    if (dailyAcc && dailyAcc.length > 0) {
+      weeklyAccuracy = dailyAcc.reverse().map((d: any) => Math.round((d.accuracy || 0.5) * 100));
+    }
+  } catch {
+    // Materialized view may not exist yet — generate from predictions
+    try {
+      const twelveWeeksAgo = new Date(Date.now() - 84 * 86400000).toISOString();
+      const { data: weeklyPreds } = await supabaseAdmin
+        .from("predictions")
+        .select("created_at, result")
+        .not("result", "is", null)
+        .neq("result", "pending")
+        .gte("created_at", twelveWeeksAgo)
+        .order("created_at", { ascending: true });
+      if (weeklyPreds && weeklyPreds.length > 0) {
+        // Group by week
+        const weekBuckets: Record<string, { correct: number; total: number }> = {};
+        for (const p of weeklyPreds) {
+          const weekStart = new Date(p.created_at);
+          weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+          const key = weekStart.toISOString().split("T")[0];
+          if (!weekBuckets[key]) weekBuckets[key] = { correct: 0, total: 0 };
+          weekBuckets[key].total++;
+          if (p.result === "correct") weekBuckets[key].correct++;
+        }
+        weeklyAccuracy = Object.values(weekBuckets)
+          .slice(-12)
+          .map((w) => Math.round((w.correct / Math.max(w.total, 1)) * 100));
+      }
+    } catch {}
+  }
+
   const totalLeagues = leaguesResult.count || 0;
-  // Use actual counts — no hardcoded fallbacks
-  const displayLeagues = totalLeagues || 0;
-  
+
   return {
     crownJewel,
     stats: {
-      totalLeagues: displayLeagues,
+      totalLeagues: totalLeagues || 0,
       totalPredictions: predictionsResult.count || 0,
       totalRecommendations: (recommendationsResult.data || []).length,
       avgAccuracy: Math.round(avgAccuracy * 10) / 10,
       totalFixturesToday: fixturesResult.data?.length || 0,
-      activeModels: 3, // Poisson + Elo + Regression (ensemble components)
+      activeModels: 3,
+      weeklyAccuracy,
     },
     upcomingFixtures,
     topValueBets,
