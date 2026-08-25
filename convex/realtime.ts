@@ -1,99 +1,28 @@
 import { query } from "./_generated/server";
 import { v } from "convex/values";
 
-// ─── Real-time Predictions ──────────────────────────────────────
-
 /**
- * Subscribe to the latest settled predictions.
- * Use with useQuery(api.realtime.getLatestPredictions, { limit: 50 }).
+ * SLIM REALTIME QUERIES — reads only from lightweight tables.
+ *
+ * All heavy analytics (599K predictions, calibration, market breakdown)
+ * now live in Supabase API routes.
+ *
+ * Convex is used only for:
+ *   - Live pick of the day
+ *   - Value picks (real-time subscription)
+ *   - Settlement feed (last 500)
+ *   - Live stats counters
  */
-export const getLatestPredictions = query({
-  args: {
-    limit: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    const limit = Math.min(args.limit ?? 50, 100);
 
-    // Use take() to stay under 32K read limit
-    const correct = await ctx.db
-      .query("predictions")
-      .withIndex("by_result", (q) => q.eq("result", "correct"))
-      .take(limit);
-
-    const wrong = await ctx.db
-      .query("predictions")
-      .withIndex("by_result", (q) => q.eq("result", "wrong"))
-      .take(limit);
-
-    const all = [...correct, ...wrong]
-      .sort((a, b) => {
-        if (a.settledAt && b.settledAt) {
-          return b.settledAt.localeCompare(a.settledAt);
-        }
-        return b.modelProbability - a.modelProbability;
-      })
-      .slice(0, limit);
-
-    return all;
+/** Get the current live pick — single lightweight document. */
+export const getLivePick = query({
+  handler: async (ctx) => {
+    const picks = await ctx.db.query("livePick").order("desc").take(1);
+    return picks[0] ?? null;
   },
 });
 
-/**
- * Subscribe to real-time odds for a specific fixture.
- * Use with useQuery(api.realtime.getOddsForFixture, { fixtureId: "xxx" }).
- */
-export const getOddsForFixture = query({
-  args: {
-    fixtureId: v.string(),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query("odds")
-      .withIndex("by_fixture", (q) => q.eq("fixtureId", args.fixtureId))
-      .take(100);
-  },
-});
-
-/**
- * Subscribe to odds snapshots grouped by fixture.
- * Useful for odds comparison dashboard.
- */
-export const getOddsComparison = query({
-  args: {
-    limit: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    const limit = Math.min(args.limit ?? 50, 100);
-
-    const allOdds = await ctx.db.query("odds").fullTableScan().take(limit * 5);
-
-    // Group by fixture
-    const byFixture: Record<string, typeof allOdds> = {};
-    for (const o of allOdds) {
-      if (!byFixture[o.fixtureId]) byFixture[o.fixtureId] = [];
-      byFixture[o.fixtureId].push(o);
-    }
-
-    return Object.entries(byFixture)
-      .slice(0, limit)
-      .map(([fixtureId, odds]) => ({
-        fixtureId,
-        odds: odds.map((o) => ({
-          bookmaker: o.bookmaker,
-          market: o.market,
-          selection: o.selection,
-          odds: o.odds,
-          impliedProb: o.impliedProb,
-          timestamp: o.timestamp,
-        })),
-      }));
-  },
-});
-
-/**
- * Subscribe to value picks by tier or market.
- * Use with useQuery(api.realtime.getValuePicksLive, { tier: "ELITE" }).
- */
+/** Subscribe to value picks — small table, filters by tier. */
 export const getValuePicksLive = query({
   args: {
     tier: v.optional(v.string()),
@@ -119,278 +48,82 @@ export const getValuePicksLive = query({
       return results.sort((a, b) => (b.edge ?? 0) - (a.edge ?? 0));
     }
 
-    // Fallback: limited scan sorted by edge
-    const results = await ctx.db
-      .query("valuePicks")
-      .fullTableScan()
-      .take(limit);
+    const results = await ctx.db.query("valuePicks").fullTableScan().take(limit);
     return results.sort((a, b) => (b.edge ?? 0) - (a.edge ?? 0));
   },
 });
 
-/**
- * Subscribe to settlement updates — recent settled predictions.
- */
+/** Get recent settlements — small table (capped at 500 docs). */
 export const getSettlementUpdates = query({
   args: {
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const limit = Math.min(args.limit ?? 50, 100);
-
-    const correct = await ctx.db
-      .query("predictions")
-      .withIndex("by_result", (q) => q.eq("result", "correct"))
+    return await ctx.db
+      .query("settlementFeed")
+      .withIndex("by_settled")
+      .order("desc")
       .take(limit);
-
-    const wrong = await ctx.db
-      .query("predictions")
-      .withIndex("by_result", (q) => q.eq("result", "wrong"))
-      .take(limit);
-
-    return [...correct, ...wrong]
-      .sort((a, b) => {
-        if (a.settledAt && b.settledAt) {
-          return b.settledAt.localeCompare(a.settledAt);
-        }
-        return 0;
-      })
-      .slice(0, limit);
   },
 });
 
-/**
- * Live stats summary — lightweight query that stays under read limits.
- */
+/** Get live stats — reads from counter table (tiny). */
 export const getLiveStats = query({
   handler: async (ctx) => {
-    // Sample-based approach: count in small batches to avoid 32K limit
-    let totalCorrect = 0;
-    let totalWrong = 0;
-
-    // Count correct predictions in batches
-    const correctBatch = await ctx.db
-      .query("predictions")
-      .withIndex("by_result", (q) => q.eq("result", "correct"))
-      .take(1000);
-    totalCorrect = correctBatch.length;
-
-    const wrongBatch = await ctx.db
-      .query("predictions")
-      .withIndex("by_result", (q) => q.eq("result", "wrong"))
-      .take(1000);
-    totalWrong = wrongBatch.length;
-
-    const total = totalCorrect + totalWrong;
-    const accuracy = total > 0 ? totalCorrect / total : 0;
-
+    const statsRows = await ctx.db.query("liveStats").fullTableScan().take(50);
+    const stats: Record<string, number> = {};
+    for (const row of statsRows) {
+      stats[row.key] = row.value;
+    }
     return {
-      totalPredictions: total,
-      correct: totalCorrect,
-      wrong: totalWrong,
-      accuracy: Math.round(accuracy * 1000) / 10,
-      lastUpdated: new Date().toISOString(),
+      totalPredictions: stats.totalSettled ?? 0,
+      correct: stats.correct ?? 0,
+      wrong: stats.wrong ?? 0,
+      accuracy: stats.totalSettled > 0
+        ? Math.round((stats.correct / stats.totalSettled) * 1000) / 10
+        : 0,
+      lastUpdated: stats.lastUpdated
+        ? new Date(stats.lastUpdated).toISOString()
+        : new Date().toISOString(),
     };
   },
 });
 
-/**
- * Get settlement summary by market.
- */
+/** Settlement by market — reads from settlementFeed (capped). */
 export const getSettlementByMarket = query({
   handler: async (ctx) => {
-    const markets = [
-      "home_win", "draw", "away_win",
-      "over_2_5", "under_2_5",
-      "btts_yes", "btts_no",
-      "over_1_5", "under_3_5",
-      "home", "away", "draw",
-      "1x2",
-    ];
+    const feed = await ctx.db.query("settlementFeed").fullTableScan().take(500);
+    const byMarket: Record<string, { total: number; correct: number }> = {};
 
-    const results = [];
-
-    for (const market of markets) {
-      const correct = await ctx.db
-        .query("predictions")
-        .withIndex("by_market", (q) => q.eq("market", market))
-        .take(2000);
-
-      const totalCorrect = correct.filter((p) => p.result === "correct").length;
-      const totalWrong = correct.filter((p) => p.result === "wrong").length;
-      const total = totalCorrect + totalWrong;
-
-      if (total > 0) {
-        results.push({
-          market,
-          total,
-          correct: totalCorrect,
-          accuracy: Math.round((totalCorrect / total) * 1000) / 10,
-        });
-      }
+    for (const p of feed) {
+      if (!byMarket[p.market]) byMarket[p.market] = { total: 0, correct: 0 };
+      byMarket[p.market].total++;
+      if (p.result === "correct") byMarket[p.market].correct++;
     }
 
-    return results.sort((a, b) => b.total - a.total);
-  },
-});
-
-// ─── Accuracy Dashboard Queries ─────────────────────────────
-
-/**
- * Get calibration buckets for accuracy analysis.
- * Buckets predictions by confidence level and measures actual accuracy.
- */
-export const getCalibrationBuckets = query({
-  handler: async (ctx) => {
-    const correct = await ctx.db
-      .query("predictions")
-      .withIndex("by_result", (q) => q.eq("result", "correct"))
-      .take(2000);
-
-    const wrong = await ctx.db
-      .query("predictions")
-      .withIndex("by_result", (q) => q.eq("result", "wrong"))
-      .take(2000);
-
-    const all = [...correct, ...wrong];
-
-    const buckets = [
-      { range: "50-59%", min: 0.50, max: 0.59, total: 0, correct: 0 },
-      { range: "60-64%", min: 0.60, max: 0.64, total: 0, correct: 0 },
-      { range: "65-69%", min: 0.65, max: 0.69, total: 0, correct: 0 },
-      { range: "70-74%", min: 0.70, max: 0.74, total: 0, correct: 0 },
-      { range: "75-79%", min: 0.75, max: 0.79, total: 0, correct: 0 },
-      { range: "80-84%", min: 0.80, max: 0.84, total: 0, correct: 0 },
-      { range: "85-89%", min: 0.85, max: 0.89, total: 0, correct: 0 },
-      { range: "90%+", min: 0.90, max: 1.0, total: 0, correct: 0 },
-    ];
-
-    for (const p of all) {
-      for (const b of buckets) {
-        if (p.modelProbability >= b.min && p.modelProbability <= b.max) {
-          b.total++;
-          if (p.result === "correct") b.correct++;
-          break;
-        }
-      }
-    }
-
-    return buckets.map((b) => ({
-      range: b.range,
-      total: b.total,
-      correct: b.correct,
-      accuracy: b.total > 0 ? Math.round((b.correct / b.total) * 1000) / 10 : 0,
-      avgPredicted: b.total > 0 ? Math.round(((b.min + b.max) / 2) * 100) : 0,
-    }));
-  },
-});
-
-/**
- * Get daily accuracy stats for the last 14 days.
- */
-export const getDailyStats = query({
-  handler: async (ctx) => {
-    const correct = await ctx.db
-      .query("predictions")
-      .withIndex("by_result", (q) => q.eq("result", "correct"))
-      .take(2000);
-
-    const wrong = await ctx.db
-      .query("predictions")
-      .withIndex("by_result", (q) => q.eq("result", "wrong"))
-      .take(2000);
-
-    const all = [...correct, ...wrong];
-
-    // Group by date (settledAt or created_at)
-    const dailyMap: Record<string, { correct: number; total: number }> = {};
-    for (const p of all) {
-      const date = (p.settledAt || "").slice(0, 10);
-      if (!date) continue;
-      if (!dailyMap[date]) dailyMap[date] = { correct: 0, total: 0 };
-      dailyMap[date].total++;
-      if (p.result === "correct") dailyMap[date].correct++;
-    }
-
-    return Object.entries(dailyMap)
-      .map(([date, stats]) => ({
-        date,
+    return Object.entries(byMarket)
+      .map(([market, stats]) => ({
+        market,
         total: stats.total,
         correct: stats.correct,
-        accuracy: stats.total > 0 ? Math.round((stats.correct / stats.total) * 1000) / 10 : 0,
+        accuracy: Math.round((stats.correct / stats.total) * 1000) / 10,
       }))
-      .sort((a, b) => b.date.localeCompare(a.date))
-      .slice(0, 14);
+      .sort((a, b) => b.total - a.total);
   },
 });
 
-/**
- * Get high-confidence (ELITE) accuracy stats.
- */
-export const getHighConfidenceStats = query({
-  args: {
-    threshold: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    const threshold = args.threshold ?? 0.65;
-
-    const correct = await ctx.db
-      .query("predictions")
-      .withIndex("by_result", (q) => q.eq("result", "correct"))
-      .take(2000);
-
-    const wrong = await ctx.db
-      .query("predictions")
-      .withIndex("by_result", (q) => q.eq("result", "wrong"))
-      .take(2000);
-
-    const all = [...correct, ...wrong];
-    const highConf = all.filter((p) => p.modelProbability >= threshold);
-    const highConfCorrect = highConf.filter((p) => p.result === "correct");
-
-    return {
-      total: highConf.length,
-      correct: highConfCorrect.length,
-      accuracy: highConf.length > 0 ? Math.round((highConfCorrect.length / highConf.length) * 1000) / 10 : 0,
-      threshold,
-    };
+/** Get leagues — lightweight reference. */
+export const getLeagues = query({
+  handler: async (ctx) => {
+    return await ctx.db.query("leagues").fullTableScan().take(200);
   },
 });
 
-/**
- * Get paginated settlement feed with all details.
- */
-export const getSettlementFeed = query({
-  args: {
-    limit: v.optional(v.number()),
-    offset: v.optional(v.number()),
-  },
+/** Get teams — lightweight reference. */
+export const getTeams = query({
+  args: { limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
-    const limit = Math.min(args.limit ?? 50, 100);
-    const offset = args.offset ?? 0;
-
-    const correct = await ctx.db
-      .query("predictions")
-      .withIndex("by_result", (q) => q.eq("result", "correct"))
-      .take(offset + limit + 100);
-
-    const wrong = await ctx.db
-      .query("predictions")
-      .withIndex("by_result", (q) => q.eq("result", "wrong"))
-      .take(offset + limit + 100);
-
-    const all = [...correct, ...wrong]
-      .sort((a, b) => {
-        if (a.settledAt && b.settledAt) {
-          return b.settledAt.localeCompare(a.settledAt);
-        }
-        return 0;
-      });
-
-    return {
-      items: all.slice(offset, offset + limit),
-      total: all.length,
-      hasMore: all.length > offset + limit,
-    };
+    return await ctx.db.query("teams").fullTableScan().take(args.limit ?? 1000);
   },
 });
