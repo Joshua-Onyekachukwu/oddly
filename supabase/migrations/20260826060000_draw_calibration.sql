@@ -9,14 +9,9 @@
 -- to create the is_service_role() and is_admin() functions.
 -- ============================================
 
--- Safety: ensure prerequisite functions exist
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'is_service_role') THEN
-    CREATE OR REPLACE FUNCTION public.is_service_role()
-    RETURNS boolean LANGUAGE sql SECURITY DEFINER STABLE
-    AS $$ SELECT current_setting('request.jwt.claims', true)::json->>'role' = 'service_role' OR current_setting('role') = 'service_role'; $$;
-  END IF;
-END $$;
+-- Safety: ensure prerequisite functions exist (CREATE OR REPLACE is idempotent)
+-- NOTE: is_service_role() must already exist from FIX-NOW.sql or cron infrastructure migration
+-- If it does not exist, run supabase/FIX-NOW.sql first
 
 -- 1. League draw calibration table
 CREATE TABLE IF NOT EXISTS league_draw_calibration (
