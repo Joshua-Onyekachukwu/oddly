@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 
-// ─── Inline UI Components (matching admin theme) ──────────────
+// ─── Inline UI Components ──────────────────────────────────────
 
 function StatCard({
   label,
@@ -12,12 +12,14 @@ function StatCard({
   icon,
   color = "bg-blue-50 text-blue-600",
   subtitle,
+  trend,
 }: {
   label: string;
   value: string | number;
   icon: string;
   color?: string;
   subtitle?: string;
+  trend?: "up" | "down" | "stable";
 }) {
   return (
     <div className="bg-white rounded-[14px] border border-gray-100 p-[16px]">
@@ -33,7 +35,20 @@ function StatCard({
         {value}
       </div>
       {subtitle && (
-        <p className="text-[11px] text-gray-400 mt-[4px]">{subtitle}</p>
+        <div className="flex items-center gap-[4px] mt-[4px]">
+          {trend && (
+            <i
+              className={`text-[10px] ${
+                trend === "up"
+                  ? "ri-arrow-up-line text-green-500"
+                  : trend === "down"
+                    ? "ri-arrow-down-line text-red-500"
+                    : "ri-subtract-line text-gray-400"
+              }`}
+            />
+          )}
+          <p className="text-[11px] text-gray-400">{subtitle}</p>
+        </div>
       )}
     </div>
   );
@@ -80,60 +95,108 @@ function Badge({
   variant = "default",
 }: {
   children: React.ReactNode;
-  variant?: "success" | "danger" | "warning" | "default";
+  variant?: "success" | "danger" | "warning" | "default" | "info";
 }) {
   const colors = {
     success: "bg-green-50 text-green-600",
     danger: "bg-red-50 text-red-600",
     warning: "bg-amber-50 text-amber-600",
+    info: "bg-blue-50 text-blue-600",
     default: "bg-gray-100 text-gray-600",
   };
   return (
-    <span
-      className={`text-[10px] font-bold px-[8px] py-[3px] rounded-full ${colors[variant]}`}
-    >
+    <span className={`text-[10px] font-bold px-[8px] py-[3px] rounded-full ${colors[variant]}`}>
       {children}
     </span>
   );
 }
 
+// ─── Migration Status Data ──────────────────────────────────────
+
+const MIGRATION_TABLES = [
+  { name: "Teams", convexKey: "teams", supabaseTable: "teams", icon: "ri-team-line" },
+  { name: "Fixtures", convexKey: "fixtures", supabaseTable: "fixtures", icon: "ri-calendar-line" },
+  { name: "Predictions", convexKey: "predictions", supabaseTable: "predictions", icon: "ri-file-list-3-line" },
+  { name: "Odds Snapshots", convexKey: "odds", supabaseTable: "odds_snapshots", icon: "ri-money-dollar-circle-line" },
+  { name: "Leagues", convexKey: "leagues", supabaseTable: "leagues", icon: "ri-trophy-line" },
+  { name: "xG Features", convexKey: "xgFeatures", supabaseTable: null, icon: "ri-line-chart-line" },
+  { name: "Referee Profiles", convexKey: "referees", supabaseTable: "referee_profiles", icon: "ri-user-star-line" },
+  { name: "Referee Matches", convexKey: "refereeMatches", supabaseTable: null, icon: "ri-whistle-line" },
+  { name: "Ref Feature Profiles", convexKey: "refFeatureProfiles", supabaseTable: null, icon: "ri-user-settings-line" },
+];
+
 // ─── Main Dashboard ───────────────────────────────────────────
 
 export default function ConvexHealthPage() {
   const [lastRefresh, setLastRefresh] = useState(new Date());
+  const [supabaseCounts, setSupabaseCounts] = useState<Record<string, number>>({});
+  const [loadingSupabase, setLoadingSupabase] = useState(true);
 
   // Real-time Convex queries
   const liveStats = useQuery(api.realtime.getLiveStats);
-  const latestPredictions = useQuery(api.realtime.getLatestPredictions, {
-    limit: 20,
-  });
-  const settlementUpdates = useQuery(api.realtime.getSettlementUpdates, {
-    limit: 20,
-  });
+  const latestPredictions = useQuery(api.realtime.getLatestPredictions, { limit: 20 });
+  const settlementUpdates = useQuery(api.realtime.getSettlementUpdates, { limit: 20 });
   const valuePicks = useQuery(api.realtime.getValuePicksLive, { limit: 30 });
   const marketAccuracy = useQuery(api.realtime.getSettlementByMarket);
-
-  // Convex stats (via predictions module)
   const convexStats = useQuery(api.predictions.getStats);
 
-  // Auto-refresh timestamp
+  // Auto-refresh
   useEffect(() => {
     const interval = setInterval(() => setLastRefresh(new Date()), 10000);
     return () => clearInterval(interval);
   }, []);
 
-  const isLoading =
-    liveStats === undefined ||
-    latestPredictions === undefined ||
-    convexStats === undefined;
+  // Fetch Supabase counts
+  useEffect(() => {
+    async function fetchSupabase() {
+      try {
+        const res = await fetch("/api/v1/admin/db-health");
+        const data = await res.json();
+        if (data.data?.supabase?.tables) {
+          setSupabaseCounts(data.data.supabase.tables);
+        }
+      } catch {}
+      setLoadingSupabase(false);
+    }
+    fetchSupabase();
+    const interval = setInterval(fetchSupabase, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
-  const totalConvex =
-    convexStats
-      ? Object.values(convexStats).reduce(
-          (a, b) => (a as number) + (typeof b === "number" ? b : 0),
-          0,
-        ) as number
-      : 0;
+  const isLoading = liveStats === undefined || convexStats === undefined;
+
+  // Parse Convex stats (some are strings like "~599K settled")
+  function parseConvexCount(val: string | number | undefined): number {
+    if (typeof val === "number") return val;
+    if (typeof val === "string") {
+      const match = val.match(/[\d.]+/);
+      if (match) {
+        const n = parseFloat(match[0]);
+        if (val.includes("K")) return Math.round(n * 1000);
+        if (val.includes("M")) return Math.round(n * 1000000);
+        return Math.round(n);
+      }
+    }
+    return 0;
+  }
+
+  function getConvexCount(key: string): number {
+    return parseConvexCount((convexStats as any)?.[key]);
+  }
+
+  function getSupabaseCount(table: string): number {
+    return supabaseCounts[table] || 0;
+  }
+
+  function getMigrationPct(convex: number, supabase: number): number {
+    if (supabase === 0) return convex > 0 ? 100 : 0;
+    return Math.min(Math.round((convex / supabase) * 100), 100);
+  }
+
+  const totalConvex = MIGRATION_TABLES.reduce(
+    (sum, t) => sum + getConvexCount(t.convexKey),
+    0,
+  );
 
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-6">
@@ -147,8 +210,7 @@ export default function ConvexHealthPage() {
             <Badge variant="success">LIVE</Badge>
           </div>
           <p className="text-[13px] text-gray-500">
-            Real-time data from Convex cold storage — predictions, xG, referees,
-            value picks.
+            Hybrid architecture: Supabase (hot) + Convex (cold/realtime). Migration status and data comparison.
           </p>
         </div>
         <div className="flex items-center gap-[8px]">
@@ -159,29 +221,25 @@ export default function ConvexHealthPage() {
         </div>
       </div>
 
-      {/* Status Indicators */}
+      {/* Connection Status */}
       <div className="flex items-center gap-[16px] p-[12px] bg-white rounded-[12px] border border-gray-100">
         <div className="flex items-center gap-[6px]">
           <div className="w-[6px] h-[6px] rounded-full bg-green-500" />
-          <span className="text-[12px] font-medium text-gray-600">
-            Supabase (Hot)
-          </span>
+          <span className="text-[12px] font-medium text-gray-600">Supabase (Hot)</span>
         </div>
         <div className="w-px h-[16px] bg-gray-200" />
         <div className="flex items-center gap-[6px]">
           <div className="w-[6px] h-[6px] rounded-full bg-green-500" />
-          <span className="text-[12px] font-medium text-gray-600">
-            Convex (Cold)
-          </span>
+          <span className="text-[12px] font-medium text-gray-600">Convex (Cold/Realtime)</span>
         </div>
         <div className="w-px h-[16px] bg-gray-200" />
         <span className="text-[11px] text-gray-400">
-          Hybrid Architecture Active — URL: limitless-mole-387.convex.cloud
+          Hybrid Architecture Active — limitless-mole-387.convex.cloud
         </span>
       </div>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-[12px]">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-[12px]">
         <StatCard
           label="Convex Records"
           value={isLoading ? "—" : totalConvex.toLocaleString()}
@@ -191,25 +249,175 @@ export default function ConvexHealthPage() {
         />
         <StatCard
           label="Teams"
-          value={isLoading ? "—" : (convexStats?.teams ?? 0).toLocaleString()}
+          value={isLoading ? "—" : getConvexCount("teams").toLocaleString()}
           icon="ri-team-line"
           color="bg-blue-50 text-blue-600"
+          subtitle={`${getSupabaseCount("teams")} in Supabase`}
+        />
+        <StatCard
+          label="Leagues"
+          value={isLoading ? "—" : getConvexCount("leagues").toLocaleString()}
+          icon="ri-trophy-line"
+          color="bg-amber-50 text-amber-600"
         />
         <StatCard
           label="xG Profiles"
-          value={isLoading ? "—" : (convexStats?.xgFeatures ?? 0).toLocaleString()}
+          value={isLoading ? "—" : getConvexCount("xgFeatures").toLocaleString()}
           icon="ri-line-chart-line"
           color="bg-green-50 text-green-600"
         />
         <StatCard
-          label="Referees"
-          value={isLoading ? "—" : (convexStats?.referees ?? 0).toLocaleString()}
-          icon="ri-user-star-line"
-          color="bg-amber-50 text-amber-600"
+          label="Referee Matches"
+          value={isLoading ? "—" : getConvexCount("refereeMatches").toLocaleString()}
+          icon="ri-whistle-line"
+          color="bg-cyan-50 text-cyan-600"
+          subtitle="Match history"
         />
       </div>
 
-      {/* Live Accuracy from Convex */}
+      {/* ─── Migration Status Table ─────────────────────────── */}
+      <Card>
+        <CardHeader
+          title="Migration Status"
+          description="Supabase vs Convex data comparison — are all records migrated?"
+          action={
+            loadingSupabase ? (
+              <Badge variant="default">Loading...</Badge>
+            ) : (
+              <Badge variant="info">{MIGRATION_TABLES.length} tables</Badge>
+            )
+          }
+        />
+        <div className="p-[16px]">
+          <div className="overflow-x-auto">
+            <table className="w-full text-[12px]">
+              <thead>
+                <tr className="border-b border-gray-100">
+                  <th className="text-left py-[8px] px-[10px] font-medium text-gray-500">Table</th>
+                  <th className="text-right py-[8px] px-[10px] font-medium text-gray-500">Supabase</th>
+                  <th className="text-right py-[8px] px-[10px] font-medium text-gray-500">Convex</th>
+                  <th className="text-center py-[8px] px-[10px] font-medium text-gray-500 min-w-[140px]">Progress</th>
+                  <th className="text-center py-[8px] px-[10px] font-medium text-gray-500">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {MIGRATION_TABLES.map((table) => {
+                  const convex = getConvexCount(table.convexKey);
+                  const supabase = table.supabaseTable
+                    ? getSupabaseCount(table.supabaseTable)
+                    : 0;
+                  const pct = getMigrationPct(convex, supabase);
+                  const status =
+                    table.supabaseTable === null
+                      ? convex > 0
+                        ? "convex-only"
+                        : "empty"
+                      : pct >= 100
+                        ? "complete"
+                        : pct > 0
+                          ? "partial"
+                          : "pending";
+
+                  return (
+                    <tr
+                      key={table.name}
+                      className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50"
+                    >
+                      <td className="py-[10px] px-[10px]">
+                        <div className="flex items-center gap-[8px]">
+                          <i className={`${table.icon} text-[14px] text-gray-400`} />
+                          <span className="font-semibold text-[#0A0F1C]">{table.name}</span>
+                        </div>
+                      </td>
+                      <td className="text-right py-[10px] px-[10px] font-mono tabular-nums text-gray-600">
+                        {loadingSupabase ? (
+                          <div className="inline-block w-[40px] h-[14px] bg-gray-100 rounded animate-pulse" />
+                        ) : table.supabaseTable ? (
+                          supabase.toLocaleString()
+                        ) : (
+                          <span className="text-gray-300">—</span>
+                        )}
+                      </td>
+                      <td className="text-right py-[10px] px-[10px] font-mono tabular-nums font-semibold text-[#0A0F1C]">
+                        {convex.toLocaleString()}
+                      </td>
+                      <td className="py-[10px] px-[10px]">
+                        <div className="flex items-center gap-[8px]">
+                          <div className="flex-1 h-[6px] bg-gray-100 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all duration-500 ${
+                                pct >= 100
+                                  ? "bg-green-500"
+                                  : pct > 50
+                                    ? "bg-amber-500"
+                                    : pct > 0
+                                      ? "bg-red-500"
+                                      : "bg-gray-200"
+                              }`}
+                              style={{ width: `${Math.max(pct, 2)}%` }}
+                            />
+                          </div>
+                          <span className="text-[10px] font-mono text-gray-400 w-[32px] text-right">
+                            {pct}%
+                          </span>
+                        </div>
+                      </td>
+                      <td className="text-center py-[10px] px-[10px]">
+                        {status === "complete" ? (
+                          <Badge variant="success">✓ Complete</Badge>
+                        ) : status === "convex-only" ? (
+                          <Badge variant="info">Convex Only</Badge>
+                        ) : status === "partial" ? (
+                          <Badge variant="warning">{pct}% Migrated</Badge>
+                        ) : status === "empty" ? (
+                          <Badge variant="danger">Empty</Badge>
+                        ) : (
+                          <Badge variant="default">Pending</Badge>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              <tfoot>
+                <tr className="border-t-2 border-gray-200 font-semibold">
+                  <td className="py-[10px] px-[10px] text-[#0A0F1C]">Total</td>
+                  <td className="text-right py-[10px] px-[10px] font-mono">
+                    {loadingSupabase
+                      ? "—"
+                      : MIGRATION_TABLES.reduce(
+                          (sum, t) =>
+                            sum + (t.supabaseTable ? getSupabaseCount(t.supabaseTable) : 0),
+                          0,
+                        ).toLocaleString()}
+                  </td>
+                  <td className="text-right py-[10px] px-[10px] font-mono">
+                    {totalConvex.toLocaleString()}
+                  </td>
+                  <td />
+                  <td className="text-center py-[10px] px-[10px]">
+                    {(() => {
+                      const supTotal = MIGRATION_TABLES.reduce(
+                        (sum, t) =>
+                          sum + (t.supabaseTable ? getSupabaseCount(t.supabaseTable) : 0),
+                        0,
+                      );
+                      const overall = supTotal > 0 ? Math.round((totalConvex / supTotal) * 100) : 100;
+                      return (
+                        <Badge variant={overall >= 90 ? "success" : overall >= 50 ? "warning" : "danger"}>
+                          {overall}% Overall
+                        </Badge>
+                      );
+                    })()}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </Card>
+
+      {/* ─── Live Accuracy ─────────────────────────────────── */}
       <Card>
         <CardHeader
           title="Live Prediction Accuracy"
@@ -261,8 +469,8 @@ export default function ConvexHealthPage() {
         </div>
       </Card>
 
+      {/* ─── Market Accuracy + Value Picks ──────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-[16px]">
-        {/* Market Accuracy from Convex */}
         <Card>
           <CardHeader
             title="Accuracy by Market"
@@ -277,10 +485,7 @@ export default function ConvexHealthPage() {
             ) : (
               <div className="space-y-[6px]">
                 {marketAccuracy.map((m) => (
-                  <div
-                    key={m.market}
-                    className="flex items-center gap-[12px] p-[10px] bg-gray-50 rounded-[8px]"
-                  >
+                  <div key={m.market} className="flex items-center gap-[12px] p-[10px] bg-gray-50 rounded-[8px]">
                     <div className="flex-1 min-w-0">
                       <span className="text-[12px] font-semibold text-[#0A0F1C] block capitalize">
                         {m.market.replace(/_/g, " ")}
@@ -293,22 +498,14 @@ export default function ConvexHealthPage() {
                       <div className="w-[60px] h-[4px] bg-gray-200 rounded-full overflow-hidden">
                         <div
                           className={`h-full rounded-full ${
-                            m.accuracy >= 65
-                              ? "bg-green-500"
-                              : m.accuracy >= 55
-                                ? "bg-amber-500"
-                                : "bg-red-500"
+                            m.accuracy >= 65 ? "bg-green-500" : m.accuracy >= 55 ? "bg-amber-500" : "bg-red-500"
                           }`}
                           style={{ width: `${Math.min(m.accuracy, 100)}%` }}
                         />
                       </div>
                       <span
                         className={`text-[13px] font-bold font-mono ${
-                          m.accuracy >= 65
-                            ? "text-green-600"
-                            : m.accuracy >= 55
-                              ? "text-amber-600"
-                              : "text-red-600"
+                          m.accuracy >= 65 ? "text-green-600" : m.accuracy >= 55 ? "text-amber-600" : "text-red-600"
                         }`}
                       >
                         {m.accuracy}%
@@ -321,7 +518,6 @@ export default function ConvexHealthPage() {
           </div>
         </Card>
 
-        {/* Live Value Picks */}
         <Card>
           <CardHeader
             title="Live Value Picks"
@@ -341,10 +537,7 @@ export default function ConvexHealthPage() {
             ) : (
               <div className="space-y-[6px] max-h-[260px] overflow-y-auto">
                 {valuePicks.slice(0, 10).map((pick, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between p-[10px] bg-gray-50 rounded-[8px]"
-                  >
+                  <div key={i} className="flex items-center justify-between p-[10px] bg-gray-50 rounded-[8px]">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-[6px]">
                         <span
@@ -382,7 +575,7 @@ export default function ConvexHealthPage() {
         </Card>
       </div>
 
-      {/* Recent Settlements Feed */}
+      {/* ─── Settlement Feed ────────────────────────────────── */}
       <Card>
         <CardHeader
           title="Settlement Feed"
@@ -399,31 +592,19 @@ export default function ConvexHealthPage() {
               <table className="w-full text-[12px]">
                 <thead>
                   <tr className="border-b border-gray-100">
-                    <th className="text-left py-[8px] px-[10px] font-medium text-gray-500">
-                      Market
-                    </th>
-                    <th className="text-left py-[8px] px-[10px] font-medium text-gray-500">
-                      Selection
-                    </th>
-                    <th className="text-center py-[8px] px-[10px] font-medium text-gray-500">
-                      Probability
-                    </th>
-                    <th className="text-center py-[8px] px-[10px] font-medium text-gray-500">
-                      Model Version
-                    </th>
-                    <th className="text-center py-[8px] px-[10px] font-medium text-gray-500">
-                      Result
-                    </th>
-                    <th className="text-right py-[8px] px-[10px] font-medium text-gray-500">
-                      Settled
-                    </th>
+                    <th className="text-left py-[8px] px-[10px] font-medium text-gray-500">Market</th>
+                    <th className="text-left py-[8px] px-[10px] font-medium text-gray-500">Selection</th>
+                    <th className="text-center py-[8px] px-[10px] font-medium text-gray-500">Probability</th>
+                    <th className="text-center py-[8px] px-[10px] font-medium text-gray-500">Version</th>
+                    <th className="text-center py-[8px] px-[10px] font-medium text-gray-500">Result</th>
+                    <th className="text-right py-[8px] px-[10px] font-medium text-gray-500">Settled</th>
                   </tr>
                 </thead>
                 <tbody>
                   {settlementUpdates.map((pred) => (
                     <tr
                       key={pred._id}
-                      className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors"
+                      className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50"
                     >
                       <td className="py-[8px] px-[10px] font-medium text-[#0A0F1C] capitalize">
                         {pred.market.replace(/_/g, " ")}
@@ -445,9 +626,7 @@ export default function ConvexHealthPage() {
                         )}
                       </td>
                       <td className="text-right py-[8px] px-[10px] text-gray-400 font-mono text-[10px]">
-                        {pred.settledAt
-                          ? new Date(pred.settledAt).toLocaleString()
-                          : "—"}
+                        {pred.settledAt ? new Date(pred.settledAt).toLocaleString() : "—"}
                       </td>
                     </tr>
                   ))}
@@ -458,85 +637,37 @@ export default function ConvexHealthPage() {
         </div>
       </Card>
 
-      {/* Latest Predictions */}
+      {/* ─── Architecture Diagram ───────────────────────────── */}
       <Card>
         <CardHeader
-          title="Latest Predictions"
-          description="Most recent settled predictions from Convex"
+          title="Architecture"
+          description="Data flow between Supabase (hot) and Convex (cold/realtime)"
         />
         <div className="p-[16px]">
-          {!latestPredictions || latestPredictions.length === 0 ? (
-            <div className="text-center py-[24px] text-gray-400">
-              <i className="ri-file-list-3-line text-[24px] block mb-[4px] opacity-50" />
-              <p className="text-[12px]">No predictions in Convex</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-[8px]">
-              {latestPredictions.slice(0, 10).map((pred) => (
-                <div
-                  key={pred._id}
-                  className="flex items-center justify-between p-[10px] bg-gray-50 rounded-[8px]"
-                >
-                  <div className="flex items-center gap-[8px]">
-                    <div
-                      className={`w-[6px] h-[6px] rounded-full ${
-                        pred.result === "correct"
-                          ? "bg-green-500"
-                          : pred.result === "wrong"
-                            ? "bg-red-500"
-                            : "bg-gray-300"
-                      }`}
-                    />
-                    <div>
-                      <span className="text-[11px] font-semibold text-[#0A0F1C] capitalize block">
-                        {pred.market.replace(/_/g, " ")} —{" "}
-                        {pred.selection.replace(/_/g, " ")}
-                      </span>
-                      <span className="text-[10px] text-gray-400">
-                        Fixture: {pred.fixtureId?.slice(0, 8)}…
-                      </span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-[13px] font-bold font-mono">
-                      {Math.round(pred.modelProbability * 100)}%
-                    </span>
-                    <span
-                      className={`text-[9px] font-bold ml-[4px] ${
-                        pred.result === "correct"
-                          ? "text-green-600"
-                          : pred.result === "wrong"
-                            ? "text-red-600"
-                            : "text-gray-400"
-                      }`}
-                    >
-                      {pred.result === "correct" ? "✓" : pred.result === "wrong" ? "✗" : "…"}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </Card>
+          <pre className="text-[10px] text-gray-500 font-mono bg-gray-50 p-[16px] rounded-[10px] overflow-x-auto leading-[1.6]">
+{`┌─────────────────────────────────┐     ┌─────────────────────────────────┐
+│       SUPABASE (Hot)            │     │       CONVEX (Cold/Realtime)    │
+├─────────────────────────────────┤     ├─────────────────────────────────┤
+│ ✓ Auth & User Sessions          │     │ ✓ ${String(getConvexCount("teams")).padStart(6)} Teams                    │
+│ ✓ Active Predictions (Live)     │     │ ✓ ${String(getConvexCount("leagues")).padStart(6)} Leagues                   │
+│ ✓ Odds Snapshots (Real-time)    │     │ ✓ ${String(getConvexCount("predictions")).padStart(6)}+ Predictions (Historical) │
+│ ✓ User Accumulators             │     │ ✓ ${String(getConvexCount("odds")).padStart(6)} Odds Snapshots            │
+│ ✓ Profile & Subscription        │     │ ✓ ${String(getConvexCount("xgFeatures")).padStart(6)} xG Feature Profiles      │
+│ ✓ ${String(getSupabaseCount("fixtures")).padStart(6)} Fixtures              │     │ ✓ ${String(getConvexCount("referees")).padStart(6)} Referee Profiles         │
+│                                 │     │ ✓ ${String(getConvexCount("refereeMatches")).padStart(6)} Referee Match History    │
+│                                 │     │ ✓ ${String(getConvexCount("refFeatureProfiles")).padStart(6)} Ref Feature Profiles    │
+└──────────────┬──────────────────┘     └──────────────┬──────────────────┘
+               │                                        │
+               └────────────┬───────────────────────────┘
+                            │
+                  ┌─────────▼─────────┐
+                  │   VERCEL (Edge)    │
+                  │  Next.js App Router │
+                  │  + Cron Jobs        │
+                  └────────────────────┘
 
-      {/* Architecture Footer */}
-      <Card>
-        <div className="p-[16px]">
-          <pre className="text-[10px] text-gray-400 font-mono bg-gray-50 p-[12px] rounded-[8px] overflow-x-auto">
-{`Hybrid Architecture
-====================
-Supabase (Hot)                    Convex (Cold/Realtime)
-├── Auth & Users                   ├── 838 Teams
-├── Active Predictions             ├── ~30,000+ Predictions
-├── Odds Snapshots                 ├── 946 xG Feature Profiles
-├── User Accumulators              ├── 113 Referee Profiles
-└── Profile & Subscription         ├── Value Picks
-                                   └── Training Datasets
-
-Real-time Subscriptions: ✓ Active
-Convex URL: limitless-mole-387.convex.cloud
-Dashboard: dashboard.convex.dev`}
+  Real-time Subscriptions: ✓ Active (ConvexReactClient → limitless-mole-387.convex.cloud)
+  Pipeline: Ensemble v5.1 (Isotonic Calibrated) → CLV Tracker → One-Game Pick Engine`}
           </pre>
         </div>
       </Card>
