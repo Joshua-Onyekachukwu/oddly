@@ -1,0 +1,444 @@
+{
+  "timestamp": "2026-08-25T00:23:03.494Z",
+  "datasets": {
+    "football_data": {
+      "rawRecords": 30340,
+      "dateRange": {
+        "from": "2021-07-23",
+        "to": "2026-05-24"
+      },
+      "leagues": {
+        "E0": 1520,
+        "E1": 2208,
+        "E2": 2208,
+        "E3": 2208,
+        "D1": 1224,
+        "D2": 1224,
+        "SP1": 1520,
+        "SP2": 1848,
+        "I1": 1520,
+        "I2": 1520,
+        "F1": 1372,
+        "F2": 1445,
+        "N1": 2142,
+        "P1": 2142,
+        "T1": 2472,
+        "B1": 2171,
+        "SC0": 1596
+      },
+      "seasons": {
+        "2122": 6536,
+        "2223": 6498,
+        "2324": 7999,
+        "2425": 7850,
+        "2526": 1457
+      },
+      "fields": [
+        "league",
+        "season",
+        "date",
+        "home_team",
+        "away_team",
+        "home_goals",
+        "away_goals",
+        "ft_result",
+        "ht_home_goals",
+        "ht_away_goals",
+        "ht_result",
+        "referee",
+        "home_shots",
+        "away_shots",
+        "home_shots_on_target",
+        "away_shots_on_target",
+        "home_fouls",
+        "away_fouls",
+        "home_corners",
+        "away_corners",
+        "home_yellow",
+        "away_yellow",
+        "home_red",
+        "away_red"
+      ],
+      "nullRates": {
+        "league": {
+          "count": 0,
+          "pct": "0.0"
+        },
+        "season": {
+          "count": 0,
+          "pct": "0.0"
+        },
+        "date": {
+          "count": 0,
+          "pct": "0.0"
+        },
+        "home_team": {
+          "count": 0,
+          "pct": "0.0"
+        },
+        "away_team": {
+          "count": 0,
+          "pct": "0.0"
+        },
+        "home_goals": {
+          "count": 0,
+          "pct": "0.0"
+        },
+        "away_goals": {
+          "count": 0,
+          "pct": "0.0"
+        },
+        "ft_result": {
+          "count": 0,
+          "pct": "0.0"
+        },
+        "ht_home_goals": {
+          "count": 42,
+          "pct": "0.1"
+        },
+        "ht_away_goals": {
+          "count": 42,
+          "pct": "0.1"
+        },
+        "ht_result": {
+          "count": 42,
+          "pct": "0.1"
+        },
+        "referee": {
+          "count": 20600,
+          "pct": "67.9"
+        },
+        "home_shots": {
+          "count": 43,
+          "pct": "0.1"
+        },
+        "away_shots": {
+          "count": 43,
+          "pct": "0.1"
+        },
+        "home_shots_on_target": {
+          "count": 43,
+          "pct": "0.1"
+        },
+        "away_shots_on_target": {
+          "count": 43,
+          "pct": "0.1"
+        },
+        "home_fouls": {
+          "count": 43,
+          "pct": "0.1"
+        },
+        "away_fouls": {
+          "count": 43,
+          "pct": "0.1"
+        },
+        "home_corners": {
+          "count": 43,
+          "pct": "0.1"
+        },
+        "away_corners": {
+          "count": 43,
+          "pct": "0.1"
+        },
+        "home_yellow": {
+          "count": 42,
+          "pct": "0.1"
+        },
+        "away_yellow": {
+          "count": 42,
+          "pct": "0.1"
+        },
+        "home_red": {
+          "count": 42,
+          "pct": "0.1"
+        },
+        "away_red": {
+          "count": 42,
+          "pct": "0.1"
+        }
+      },
+      "qualityIssues": [
+        {
+          "type": "duplicate_fixture",
+          "count": 3026
+        }
+      ],
+      "validRecords": 30340,
+      "invalidRecords": 0
+    },
+    "supabase_fixtures": {
+      "rawRecords": 13986,
+      "fields": [
+        "id",
+        "external_id",
+        "home_team_id",
+        "away_team_id",
+        "league_id",
+        "kickoff_time",
+        "status",
+        "home_score",
+        "away_score",
+        "is_featured",
+        "created_at",
+        "updated_at"
+      ],
+      "columns_with_nulls": [
+        "home_score",
+        "away_score"
+      ]
+    },
+    "supabase_predictions": {
+      "rawRecords": 599080,
+      "fields": [
+        "id",
+        "fixture_id",
+        "market",
+        "selection",
+        "model_probability",
+        "confidence_lower",
+        "confidence_upper",
+        "model_version",
+        "training_data_cutoff",
+        "features_used",
+        "sub_model_probabilities",
+        "model_disagreement",
+        "data_quality_score",
+        "data_quality_breakdown",
+        "result",
+        "created_at",
+        "settled_at",
+        "confidence_tier"
+      ]
+    },
+    "team_composite_ratings": {
+      "rawRecords": 405,
+      "fields": [
+        "team",
+        "matches",
+        "goalsFor",
+        "goalsAgainst",
+        "wins",
+        "draws",
+        "losses",
+        "homeMatches",
+        "homeWins",
+        "awayMatches",
+        "awayWins",
+        "shotsFor",
+        "shotsAgainst",
+        "foulsFor",
+        "foulsAgainst",
+        "yellowCards",
+        "redCards",
+        "cornersFor",
+        "form",
+        "attackRating",
+        "defenseRating",
+        "goalDiff",
+        "winRate",
+        "homeWinRate",
+        "awayWinRate",
+        "shotsPerGame",
+        "foulsPerGame",
+        "yellowPerGame",
+        "cornersPerGame",
+        "recentForm"
+      ],
+      "coverage": "405 teams with composite ratings"
+    },
+    "team_injury_impact": {
+      "rawRecords": 149,
+      "coverage": "149 teams with injury data"
+    },
+    "player_stats": {
+      "rawRecords": 265,
+      "fields": [
+        "player_name",
+        "player_id",
+        "team_name",
+        "team_id_api",
+        "league",
+        "league_id",
+        "position",
+        "goals",
+        "assists",
+        "shots_total",
+        "shots_on_target",
+        "passes_key",
+        "pass_accuracy",
+        "tackles_total",
+        "tackles_interceptions",
+        "duels_total",
+        "duels_won",
+        "dribbles_attempts",
+        "dribbles_success",
+        "fouls_committed",
+        "fouls_drawn",
+        "yellow_cards",
+        "red_cards",
+        "appearances",
+        "minutes",
+        "rating",
+        "penalty_scored",
+        "penalty_missed",
+        "source",
+        "fetched_at"
+      ],
+      "teamsRepresented": 116,
+      "leaguesRepresented": 8
+    },
+    "referee_profiles": {
+      "rawRecords": 113,
+      "fields": [
+        "name",
+        "matches",
+        "homeWinPct",
+        "drawPct",
+        "awayWinPct",
+        "avgGoals",
+        "avgYellow",
+        "avgRed",
+        "avgFouls",
+        "bttsPct",
+        "over25Pct",
+        "homeBias",
+        "leagues"
+      ]
+    },
+    "referee_features": {
+      "built_at": "2026-08-24T13:27:30.371Z",
+      "total_matches": 9740,
+      "matches_with_ref_stats": 8971
+    },
+    "statsbomb_xg": {
+      "matches_processed": 2183,
+      "competitions": 7
+    },
+    "understat_xg": {
+      "leagues": 5,
+      "total_teams": 0
+    },
+    "odds_snapshots": {
+      "rawRecords": 14984,
+      "fixtures_with_features": 16,
+      "market_consensus_fixtures": 103
+    },
+    "standings": {
+      "leagues": 9,
+      "total_teams": 176
+    }
+  },
+  "gaps": [
+    {
+      "feature": "Starting Lineups",
+      "why": "Knowing the actual starting XI allows precise player-impact modeling, formation analysis, and tactical matchup prediction",
+      "historicalAvailability": "0% — never collected",
+      "source": "Understat (free, post-match), API-Football (free tier, pre-match)",
+      "cost": "Free (Understat), Free tier 100 req/day (API-Football)",
+      "reliability": "High (Understat) / Medium (API-Football predicted lineups)",
+      "coverage": "Top 5 leagues, 2017+",
+      "integrationDifficulty": "Medium — need per-match lookup",
+      "expectedValue": "HIGH — formation matchup + player availability is strong signal"
+    },
+    {
+      "feature": "Weather / Pitch Conditions",
+      "why": "Rain, wind, cold affect playing style, goals, cards",
+      "historicalAvailability": "0% — never collected",
+      "source": "OpenWeatherMap (free 1000 req/day), Visual Crossing (free historical)",
+      "cost": "Free",
+      "reliability": "High",
+      "coverage": "All matches with venue coordinates",
+      "integrationDifficulty": "Medium — need venue geocoding",
+      "expectedValue": "LOW-MEDIUM — marginal but real effect on totals"
+    },
+    {
+      "feature": "Travel Distance",
+      "why": "Long travel → fatigue → performance drop",
+      "historicalAvailability": "0% — never collected",
+      "source": "Can compute from team home cities",
+      "cost": "Free (geocoding)",
+      "reliability": "High",
+      "coverage": "All matches",
+      "integrationDifficulty": "Low",
+      "expectedValue": "LOW-MEDIUM — mainly for midweek/international"
+    },
+    {
+      "feature": "Manager Tenure / Changes",
+      "why": "New manager bounce, long-tenure stability",
+      "historicalAvailability": "0%",
+      "source": "Wikipedia scraping, Transfermarkt",
+      "cost": "Free",
+      "reliability": "Medium",
+      "coverage": "Top leagues",
+      "integrationDifficulty": "High",
+      "expectedValue": "MEDIUM — known real effect"
+    },
+    {
+      "feature": "Asian Handicap Odds",
+      "why": "Most efficient market, sharp money indicator",
+      "historicalAvailability": "0% — only 1X2 odds collected",
+      "source": "The Odds API (exhausted), OddsPortal (free scraping)",
+      "cost": "Free (scraping) or paid API",
+      "reliability": "High",
+      "coverage": "Most bookmakers",
+      "integrationDifficulty": "Medium",
+      "expectedValue": "HIGH — AH is the sharpest market"
+    },
+    {
+      "feature": "Expected Assists (xA)",
+      "why": "Shot quality + creation quality combination",
+      "historicalAvailability": "Limited (StatsBomb 2,183 matches)",
+      "source": "StatsBomb open data (free), FBref (free)",
+      "cost": "Free",
+      "reliability": "High",
+      "coverage": "Top 5 leagues, 2017+",
+      "integrationDifficulty": "Low",
+      "expectedValue": "MEDIUM"
+    },
+    {
+      "feature": "Possession / PPDA",
+      "why": "Tactical style indicator, pressing intensity",
+      "historicalAvailability": "Limited (StatsBomb for xG matches)",
+      "source": "Understat (free), FBref (free)",
+      "cost": "Free",
+      "reliability": "High",
+      "coverage": "Top 5 leagues",
+      "integrationDifficulty": "Low",
+      "expectedValue": "MEDIUM"
+    },
+    {
+      "feature": "Promotion/Relegation Effects",
+      "why": "Teams newly promoted/relegated behave differently",
+      "historicalAvailability": "Can derive from standings history",
+      "source": "Computed from our own data",
+      "cost": "Free",
+      "reliability": "High",
+      "coverage": "All leagues with standings",
+      "integrationDifficulty": "Low",
+      "expectedValue": "MEDIUM"
+    }
+  ],
+  "summary": {
+    "totalDatasets": 12,
+    "primaryDataset": "football_data (30,340 matches, 17 leagues, 2021-2026)",
+    "totalHistoricalMatches": 30340,
+    "totalPredictions": 599080,
+    "totalOdds": 14984,
+    "totalTeams": 405,
+    "totalPlayers": 265,
+    "totalReferees": 113,
+    "totalLeagues": 17,
+    "keyGaps": [
+      "Expected Assists (xA)",
+      "Possession / PPDA",
+      "Promotion/Relegation Effects"
+    ],
+    "recommendedNextSteps": [
+      "Build clean historical research dataset from football_data (30,340 matches)",
+      "Add weather data for all fixtures (OpenWeatherMap free tier)",
+      "Collect Asian Handicap odds from OddsPortal",
+      "Build walk-forward prediction simulator",
+      "Run feature discovery engine"
+    ]
+  }
+}

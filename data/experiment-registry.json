@@ -1,0 +1,485 @@
+{
+  "experiments": [
+    {
+      "id": "EXP-001",
+      "name": "walk-forward-1X2-20260825-0124",
+      "timestamp": "20260825-0124",
+      "market": "1X2",
+      "feature_set": "extended",
+      "model": "XGBoost",
+      "folds": 3,
+      "train_seasons": [
+        "2122",
+        "2223",
+        "2122",
+        "2223",
+        "2324",
+        "2122",
+        "2223",
+        "2324",
+        "2425"
+      ],
+      "test_seasons": [
+        "2324",
+        "2425",
+        "2526"
+      ],
+      "total_test_matches": 14280,
+      "metrics": {
+        "accuracy": 65.62,
+        "log_loss": 0.6219,
+        "brier": 0.2166,
+        "ece": 0.039,
+        "high_conf_accuracy": 77.98,
+        "elite_accuracy": 79.84
+      },
+      "feature_importance": {
+        "elo_diff": "0.17380285",
+        "home_goals_for": "0.05017482",
+        "away_shots_for": "0.039552294",
+        "away_goals_for": "0.03668801",
+        "home_shots_against": "0.031796284",
+        "home_corners_for": "0.031682674",
+        "away_position": "0.026916694",
+        "away_fouls_for": "0.02555424",
+        "away_corners_for": "0.024891535",
+        "ppg_diff": "0.024778213"
+      },
+      "fold_results": [
+        {
+          "train_seasons": [
+            "2122",
+            "2223"
+          ],
+          "test_season": "2324",
+          "train_size": 13034,
+          "test_size": 6467,
+          "market": "1X2",
+          "accuracy_xgb": 63.6,
+          "accuracy_baseline": 56.63,
+          "accuracy_delta": 6.97,
+          "log_loss_xgb": 0.6329,
+          "log_loss_baseline": 0.6844,
+          "brier_xgb": 0.2216,
+          "brier_baseline": 0.2456,
+          "f1_xgb": 0.4778,
+          "ece_xgb": 0.0364,
+          "high_conf_accuracy": 78.44,
+          "high_conf_n": 436,
+          "elite_accuracy": 80.78,
+          "elite_n": 307,
+          "feature_importance": {
+            "elo_diff": "0.098987535",
+            "home_goals_for": "0.04296879",
+            "away_goals_for": "0.03302182",
+            "away_shots_for": "0.0325964",
+            "home_corners_for": "0.030286081",
+            "home_shots_for": "0.028894521",
+            "away_position": "0.02879685",
+            "home_injury_impact": "0.028560514",
+            "home_shots_against": "0.02759165",
+            "away_goals_against": "0.026300741"
+          }
+        },
+        {
+          "train_seasons": [
+            "2122",
+            "2223",
+            "2324"
+          ],
+          "test_season": "2425",
+          "train_size": 19501,
+          "test_size": 6356,
+          "market": "1X2",
+          "accuracy_xgb": 63.72,
+          "accuracy_baseline": 56.25,
+          "accuracy_delta": 7.47,
+          "log_loss_xgb": 0.6337,
+          "log_loss_baseline": 0.6853,
+          "brier_xgb": 0.222,
+          "brier_baseline": 0.2461,
+          "f1_xgb": 0.4769,
+          "ece_xgb": 0.0323,
+          "high_conf_accuracy": 78.6,
+          "high_conf_n": 444,
+          "elite_accuracy": 80.63,
+          "elite_n": 315,
+          "feature_importance": {
+            "elo_diff": "0.12160275",
+            "home_goals_for": "0.05168203",
+            "away_goals_for": "0.036970224",
+            "away_shots_for": "0.036435157",
+            "home_shots_for": "0.028138734",
+            "home_corners_for": "0.027944481",
+            "away_position": "0.026987743",
+            "home_shots_against": "0.026254604",
+            "home_fts_5": "0.026178792",
+            "home_fouls_for": "0.024811128"
+          }
+        },
+        {
+          "train_seasons": [
+            "2122",
+            "2223",
+            "2324",
+            "2425"
+          ],
+          "test_season": "2526",
+          "train_size": 25857,
+          "test_size": 1457,
+          "market": "1X2",
+          "accuracy_xgb": 69.53,
+          "accuracy_baseline": 57.52,
+          "accuracy_delta": 12.01,
+          "log_loss_xgb": 0.5991,
+          "log_loss_baseline": 0.6821,
+          "brier_xgb": 0.2062,
+          "brier_baseline": 0.2445,
+          "f1_xgb": 0.5941,
+          "ece_xgb": 0.0483,
+          "high_conf_accuracy": 76.89,
+          "high_conf_n": 212,
+          "elite_accuracy": 78.1,
+          "elite_n": 137,
+          "feature_importance": {
+            "elo_diff": "0.17380285",
+            "home_goals_for": "0.05017482",
+            "away_shots_for": "0.039552294",
+            "away_goals_for": "0.03668801",
+            "home_shots_against": "0.031796284",
+            "home_corners_for": "0.031682674",
+            "away_position": "0.026916694",
+            "away_fouls_for": "0.02555424",
+            "away_corners_for": "0.024891535",
+            "ppg_diff": "0.024778213"
+          }
+        }
+      ],
+      "status": "candidate",
+      "reasoning": "",
+      "created_at": "2026-08-25T00:26:28.780Z"
+    },
+    {
+      "id": "EXP-002",
+      "name": "walk-forward-O2.5-20260825-0125",
+      "timestamp": "20260825-0125",
+      "market": "O2.5",
+      "feature_set": "extended",
+      "model": "XGBoost",
+      "folds": 3,
+      "train_seasons": [
+        "2122",
+        "2223",
+        "2122",
+        "2223",
+        "2324",
+        "2122",
+        "2223",
+        "2324",
+        "2425"
+      ],
+      "test_seasons": [
+        "2324",
+        "2425",
+        "2526"
+      ],
+      "total_test_matches": 14280,
+      "metrics": {
+        "accuracy": 56.49,
+        "log_loss": 0.6805,
+        "brier": 0.2438,
+        "ece": 0.0376,
+        "high_conf_accuracy": 70.37,
+        "elite_accuracy": 75.6
+      },
+      "feature_importance": {
+        "home_goals_for": "0.05158737",
+        "away_goals_for": "0.035845228",
+        "home_fouls_for": "0.03572405",
+        "away_doubtful": "0.034377024",
+        "away_fouls_for": "0.031731687",
+        "elo_diff": "0.026366288",
+        "away_position": "0.025079396",
+        "away_shots_for": "0.024917861",
+        "home_gf_5": "0.02486884",
+        "has_ref": "0.024769826"
+      },
+      "fold_results": [
+        {
+          "train_seasons": [
+            "2122",
+            "2223"
+          ],
+          "test_season": "2324",
+          "train_size": 13034,
+          "test_size": 6467,
+          "market": "O2.5",
+          "accuracy_xgb": 56.01,
+          "accuracy_baseline": 47.3,
+          "accuracy_delta": 8.71,
+          "log_loss_xgb": 0.6813,
+          "log_loss_baseline": 0.6941,
+          "brier_xgb": 0.2441,
+          "brier_baseline": 0.2505,
+          "f1_xgb": 0.5315,
+          "ece_xgb": 0.0363,
+          "high_conf_accuracy": 70.12,
+          "high_conf_n": 164,
+          "elite_accuracy": 76.92,
+          "elite_n": 26,
+          "feature_importance": {
+            "home_goals_for": "0.04397256",
+            "home_shots_for": "0.033787813",
+            "away_fouls_for": "0.031293705",
+            "home_fouls_for": "0.03042493",
+            "away_goals_for": "0.0289963",
+            "away_goals_against": "0.028003624",
+            "has_ref": "0.027632046",
+            "away_shots_for": "0.027149698",
+            "season_phase": "0.026599314",
+            "month": "0.026565742"
+          }
+        },
+        {
+          "train_seasons": [
+            "2122",
+            "2223",
+            "2324"
+          ],
+          "test_season": "2425",
+          "train_size": 19501,
+          "test_size": 6356,
+          "market": "O2.5",
+          "accuracy_xgb": 56.77,
+          "accuracy_baseline": 51.04,
+          "accuracy_delta": 5.73,
+          "log_loss_xgb": 0.6813,
+          "log_loss_baseline": 0.693,
+          "brier_xgb": 0.2441,
+          "brier_baseline": 0.2499,
+          "f1_xgb": 0.5686,
+          "ece_xgb": 0.0524,
+          "high_conf_accuracy": 70.98,
+          "high_conf_n": 348,
+          "elite_accuracy": 73.2,
+          "elite_n": 97,
+          "feature_importance": {
+            "home_goals_for": "0.04750252",
+            "home_fouls_for": "0.035074674",
+            "home_shots_for": "0.03489135",
+            "away_goals_for": "0.033237834",
+            "away_fouls_for": "0.03045621",
+            "season_phase": "0.030110586",
+            "away_yellow_cards": "0.028447762",
+            "away_goals_against": "0.027992748",
+            "home_goals_against": "0.02722428",
+            "away_doubtful": "0.02626725"
+          }
+        },
+        {
+          "train_seasons": [
+            "2122",
+            "2223",
+            "2324",
+            "2425"
+          ],
+          "test_season": "2526",
+          "train_size": 25857,
+          "test_size": 1457,
+          "market": "O2.5",
+          "accuracy_xgb": 56.69,
+          "accuracy_baseline": 54.22,
+          "accuracy_delta": 2.47,
+          "log_loss_xgb": 0.679,
+          "log_loss_baseline": 0.6923,
+          "brier_xgb": 0.2431,
+          "brier_baseline": 0.2496,
+          "f1_xgb": 0.6573,
+          "ece_xgb": 0.024,
+          "high_conf_accuracy": 70,
+          "high_conf_n": 140,
+          "elite_accuracy": 76.67,
+          "elite_n": 30,
+          "feature_importance": {
+            "home_goals_for": "0.05158737",
+            "away_goals_for": "0.035845228",
+            "home_fouls_for": "0.03572405",
+            "away_doubtful": "0.034377024",
+            "away_fouls_for": "0.031731687",
+            "elo_diff": "0.026366288",
+            "away_position": "0.025079396",
+            "away_shots_for": "0.024917861",
+            "home_gf_5": "0.02486884",
+            "has_ref": "0.024769826"
+          }
+        }
+      ],
+      "status": "candidate",
+      "reasoning": "",
+      "created_at": "2026-08-25T00:26:28.956Z"
+    },
+    {
+      "id": "EXP-003",
+      "name": "walk-forward-BTTS-20260825-0125",
+      "timestamp": "20260825-0125",
+      "market": "BTTS",
+      "feature_set": "extended",
+      "model": "XGBoost",
+      "folds": 3,
+      "train_seasons": [
+        "2122",
+        "2223",
+        "2122",
+        "2223",
+        "2324",
+        "2122",
+        "2223",
+        "2324",
+        "2425"
+      ],
+      "test_seasons": [
+        "2324",
+        "2425",
+        "2526"
+      ],
+      "total_test_matches": 14280,
+      "metrics": {
+        "accuracy": 54.8,
+        "log_loss": 0.687,
+        "brier": 0.2469,
+        "ece": 0.0635,
+        "high_conf_accuracy": 61,
+        "elite_accuracy": 50
+      },
+      "feature_importance": {
+        "has_ref": "0.031450003",
+        "away_goals_for": "0.030634556",
+        "season_phase": "0.027922748",
+        "away_fts_5": "0.027427956",
+        "away_fouls_for": "0.027141886",
+        "away_corners_for": "0.026490476",
+        "home_goals_for": "0.025887547",
+        "away_injury_impact": "0.025760187",
+        "home_fts_5": "0.024527984",
+        "home_corners_for": "0.024320873"
+      },
+      "fold_results": [
+        {
+          "train_seasons": [
+            "2122",
+            "2223"
+          ],
+          "test_season": "2324",
+          "train_size": 13034,
+          "test_size": 6467,
+          "market": "BTTS",
+          "accuracy_xgb": 54.38,
+          "accuracy_baseline": 53.9,
+          "accuracy_delta": 0.48,
+          "log_loss_xgb": 0.6891,
+          "log_loss_baseline": 0.6913,
+          "brier_xgb": 0.248,
+          "brier_baseline": 0.2491,
+          "f1_xgb": 0.6332,
+          "ece_xgb": 0.0479,
+          "high_conf_accuracy": 0,
+          "high_conf_n": 0,
+          "elite_accuracy": 0,
+          "elite_n": 0,
+          "feature_importance": {
+            "home_doubtful": "0.031141339",
+            "away_corners_for": "0.030909264",
+            "home_fouls_for": "0.029715024",
+            "away_wr_5": "0.029619211",
+            "has_ref": "0.029587809",
+            "away_injury_impact": "0.028870111",
+            "away_fouls_for": "0.027735485",
+            "home_corners_for": "0.027714977",
+            "away_goals_for": "0.027206993",
+            "away_cs_5": "0.02688691"
+          }
+        },
+        {
+          "train_seasons": [
+            "2122",
+            "2223",
+            "2324"
+          ],
+          "test_season": "2425",
+          "train_size": 19501,
+          "test_size": 6356,
+          "market": "BTTS",
+          "accuracy_xgb": 53.46,
+          "accuracy_baseline": 53.21,
+          "accuracy_delta": 0.25,
+          "log_loss_xgb": 0.688,
+          "log_loss_baseline": 0.6913,
+          "brier_xgb": 0.2474,
+          "brier_baseline": 0.2491,
+          "f1_xgb": 0.6495,
+          "ece_xgb": 0.0258,
+          "high_conf_accuracy": 50,
+          "high_conf_n": 4,
+          "elite_accuracy": 0,
+          "elite_n": 0,
+          "feature_importance": {
+            "has_ref": "0.03489388",
+            "away_goals_for": "0.034167062",
+            "away_wr_5": "0.031797215",
+            "away_corners_for": "0.03022269",
+            "away_fouls_for": "0.030010955",
+            "home_corners_for": "0.02951993",
+            "away_shots_for": "0.029031787",
+            "home_goals_against": "0.028757788",
+            "away_doubtful": "0.027839575",
+            "home_fouls_for": "0.027682403"
+          }
+        },
+        {
+          "train_seasons": [
+            "2122",
+            "2223",
+            "2324",
+            "2425"
+          ],
+          "test_season": "2526",
+          "train_size": 25857,
+          "test_size": 1457,
+          "market": "BTTS",
+          "accuracy_xgb": 56.55,
+          "accuracy_baseline": 54.29,
+          "accuracy_delta": 2.26,
+          "log_loss_xgb": 0.6838,
+          "log_loss_baseline": 0.6901,
+          "brier_xgb": 0.2453,
+          "brier_baseline": 0.2485,
+          "f1_xgb": 0.6821,
+          "ece_xgb": 0.1167,
+          "high_conf_accuracy": 72,
+          "high_conf_n": 25,
+          "elite_accuracy": 50,
+          "elite_n": 2,
+          "feature_importance": {
+            "has_ref": "0.031450003",
+            "away_goals_for": "0.030634556",
+            "season_phase": "0.027922748",
+            "away_fts_5": "0.027427956",
+            "away_fouls_for": "0.027141886",
+            "away_corners_for": "0.026490476",
+            "home_goals_for": "0.025887547",
+            "away_injury_impact": "0.025760187",
+            "home_fts_5": "0.024527984",
+            "home_corners_for": "0.024320873"
+          }
+        }
+      ],
+      "status": "candidate",
+      "reasoning": "",
+      "created_at": "2026-08-25T00:26:29.137Z"
+    }
+  ],
+  "metadata": {
+    "created": "2026-08-25T00:26:28.779Z",
+    "version": 1
+  }
+}
