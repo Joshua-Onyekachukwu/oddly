@@ -5,23 +5,50 @@
 -- Paste this ENTIRE file into Supabase SQL Editor and click Run.
 -- It will:
 --   1. Create referee_profiles, match_stats, team_referee_stats tables
---   2. Enable RLS on ALL tables with proper policies
+--   2. Enable RLS on ALL tables that exist with proper policies
 --   3. Revoke broad anon/authenticated grants
 --   4. Create audit functions
 --
--- Safe to run multiple times (uses IF NOT EXISTS / DROP IF EXISTS)
+-- Safe to run multiple times (uses IF NOT EXISTS / exception handling)
 -- ============================================
 
 -- ============================================
--- FIX 1: CREATE MISSING REFEREE TABLES
+-- FIX 1: SECURITY HELPER FUNCTIONS (must exist before policies)
 -- ============================================
 
--- Add referee columns to fixtures
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS boolean
+LANGUAGE sql SECURITY DEFINER STABLE
+AS $$
+  SELECT EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin');
+$$;
+
+CREATE OR REPLACE FUNCTION public.is_service_role()
+RETURNS boolean
+LANGUAGE sql SECURITY DEFINER STABLE
+AS $$
+  SELECT coalesce(current_setting('request.jwt.claims', true)::json->>'role', '') = 'service_role';
+$$;
+
+CREATE OR REPLACE FUNCTION public.check_rls_status()
+RETURNS TABLE (table_name text, rls_enabled boolean, policy_count bigint)
+LANGUAGE sql SECURITY DEFINER
+AS $$
+  SELECT t.tablename::text, c.relrowsecurity,
+    (SELECT count(*) FROM pg_policy WHERE polrelid = c.oid)
+  FROM pg_tables t JOIN pg_class c ON c.relname = t.tablename
+  WHERE t.schemaname = 'public' ORDER BY t.tablename;
+$$;
+
+
+-- ============================================
+-- FIX 2: CREATE MISSING REFEREE TABLES
+-- ============================================
+
 ALTER TABLE fixtures ADD COLUMN IF NOT EXISTS referee_name TEXT;
 ALTER TABLE fixtures ADD COLUMN IF NOT EXISTS referee_id TEXT;
-CREATE INDEX IF NOT EXISTS idx_fixtures_referee ON fixtures(referee_name);
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_fixtures_referee ON fixtures(referee_name); EXCEPTION WHEN duplicate_table THEN NULL; END $$;
 
--- referee_profiles
 CREATE TABLE IF NOT EXISTS referee_profiles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   referee_name TEXT NOT NULL UNIQUE,
@@ -44,49 +71,35 @@ CREATE TABLE IF NOT EXISTS referee_profiles (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
-CREATE INDEX IF NOT EXISTS idx_referee_profiles_name ON referee_profiles(referee_name);
-CREATE INDEX IF NOT EXISTS idx_referee_profiles_matches ON referee_profiles(total_matches DESC);
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_referee_profiles_name ON referee_profiles(referee_name); EXCEPTION WHEN duplicate_table THEN NULL; END $$;
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_referee_profiles_matches ON referee_profiles(total_matches DESC); EXCEPTION WHEN duplicate_table THEN NULL; END $$;
 
--- match_stats
 CREATE TABLE IF NOT EXISTS match_stats (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   fixture_id UUID NOT NULL REFERENCES fixtures(id) ON DELETE CASCADE UNIQUE,
   referee_name TEXT,
-  home_shots INTEGER,
-  away_shots INTEGER,
-  home_shots_on_target INTEGER,
-  away_shots_on_target INTEGER,
-  home_fouls INTEGER,
-  away_fouls INTEGER,
-  home_corners INTEGER,
-  away_corners INTEGER,
-  home_yellow_cards INTEGER,
-  away_yellow_cards INTEGER,
-  home_red_cards INTEGER,
-  away_red_cards INTEGER,
-  ht_home_goals INTEGER,
-  ht_away_goals INTEGER,
-  ht_result TEXT,
-  ft_result TEXT,
+  home_shots INTEGER, away_shots INTEGER,
+  home_shots_on_target INTEGER, away_shots_on_target INTEGER,
+  home_fouls INTEGER, away_fouls INTEGER,
+  home_corners INTEGER, away_corners INTEGER,
+  home_yellow_cards INTEGER, away_yellow_cards INTEGER,
+  home_red_cards INTEGER, away_red_cards INTEGER,
+  ht_home_goals INTEGER, ht_away_goals INTEGER,
+  ht_result TEXT, ft_result TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
-CREATE INDEX IF NOT EXISTS idx_match_stats_fixture ON match_stats(fixture_id);
-CREATE INDEX IF NOT EXISTS idx_match_stats_referee ON match_stats(referee_name);
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_match_stats_fixture ON match_stats(fixture_id); EXCEPTION WHEN duplicate_table THEN NULL; END $$;
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_match_stats_referee ON match_stats(referee_name); EXCEPTION WHEN duplicate_table THEN NULL; END $$;
 
--- team_referee_stats
 CREATE TABLE IF NOT EXISTS team_referee_stats (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   team_id UUID NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
   referee_name TEXT NOT NULL,
   matches_under_referee INTEGER DEFAULT 0,
-  wins INTEGER DEFAULT 0,
-  draws INTEGER DEFAULT 0,
-  losses INTEGER DEFAULT 0,
-  goals_scored INTEGER DEFAULT 0,
-  goals_conceded INTEGER DEFAULT 0,
-  yellow_cards INTEGER DEFAULT 0,
-  red_cards INTEGER DEFAULT 0,
+  wins INTEGER DEFAULT 0, draws INTEGER DEFAULT 0, losses INTEGER DEFAULT 0,
+  goals_scored INTEGER DEFAULT 0, goals_conceded INTEGER DEFAULT 0,
+  yellow_cards INTEGER DEFAULT 0, red_cards INTEGER DEFAULT 0,
   fouls_committed INTEGER DEFAULT 0,
   win_pct DECIMAL(5,4),
   referee_advantage DECIMAL(5,4),
@@ -95,34 +108,26 @@ CREATE TABLE IF NOT EXISTS team_referee_stats (
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(team_id, referee_name)
 );
-CREATE INDEX IF NOT EXISTS idx_team_referee_team ON team_referee_stats(team_id);
-CREATE INDEX IF NOT EXISTS idx_team_referee_name ON team_referee_stats(referee_name);
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_team_referee_team ON team_referee_stats(team_id); EXCEPTION WHEN duplicate_table THEN NULL; END $$;
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_team_referee_name ON team_referee_stats(referee_name); EXCEPTION WHEN duplicate_table THEN NULL; END $$;
 
--- referee_match_history
 CREATE TABLE IF NOT EXISTS referee_match_history (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   referee_name TEXT NOT NULL,
   fixture_id UUID REFERENCES fixtures(id),
   match_date DATE,
-  home_goals INTEGER,
-  away_goals INTEGER,
-  ft_result TEXT,
-  home_yellow INTEGER DEFAULT 0,
-  away_yellow INTEGER DEFAULT 0,
-  home_red INTEGER DEFAULT 0,
-  away_red INTEGER DEFAULT 0,
+  home_goals INTEGER, away_goals INTEGER, ft_result TEXT,
+  home_yellow INTEGER DEFAULT 0, away_yellow INTEGER DEFAULT 0,
+  home_red INTEGER DEFAULT 0, away_red INTEGER DEFAULT 0,
   total_cards INTEGER DEFAULT 0,
-  home_fouls INTEGER,
-  away_fouls INTEGER,
-  home_shots INTEGER,
-  away_shots INTEGER,
-  home_corners INTEGER,
-  away_corners INTEGER,
+  home_fouls INTEGER, away_fouls INTEGER,
+  home_shots INTEGER, away_shots INTEGER,
+  home_corners INTEGER, away_corners INTEGER,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
-CREATE INDEX IF NOT EXISTS idx_referee_history_name ON referee_match_history(referee_name);
-CREATE INDEX IF NOT EXISTS idx_referee_history_date ON referee_match_history(match_date);
-CREATE INDEX IF NOT EXISTS idx_referee_history_fixture ON referee_match_history(fixture_id);
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_referee_history_name ON referee_match_history(referee_name); EXCEPTION WHEN duplicate_table THEN NULL; END $$;
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_referee_history_date ON referee_match_history(match_date); EXCEPTION WHEN duplicate_table THEN NULL; END $$;
+DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_referee_history_fixture ON referee_match_history(fixture_id); EXCEPTION WHEN duplicate_table THEN NULL; END $$;
 
 -- Views
 CREATE OR REPLACE VIEW referee_analysis AS
@@ -140,315 +145,132 @@ WHERE tr.matches_under_referee >= 3 ORDER BY tr.referee_advantage DESC;
 
 
 -- ============================================
--- FIX 2: SECURITY HELPER FUNCTIONS
+-- FIX 3: ENABLE RLS ON ALL EXISTING TABLES
+--
+-- Each table is wrapped in a DO block so missing tables
+-- are silently skipped instead of causing errors.
 -- ============================================
 
--- Admin check (security definer to avoid RLS recursion)
-CREATE OR REPLACE FUNCTION public.is_admin()
-RETURNS boolean
-LANGUAGE sql SECURITY DEFINER STABLE
-AS $$
-  SELECT EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin');
+-- Helper: enable RLS + policies for a table (skips if table missing)
+CREATE OR REPLACE FUNCTION _enable_rls_for_table(
+  tbl text,
+  select_policy text,
+  select_using text,
+  manage_policy text DEFAULT NULL,
+  manage_using text DEFAULT NULL,
+  force_rls boolean DEFAULT false
+) RETURNS void LANGUAGE plpgsql AS $$
+BEGIN
+  -- Check table exists
+  IF NOT EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename = tbl) THEN
+    RAISE NOTICE '  Skipped % (table does not exist)', tbl;
+    RETURN;
+  END IF;
+
+  -- Enable RLS
+  EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', tbl);
+  IF force_rls THEN
+    EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY', tbl);
+  END IF;
+
+  -- Drop old policies that might conflict
+  EXECUTE format('DROP POLICY IF EXISTS %s ON %I', quote_literal(select_policy), tbl);
+  IF manage_policy IS NOT NULL THEN
+    EXECUTE format('DROP POLICY IF EXISTS %s ON %I', quote_literal(manage_policy), tbl);
+  END IF;
+
+  -- Create select policy
+  EXECUTE format('CREATE POLICY %s ON %I FOR SELECT USING (%s)', quote_literal(select_policy), tbl, select_using);
+
+  -- Create manage policy
+  IF manage_policy IS NOT NULL AND manage_using IS NOT NULL THEN
+    EXECUTE format('CREATE POLICY %s ON %I FOR ALL USING (%s)', quote_literal(manage_policy), tbl, manage_using);
+  END IF;
+
+  RAISE NOTICE '  Enabled RLS on %', tbl;
+END;
 $$;
 
--- Service role check (for cron/API endpoints)
-CREATE OR REPLACE FUNCTION public.is_service_role()
-RETURNS boolean
-LANGUAGE sql SECURITY DEFINER STABLE
-AS $$
-  SELECT coalesce(current_setting('request.jwt.claims', true)::json->>'role', '') = 'service_role';
-$$;
+-- Now apply RLS to every table that exists
 
--- RLS audit function
-CREATE OR REPLACE FUNCTION public.check_rls_status()
-RETURNS TABLE (table_name text, rls_enabled boolean, policy_count bigint)
-LANGUAGE sql SECURITY DEFINER
-AS $$
-  SELECT t.tablename::text, c.relrowsecurity,
-    (SELECT count(*) FROM pg_policy WHERE polrelid = c.oid)
-  FROM pg_tables t JOIN pg_class c ON c.relname = t.tablename
-  WHERE t.schemaname = 'public' ORDER BY t.tablename;
-$$;
+-- PUBLIC_READ tables: anyone can read, service role manages
+SELECT _enable_rls_for_table('leagues',             'Anyone can view leagues',          'true', 'Service role manages leagues',         'public.is_service_role()');
+SELECT _enable_rls_for_table('teams',               'Anyone can view teams',            'true', 'Service role manages teams',           'public.is_service_role()');
+SELECT _enable_rls_for_table('team_aliases',        'Anyone can view team aliases',     'true', 'Service role manages team aliases',    'public.is_service_role()');
+SELECT _enable_rls_for_table('fixtures',            'Anyone can view fixtures',         'true', 'Service role manages fixtures',        'public.is_service_role()');
+SELECT _enable_rls_for_table('odds_snapshots',      'Anyone can view odds',             'true', 'Service role manages odds',            'public.is_service_role()');
+SELECT _enable_rls_for_table('predictions',         'Anyone can view predictions',      'true', 'Service role manages predictions',     'public.is_service_role()', true);
+SELECT _enable_rls_for_table('recommendations',     'Anyone can view recommendations',  'true', 'Service role manages recommendations', 'public.is_service_role()');
+SELECT _enable_rls_for_table('model_performance',   'Anyone can view model performance','true', 'Service role manages model performance','public.is_service_role()');
+SELECT _enable_rls_for_table('model_performance_history','Anyone can view mph',          'true', 'Service role manages mph',             'public.is_service_role()');
+SELECT _enable_rls_for_table('model_predictions',   'Anyone can view model predictions','true', 'Service role manages model predictions','public.is_service_role()');
+SELECT _enable_rls_for_table('historical_matches',  'Anyone can view historical matches','true','Service role manages historical matches','public.is_service_role()');
+SELECT _enable_rls_for_table('ai_cache',            'Anyone can view ai cache',         'true', 'Service role manages ai cache',        'public.is_service_role()');
+SELECT _enable_rls_for_table('announcements',       'Anyone can view announcements',    'is_active = true', 'Service role manages announcements','public.is_service_role()');
+SELECT _enable_rls_for_table('players',             'Authenticated can view players',   'auth.role() = ''authenticated''', 'Service role manages players', 'public.is_service_role()');
 
+-- USER_SCOPED tables: users see own data, service role manages all
+SELECT _enable_rls_for_table('profiles',            'Users see own profile',            'auth.uid() = id', 'Service role manages profiles', 'public.is_service_role()', true);
+SELECT _enable_rls_for_table('user_bets',           'Users manage own bets',            'auth.uid() = user_id', 'Service role manages bets', 'public.is_service_role()', true);
+SELECT _enable_rls_for_table('accumulators',        'Users manage own accumulators',    'auth.uid() = user_id', 'Service role manages accumulators', 'public.is_service_role()', true);
+SELECT _enable_rls_for_table('rollover_chains',     'Users manage own chains',          'auth.uid() = user_id', 'Service role manages chains', 'public.is_service_role()');
+SELECT _enable_rls_for_table('notifications',       'Users see own notifications',      'auth.uid() = user_id', 'Service role manages notifications', 'public.is_service_role()');
 
--- ============================================
--- FIX 3: ENABLE RLS ON ALL TABLES
--- ============================================
+-- rollover_picks: users see via chain ownership
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename = 'rollover_picks') THEN
+    ALTER TABLE rollover_picks ENABLE ROW LEVEL SECURITY;
+    DROP POLICY IF EXISTS 'Users manage own picks' ON rollover_picks;
+    DROP POLICY IF EXISTS 'Service role manages picks' ON rollover_picks;
+    CREATE POLICY 'Users manage own picks' ON rollover_picks
+      FOR ALL USING (chain_id IN (SELECT id FROM rollover_chains WHERE user_id = auth.uid()));
+    CREATE POLICY 'Service role manages picks' ON rollover_picks
+      FOR ALL USING (public.is_service_role());
+    RAISE NOTICE '  Enabled RLS on rollover_picks';
+  END IF;
+END $$;
 
--- ── profiles ──
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE profiles FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users see own profile" ON profiles;
-DROP POLICY IF EXISTS "Users update own profile" ON profiles;
-DROP POLICY IF EXISTS "Admins see all profiles" ON profiles;
-DROP POLICY IF EXISTS "Service role full access profiles" ON profiles;
-CREATE POLICY "Users see own profile" ON profiles FOR SELECT USING (auth.uid() = id);
-CREATE POLICY "Users update own profile" ON profiles FOR UPDATE USING (auth.uid() = id);
-CREATE POLICY "Service role manages profiles" ON profiles FOR ALL USING (public.is_service_role());
+-- ADMIN_ONLY / SERVICE_INTERNAL tables: service role only
+SELECT _enable_rls_for_table('admin_activity_log',  'Service role manages activity log','public.is_service_role()', NULL, NULL, true);
+SELECT _enable_rls_for_table('scoring_config',      'Authenticated can view scoring config','auth.role() = ''authenticated''', 'Service role manages scoring config','public.is_service_role()');
+SELECT _enable_rls_for_table('match_features',      'Service role manages match features','public.is_service_role()', NULL, NULL, true);
+SELECT _enable_rls_for_table('training_log',        'Service role manages training log','public.is_service_role()', NULL, NULL, false);
+SELECT _enable_rls_for_table('model_learning_history','Service role manages learning history','public.is_service_role()', NULL, NULL, false);
+SELECT _enable_rls_for_table('crown_jewel_history', 'Service role manages crown jewel', 'public.is_service_role()', NULL, NULL, false);
+SELECT _enable_rls_for_table('model_versions',      'Service role manages model versions','public.is_service_role()', NULL, NULL, false);
+SELECT _enable_rls_for_table('feature_importance',  'Service role manages feature importance','public.is_service_role()', NULL, NULL, false);
+SELECT _enable_rls_for_table('elo_ratings',         'Service role manages elo ratings', 'public.is_service_role()', NULL, NULL, true);
+SELECT _enable_rls_for_table('prediction_history',  'Service role manages prediction history','public.is_service_role()', NULL, NULL, true);
+SELECT _enable_rls_for_table('referee_profiles',    'Authenticated can view referee profiles','auth.role() = ''authenticated''', 'Service role manages referee profiles','public.is_service_role()', true);
+SELECT _enable_rls_for_table('referee_match_history','Authenticated can view referee history','auth.role() = ''authenticated''', 'Service role manages referee history','public.is_service_role()', true);
+SELECT _enable_rls_for_table('team_referee_stats',  'Authenticated can view team referee stats','auth.role() = ''authenticated''', 'Service role manages team referee stats','public.is_service_role()', true);
+SELECT _enable_rls_for_table('match_stats',         'Authenticated can view match stats','auth.role() = ''authenticated''', 'Service role manages match stats','public.is_service_role()', true);
 
--- ── leagues ──
-ALTER TABLE leagues ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Anyone can view active leagues" ON leagues;
-DROP POLICY IF EXISTS "Admins can manage leagues" ON leagues;
-CREATE POLICY "Anyone can view leagues" ON leagues FOR SELECT USING (true);
-CREATE POLICY "Service role manages leagues" ON leagues FOR ALL USING (public.is_service_role());
+-- Tables that may or may not exist in your DB
+SELECT _enable_rls_for_table('player_appearances',     'Service role manages player appearances', 'public.is_service_role()');
+SELECT _enable_rls_for_table('player_impact',          'Service role manages player impact',      'public.is_service_role()');
+SELECT _enable_rls_for_table('player_availability',    'Service role manages player availability','public.is_service_role()');
+SELECT _enable_rls_for_table('player_impact_scores',   'Service role manages player impact scores','public.is_service_role()');
+SELECT _enable_rls_for_table('player_injury_data',     'Service role manages player injury data', 'public.is_service_role()');
+SELECT _enable_rls_for_table('referee_feature_profiles','Service role manages referee feature profiles','public.is_service_role()');
+SELECT _enable_rls_for_table('team_feature_profiles',  'Service role manages team feature profiles','public.is_service_role()');
+SELECT _enable_rls_for_table('team_match_stats',       'Service role manages team match stats',   'public.is_service_role()');
+SELECT _enable_rls_for_table('team_strengths',         'Service role manages team strengths',     'public.is_service_role()');
+SELECT _enable_rls_for_table('xg_features',            'Service role manages xg features',        'public.is_service_role()');
+SELECT _enable_rls_for_table('odds_feature_cache',     'Service role manages odds feature cache', 'public.is_service_role()');
+SELECT _enable_rls_for_table('league_model_params',    'Service role manages league model params', 'public.is_service_role()');
+SELECT _enable_rls_for_table('model_weight_config',    'Service role manages model weight config', 'public.is_service_role()');
+SELECT _enable_rls_for_table('agent_audit_log',        'Service role manages agent audit log',     'public.is_service_role()');
 
--- ── teams ──
-ALTER TABLE teams ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Anyone can view teams" ON teams;
-DROP POLICY IF EXISTS "Admins can manage teams" ON teams;
-CREATE POLICY "Anyone can view teams" ON teams FOR SELECT USING (true);
-CREATE POLICY "Service role manages teams" ON teams FOR ALL USING (public.is_service_role());
-
--- ── team_aliases ──
-ALTER TABLE team_aliases ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Anyone can view team aliases" ON team_aliases;
-DROP POLICY IF EXISTS "Admins can manage team aliases" ON team_aliases;
-CREATE POLICY "Anyone can view team aliases" ON team_aliases FOR SELECT USING (true);
-CREATE POLICY "Service role manages team aliases" ON team_aliases FOR ALL USING (public.is_service_role());
-
--- ── fixtures ──
-ALTER TABLE fixtures ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Anyone can view fixtures" ON fixtures;
-DROP POLICY IF EXISTS "Admins can manage fixtures" ON fixtures;
-CREATE POLICY "Anyone can view fixtures" ON fixtures FOR SELECT USING (true);
-CREATE POLICY "Service role manages fixtures" ON fixtures FOR ALL USING (public.is_service_role());
-
--- ── odds_snapshots ──
-ALTER TABLE odds_snapshots ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Anyone can view odds" ON odds_snapshots;
-DROP POLICY IF EXISTS "Admins can manage odds" ON odds_snapshots;
-CREATE POLICY "Anyone can view odds" ON odds_snapshots FOR SELECT USING (true);
-CREATE POLICY "Service role manages odds" ON odds_snapshots FOR ALL USING (public.is_service_role());
-
--- ── predictions ──
-ALTER TABLE predictions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE predictions FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Anyone can view predictions" ON predictions;
-DROP POLICY IF EXISTS "Admins can manage predictions" ON predictions;
-CREATE POLICY "Anyone can view predictions" ON predictions FOR SELECT USING (true);
-CREATE POLICY "Service role manages predictions" ON predictions FOR ALL USING (public.is_service_role());
-
--- ── recommendations ──
-ALTER TABLE recommendations ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Anyone can view recommendations" ON recommendations;
-DROP POLICY IF EXISTS "Admins can manage recommendations" ON recommendations;
-CREATE POLICY "Anyone can view recommendations" ON recommendations FOR SELECT USING (true);
-CREATE POLICY "Service role manages recommendations" ON recommendations FOR ALL USING (public.is_service_role());
-
--- ── user_bets ──
-ALTER TABLE user_bets ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_bets FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users see own bets" ON user_bets;
-DROP POLICY IF EXISTS "Admins see all bets" ON user_bets;
-CREATE POLICY "Users manage own bets" ON user_bets FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Service role manages bets" ON user_bets FOR ALL USING (public.is_service_role());
-
--- ── accumulators ──
-ALTER TABLE accumulators ENABLE ROW LEVEL SECURITY;
-ALTER TABLE accumulators FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users see own accumulators" ON accumulators;
-DROP POLICY IF EXISTS "Admins see all accumulators" ON accumulators;
-CREATE POLICY "Users manage own accumulators" ON accumulators FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Service role manages accumulators" ON accumulators FOR ALL USING (public.is_service_role());
-
--- ── rollover_chains ──
-ALTER TABLE rollover_chains ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users see own chains" ON rollover_chains;
-DROP POLICY IF EXISTS "Admins see all chains" ON rollover_chains;
-CREATE POLICY "Users manage own chains" ON rollover_chains FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Service role manages chains" ON rollover_chains FOR ALL USING (public.is_service_role());
-
--- ── rollover_picks ──
-ALTER TABLE rollover_picks ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users see own picks" ON rollover_picks;
-DROP POLICY IF EXISTS "Admins see all picks" ON rollover_picks;
-CREATE POLICY "Users manage own picks" ON rollover_picks
-  FOR ALL USING (chain_id IN (SELECT id FROM rollover_chains WHERE user_id = auth.uid()));
-CREATE POLICY "Service role manages picks" ON rollover_picks FOR ALL USING (public.is_service_role());
-
--- ── model_performance ──
-ALTER TABLE model_performance ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Anyone can view model performance" ON model_performance;
-DROP POLICY IF EXISTS "Admins can manage model performance" ON model_performance;
-CREATE POLICY "Anyone can view model performance" ON model_performance FOR SELECT USING (true);
-CREATE POLICY "Service role manages model performance" ON model_performance FOR ALL USING (public.is_service_role());
-
--- ── ai_cache ──
-ALTER TABLE ai_cache ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Anyone can view ai cache" ON ai_cache;
-DROP POLICY IF EXISTS "System can manage ai cache" ON ai_cache;
-CREATE POLICY "Anyone can view ai cache" ON ai_cache FOR SELECT USING (true);
-CREATE POLICY "Service role manages ai cache" ON ai_cache FOR ALL USING (public.is_service_role());
-
--- ── notifications ──
-ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users see own notifications" ON notifications;
-DROP POLICY IF EXISTS "System can insert notifications" ON notifications;
-CREATE POLICY "Users see own notifications" ON notifications FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users update own notifications" ON notifications FOR UPDATE USING (auth.uid() = user_id);
-CREATE POLICY "Service role manages notifications" ON notifications FOR ALL USING (public.is_service_role());
-
--- ── scoring_config ──
-ALTER TABLE scoring_config ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Anyone can view scoring config" ON scoring_config;
-DROP POLICY IF EXISTS "Admins can manage scoring config" ON scoring_config;
-CREATE POLICY "Authenticated can view scoring config" ON scoring_config FOR SELECT USING (auth.role() = 'authenticated');
-CREATE POLICY "Service role manages scoring config" ON scoring_config FOR ALL USING (public.is_service_role());
-
--- ── announcements ──
-ALTER TABLE announcements ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Anyone can view active announcements" ON announcements;
-DROP POLICY IF EXISTS "Admins can manage announcements" ON announcements;
-CREATE POLICY "Anyone can view active announcements" ON announcements FOR SELECT USING (is_active = true);
-CREATE POLICY "Service role manages announcements" ON announcements FOR ALL USING (public.is_service_role());
-
--- ── admin_activity_log ──
-ALTER TABLE admin_activity_log ENABLE ROW LEVEL SECURITY;
-ALTER TABLE admin_activity_log FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Admins can view activity log" ON admin_activity_log;
-DROP POLICY IF EXISTS "Admins can insert activity log" ON admin_activity_log;
-CREATE POLICY "Service role manages activity log" ON admin_activity_log FOR ALL USING (public.is_service_role());
-
--- ── historical_matches ──
-ALTER TABLE historical_matches ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Anyone can view historical matches" ON historical_matches FOR SELECT USING (true);
-CREATE POLICY "Service role manages historical matches" ON historical_matches FOR ALL USING (public.is_service_role());
-
--- ── match_features ──
-ALTER TABLE match_features ENABLE ROW LEVEL SECURITY;
-ALTER TABLE match_features FORCE ROW LEVEL SECURITY;
-CREATE POLICY "Service role manages match features" ON match_features FOR ALL USING (public.is_service_role());
-
--- ── model_predictions ──
-ALTER TABLE model_predictions ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Anyone can view model predictions" ON model_predictions FOR SELECT USING (true);
-CREATE POLICY "Service role manages model predictions" ON model_predictions FOR ALL USING (public.is_service_role());
-
--- ── model_performance_history ──
-ALTER TABLE model_performance_history ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Anyone can view model performance history" ON model_performance_history FOR SELECT USING (true);
-CREATE POLICY "Service role manages model performance history" ON model_performance_history FOR ALL USING (public.is_service_role());
-
--- ── training_log ──
-ALTER TABLE training_log ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Service role manages training log" ON training_log FOR ALL USING (public.is_service_role());
-
--- ── model_learning_history ──
-ALTER TABLE model_learning_history ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Service role manages learning history" ON model_learning_history FOR ALL USING (public.is_service_role());
-
--- ── crown_jewel_history ──
-ALTER TABLE crown_jewel_history ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Service role manages crown jewel" ON crown_jewel_history FOR ALL USING (public.is_service_role());
-
--- ── model_versions ──
-ALTER TABLE model_versions ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Service role manages model versions" ON model_versions FOR ALL USING (public.is_service_role());
-
--- ── feature_importance ──
-ALTER TABLE feature_importance ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Service role manages feature importance" ON feature_importance FOR ALL USING (public.is_service_role());
-
--- ── players ──
-ALTER TABLE players ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Authenticated can view players" ON players FOR SELECT USING (auth.role() = 'authenticated');
-CREATE POLICY "Service role manages players" ON players FOR ALL USING (public.is_service_role());
-
--- ── player_appearances ──
-ALTER TABLE player_appearances ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Service role manages player appearances" ON player_appearances FOR ALL USING (public.is_service_role());
-
--- ── player_impact ──
-ALTER TABLE player_impact ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Service role manages player impact" ON player_impact FOR ALL USING (public.is_service_role());
-
--- ── player_availability ──
-ALTER TABLE player_availability ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Service role manages player availability" ON player_availability FOR ALL USING (public.is_service_role());
-
--- ── player_impact_scores ──
-ALTER TABLE player_impact_scores ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Service role manages player impact scores" ON player_impact_scores FOR ALL USING (public.is_service_role());
-
--- ── player_injury_data ──
-ALTER TABLE player_injury_data ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Service role manages player injury data" ON player_injury_data FOR ALL USING (public.is_service_role());
-
--- ── elo_ratings ──
-ALTER TABLE elo_ratings ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Service role manages elo ratings" ON elo_ratings FOR ALL USING (public.is_service_role());
-
--- ── prediction_history ──
-ALTER TABLE prediction_history ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Service role manages prediction history" ON prediction_history FOR ALL USING (public.is_service_role());
-
--- ── referee_profiles ──
-ALTER TABLE referee_profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE referee_profiles FORCE ROW LEVEL SECURITY;
-CREATE POLICY "Authenticated can view referee profiles" ON referee_profiles FOR SELECT USING (auth.role() = 'authenticated');
-CREATE POLICY "Service role manages referee profiles" ON referee_profiles FOR ALL USING (public.is_service_role());
-
--- ── referee_match_history ──
-ALTER TABLE referee_match_history ENABLE ROW LEVEL SECURITY;
-ALTER TABLE referee_match_history FORCE ROW LEVEL SECURITY;
-CREATE POLICY "Authenticated can view referee history" ON referee_match_history FOR SELECT USING (auth.role() = 'authenticated');
-CREATE POLICY "Service role manages referee history" ON referee_match_history FOR ALL USING (public.is_service_role());
-
--- ── referee_feature_profiles ──
-ALTER TABLE referee_feature_profiles ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Service role manages referee feature profiles" ON referee_feature_profiles FOR ALL USING (public.is_service_role());
-
--- ── team_feature_profiles ──
-ALTER TABLE team_feature_profiles ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Service role manages team feature profiles" ON team_feature_profiles FOR ALL USING (public.is_service_role());
-
--- ── team_match_stats ──
-ALTER TABLE team_match_stats ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Service role manages team match stats" ON team_match_stats FOR ALL USING (public.is_service_role());
-
--- ── team_referee_stats ──
-ALTER TABLE team_referee_stats ENABLE ROW LEVEL SECURITY;
-ALTER TABLE team_referee_stats FORCE ROW LEVEL SECURITY;
-CREATE POLICY "Authenticated can view team referee stats" ON team_referee_stats FOR SELECT USING (auth.role() = 'authenticated');
-CREATE POLICY "Service role manages team referee stats" ON team_referee_stats FOR ALL USING (public.is_service_role());
-
--- ── team_strengths ──
-ALTER TABLE team_strengths ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Service role manages team strengths" ON team_strengths FOR ALL USING (public.is_service_role());
-
--- ── xg_features ──
-ALTER TABLE xg_features ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Service role manages xg features" ON xg_features FOR ALL USING (public.is_service_role());
-
--- ── odds_feature_cache ──
-ALTER TABLE odds_feature_cache ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Service role manages odds feature cache" ON odds_feature_cache FOR ALL USING (public.is_service_role());
-
--- ── league_model_params ──
-ALTER TABLE league_model_params ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Service role manages league model params" ON league_model_params FOR ALL USING (public.is_service_role());
-
--- ── model_weight_config ──
-ALTER TABLE model_weight_config ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Service role manages model weight config" ON model_weight_config FOR ALL USING (public.is_service_role());
-
--- ── match_stats ──
-ALTER TABLE match_stats ENABLE ROW LEVEL SECURITY;
-ALTER TABLE match_stats FORCE ROW LEVEL SECURITY;
-CREATE POLICY "Authenticated can view match stats" ON match_stats FOR SELECT USING (auth.role() = 'authenticated');
-CREATE POLICY "Service role manages match stats" ON match_stats FOR ALL USING (public.is_service_role());
-
--- ── agent_audit_log ──
-ALTER TABLE agent_audit_log ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Service role manages agent audit log" ON agent_audit_log FOR ALL USING (public.is_service_role());
+-- Cleanup helper function
+DROP FUNCTION IF EXISTS _enable_rls_for_table(text,text,text,text,text,boolean);
 
 
 -- ============================================
 -- FIX 4: REVOKE BROAD GRANTS, RE-GRANT MINIMUM
 -- ============================================
 
--- Revoke everything from anon and authenticated
+-- Revoke everything first
 REVOKE ALL ON ALL TABLES IN SCHEMA public FROM anon;
 REVOKE ALL ON ALL TABLES IN SCHEMA public FROM authenticated;
 
@@ -495,41 +317,16 @@ GRANT SELECT, INSERT ON referee_match_history TO authenticated;
 
 
 -- ============================================
--- TRIGGERS (for new tables)
--- ============================================
-
-DO $$ BEGIN
-  CREATE TRIGGER update_referee_profiles_updated_at
-    BEFORE UPDATE ON referee_profiles
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
-EXCEPTION WHEN duplicate_table THEN NULL;
-END $$;
-
-DO $$ BEGIN
-  CREATE TRIGGER update_match_stats_updated_at
-    BEFORE UPDATE ON match_stats
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
-EXCEPTION WHEN duplicate_table THEN NULL;
-END $$;
-
-DO $$ BEGIN
-  CREATE TRIGGER update_team_referee_stats_updated_at
-    BEFORE UPDATE ON team_referee_stats
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
-EXCEPTION WHEN duplicate_table THEN NULL;
-END $$;
-
-
--- ============================================
 -- DONE
 -- ============================================
 
 DO $$ BEGIN
+  RAISE NOTICE '';
   RAISE NOTICE '=== ODDLY CRITICAL FIXES APPLIED ===';
   RAISE NOTICE '  1. Created: referee_profiles, match_stats, team_referee_stats, referee_match_history';
-  RAISE NOTICE '  2. Enabled RLS on ALL tables with proper policies';
-  RAISE NOTICE '  3. Revoked broad grants and re-granted minimum permissions';
-  RAISE NOTICE '  4. Created is_admin(), is_service_role(), check_rls_status() functions';
+  RAISE NOTICE '  2. Enabled RLS on all existing tables (missing tables silently skipped)';
+  RAISE NOTICE '  3. Revoked broad grants, re-granted minimum permissions';
+  RAISE NOTICE '  4. Created is_admin(), is_service_role(), check_rls_status()';
   RAISE NOTICE '';
-  RAISE NOTICE 'Verify with: SELECT * FROM check_rls_status();';
+  RAISE NOTICE 'Verify: SELECT * FROM check_rls_status();';
 END $$;
