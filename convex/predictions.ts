@@ -436,10 +436,7 @@ export const bulkInsertRefereeMatches = mutation({
     let ok = 0, fail = 0;
     for (const m of args.matches) {
       try {
-        const clean = Object.fromEntries(
-          Object.entries(m).map(([k, v]) => [k, v === null ? undefined : v])
-        );
-        await ctx.db.insert("refereeMatches", clean);
+        await ctx.db.insert("refereeMatches", m);
         ok++;
       } catch { fail++; }
     }
@@ -463,10 +460,7 @@ export const bulkInsertRefFeatureProfiles = mutation({
     let ok = 0, fail = 0;
     for (const p of args.profiles) {
       try {
-        const clean = Object.fromEntries(
-          Object.entries(p).map(([k, v]) => [k, v === null ? undefined : v])
-        );
-        await ctx.db.insert("refereeFeatureProfiles", clean);
+        await ctx.db.insert("refereeFeatureProfiles", p);
         ok++;
       } catch { fail++; }
     }
