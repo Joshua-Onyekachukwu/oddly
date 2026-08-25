@@ -25,12 +25,11 @@ interface RecentActivity {
 
 const QUICK_LINKS = [
   { label: "Pipeline", href: "/admin/pipeline", icon: "ri-plug-line", desc: "Data sync & API usage" },
+  { label: "Cron Jobs", href: "/admin/crons", icon: "ri-timer-line", desc: "Execution status & alerts" },
   { label: "One Game Pick", href: "/admin/picks", icon: "ri-crosshair-2-line", desc: "Today's pick + CLV" },
   { label: "AI Monitor", href: "/admin/ai-monitor", icon: "ri-robot-2-line", desc: "NVIDIA API & model stats" },
   { label: "Model Health", href: "/admin/model-health", icon: "ri-heart-pulse-line", desc: "Accuracy & calibration" },
   { label: "Users", href: "/admin/users", icon: "ri-user-settings-line", desc: "Roles & subscriptions" },
-  { label: "Announcements", href: "/admin/announcements", icon: "ri-megaphone-line", desc: "Push notifications" },
-  { label: "Scoring", href: "/admin/scoring", icon: "ri-settings-5-line", desc: "Score weights & thresholds" },
   { label: "Security", href: "/admin/security", icon: "ri-shield-check-line", desc: "Auth, RLS & rate limits" },
 ];
 
