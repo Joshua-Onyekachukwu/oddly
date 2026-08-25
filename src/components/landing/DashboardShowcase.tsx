@@ -145,7 +145,7 @@ function DashboardPreview({ stats }: { stats?: LandingStats }) {
               <div className="bg-white/[0.02] rounded-[12px] border border-white/5 p-[14px]">
                 <span className="text-[10px] text-white/30 uppercase tracking-wider block mb-[10px]">Model Accuracy</span>
                 <div className="flex items-end gap-[3px] h-[48px]">
-                  {[65, 72, 68, 81, 77, 85, 91, 88, 93, 90, 87, 91].map((v, i) => (
+                  {(stats?.weeklyAccuracy || [65, 72, 68, 81, 77, 85, 91, 88, 93, 90, 87, 91]).map((v: number, i: number) => (
                     <div key={i} className="flex-1 flex flex-col items-center justify-end">
                       <div
                         className="w-full rounded-[2px] transition-all duration-500"
@@ -160,18 +160,18 @@ function DashboardPreview({ stats }: { stats?: LandingStats }) {
                 </div>
                 <div className="flex items-center justify-between mt-[8px]">
                   <span className="text-[9px] text-white/20">12 week trend</span>
-                  <span className="text-[10px] text-[#22c55e] font-mono-data font-semibold">91.2%</span>
+                  <span className="text-[10px] text-[#22c55e] font-mono-data font-semibold">{stats?.avgAccuracy ? `${stats.avgAccuracy}%` : "—"}</span>
                 </div>
               </div>
 
               {/* Quick stats */}
               <div className="grid grid-cols-2 gap-[8px]">
                 <div className="bg-white/[0.02] rounded-[10px] border border-white/5 p-[10px] text-center">
-                  <span className="text-[16px] font-bold text-[#BFFF00] font-mono-data block">7</span>
+                  <span className="text-[16px] font-bold text-[#BFFF00] font-mono-data block">{stats?.activeModels || 3}</span>
                   <span className="text-[9px] text-white/30">Active Models</span>
                 </div>
                 <div className="bg-white/[0.02] rounded-[10px] border border-white/5 p-[10px] text-center">
-                  <span className="text-[16px] font-bold text-white font-mono-data block">{stats?.totalLeagues ? `${stats.totalLeagues}+` : "360+"}</span>
+                  <span className="text-[16px] font-bold text-white font-mono-data block">{stats?.totalLeagues ? `${stats.totalLeagues}+` : "—"}</span>
                   <span className="text-[9px] text-white/30">Leagues</span>
                 </div>
               </div>

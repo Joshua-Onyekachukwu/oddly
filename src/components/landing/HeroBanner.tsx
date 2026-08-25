@@ -74,15 +74,15 @@ const HeroBanner: React.FC<HeroBannerProps> = ({ crownJewel, stats: initialStats
 
   // Use live data or fallbacks
   const cj = crownJewel;
-  const homeTeam = cj?.homeTeam || "Arsenal";
-  const awayTeam = cj?.awayTeam || "Chelsea";
-  const market = cj?.market?.replace(/_/g, " ") || "Over 2.5 Goals";
-  const selection = cj?.selection || "over";
-  const modelProb = cj ? Math.round(cj.modelProbability * 100) : 93;
-  const impliedProb = cj ? Math.round(cj.impliedProbability * 100) : 71;
-  const edge = cj ? Math.round(cj.edge * 100) : 22;
+  const homeTeam = cj?.homeTeam || "—";
+  const awayTeam = cj?.awayTeam || "—";
+  const market = cj?.market?.replace(/_/g, " ") || "—";
+  const selection = cj?.selection || "—";
+  const modelProb = cj ? Math.round(cj.modelProbability * 100) : 0;
+  const impliedProb = cj ? Math.round(cj.impliedProbability * 100) : 0;
+  const edge = cj ? Math.round(cj.edge * 100) : 0;
   const models = cj?.modelAgreement || stats.activeModels;
-  const kickoff = cj?.kickoff ? formatKickoff(cj.kickoff) : "Today 20:00";
+  const kickoff = cj?.kickoff ? formatKickoff(cj.kickoff) : "—";
   const hasCrownJewel = !!cj;
 
   return (

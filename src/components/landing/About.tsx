@@ -96,7 +96,7 @@ const About: React.FC<AboutProps> = ({ stats }) => {
             </p>
 
             <div className="space-y-[12px]">
-              {getAboutCards(stats?.totalLeagues ? `${stats.totalLeagues}+` : "360+").map((card, index) => (
+              {getAboutCards(stats?.totalLeagues ? `${stats.totalLeagues}+` : "—").map((card, index) => (
                 <div
                   key={index}
                   {...getScrollRevealClasses(isVisible, 200 + index * 80)}
