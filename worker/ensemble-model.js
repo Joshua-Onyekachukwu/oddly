@@ -352,6 +352,37 @@ const REG_WEIGHTS = {
   return sigmoid(z);
 }
 
+// ─── Referee Feature Lookup ──────────────────────────────────────────────
+function getRefereeFeatures(homeTeam, awayTeam) {
+  const result = { hasProfile: false, referee: null, homeBias: 0, avgGoals: 2.6, yellowPerMatch: 3.5, homeTeamRef: { matches: 0, winRate: 0.46 }, awayTeamRef: { matches: 0, winRate: 0.30 } };
+  try {
+    const refProfilesPath = path.join(__dirname, '..', 'data', 'referee-features-built.json');
+    if (!fs.existsSync(refProfilesPath)) return result;
+    const refData = JSON.parse(fs.readFileSync(refProfilesPath, 'utf8'));
+    const profiles = refData.profiles || refData;
+    if (!profiles || typeof profiles !== 'object') return result;
+    // Find best matching profile for either team
+    for (const [name, profile] of Object.entries(profiles)) {
+      if (typeof profile !== 'object' || !profile) continue;
+      // Check if this referee has history with home or away team
+      const teamHistory = profile.teamHistory || {};
+      const hHist = teamHistory[homeTeam];
+      const aHist = teamHistory[awayTeam];
+      if (hHist || aHist) {
+        result.hasProfile = true;
+        result.referee = name;
+        result.homeBias = profile.homeBias || 0;
+        result.avgGoals = profile.avgGoals || 2.6;
+        result.yellowPerMatch = profile.yellowPerMatch || 3.5;
+        if (hHist) result.homeTeamRef = { matches: hHist.matches || 0, winRate: hHist.winRate || 0.46 };
+        if (aHist) result.awayTeamRef = { matches: aHist.matches || 0, winRate: aHist.winRate || 0.30 };
+        break;
+      }
+    }
+  } catch {}
+  return result;
+}
+
 // ─── Ensemble Combiner ──────────────────────────────────────────────────
 // Weights learned from calibration (Poisson best for totals, Elo best for 1X2)
 const ENSEMBLE_WEIGHTS = {
