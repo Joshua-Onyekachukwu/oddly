@@ -113,16 +113,14 @@ function Badge({
 
 // ─── Migration Status Data ──────────────────────────────────────
 
+// Slim schema — only real-time tables remain in Convex
 const MIGRATION_TABLES = [
-  { name: "Teams", convexKey: "teams", supabaseTable: "teams", icon: "ri-team-line" },
-  { name: "Fixtures", convexKey: "fixtures", supabaseTable: "fixtures", icon: "ri-calendar-line" },
-  { name: "Predictions", convexKey: "predictions", supabaseTable: "predictions", icon: "ri-file-list-3-line" },
-  { name: "Odds Snapshots", convexKey: "odds", supabaseTable: "odds_snapshots", icon: "ri-money-dollar-circle-line" },
   { name: "Leagues", convexKey: "leagues", supabaseTable: "leagues", icon: "ri-trophy-line" },
-  { name: "xG Features", convexKey: "xgFeatures", supabaseTable: null, icon: "ri-line-chart-line" },
-  { name: "Referee Profiles", convexKey: "referees", supabaseTable: "referee_profiles", icon: "ri-user-star-line" },
-  { name: "Referee Matches", convexKey: "refereeMatches", supabaseTable: null, icon: "ri-whistle-line" },
-  { name: "Ref Feature Profiles", convexKey: "refFeatureProfiles", supabaseTable: null, icon: "ri-user-settings-line" },
+  { name: "Teams", convexKey: "teams", supabaseTable: "teams", icon: "ri-team-line" },
+  { name: "Live Pick", convexKey: "livePick", supabaseTable: null, icon: "ri-crosshair-2-line" },
+  { name: "Value Picks", convexKey: "valuePicks", supabaseTable: null, icon: "ri-money-dollar-circle-line" },
+  { name: "Settlement Feed", convexKey: "settlementFeed", supabaseTable: "predictions", icon: "ri-file-list-3-line" },
+  { name: "Live Stats", convexKey: "liveStats", supabaseTable: null, icon: "ri-pulse-line" },
 ];
 
 // ─── Main Dashboard ───────────────────────────────────────────
@@ -165,7 +163,7 @@ export default function ConvexHealthPage() {
 
   const isLoading = liveStats === undefined || convexStats === undefined;
 
-  // Parse Convex stats (some are strings like "~599K settled")
+  // Parse Convex stats (handles number or string values)
   function parseConvexCount(val: string | number | undefined): number {
     if (typeof val === "number") return val;
     if (typeof val === "string") {
@@ -210,7 +208,7 @@ export default function ConvexHealthPage() {
             <Badge variant="success">LIVE</Badge>
           </div>
           <p className="text-[13px] text-gray-500">
-            Hybrid architecture: Supabase (hot) + Convex (cold/realtime). Migration status and data comparison.
+            Convex (real-time only) — 7 lightweight tables. Heavy data (599K predictions, 15K odds) lives in Supabase.
           </p>
         </div>
         <div className="flex items-center gap-[8px]">
@@ -245,7 +243,7 @@ export default function ConvexHealthPage() {
           value={isLoading ? "—" : totalConvex.toLocaleString()}
           icon="ri-database-2-line"
           color="bg-purple-50 text-purple-600"
-          subtitle="Total across all tables"
+          subtitle="7 lightweight tables"
         />
         <StatCard
           label="Teams"
@@ -261,17 +259,18 @@ export default function ConvexHealthPage() {
           color="bg-amber-50 text-amber-600"
         />
         <StatCard
-          label="xG Profiles"
-          value={isLoading ? "—" : getConvexCount("xgFeatures").toLocaleString()}
-          icon="ri-line-chart-line"
+          label="Live Pick"
+          value={isLoading ? "—" : getConvexCount("livePick")}
+          icon="ri-crosshair-2-line"
           color="bg-green-50 text-green-600"
+          subtitle="Current pick of the day"
         />
         <StatCard
-          label="Referee Matches"
-          value={isLoading ? "—" : getConvexCount("refereeMatches").toLocaleString()}
-          icon="ri-whistle-line"
+          label="Value Picks"
+          value={isLoading ? "—" : getConvexCount("valuePicks")}
+          icon="ri-money-dollar-circle-line"
           color="bg-cyan-50 text-cyan-600"
-          subtitle="Match history"
+          subtitle="Live value bets"
         />
       </div>
 
@@ -646,16 +645,16 @@ export default function ConvexHealthPage() {
         <div className="p-[16px]">
           <pre className="text-[10px] text-gray-500 font-mono bg-gray-50 p-[16px] rounded-[10px] overflow-x-auto leading-[1.6]">
 {`┌─────────────────────────────────┐     ┌─────────────────────────────────┐
-│       SUPABASE (Hot)            │     │       CONVEX (Cold/Realtime)    │
+│       SUPABASE (Primary)        │     │       CONVEX (Real-time Only)   │
 ├─────────────────────────────────┤     ├─────────────────────────────────┤
-│ ✓ Auth & User Sessions          │     │ ✓ ${String(getConvexCount("teams")).padStart(6)} Teams                    │
-│ ✓ Active Predictions (Live)     │     │ ✓ ${String(getConvexCount("leagues")).padStart(6)} Leagues                   │
-│ ✓ Odds Snapshots (Real-time)    │     │ ✓ ${String(getConvexCount("predictions")).padStart(6)}+ Predictions (Historical) │
-│ ✓ User Accumulators             │     │ ✓ ${String(getConvexCount("odds")).padStart(6)} Odds Snapshots            │
-│ ✓ Profile & Subscription        │     │ ✓ Live Pick (real-time)              │
-│ ✓ ${String(getSupabaseCount("fixtures")).padStart(6)} Fixtures              │     │ ✓ Value Picks (real-time)             │
-│                                 │     │ ✓ Settlement Feed (last 500)          │
-│                                 │     │ ✓ Live Stats Counters                 │
+│ ✓ ${String(getSupabaseCount("fixtures") || "~14K").padStart(6)} Fixtures              │     │ ✓ ${String(getConvexCount("teams")).padStart(6)} Teams (reference)          │
+│ ✓ ~599K Predictions (Historical)│     │ ✓ ${String(getConvexCount("leagues")).padStart(6)} Leagues (reference)        │
+│ ✓ ~15K Odds Snapshots           │     │ ✓ Live Pick (real-time)              │
+│ ✓ Auth & User Sessions          │     │ ✓ Value Picks (real-time)             │
+│ ✓ User Accumulators             │     │ ✓ Settlement Feed (last 500)          │
+│ ✓ xG, Referee, Injury Data      │     │ ✓ Live Stats Counters                 │
+│ ✓ Model Performance History     │     │                                       │
+│ ✓ Team/Player Features          │     │   7 tables, ~1.5K rows total          │
 └──────────────┬──────────────────┘     └──────────────┬──────────────────┘
                │                                        │
                └────────────┬───────────────────────────┘
@@ -663,12 +662,13 @@ export default function ConvexHealthPage() {
                   ┌─────────▼─────────┐
                   │   VERCEL (Edge)    │
                   │  Next.js App Router │
-                  │  + Cron Jobs        │
+                  │  5 Cron Jobs        │
                   └────────────────────┘
 
-  Real-time Subscriptions: ✓ Active (ConvexReactClient → limitless-mole-387.convex.cloud)
-  Pipeline: Ensemble v5.1 → CLV Tracker → One-Game Pick Engine
-  Analytics: Supabase API (/api/v1/analytics) → calibration, markets, daily stats`}
+  Real-time: ConvexReactClient → limitless-mole-387.convex.cloud
+  Pipeline: Ensemble v2.0 → CLV Tracker → One-Game Pick Engine
+  Analytics: /api/v1/analytics (Supabase) → calibration, markets, daily stats
+  Cron: pipeline(30m) • settle(1h) • predict(2h) • sync(6h) • daily(6am)`}
           </pre>
         </div>
       </Card>
