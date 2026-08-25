@@ -31,6 +31,7 @@ const QUICK_LINKS = [
   { label: "Users", href: "/admin/users", icon: "ri-user-settings-line", desc: "Roles & subscriptions" },
   { label: "Announcements", href: "/admin/announcements", icon: "ri-megaphone-line", desc: "Push notifications" },
   { label: "Scoring", href: "/admin/scoring", icon: "ri-settings-5-line", desc: "Score weights & thresholds" },
+  { label: "Security", href: "/admin/security", icon: "ri-shield-check-line", desc: "Auth, RLS & rate limits" },
 ];
 
 export default function AdminDashboardPage() {

@@ -50,6 +50,7 @@ const ADMIN_NAV_GROUPS: NavGroup[] = [
   {
     label: "System",
     items: [
+      { label: "Security", href: "/admin/security", icon: "ri-shield-check-line" },
       { label: "System Health", href: "/admin/system-health", icon: "ri-heart-pulse-line" },
       { label: "Database Health", href: "/admin/db-health", icon: "ri-database-2-line" },
       { label: "Convex Health", href: "/admin/convex-health", icon: "ri-cloud-line" },
