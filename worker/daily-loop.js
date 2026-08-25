@@ -54,53 +54,9 @@ async function getConfig(key) {
 
 async function setConfig(key, value) {
   await supabase.from("scoring_config").upsert({ config_key: key, config_value: value, updated_at: now() });
-}
-
-// ─── Model Implementations ──────────────────────────────────────────────────
-
-class EloModel {
-  constructor() { this.ratings = {}; }
-  get(t) { return this.ratings[t] || 1500; }
-  predict(home, away) {
-    const h = this.get(home) + 65;
-    const a = this.get(away);
-    return 1 / (1 + Math.pow(10, (a - h) / 400));
-  }
-  update(home, away, hg, ag) {
-    const h = this.get(home) + 65;
-    const a = this.get(away);
-    const eH = 1 / (1 + Math.pow(10, (a - h) / 400));
-    const actual = hg > ag ? 1 : hg < ag ? 0 : 0.5;
-    this.ratings[home] = this.get(home) + 32 * (actual - eH);
-    this.ratings[away] = this.get(away) + 32 * ((1 - actual) - (1 - eH));
-  }
-}
-
-class FormTracker {
-  constructor() { this.history = {}; }
-  record(team, result, goals, against) {
-    if (!this.history[team]) this.history[team] = [];
-    this.history[team].push({ result, goals, against });
-    if (this.history[team].length > 30) this.history[team].shift();
-  }
-  getForm(team, n = 5) {
-    const last = (this.history[team] || []).slice(-n);
-    if (last.length === 0) return { ppg: 1.5, winRate: 0.4, streak: 0, avgGoals: 1.3, avgConceded: 1.2 };
-    const ppg = last.reduce((s, r) => s + (r.result === "W" ? 3 : r.result === "D" ? 1 : 0), 0) / last.length;
-    const winRate = last.filter(r => r.result === "W").length / last.length;
-    let streak = 0;
-    for (let i = last.length - 1; i >= 0; i--) {
-      if (last[i].result === "W") { if (streak >= 0) streak++; else break; }
-      else if (last[i].result === "L") { if (streak <= 0) streak--; else break; }
-      else break;
-    }
-    return {
-      ppg, winRate, streak,
-      avgGoals: last.reduce((s, r) => s + r.goals, 0) / last.length,
-      avgConceded: last.reduce((s, r) => s + r.against, 0) / last.length,
-    };
-  }
-}
+}// ─── Model: Ensemble v5.1 (imported from ensemble-model.js) ──────────────
+// Elo, Poisson, Regression, xG, Referee adjustments, Isotonic calibration
+// All model logic lives in worker/ensemble-model.js
 
 // ─── Feature Extraction ─────────────────────────────────────────────────────
 
@@ -220,31 +176,38 @@ async function stepScan() {
   return fixtures;
 }
 
-// ─── Step 2: PREDICT ───────────────────────────────────────────────────────
+// ─── Step 2: PREDICT (Ensemble v5.1) ──────────────────────────────────────
 
 async function stepPredict(fixtures) {
-  console.log("\n🧠 Step 2: GENERATING predictions...");
+  console.log("\n🧠 Step 2: GENERATING predictions (Ensemble v5.1)...");
 
-  // Load models
-  const elo = new EloModel();
-  const form = new FormTracker();
+  // Import ensemble model
+  const ensemble = require("./ensemble-model");
+  const tracker = new ensemble.EnhancedTracker();
 
-  // Calibrate from historical data
-  const { data: historical } = await supabase
-    .from("match_features")
-    .select("home_team_name, away_team_name, home_score, away_score, actual_result")
-    .not("home_score", "is", null)
-    .order("computed_at", { ascending: false })
-    .limit(500);
-
-  if (historical) {
-    for (const h of historical) {
-      const homeResult = h.actual_result === "home" ? "W" : h.actual_result === "draw" ? "D" : "L";
-      const awayResult = h.actual_result === "away" ? "W" : h.actual_result === "draw" ? "D" : "L";
-      form.record(h.home_team_name, homeResult, h.home_score, h.away_score);
-      form.record(h.away_team_name, awayResult, h.away_score, h.home_score);
+  // Load historical data into tracker
+  console.log("   Loading historical matches...");
+  let offset = 0;
+  let loaded = 0;
+  while (true) {
+    const { data: batch } = await supabase
+      .from("fixtures")
+      .select("home_score, away_score, kickoff_time, league_id, home:teams!fixtures_home_team_id_fkey(canonical_name), away:teams!fixtures_away_team_id_fkey(canonical_name)")
+      .eq("status", "finished")
+      .not("home_score", "is", null)
+      .order("kickoff_time", { ascending: true })
+      .range(offset, offset + 999);
+    if (!batch || batch.length === 0) break;
+    for (const m of batch) {
+      const home = m.home?.canonical_name;
+      const away = m.away?.canonical_name;
+      if (home && away) tracker.recordMatch(home, away, m.home_score, m.away_score, m.kickoff_time, m.league_id);
     }
+    loaded += batch.length;
+    offset += 999;
+    if (batch.length < 1000) break;
   }
+  console.log(`   Loaded ${loaded} historical matches`);
 
   // Get odds for all fixtures
   const fixtureIds = fixtures.map(f => f.id);
@@ -262,11 +225,6 @@ async function stepPredict(fixtures) {
     }
   }
 
-  // Load model weights
-  const weights = await getConfig("ensemble_weights") || {
-    elo: 0.29, form: 0.19, goals: 0.18, odds: 0.10, homeAdv: 0.10, h2h: 0.10, streak: 0.05
-  };
-
   const predictions = [];
 
   for (const fixture of fixtures) {
@@ -274,80 +232,112 @@ async function stepPredict(fixtures) {
     const awayName = fixture.away_team?.canonical_name;
     if (!homeName || !awayName) continue;
 
-    const features = extractFeatures(fixture, elo, form, oddsByFixture[fixture.id], null);
-    const patterns = extractPatterns(features);
+    // Set odds for this fixture
+    tracker._currentFixtureOdds = oddsByFixture[fixture.id] || null;
 
-    // Generate predictions for multiple markets
-    const markets = [
-      { market: "1X2", selection: homeName, side: "home" },
-      { market: "1X2", selection: awayName, side: "away" },
-      { market: "over_under", selection: "over_2.5" },
-      { market: "over_under", selection: "under_3.5" },
-      { market: "btts", selection: "yes" },
-    ];
+    // Get features from ensemble tracker
+    const { homeLambda, awayLambda, features } = tracker.getFeatures(homeName, awayName, fixture.league_id);
 
-    for (const m of markets) {
-      let prob;
-      if (m.market === "1X2") {
-        prob = m.side === "home" ? features.elo_home_prob : (1 - features.elo_home_prob);
-        if (features.market_home_prob) {
-          const marketProb = m.side === "home" ? features.market_home_prob : (1 - features.market_home_prob);
-          prob = clamp(prob * weights.elo + marketProb * weights.odds + 0.5 * (1 - weights.elo - weights.odds));
-        }
-      } else if (m.selection === "over_2.5") {
-        prob = clamp(0.50 + (features.home_avg_goals + features.away_avg_goals - 2.5) * 0.15);
-      } else if (m.selection === "under_3.5") {
-        prob = clamp(0.50 + (3.5 - features.home_avg_goals - features.away_avg_goals) * 0.15);
-      } else if (m.selection === "yes") {
-        prob = clamp(0.45 + features.home_win_rate * 0.2 + features.away_win_rate * 0.1);
-      } else {
-        prob = 0.50;
+    // Get referee features
+    const refFeatures = ensemble.getRefereeFeatures(homeName, awayName);
+
+    // Adjust lambdas with referee data
+    let adjHomeLambda = homeLambda;
+    let adjAwayLambda = awayLambda;
+    if (refFeatures.hasProfile && refFeatures.referee) {
+      const refGoalAdj = refFeatures.avgGoals / 2.6;
+      adjHomeLambda = ensemble.clamp(homeLambda * refGoalAdj, 0.3, 4.5);
+      adjAwayLambda = ensemble.clamp(awayLambda * refGoalAdj, 0.3, 4.5);
+      const hMatches = refFeatures.homeTeamRef?.matches || 0;
+      const aMatches = refFeatures.awayTeamRef?.matches || 0;
+      if (hMatches >= 3 && aMatches >= 3) {
+        const strDiff = (refFeatures.homeTeamRef.winRate - 0.46) - (refFeatures.awayTeamRef.winRate - 0.30);
+        adjHomeLambda = ensemble.clamp(adjHomeLambda * (1 + strDiff * 0.25), 0.3, 4.5);
+        adjAwayLambda = ensemble.clamp(adjAwayLambda * (1 - strDiff * 0.25), 0.3, 4.5);
       }
+      const homeBiasAdj = 1 + (refFeatures.homeBias - 0.46) * 0.15;
+      adjHomeLambda = ensemble.clamp(adjHomeLambda * homeBiasAdj, 0.3, 4.5);
+      adjAwayLambda = ensemble.clamp(adjAwayLambda / homeBiasAdj, 0.3, 4.5);
+    }
 
-      const prediction = {
+    // Model 1: Poisson (referee-adjusted)
+    const grid = ensemble.poissonGoals(adjHomeLambda, adjAwayLambda);
+    const poissonMarkets = ensemble.computeMarkets(grid);
+
+    // Model 2: Elo
+    const eloProb = ensemble.eloWinProb(tracker.elo[homeName] || 1500, tracker.elo[awayName] || 1500);
+
+    // Model 3: Regression
+    const { regressionProb } = require("./ensemble-model");
+    const regProb = regressionProb(features, refFeatures);
+
+    // Ensemble: combine all three
+    let ensembleMarkets = ensemble.ensembleCombine(poissonMarkets, eloProb, regProb, features);
+
+    // Apply calibration
+    for (const [mk, prob] of Object.entries(ensembleMarkets)) {
+      ensembleMarkets[mk] = ensemble.applyCalibration(prob);
+    }
+
+    // Build feature snapshot for traceability
+    const featureSnapshot = {
+      eloDiff: features.eloDiff,
+      homePPG: features.homePPG,
+      awayPPG: features.awayPPG,
+      homeGF: features.homeGF,
+      homeGA: features.homeGA,
+      awayGF: features.awayGF,
+      awayGA: features.awayGA,
+      cleanSheet: features.cleanSheet,
+      homeWinRate: features.homeWinRate,
+      awayWinRate: features.awayWinRate,
+      streak: features.streak,
+      homeLambda: adjHomeLambda,
+      awayLambda: adjAwayLambda,
+      expectedGoals: adjHomeLambda + adjAwayLambda,
+      homeElo: tracker.elo[homeName] || 1500,
+      awayElo: tracker.elo[awayName] || 1500,
+      referee: refFeatures.referee || null,
+    };
+
+    // Store predictions for all markets
+    for (const [mk, prob] of Object.entries(ensembleMarkets)) {
+      const [market, ...selectionParts] = mk.split("_");
+      const selection = selectionParts.join("_");
+      predictions.push({
         fixture_id: fixture.id,
-        market: m.market,
-        selection: m.selection,
+        market: market === "OU" ? "over_under" : market.toLowerCase(),
+        selection: selection || mk,
         model_probability: Math.round(prob * 10000) / 10000,
         confidence_lower: Math.round(prob * 0.9 * 10000) / 10000,
         confidence_upper: Math.round(Math.min(prob * 1.1, 0.99) * 10000) / 10000,
+        model_version: "v5.1-ensemble",
+        features_used: featureSnapshot,
         result: "pending",
-      };
-
-      predictions.push(prediction);
-
-      // Store in model_learning_history with full feature snapshot
-      await supabase.from("model_learning_history").insert({
-        model_version: await getConfig("current_model_version") || "v1.0",
-        prediction_id: null, // Will be linked after insert
-        fixture_id: fixture.id,
-        market: m.market,
-        selection: m.selection,
-        predicted_probability: prob,
-        features_snapshot: features,
-        was_correct: null,
-        predicted_at: now(),
       });
     }
 
-    // Store the main prediction
-    const mainPred = predictions.find(p => p.fixture_id === fixture.id && p.market === "1X2" && p.selection === homeName);
-    if (mainPred) {
-      await supabase.from("predictions").upsert({
-        fixture_id: fixture.id,
-        market: "1X2",
-        selection: mainPred.selection,
-        model_probability: mainPred.model_probability,
-        confidence_lower: mainPred.confidence_lower,
-        confidence_upper: mainPred.confidence_upper,
-        result: "pending",
-      }, { onConflict: "fixture_id,market" });
-    }
+    // Store in model_learning_history with full snapshot
+    await supabase.from("model_learning_history").insert({
+      model_version: "v5.1-ensemble",
+      fixture_id: fixture.id,
+      market: "1X2",
+      selection: homeName,
+      predicted_probability: ensembleMarkets["1X2_Home"] || 0.5,
+      features_snapshot: featureSnapshot,
+      was_correct: null,
+      predicted_at: now(),
+    });
 
-    console.log(`   🎯 ${homeName} vs ${awayName}: Home=${(features.elo_home_prob * 100).toFixed(1)}%`);
+    console.log(`   🎯 ${homeName} vs ${awayName}: Home=${((ensembleMarkets["1X2_Home"] || 0.5) * 100).toFixed(1)}% Draw=${((ensembleMarkets["1X2_Draw"] || 0.25) * 100).toFixed(1)}% Away=${((ensembleMarkets["1X2_Away"] || 0.25) * 100).toFixed(1)}%`);
   }
 
-  console.log(`   ✅ Generated ${predictions.length} predictions`);
+  // Batch insert all predictions
+  for (let i = 0; i < predictions.length; i += 50) {
+    await supabase.from("predictions").insert(predictions.slice(i, i + 50));
+  }
+
+  console.log(`   ✅ Generated ${predictions.length} predictions (Ensemble v5.1)`);
   return predictions;
 }
 
