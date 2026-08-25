@@ -172,7 +172,7 @@ export async function getLandingPageData(): Promise<LandingPageData> {
         modelProbability: Number(topRec.model_probability),
         impliedProbability: impliedProb,
         edge: Number(topRec.edge),
-        modelAgreement: 7, // default — 7 models
+        modelAgreement: 3, // Ensemble: Poisson + Elo + Regression
       };
     }
   }
@@ -238,7 +238,8 @@ export async function getLandingPageData(): Promise<LandingPageData> {
 
   // Use actual league count or fallback to marketing number
   const totalLeagues = leaguesResult.count || 0;
-  const displayLeagues = totalLeagues > 100 ? totalLeagues : 369;
+  // Use actual counts — no hardcoded fallbacks
+  const displayLeagues = totalLeagues || 0;
   
   return {
     crownJewel,
@@ -248,7 +249,7 @@ export async function getLandingPageData(): Promise<LandingPageData> {
       totalRecommendations: (recommendationsResult.data || []).length,
       avgAccuracy: Math.round(avgAccuracy * 10) / 10,
       totalFixturesToday: fixturesResult.data?.length || 0,
-      activeModels: 7,
+      activeModels: 3, // Poisson + Elo + Regression (ensemble components)
     },
     upcomingFixtures,
     topValueBets,

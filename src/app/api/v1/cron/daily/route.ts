@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
 function isAuthorizedCron(request: NextRequest): boolean {
   const authHeader = request.headers.get("authorization");
   const cronSecret = process.env.VERCEL_CRON_SECRET;
-  if (!cronSecret) return true;
+  if (!cronSecret) { console.warn('[CRON] VERCEL_CRON_SECRET not set — cron auth disabled'); return true; }
   if (authHeader === `Bearer ${cronSecret}`) return true;
   return false;
 }
