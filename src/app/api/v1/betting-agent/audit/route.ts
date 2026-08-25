@@ -13,6 +13,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
+import { requireAdmin } from "@/lib/api/utils";
 
 const supabaseAdmin = createClient<Database>(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -21,6 +22,9 @@ const supabaseAdmin = createClient<Database>(
 
 export async function GET(request: NextRequest) {
   try {
+    // SECURITY: Require admin access
+    await requireAdmin(request);
+    
     const { searchParams } = new URL(request.url);
     const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
     const pageSize = Math.min(100, Math.max(1, parseInt(searchParams.get("pageSize") || "20")));

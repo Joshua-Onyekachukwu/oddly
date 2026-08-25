@@ -8,7 +8,7 @@ import type { Database } from "@/lib/supabase/database.types";
 function isAuthorizedCron(request: NextRequest): boolean {
   const authHeader = request.headers.get("authorization");
   const cronSecret = process.env.VERCEL_CRON_SECRET;
-  if (!cronSecret) { console.warn('[CRON] VERCEL_CRON_SECRET not set — cron auth disabled'); return true; }
+  if (!cronSecret) { console.error('[CRON] CRITICAL: VERCEL_CRON_SECRET not set — cron auth disabled'); return false; }
   if (authHeader === `Bearer ${cronSecret}`) return true;
   return false;
 }

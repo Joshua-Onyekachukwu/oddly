@@ -14,6 +14,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
+import { requireAuth } from "@/lib/api/utils";
 
 const supabaseAdmin = createClient<Database>(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -48,6 +49,9 @@ const DEFAULT_LIMITS: RiskLimit = {
 
 export async function POST(request: NextRequest) {
   try {
+    // SECURITY: Require authentication
+    await requireAuth(request);
+    
     const body = await request.json();
     const selections: Selection[] = body.selections || [];
     const stake = Math.min(100000, Math.max(100, body.stake || 1000));

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { requireAdmin } from "@/lib/api/utils";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || "",
@@ -11,14 +12,13 @@ const supabaseAdmin = createClient(
  *
  * Manual trigger for the full pipeline from admin dashboard.
  * Runs: sync → predict → settle → learn
+ * 
+ * SECURITY: Requires valid admin JWT — not just presence of auth header.
  */
 export async function POST(request: NextRequest) {
   try {
-    // Verify admin user
-    const authHeader = request.headers.get("authorization");
-    if (!authHeader) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    // Verify admin user with proper JWT validation
+    await requireAdmin(request);
 
     const startTime = Date.now();
     const origin = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
