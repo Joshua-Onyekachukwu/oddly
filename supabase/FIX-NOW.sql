@@ -53,8 +53,10 @@ CREATE INDEX IF NOT EXISTS idx_cron_runs_job_name ON cron_runs(job_name, started
 CREATE INDEX IF NOT EXISTS idx_cron_runs_started ON cron_runs(started_at DESC);
 
 ALTER TABLE cron_runs ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Service role manages cron_runs" ON cron_runs;
 CREATE POLICY "Service role manages cron_runs" ON cron_runs
   FOR ALL USING (public.is_service_role());
+DROP POLICY IF EXISTS "Authenticated can read cron_runs" ON cron_runs;
 CREATE POLICY "Authenticated can read cron_runs" ON cron_runs
   FOR SELECT USING (auth.role() = 'authenticated');
 
