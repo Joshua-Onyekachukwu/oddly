@@ -4,7 +4,19 @@
 --
 -- League-specific draw calibration with shrinkage,
 -- champion/challenger, and versioning.
+--
+-- NOTE: Run 20260826050000_create_cron_infrastructure.sql FIRST
+-- to create the is_service_role() and is_admin() functions.
 -- ============================================
+
+-- Safety: ensure prerequisite functions exist
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'is_service_role') THEN
+    CREATE OR REPLACE FUNCTION public.is_service_role()
+    RETURNS boolean LANGUAGE sql SECURITY DEFINER STABLE
+    AS $$ SELECT current_setting('request.jwt.claims', true)::json->>'role' = 'service_role' OR current_setting('role') = 'service_role'; $$;
+  END IF;
+END $$;
 
 -- 1. League draw calibration table
 CREATE TABLE IF NOT EXISTS league_draw_calibration (

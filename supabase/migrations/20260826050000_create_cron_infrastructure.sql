@@ -8,6 +8,29 @@
 -- - Materialized view for /admin/crons dashboard
 -- ============================================
 
+-- 0. Prerequisite functions (safe to re-create)
+CREATE OR REPLACE FUNCTION public.is_service_role()
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+AS $$
+  SELECT current_setting('request.jwt.claims', true)::json->>'role' = 'service_role'
+  OR current_setting('role') = 'service_role';
+$$;
+
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid() AND role = 'admin'
+  );
+$$;
+
 -- 1. Cron execution log table
 CREATE TABLE IF NOT EXISTS cron_runs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
