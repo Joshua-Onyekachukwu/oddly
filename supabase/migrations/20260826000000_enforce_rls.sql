@@ -565,6 +565,9 @@ GRANT SELECT ON scoring_config TO authenticated;
 GRANT SELECT ON announcements TO authenticated;
 GRANT SELECT ON players TO authenticated;
 GRANT SELECT ON referee_profiles TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON match_stats TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON team_referee_stats TO authenticated;
+GRANT SELECT, INSERT ON referee_match_history TO authenticated;
 
 -- ============================================
 -- AUDIT: Create a function to verify RLS status
