@@ -485,8 +485,15 @@ async function stepSettle() {
         else if (pred.selection === awayName && ag > hg) result = "correct";
         else if (pred.selection === "Draw" && hg === ag) result = "correct";
       } else if (pred.market === "over_under") {
-        if (pred.selection === "over_2.5" && total > 2.5) result = "correct";
-        else if (pred.selection === "under_3.5" && total < 3.5) result = "correct";
+        // Handle all O/U lines
+        const sel = (pred.selection || "").toLowerCase();
+        if (sel.includes("over")) {
+          const line = parseFloat(sel.replace("over_", ""));
+          if (!isNaN(line) && total > line) result = "correct";
+        } else if (sel.includes("under")) {
+          const line = parseFloat(sel.replace("under_", ""));
+          if (!isNaN(line) && total < line) result = "correct";
+        }
       } else if (pred.market === "btts") {
         if (pred.selection === "yes" && hg > 0 && ag > 0) result = "correct";
         else if (pred.selection === "no" && (hg === 0 || ag === 0)) result = "correct";

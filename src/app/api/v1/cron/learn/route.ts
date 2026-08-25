@@ -9,7 +9,7 @@ const supabaseAdmin = createClient(
 function isAuthorizedCron(request: NextRequest): boolean {
   const authHeader = request.headers.get("authorization");
   const cronSecret = process.env.VERCEL_CRON_SECRET;
-  if (!cronSecret) return true;
+  if (!cronSecret) { console.warn('[CRON] VERCEL_CRON_SECRET not set — cron auth disabled'); return true; }
   return authHeader === `Bearer ${cronSecret}`;
 }
 
