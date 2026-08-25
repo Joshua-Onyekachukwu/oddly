@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useQuery } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
+import { useLiveStats, useSettlementFeed, useValuePicksLive, useMarketAccuracy, usePredictionStats } from "@/hooks/useSupabaseRealtime";
 
 // ─── Inline UI Components ──────────────────────────────────────
 
@@ -113,14 +112,14 @@ function Badge({
 
 // ─── Migration Status Data ──────────────────────────────────────
 
-// Slim schema — only real-time tables remain in Convex
+// All tables now live in Supabase (Convex fully removed)
 const MIGRATION_TABLES = [
-  { name: "Leagues", convexKey: "leagues", supabaseTable: "leagues", icon: "ri-trophy-line" },
-  { name: "Teams", convexKey: "teams", supabaseTable: "teams", icon: "ri-team-line" },
-  { name: "Live Pick", convexKey: "livePick", supabaseTable: null, icon: "ri-crosshair-2-line" },
-  { name: "Value Picks", convexKey: "valuePicks", supabaseTable: null, icon: "ri-money-dollar-circle-line" },
-  { name: "Settlement Feed", convexKey: "settlementFeed", supabaseTable: "predictions", icon: "ri-file-list-3-line" },
-  { name: "Live Stats", convexKey: "liveStats", supabaseTable: null, icon: "ri-pulse-line" },
+  { name: "Leagues", supabaseTable: "leagues", icon: "ri-trophy-line" },
+  { name: "Teams", supabaseTable: "teams", icon: "ri-team-line" },
+  { name: "Live Pick", supabaseTable: "live_pick", icon: "ri-crosshair-2-line" },
+  { name: "Value Picks", supabaseTable: "value_picks", icon: "ri-money-dollar-circle-line" },
+  { name: "Settlement Feed", supabaseTable: "settlement_feed", icon: "ri-file-list-3-line" },
+  { name: "Live Stats", supabaseTable: "live_stats", icon: "ri-pulse-line" },
 ];
 
 // ─── Main Dashboard ───────────────────────────────────────────
@@ -130,13 +129,17 @@ export default function ConvexHealthPage() {
   const [supabaseCounts, setSupabaseCounts] = useState<Record<string, number>>({});
   const [loadingSupabase, setLoadingSupabase] = useState(true);
 
-  // Real-time Convex queries
-  const liveStats = useQuery(api.realtime.getLiveStats);
-  const latestPredictions = useQuery(api.realtime.getSettlementUpdates, { limit: 20 });
-  const settlementUpdates = useQuery(api.realtime.getSettlementUpdates, { limit: 20 });
-  const valuePicks = useQuery(api.realtime.getValuePicksLive, { limit: 30 });
-  const marketAccuracy = useQuery(api.realtime.getSettlementByMarket);
-  const convexStats = useQuery(api.predictions.getStats);
+  // Real-time Supabase queries (replaces Convex)
+  const liveStatsData = useLiveStats();
+  const settlementUpdates = useSettlementFeed(20);
+  const valuePicks = useValuePicksLive(30);
+  const marketAccuracy = useMarketAccuracy();
+  const predictionStats = usePredictionStats();
+
+  // Map to legacy variable names for downstream code
+  const liveStats = liveStatsData ? { totalPredictions: liveStatsData.total_predictions, correct: liveStatsData.correct_predictions, wrong: 0, accuracy: liveStatsData.accuracy } : undefined;
+  const latestPredictions = settlementUpdates;
+  // Removed: all data now in Supabase
 
   // Auto-refresh
   useEffect(() => {
@@ -161,38 +164,14 @@ export default function ConvexHealthPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const isLoading = liveStats === undefined || convexStats === undefined;
-
-  // Parse Convex stats (handles number or string values)
-  function parseConvexCount(val: string | number | undefined): number {
-    if (typeof val === "number") return val;
-    if (typeof val === "string") {
-      const match = val.match(/[\d.]+/);
-      if (match) {
-        const n = parseFloat(match[0]);
-        if (val.includes("K")) return Math.round(n * 1000);
-        if (val.includes("M")) return Math.round(n * 1000000);
-        return Math.round(n);
-      }
-    }
-    return 0;
-  }
-
-  function getConvexCount(key: string): number {
-    return parseConvexCount((convexStats as any)?.[key]);
-  }
+  const isLoading = !liveStatsData && !predictionStats;
 
   function getSupabaseCount(table: string): number {
     return supabaseCounts[table] || 0;
   }
 
-  function getMigrationPct(convex: number, supabase: number): number {
-    if (supabase === 0) return convex > 0 ? 100 : 0;
-    return Math.min(Math.round((convex / supabase) * 100), 100);
-  }
-
-  const totalConvex = MIGRATION_TABLES.reduce(
-    (sum, t) => sum + getConvexCount(t.convexKey),
+  const totalSupabase = MIGRATION_TABLES.reduce(
+    (sum, t) => sum + getSupabaseCount(t.supabaseTable || ''),
     0,
   );
 
@@ -226,48 +205,43 @@ export default function ConvexHealthPage() {
           <span className="text-[12px] font-medium text-gray-600">Supabase (Hot)</span>
         </div>
         <div className="w-px h-[16px] bg-gray-200" />
-        <div className="flex items-center gap-[6px]">
-          <div className="w-[6px] h-[6px] rounded-full bg-green-500" />
-          <span className="text-[12px] font-medium text-gray-600">Convex (Cold/Realtime)</span>
-        </div>
         <div className="w-px h-[16px] bg-gray-200" />
         <span className="text-[11px] text-gray-400">
-          Hybrid Architecture Active — limitless-mole-387.convex.cloud
+          Supabase-only Architecture — Convex fully removed
         </span>
       </div>
 
       {/* Summary Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-[12px]">
         <StatCard
-          label="Convex Records"
-          value={isLoading ? "—" : totalConvex.toLocaleString()}
+          label="Realtime Tables"
+          value={isLoading ? "—" : totalSupabase.toLocaleString()}
           icon="ri-database-2-line"
           color="bg-purple-50 text-purple-600"
-          subtitle="7 lightweight tables"
+          subtitle="All in Supabase"
         />
         <StatCard
           label="Teams"
-          value={isLoading ? "—" : getConvexCount("teams").toLocaleString()}
+          value={isLoading ? "—" : getSupabaseCount("teams").toLocaleString()}
           icon="ri-team-line"
           color="bg-blue-50 text-blue-600"
-          subtitle={`${getSupabaseCount("teams")} in Supabase`}
         />
         <StatCard
           label="Leagues"
-          value={isLoading ? "—" : getConvexCount("leagues").toLocaleString()}
+          value={isLoading ? "—" : getSupabaseCount("leagues").toLocaleString()}
           icon="ri-trophy-line"
           color="bg-amber-50 text-amber-600"
         />
         <StatCard
           label="Live Pick"
-          value={isLoading ? "—" : getConvexCount("livePick")}
+          value={isLoading ? "—" : getSupabaseCount("live_pick")}
           icon="ri-crosshair-2-line"
           color="bg-green-50 text-green-600"
           subtitle="Current pick of the day"
         />
         <StatCard
           label="Value Picks"
-          value={isLoading ? "—" : getConvexCount("valuePicks")}
+          value={isLoading ? "—" : getSupabaseCount("value_picks")}
           icon="ri-money-dollar-circle-line"
           color="bg-cyan-50 text-cyan-600"
           subtitle="Live value bets"
@@ -278,7 +252,7 @@ export default function ConvexHealthPage() {
       <Card>
         <CardHeader
           title="Migration Status"
-          description="Supabase vs Convex data comparison — are all records migrated?"
+          description="All data now lives in Supabase"
           action={
             loadingSupabase ? (
               <Badge variant="default">Loading...</Badge>
@@ -293,29 +267,15 @@ export default function ConvexHealthPage() {
               <thead>
                 <tr className="border-b border-gray-100">
                   <th className="text-left py-[8px] px-[10px] font-medium text-gray-500">Table</th>
-                  <th className="text-right py-[8px] px-[10px] font-medium text-gray-500">Supabase</th>
-                  <th className="text-right py-[8px] px-[10px] font-medium text-gray-500">Convex</th>
-                  <th className="text-center py-[8px] px-[10px] font-medium text-gray-500 min-w-[140px]">Progress</th>
+                  <th className="text-right py-[8px] px-[10px] font-medium text-gray-500">Row Count</th>
                   <th className="text-center py-[8px] px-[10px] font-medium text-gray-500">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {MIGRATION_TABLES.map((table) => {
-                  const convex = getConvexCount(table.convexKey);
-                  const supabase = table.supabaseTable
+                  const count = table.supabaseTable
                     ? getSupabaseCount(table.supabaseTable)
                     : 0;
-                  const pct = getMigrationPct(convex, supabase);
-                  const status =
-                    table.supabaseTable === null
-                      ? convex > 0
-                        ? "convex-only"
-                        : "empty"
-                      : pct >= 100
-                        ? "complete"
-                        : pct > 0
-                          ? "partial"
-                          : "pending";
 
                   return (
                     <tr
@@ -328,50 +288,16 @@ export default function ConvexHealthPage() {
                           <span className="font-semibold text-[#0A0F1C]">{table.name}</span>
                         </div>
                       </td>
-                      <td className="text-right py-[10px] px-[10px] font-mono tabular-nums text-gray-600">
+                      <td className="text-right py-[10px] px-[10px] font-mono tabular-nums font-semibold text-[#0A0F1C]">
                         {loadingSupabase ? (
                           <div className="inline-block w-[40px] h-[14px] bg-gray-100 rounded animate-pulse" />
-                        ) : table.supabaseTable ? (
-                          supabase.toLocaleString()
-                        ) : (
-                          <span className="text-gray-300">—</span>
-                        )}
-                      </td>
-                      <td className="text-right py-[10px] px-[10px] font-mono tabular-nums font-semibold text-[#0A0F1C]">
-                        {convex.toLocaleString()}
-                      </td>
-                      <td className="py-[10px] px-[10px]">
-                        <div className="flex items-center gap-[8px]">
-                          <div className="flex-1 h-[6px] bg-gray-100 rounded-full overflow-hidden">
-                            <div
-                              className={`h-full rounded-full transition-all duration-500 ${
-                                pct >= 100
-                                  ? "bg-green-500"
-                                  : pct > 50
-                                    ? "bg-amber-500"
-                                    : pct > 0
-                                      ? "bg-red-500"
-                                      : "bg-gray-200"
-                              }`}
-                              style={{ width: `${Math.max(pct, 2)}%` }}
-                            />
-                          </div>
-                          <span className="text-[10px] font-mono text-gray-400 w-[32px] text-right">
-                            {pct}%
-                          </span>
-                        </div>
+                        ) : count.toLocaleString()}
                       </td>
                       <td className="text-center py-[10px] px-[10px]">
-                        {status === "complete" ? (
-                          <Badge variant="success">✓ Complete</Badge>
-                        ) : status === "convex-only" ? (
-                          <Badge variant="info">Convex Only</Badge>
-                        ) : status === "partial" ? (
-                          <Badge variant="warning">{pct}% Migrated</Badge>
-                        ) : status === "empty" ? (
-                          <Badge variant="danger">Empty</Badge>
+                        {count > 0 ? (
+                          <Badge variant="success">✓ Active</Badge>
                         ) : (
-                          <Badge variant="default">Pending</Badge>
+                          <Badge variant="default">Empty</Badge>
                         )}
                       </td>
                     </tr>
@@ -391,7 +317,7 @@ export default function ConvexHealthPage() {
                         ).toLocaleString()}
                   </td>
                   <td className="text-right py-[10px] px-[10px] font-mono">
-                    {totalConvex.toLocaleString()}
+                    {totalSupabase.toLocaleString()}
                   </td>
                   <td />
                   <td className="text-center py-[10px] px-[10px]">
@@ -401,7 +327,7 @@ export default function ConvexHealthPage() {
                           sum + (t.supabaseTable ? getSupabaseCount(t.supabaseTable) : 0),
                         0,
                       );
-                      const overall = supTotal > 0 ? Math.round((totalConvex / supTotal) * 100) : 100;
+                      const overall = 100; // All data in Supabase now
                       return (
                         <Badge variant={overall >= 90 ? "success" : overall >= 50 ? "warning" : "danger"}>
                           {overall}% Overall
@@ -420,7 +346,7 @@ export default function ConvexHealthPage() {
       <Card>
         <CardHeader
           title="Live Prediction Accuracy"
-          description="Real-time settled prediction stats from Convex"
+          description="Real-time settled prediction stats from Supabase"
         />
         <div className="p-[20px]">
           {isLoading ? (
@@ -473,13 +399,13 @@ export default function ConvexHealthPage() {
         <Card>
           <CardHeader
             title="Accuracy by Market"
-            description="Convex settled predictions breakdown"
+            description="Settlement feed"
           />
           <div className="p-[16px]">
             {!marketAccuracy || marketAccuracy.length === 0 ? (
               <div className="text-center py-[24px] text-gray-400">
                 <i className="ri-bar-chart-line text-[24px] block mb-[4px] opacity-50" />
-                <p className="text-[12px]">No market data in Convex yet</p>
+                <p className="text-[12px]">No settlement data yet</p>
               </div>
             ) : (
               <div className="space-y-[6px]">
@@ -520,7 +446,7 @@ export default function ConvexHealthPage() {
         <Card>
           <CardHeader
             title="Live Value Picks"
-            description="Real-time value detection from Convex"
+            description="Real-time value detection from Supabase"
             action={
               valuePicks && valuePicks.length > 0 ? (
                 <Badge variant="success">{valuePicks.length} active</Badge>
@@ -551,7 +477,7 @@ export default function ConvexHealthPage() {
                           {pick.tier}
                         </span>
                         <span className="text-[12px] font-semibold text-[#0A0F1C] truncate">
-                          {pick.matchName || "Unknown Match"}
+                          {pick.match_name || "Unknown Match"}
                         </span>
                       </div>
                       <span className="text-[10px] text-gray-400 capitalize">
@@ -563,7 +489,7 @@ export default function ConvexHealthPage() {
                         +{((pick.edge ?? 0) * 100).toFixed(1)}%
                       </div>
                       <div className="text-[10px] text-gray-400">
-                        {(pick.modelProb * 100).toFixed(0)}% vs implied
+                        {((pick.model_probability ?? 0) * 100).toFixed(0)}% vs implied
                       </div>
                     </div>
                   </div>
@@ -578,7 +504,7 @@ export default function ConvexHealthPage() {
       <Card>
         <CardHeader
           title="Settlement Feed"
-          description="Latest settled predictions from Convex — updates in real-time"
+          description="Latest settled predictions from Supabase — updates in real-time"
         />
         <div className="p-[16px]">
           {!settlementUpdates || settlementUpdates.length === 0 ? (
@@ -602,7 +528,7 @@ export default function ConvexHealthPage() {
                 <tbody>
                   {settlementUpdates.map((pred) => (
                     <tr
-                      key={pred._id}
+                      key={pred.id}
                       className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50"
                     >
                       <td className="py-[8px] px-[10px] font-medium text-[#0A0F1C] capitalize">
@@ -612,10 +538,10 @@ export default function ConvexHealthPage() {
                         {pred.selection.replace(/_/g, " ")}
                       </td>
                       <td className="text-center py-[8px] px-[10px] font-mono tabular-nums">
-                        {Math.round(pred.modelProbability * 100)}%
+                        {Math.round(pred.model_probability * 100)}%
                       </td>
                       <td className="text-center py-[8px] px-[10px] text-gray-400">
-                        {pred.modelVersion}
+                        {pred.model_version}
                       </td>
                       <td className="text-center py-[8px] px-[10px]">
                         {pred.result === "correct" ? (
@@ -625,7 +551,7 @@ export default function ConvexHealthPage() {
                         )}
                       </td>
                       <td className="text-right py-[8px] px-[10px] text-gray-400 font-mono text-[10px]">
-                        {pred.settledAt ? new Date(pred.settledAt).toLocaleString() : "—"}
+                        {pred.settled_at ? new Date(pred.settled_at).toLocaleString() : "—"}
                       </td>
                     </tr>
                   ))}
@@ -640,35 +566,37 @@ export default function ConvexHealthPage() {
       <Card>
         <CardHeader
           title="Architecture"
-          description="Data flow between Supabase (hot) and Convex (cold/realtime)"
+          description="Data flow — Supabase handles all data"
         />
         <div className="p-[16px]">
           <pre className="text-[10px] text-gray-500 font-mono bg-gray-50 p-[16px] rounded-[10px] overflow-x-auto leading-[1.6]">
-{`┌─────────────────────────────────┐     ┌─────────────────────────────────┐
-│       SUPABASE (Primary)        │     │       CONVEX (Real-time Only)   │
-├─────────────────────────────────┤     ├─────────────────────────────────┤
-│ ✓ ${String(getSupabaseCount("fixtures") || "~14K").padStart(6)} Fixtures              │     │ ✓ ${String(getConvexCount("teams")).padStart(6)} Teams (reference)          │
-│ ✓ ~599K Predictions (Historical)│     │ ✓ ${String(getConvexCount("leagues")).padStart(6)} Leagues (reference)        │
-│ ✓ ~15K Odds Snapshots           │     │ ✓ Live Pick (real-time)              │
-│ ✓ Auth & User Sessions          │     │ ✓ Value Picks (real-time)             │
-│ ✓ User Accumulators             │     │ ✓ Settlement Feed (last 500)          │
-│ ✓ xG, Referee, Injury Data      │     │ ✓ Live Stats Counters                 │
-│ ✓ Model Performance History     │     │                                       │
-│ ✓ Team/Player Features          │     │   7 tables, ~1.5K rows total          │
-└──────────────┬──────────────────┘     └──────────────┬──────────────────┘
-               │                                        │
-               └────────────┬───────────────────────────┘
-                            │
-                  ┌─────────▼─────────┐
-                  │   VERCEL (Edge)    │
-                  │  Next.js App Router │
-                  │  5 Cron Jobs        │
-                  └────────────────────┘
+{`┌─────────────────────────────────┐
+│       SUPABASE (All Data)       │
+├─────────────────────────────────┤
+│ ✓ ${String(getSupabaseCount("fixtures") || "~14K").padStart(6)} Fixtures              │
+│ ✓ ~599K Predictions (Historical)│
+│ ✓ ~15K Odds Snapshots           │
+│ ✓ Auth & User Sessions          │
+│ ✓ User Accumulators             │
+│ ✓ xG, Referee, Injury Data      │
+│ ✓ Model Performance History     │
+│ ✓ Team/Player Features          │
+│ ✓ Live Pick (real-time)         │
+│ ✓ Value Picks (real-time)       │
+│ ✓ Settlement Feed (last 500)    │
+│ ✓ Live Stats Counters           │
+└──────────────┬──────────────────┘
+               │
+               │
+         ┌─────▼─────┐
+         │   VERCEL   │
+         │  6 Cron Jobs│
+         └────────────┘
 
-  Real-time: ConvexReactClient → limitless-mole-387.convex.cloud
-  Pipeline: Ensemble v2.0 → CLV Tracker → One-Game Pick Engine
+  Real-time: Supabase Realtime → live_pick, value_picks, settlement_feed
+  Pipeline: Ensemble v5.1 → CLV Tracker → One-Game Pick Engine
   Analytics: /api/v1/analytics (Supabase) → calibration, markets, daily stats
-  Cron: pipeline(30m) • settle(1h) • predict(2h) • sync(6h) • daily(6am)`}
+  Cron: pipeline(30m) • settle(1h) • predict(2h) • sync(6h) • daily(6am) • learn(weekly)`}
           </pre>
         </div>
       </Card>

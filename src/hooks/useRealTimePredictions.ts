@@ -1,20 +1,21 @@
 "use client";
 
-import { useQuery } from "convex/react";
-import { api } from "../../convex/_generated/api";
+import {
+  useSettlementFeed,
+  useLiveStats,
+  useMarketAccuracy,
+  usePredictionStats,
+} from "./useSupabaseRealtime";
 
 /**
- * Subscribe to real-time prediction updates from Convex.
- * Re-renders automatically when predictions change.
+ * Subscribe to real-time prediction updates from Supabase.
+ * Polls every 15s (replaces Convex real-time subscription).
  *
  * @param options.limit - Max predictions to return (default: 50)
  * @returns { predictions, isLoading, error }
  */
 export function useRealTimePredictions(options?: { limit?: number }) {
-  // Use settlement feed instead of old predictions query
-  const settlements = useQuery(api.realtime.getSettlementUpdates, {
-    limit: options?.limit ?? 50,
-  });
+  const settlements = useSettlementFeed(options?.limit ?? 50);
 
   return {
     predictions: settlements ?? [],
@@ -28,9 +29,7 @@ export function useRealTimePredictions(options?: { limit?: number }) {
  * Shows recently settled predictions with correct/wrong status.
  */
 export function useSettlementUpdates(options?: { limit?: number }) {
-  const settlements = useQuery(api.realtime.getSettlementUpdates, {
-    limit: options?.limit ?? 50,
-  });
+  const settlements = useSettlementFeed(options?.limit ?? 50);
 
   return {
     settlements: settlements ?? [],
@@ -44,10 +43,18 @@ export function useSettlementUpdates(options?: { limit?: number }) {
  * Subscribe to live accuracy stats that update in real-time.
  */
 export function useLiveAccuracyStats() {
-  const stats = useQuery(api.realtime.getLiveStats);
+  const liveStats = useLiveStats();
 
   return {
-    stats: stats ?? null,
-    isLoading: stats === undefined,
+    stats: liveStats
+      ? {
+          totalPredictions: liveStats.total_predictions,
+          correct: liveStats.correct_predictions,
+          wrong: 0,
+          accuracy: liveStats.accuracy,
+          lastUpdated: new Date().toISOString(),
+        }
+      : null,
+    isLoading: liveStats === undefined,
   };
 }

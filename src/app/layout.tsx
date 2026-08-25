@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Space_Grotesk, DM_Sans, JetBrains_Mono } from "next/font/google";
 import { AuthProvider } from "@/providers/AuthProvider";
-import { ConvexClientProvider } from "@/providers/ConvexProvider";
 import { ToastContainer } from "@/components/notifications/Toast";
 import { validateEnv } from "@/lib/env";
 import "./globals.css";
@@ -86,12 +85,10 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="font-body antialiased bg-[#FAFBFC] text-[#0A0F1C]">
-        <ConvexClientProvider>
-          <AuthProvider>
-            {children}
-            <ToastContainer />
-          </AuthProvider>
-        </ConvexClientProvider>
+        <AuthProvider>
+          {children}
+          <ToastContainer />
+        </AuthProvider>
       </body>
     </html>
   );
