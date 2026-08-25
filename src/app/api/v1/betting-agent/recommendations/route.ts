@@ -14,7 +14,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import { requireAuth } from "@/lib/api/utils";
+import { requireAuth, checkRateLimit, addRateLimitHeaders } from "@/lib/api/utils";
+import { RATE_LIMITS, ipRateLimitKey } from "@/lib/api/rate-limits";
 
 const supabaseAdmin = createClient<Database>(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -36,8 +37,22 @@ function clamp(v: number, lo = 0.01, hi = 0.99) {
 export async function POST(request: NextRequest) {
   try {
     // SECURITY: Require authentication
-    await requireAuth(request);
-    
+    const auth = await requireAuth(request);
+
+    // Rate limit: 10 requests per minute per user
+    const rl = checkRateLimit(
+      ipRateLimitKey(auth.user.id, "betting-agent-recommendations"),
+      RATE_LIMITS.bettingAgent.recommendations.limit,
+      RATE_LIMITS.bettingAgent.recommendations.windowMs
+    );
+    if (!rl.allowed) {
+      return addRateLimitHeaders(
+        NextResponse.json({ error: "Rate limit exceeded. Try again in a minute." }, { status: 429 }),
+        rl.remaining,
+        rl.resetAt
+      );
+    }
+
     let body: Record<string, unknown> = {};
     try {
       body = await request.json();

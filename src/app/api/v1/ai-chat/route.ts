@@ -4,18 +4,13 @@ import type { Database } from "@/lib/supabase/database.types";
 import { getNVIDIAClient } from "@/lib/nvidia/client";
 import { buildChatMessages } from "@/lib/nvidia/prompts";
 import { aiChatSchema, validateBody } from "@/lib/api/validation";
+import { checkRateLimit, addRateLimitHeaders } from "@/lib/api/utils";
+import { RATE_LIMITS, userRateLimitKey } from "@/lib/api/rate-limits";
 
 const supabaseAdmin = createClient<Database>(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
-
-// Rate limits per tier
-const RATE_LIMITS: Record<string, number> = {
-  free: -1, // unlimited during testing
-  premium: -1, // unlimited
-  elite: -1, // unlimited
-};
 
 /**
  * POST /api/v1/ai-chat
@@ -67,25 +62,19 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Rate limit check for free tier
-    if (userId && RATE_LIMITS[userTier] !== -1) {
-      // Count today's questions
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      const { count } = await supabaseAdmin
-        .from("ai_cache")
-        .select("*", { count: "exact", head: true })
-        .eq("model_used", `chat:${userId}`)
-        .gte("created_at", today.toISOString());
-
-      const limit = RATE_LIMITS[userTier];
-      if (count !== null && count >= limit) {
-        return NextResponse.json(
-          {
-            error: `Daily limit reached (${limit} questions/day for ${userTier} tier). Upgrade for unlimited.`,
-          },
-          { status: 429 }
+    // Rate limit check
+    const dailyLimit = (RATE_LIMITS.aiChat as Record<string, number>)[userTier] ?? RATE_LIMITS.aiChat.free;
+    if (userId && dailyLimit !== -1) {
+      const rlKey = userRateLimitKey(userId, "ai-chat-daily");
+      const rl = checkRateLimit(rlKey, dailyLimit, RATE_LIMITS.aiChat.windowMs);
+      if (!rl.allowed) {
+        return addRateLimitHeaders(
+          NextResponse.json(
+            { error: `Daily limit reached (${dailyLimit} questions/day for ${userTier} tier). Upgrade for unlimited.` },
+            { status: 429 }
+          ),
+          rl.remaining,
+          rl.resetAt
         );
       }
     }
@@ -142,9 +131,9 @@ export async function POST(request: NextRequest) {
       userProfile: {
         tier: userTier,
         questionsRemaining:
-          RATE_LIMITS[userTier] === -1
+          dailyLimit === -1
             ? -1
-            : RATE_LIMITS[userTier] -
+            : dailyLimit -
               ((await supabaseAdmin
                 .from("ai_cache")
                 .select("*", { count: "exact", head: true })
