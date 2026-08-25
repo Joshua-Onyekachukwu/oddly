@@ -249,6 +249,15 @@ export const upsertLeague = mutation({
   },
 });
 
+// ─── Cleanup (temporary — delete old heavy data) ──────────
+
+export const deleteById = mutation({
+  args: { id: v.id("liveStats") },
+  handler: async (ctx, args) => {
+    await ctx.db.delete(args.id);
+  },
+});
+
 // ─── Stats Query ──────────────────────────────────────────────
 
 export const getStats = query({
