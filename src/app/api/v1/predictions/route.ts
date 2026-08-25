@@ -18,7 +18,7 @@ import {
   successResponse,
   createdResponse,
   requireAuth,
-  parsePagination,
+  requireAdmin,
   buildPaginationMeta,
   internalError,
   unprocessable,
@@ -43,7 +43,17 @@ const predictionCreateSchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
-  const rl = checkRateLimit("predictions", 120, 60000);
+  // SECURITY: Admin-only — predictions are system data, not user data
+  try {
+    await requireAdmin(request);
+  } catch (err: any) {
+    if (err?.code === "UNAUTHORIZED") {
+      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+    }
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const rl = checkRateLimit("predictions", 60, 60000);
   const { searchParams } = new URL(request.url);
 
   const validation = validateQuery(predictionQuerySchema, searchParams);
@@ -58,9 +68,10 @@ export async function GET(request: NextRequest) {
   const offset = (page - 1) * pageSize;
 
   try {
+    // Use service_role key (admin-only endpoint)
     const supabase = createClient<Database>(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
     let query = supabase
