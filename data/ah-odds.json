@@ -1,0 +1,6690 @@
+{
+  "scraped_at": "2026-08-25T08:16:44.767Z",
+  "leagues": {
+    "epl": {
+      "name": "Premier League",
+      "country": "England",
+      "matches_scraped": 10,
+      "scraped_at": "2026-08-25T07:50:37.783Z"
+    },
+    "laliga": {
+      "name": "La Liga",
+      "country": "Spain",
+      "matches_scraped": 15,
+      "scraped_at": "2026-08-25T08:05:13.289Z"
+    },
+    "bundesliga": {
+      "name": "Bundesliga",
+      "country": "Germany",
+      "matches_scraped": 9,
+      "scraped_at": "2026-08-25T08:09:02.891Z"
+    },
+    "seriea": {
+      "name": "Serie A",
+      "country": "Italy",
+      "matches_scraped": 10,
+      "scraped_at": "2026-08-25T08:12:49.338Z"
+    },
+    "ligue1": {
+      "name": "Ligue 1",
+      "country": "France",
+      "matches_scraped": 15,
+      "scraped_at": "2026-08-25T08:16:44.766Z"
+    }
+  },
+  "matches": {
+    "Crystal Palace - Manchester City_epl": {
+      "match": "Crystal Palace - Manchester City",
+      "url": "https://www.oddsportal.com/football/h2h/crystal-palace-AovF1Mia/manchester-city-Wtn9Stg0/",
+      "lines": [
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 10.5,
+          "awayOdds": 1.02,
+          "payout": 93
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 3,
+          "homeOdds": 9,
+          "awayOdds": 1.01,
+          "payout": 90.8
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 3,
+          "homeOdds": 5.95,
+          "awayOdds": 1.07,
+          "payout": 90.7
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 3,
+          "homeOdds": 4.07,
+          "awayOdds": 1.19,
+          "payout": 92.1
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 3,
+          "homeOdds": 3.65,
+          "awayOdds": 1.23,
+          "payout": 92
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 3,
+          "homeOdds": 2.73,
+          "awayOdds": 1.4,
+          "payout": 92.5
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 3,
+          "homeOdds": 2.06,
+          "awayOdds": 1.77,
+          "payout": 95.2
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 3,
+          "homeOdds": 1.79,
+          "awayOdds": 2.03,
+          "payout": 95.1
+        },
+        {
+          "handicap": 1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.66,
+          "awayOdds": 2.42,
+          "payout": 96.3
+        },
+        {
+          "handicap": 1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.54,
+          "awayOdds": 2.72,
+          "payout": 96.2
+        },
+        {
+          "handicap": 1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.31,
+          "awayOdds": 3.02,
+          "payout": 91.4
+        },
+        {
+          "handicap": 2,
+          "bookmakerCount": 3,
+          "homeOdds": 1.19,
+          "awayOdds": 3.94,
+          "payout": 91.4
+        },
+        {
+          "handicap": 2.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.15,
+          "awayOdds": 4.27,
+          "payout": 90.6
+        },
+        {
+          "handicap": 2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.13,
+          "awayOdds": 4.55,
+          "payout": 90.5
+        },
+        {
+          "handicap": 2.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.07,
+          "awayOdds": 5.74,
+          "payout": 90.2
+        },
+        {
+          "handicap": 3,
+          "bookmakerCount": 3,
+          "homeOdds": 1.02,
+          "awayOdds": 8.1,
+          "payout": 90.6
+        },
+        {
+          "handicap": 3.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.01,
+          "awayOdds": 8.7,
+          "payout": 90.5
+        }
+      ],
+      "mainLine": 1,
+      "scraped_at": "2026-08-25T07:47:28.578Z"
+    },
+    "Liverpool - Nottingham_epl": {
+      "match": "Liverpool - Nottingham",
+      "url": "https://www.oddsportal.com/football/h2h/liverpool-lId4TMwf/nottingham-UsushcZr/",
+      "lines": [
+        {
+          "handicap": -3.5,
+          "bookmakerCount": 3,
+          "homeOdds": 7.4,
+          "awayOdds": 1.03,
+          "payout": 90.4
+        },
+        {
+          "handicap": -3.25,
+          "bookmakerCount": 3,
+          "homeOdds": 7.1,
+          "awayOdds": 1.04,
+          "payout": 90.7
+        },
+        {
+          "handicap": -3,
+          "bookmakerCount": 3,
+          "homeOdds": 6.75,
+          "awayOdds": 1.05,
+          "payout": 90.9
+        },
+        {
+          "handicap": -2.75,
+          "bookmakerCount": 3,
+          "homeOdds": 4.8,
+          "awayOdds": 1.12,
+          "payout": 90.8
+        },
+        {
+          "handicap": -2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 3.82,
+          "awayOdds": 1.19,
+          "payout": 90.7
+        },
+        {
+          "handicap": -2.25,
+          "bookmakerCount": 3,
+          "homeOdds": 3.52,
+          "awayOdds": 1.24,
+          "payout": 91.7
+        },
+        {
+          "handicap": -2,
+          "bookmakerCount": 3,
+          "homeOdds": 3.18,
+          "awayOdds": 1.29,
+          "payout": 91.8
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 2.73,
+          "awayOdds": 1.54,
+          "payout": 96.2
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 2.35,
+          "awayOdds": 1.69,
+          "payout": 96
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 2,
+          "awayOdds": 1.81,
+          "payout": 95
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 3,
+          "homeOdds": 1.75,
+          "awayOdds": 2.08,
+          "payout": 95
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.55,
+          "awayOdds": 2.33,
+          "payout": 93.1
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.28,
+          "awayOdds": 3.26,
+          "payout": 91.9
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 3,
+          "homeOdds": 1.14,
+          "awayOdds": 4.75,
+          "payout": 91.9
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.13,
+          "awayOdds": 4.85,
+          "payout": 91.6
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.04,
+          "awayOdds": 8.7,
+          "payout": 92.9
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 3,
+          "homeOdds": 1.01,
+          "awayOdds": 12,
+          "payout": 93.2
+        }
+      ],
+      "mainLine": -1.25,
+      "scraped_at": "2026-08-25T07:47:41.719Z"
+    },
+    "Bournemouth - Everton_epl": {
+      "match": "Bournemouth - Everton",
+      "url": "https://www.oddsportal.com/football/h2h/bournemouth-OtpNdwrc/everton-KluSTr9s/",
+      "lines": [
+        {
+          "handicap": -2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 8.1,
+          "awayOdds": 1.02,
+          "payout": 90.6
+        },
+        {
+          "handicap": -2.25,
+          "bookmakerCount": 3,
+          "homeOdds": 7.65,
+          "awayOdds": 1.02,
+          "payout": 90
+        },
+        {
+          "handicap": -2,
+          "bookmakerCount": 3,
+          "homeOdds": 7.2,
+          "awayOdds": 1.03,
+          "payout": 90.1
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 4.83,
+          "awayOdds": 1.12,
+          "payout": 90.9
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 4,
+          "homeOdds": 3.86,
+          "awayOdds": 1.26,
+          "payout": 92
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 3.56,
+          "awayOdds": 1.32,
+          "payout": 93.2
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 4,
+          "homeOdds": 3.12,
+          "awayOdds": 1.39,
+          "payout": 93
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 2.46,
+          "awayOdds": 1.59,
+          "payout": 93.4
+        },
+        {
+          "handicap": -0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 2.1,
+          "awayOdds": 1.79,
+          "payout": 96.6
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.85,
+          "awayOdds": 2.11,
+          "payout": 96.4
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 4,
+          "homeOdds": 1.58,
+          "awayOdds": 2.62,
+          "payout": 96.3
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.41,
+          "awayOdds": 3.09,
+          "payout": 93.9
+        },
+        {
+          "handicap": 0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.32,
+          "awayOdds": 3.53,
+          "payout": 96.1
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.22,
+          "awayOdds": 4.59,
+          "payout": 93.1
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 3,
+          "homeOdds": 1.07,
+          "awayOdds": 6.7,
+          "payout": 92.3
+        },
+        {
+          "handicap": 1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.04,
+          "awayOdds": 7.16,
+          "payout": 90.8
+        },
+        {
+          "handicap": 1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.03,
+          "awayOdds": 7.7,
+          "payout": 90.8
+        }
+      ],
+      "mainLine": -0.5,
+      "scraped_at": "2026-08-25T07:47:54.988Z"
+    },
+    "Coventry - Hull_epl": {
+      "match": "Coventry - Hull",
+      "url": "https://www.oddsportal.com/football/h2h/coventry-GOvB22xg/hull-city-S66R0t75/",
+      "lines": [
+        {
+          "handicap": -2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 5.6,
+          "awayOdds": 1.08,
+          "payout": 90.5
+        },
+        {
+          "handicap": -2.25,
+          "bookmakerCount": 3,
+          "homeOdds": 5.29,
+          "awayOdds": 1.09,
+          "payout": 90.4
+        },
+        {
+          "handicap": -2,
+          "bookmakerCount": 3,
+          "homeOdds": 4.9,
+          "awayOdds": 1.11,
+          "payout": 90.5
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 4.93,
+          "awayOdds": 1.23,
+          "payout": 96.2
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 4,
+          "homeOdds": 3.71,
+          "awayOdds": 1.34,
+          "payout": 96
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 3,
+          "awayOdds": 1.41,
+          "payout": 93.1
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 4,
+          "homeOdds": 2.62,
+          "awayOdds": 1.53,
+          "payout": 93.2
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 2.15,
+          "awayOdds": 1.76,
+          "payout": 93.6
+        },
+        {
+          "handicap": -0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.89,
+          "awayOdds": 2,
+          "payout": 97.2
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.66,
+          "awayOdds": 2.42,
+          "payout": 96.4
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 4,
+          "homeOdds": 1.36,
+          "awayOdds": 3.33,
+          "payout": 95.4
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.27,
+          "awayOdds": 3.93,
+          "payout": 93.8
+        },
+        {
+          "handicap": 0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.22,
+          "awayOdds": 4.53,
+          "payout": 96.1
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.11,
+          "awayOdds": 5.37,
+          "payout": 92
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 3,
+          "homeOdds": 1.04,
+          "awayOdds": 8.2,
+          "payout": 92.3
+        },
+        {
+          "handicap": 1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.02,
+          "awayOdds": 8.4,
+          "payout": 91
+        },
+        {
+          "handicap": 1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.02,
+          "awayOdds": 8.7,
+          "payout": 91.3
+        }
+      ],
+      "mainLine": -0.5,
+      "scraped_at": "2026-08-25T07:48:08.187Z"
+    },
+    "Tottenham - Newcastle_epl": {
+      "match": "Tottenham - Newcastle",
+      "url": "https://www.oddsportal.com/football/h2h/newcastle-utd-p6ahwuwJ/tottenham-UDg08Ohm/",
+      "lines": [
+        {
+          "handicap": -2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 8.6,
+          "awayOdds": 1.01,
+          "payout": 90.4
+        },
+        {
+          "handicap": -2,
+          "bookmakerCount": 3,
+          "homeOdds": 7.7,
+          "awayOdds": 1.03,
+          "payout": 90.8
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 5.22,
+          "awayOdds": 1.1,
+          "payout": 90.9
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 4.05,
+          "awayOdds": 1.17,
+          "payout": 90.8
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 3.68,
+          "awayOdds": 1.23,
+          "payout": 92.2
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 3,
+          "homeOdds": 3.28,
+          "awayOdds": 1.28,
+          "payout": 92.1
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 3,
+          "homeOdds": 2.53,
+          "awayOdds": 1.46,
+          "payout": 92.6
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 3,
+          "homeOdds": 2,
+          "awayOdds": 1.94,
+          "payout": 96.1
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 3,
+          "homeOdds": 1.71,
+          "awayOdds": 2.32,
+          "payout": 96.2
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.46,
+          "awayOdds": 2.56,
+          "payout": 93
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.23,
+          "awayOdds": 3.62,
+          "payout": 91.8
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 3,
+          "homeOdds": 1.12,
+          "awayOdds": 5.25,
+          "payout": 92.3
+        },
+        {
+          "handicap": 1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.08,
+          "awayOdds": 5.66,
+          "payout": 90.7
+        },
+        {
+          "handicap": 1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.07,
+          "awayOdds": 6.1,
+          "payout": 91
+        },
+        {
+          "handicap": 1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.02,
+          "awayOdds": 8.2,
+          "payout": 90.7
+        }
+      ],
+      "mainLine": -0.25,
+      "scraped_at": "2026-08-25T07:48:21.540Z"
+    },
+    "Leeds - Brentford_epl": {
+      "match": "Leeds - Brentford",
+      "url": "https://www.oddsportal.com/football/h2h/brentford-xYe7DwID/leeds-tUxUbLR2/",
+      "lines": [
+        {
+          "handicap": -2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 11,
+          "awayOdds": 1.01,
+          "payout": 92.5
+        },
+        {
+          "handicap": -2,
+          "bookmakerCount": 3,
+          "homeOdds": 9.9,
+          "awayOdds": 1.02,
+          "payout": 92.5
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 6.33,
+          "awayOdds": 1.06,
+          "payout": 90.8
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 4.85,
+          "awayOdds": 1.12,
+          "payout": 91
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 4.52,
+          "awayOdds": 1.23,
+          "payout": 92.9
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 4,
+          "homeOdds": 4.28,
+          "awayOdds": 1.24,
+          "payout": 93
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 3.11,
+          "awayOdds": 1.39,
+          "payout": 93.4
+        },
+        {
+          "handicap": -0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 2.56,
+          "awayOdds": 1.55,
+          "payout": 96.5
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 2.24,
+          "awayOdds": 1.76,
+          "payout": 96.5
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 4,
+          "homeOdds": 1.9,
+          "awayOdds": 2.04,
+          "payout": 96.3
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.62,
+          "awayOdds": 2.4,
+          "payout": 93.9
+        },
+        {
+          "handicap": 0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.48,
+          "awayOdds": 2.78,
+          "payout": 96.6
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.34,
+          "awayOdds": 3.42,
+          "payout": 93
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 4,
+          "homeOdds": 1.2,
+          "awayOdds": 4.84,
+          "payout": 92.9
+        },
+        {
+          "handicap": 1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.12,
+          "awayOdds": 4.92,
+          "payout": 91.2
+        },
+        {
+          "handicap": 1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.1,
+          "awayOdds": 5.35,
+          "payout": 91.2
+        },
+        {
+          "handicap": 1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.04,
+          "awayOdds": 8.15,
+          "payout": 92.2
+        },
+        {
+          "handicap": 2,
+          "bookmakerCount": 3,
+          "homeOdds": 1.01,
+          "awayOdds": 11,
+          "payout": 92.5
+        }
+      ],
+      "mainLine": 0,
+      "scraped_at": "2026-08-25T07:48:35.483Z"
+    },
+    "Chelsea - Brighton_epl": {
+      "match": "Chelsea - Brighton",
+      "url": "https://www.oddsportal.com/football/h2h/brighton-2XrRecc3/chelsea-4fGZN2oK/",
+      "lines": [
+        {
+          "handicap": -2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 6.25,
+          "awayOdds": 1.06,
+          "payout": 90.6
+        },
+        {
+          "handicap": -2,
+          "bookmakerCount": 3,
+          "homeOdds": 5.5,
+          "awayOdds": 1.08,
+          "payout": 90.3
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 4,
+          "awayOdds": 1.18,
+          "payout": 91.1
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 4,
+          "homeOdds": 3.46,
+          "awayOdds": 1.33,
+          "payout": 92.3
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 3.09,
+          "awayOdds": 1.4,
+          "payout": 93.1
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 4,
+          "homeOdds": 2.72,
+          "awayOdds": 1.5,
+          "payout": 93.2
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 2.22,
+          "awayOdds": 1.71,
+          "payout": 93.6
+        },
+        {
+          "handicap": -0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.94,
+          "awayOdds": 1.94,
+          "payout": 97
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.75,
+          "awayOdds": 2.26,
+          "payout": 96.4
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 4,
+          "homeOdds": 1.51,
+          "awayOdds": 2.82,
+          "payout": 96.2
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.37,
+          "awayOdds": 3.23,
+          "payout": 93.8
+        },
+        {
+          "handicap": 0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.3,
+          "awayOdds": 3.66,
+          "payout": 95.9
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.17,
+          "awayOdds": 4.38,
+          "payout": 92.3
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 3,
+          "homeOdds": 1.07,
+          "awayOdds": 6.5,
+          "payout": 91.9
+        },
+        {
+          "handicap": 1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.05,
+          "awayOdds": 6.77,
+          "payout": 90.9
+        },
+        {
+          "handicap": 1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.04,
+          "awayOdds": 7.2,
+          "payout": 90.9
+        },
+        {
+          "handicap": 1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.01,
+          "awayOdds": 9.1,
+          "payout": 90.9
+        }
+      ],
+      "mainLine": -0.5,
+      "scraped_at": "2026-08-25T07:48:49.725Z"
+    },
+    "Sunderland - Fulham_epl": {
+      "match": "Sunderland - Fulham",
+      "url": "https://www.oddsportal.com/football/h2h/fulham-69ZiU2Om/sunderland-WSzc94ws/",
+      "lines": [
+        {
+          "handicap": -2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 11,
+          "awayOdds": 1.01,
+          "payout": 92.5
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 6.15,
+          "awayOdds": 1.07,
+          "payout": 91.1
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 4.7,
+          "awayOdds": 1.13,
+          "payout": 91.1
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 4.64,
+          "awayOdds": 1.21,
+          "payout": 93
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 4,
+          "homeOdds": 4.12,
+          "awayOdds": 1.25,
+          "payout": 93
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 3,
+          "awayOdds": 1.42,
+          "payout": 93.5
+        },
+        {
+          "handicap": -0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 2.46,
+          "awayOdds": 1.6,
+          "payout": 96.9
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 2.14,
+          "awayOdds": 1.83,
+          "payout": 96.5
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 4,
+          "homeOdds": 1.79,
+          "awayOdds": 2.19,
+          "payout": 96.4
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.54,
+          "awayOdds": 2.58,
+          "payout": 93.9
+        },
+        {
+          "handicap": 0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.42,
+          "awayOdds": 2.99,
+          "payout": 96.3
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.29,
+          "awayOdds": 3.78,
+          "payout": 92.9
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 4,
+          "homeOdds": 1.17,
+          "awayOdds": 5.48,
+          "payout": 93.2
+        },
+        {
+          "handicap": 1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.09,
+          "awayOdds": 5.61,
+          "payout": 91.3
+        },
+        {
+          "handicap": 1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.07,
+          "awayOdds": 6.05,
+          "payout": 90.9
+        },
+        {
+          "handicap": 1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.02,
+          "awayOdds": 8,
+          "payout": 90.5
+        }
+      ],
+      "mainLine": -0.25,
+      "scraped_at": "2026-08-25T07:49:02.429Z"
+    },
+    "Manchester Utd - Ipswich_epl": {
+      "match": "Manchester Utd - Ipswich",
+      "url": "https://www.oddsportal.com/football/h2h/ipswich-thqhB2MB/manchester-united-ppjDR086/",
+      "lines": [
+        {
+          "handicap": -3.5,
+          "bookmakerCount": 3,
+          "homeOdds": 7.4,
+          "awayOdds": 1.03,
+          "payout": 90.4
+        },
+        {
+          "handicap": -3.25,
+          "bookmakerCount": 3,
+          "homeOdds": 7,
+          "awayOdds": 1.04,
+          "payout": 90.5
+        },
+        {
+          "handicap": -3,
+          "bookmakerCount": 3,
+          "homeOdds": 6.6,
+          "awayOdds": 1.05,
+          "payout": 90.6
+        },
+        {
+          "handicap": -2.75,
+          "bookmakerCount": 3,
+          "homeOdds": 4.68,
+          "awayOdds": 1.14,
+          "payout": 91.7
+        },
+        {
+          "handicap": -2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 3.66,
+          "awayOdds": 1.22,
+          "payout": 91.5
+        },
+        {
+          "handicap": -2.25,
+          "bookmakerCount": 4,
+          "homeOdds": 3.71,
+          "awayOdds": 1.3,
+          "payout": 93.6
+        },
+        {
+          "handicap": -2,
+          "bookmakerCount": 4,
+          "homeOdds": 3.3,
+          "awayOdds": 1.36,
+          "payout": 93.5
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 4,
+          "homeOdds": 2.6,
+          "awayOdds": 1.59,
+          "payout": 96.2
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 4,
+          "homeOdds": 2.25,
+          "awayOdds": 1.75,
+          "payout": 96.2
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.96,
+          "awayOdds": 1.93,
+          "payout": 93.7
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 4,
+          "homeOdds": 1.68,
+          "awayOdds": 2.27,
+          "payout": 93.7
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.52,
+          "awayOdds": 2.63,
+          "payout": 93.1
+        },
+        {
+          "handicap": -0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.42,
+          "awayOdds": 2.97,
+          "payout": 96.1
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.29,
+          "awayOdds": 3.79,
+          "payout": 92.2
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 3,
+          "homeOdds": 1.11,
+          "awayOdds": 5.1,
+          "payout": 91.2
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.01,
+          "awayOdds": 9.1,
+          "payout": 90.9
+        }
+      ],
+      "mainLine": -1.25,
+      "scraped_at": "2026-08-25T07:49:15.430Z"
+    },
+    "Aston Villa - Arsenal_epl": {
+      "match": "Aston Villa - Arsenal",
+      "url": "https://www.oddsportal.com/football/h2h/arsenal-hA1Zm19f/aston-villa-W00wmLO0/",
+      "lines": [
+        {
+          "handicap": -1,
+          "bookmakerCount": 3,
+          "homeOdds": 11.5,
+          "awayOdds": 1.01,
+          "payout": 92.8
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 3,
+          "homeOdds": 7.5,
+          "awayOdds": 1.04,
+          "payout": 91.3
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 4.73,
+          "awayOdds": 1.19,
+          "payout": 92.7
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 4,
+          "homeOdds": 4.85,
+          "awayOdds": 1.19,
+          "payout": 93.2
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 3.26,
+          "awayOdds": 1.35,
+          "payout": 93.3
+        },
+        {
+          "handicap": 0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 2.61,
+          "awayOdds": 1.52,
+          "payout": 96.1
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 2.32,
+          "awayOdds": 1.71,
+          "payout": 96
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 4,
+          "homeOdds": 1.94,
+          "awayOdds": 1.93,
+          "payout": 95.4
+        },
+        {
+          "handicap": 1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.75,
+          "awayOdds": 2.26,
+          "payout": 96.3
+        },
+        {
+          "handicap": 1.5,
+          "bookmakerCount": 4,
+          "homeOdds": 1.6,
+          "awayOdds": 2.58,
+          "payout": 96.2
+        },
+        {
+          "handicap": 1.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.38,
+          "awayOdds": 3.12,
+          "payout": 92.5
+        },
+        {
+          "handicap": 2,
+          "bookmakerCount": 4,
+          "homeOdds": 1.23,
+          "awayOdds": 4.26,
+          "payout": 92.6
+        },
+        {
+          "handicap": 2.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.16,
+          "awayOdds": 4.07,
+          "payout": 90.3
+        },
+        {
+          "handicap": 2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.14,
+          "awayOdds": 4.4,
+          "payout": 90.5
+        },
+        {
+          "handicap": 2.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.08,
+          "awayOdds": 5.64,
+          "payout": 90.6
+        },
+        {
+          "handicap": 3,
+          "bookmakerCount": 3,
+          "homeOdds": 1.02,
+          "awayOdds": 8.2,
+          "payout": 90.7
+        },
+        {
+          "handicap": 3.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.01,
+          "awayOdds": 9,
+          "payout": 90.8
+        }
+      ],
+      "mainLine": 1,
+      "scraped_at": "2026-08-25T07:49:29.668Z"
+    },
+    "Valencia - Betis_laliga": {
+      "match": "Valencia - Betis",
+      "url": "https://www.oddsportal.com/football/h2h/betis-vJbTeCGP/valencia-CQeaytrD/",
+      "lines": [
+        {
+          "handicap": -2,
+          "bookmakerCount": 3,
+          "homeOdds": 12,
+          "awayOdds": 1.01,
+          "payout": 93.2
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 8.25,
+          "awayOdds": 1.04,
+          "payout": 92.4
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 6,
+          "awayOdds": 1.09,
+          "payout": 92.2
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 5.53,
+          "awayOdds": 1.12,
+          "payout": 93.1
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 4,
+          "homeOdds": 5.22,
+          "awayOdds": 1.18,
+          "payout": 93.7
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 3.59,
+          "awayOdds": 1.31,
+          "payout": 94.1
+        },
+        {
+          "handicap": -0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 2.88,
+          "awayOdds": 1.45,
+          "payout": 96.4
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 2.47,
+          "awayOdds": 1.65,
+          "payout": 96.4
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 4,
+          "homeOdds": 2.06,
+          "awayOdds": 1.89,
+          "payout": 96.5
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.71,
+          "awayOdds": 2.21,
+          "payout": 94.6
+        },
+        {
+          "handicap": 0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.54,
+          "awayOdds": 2.59,
+          "payout": 96.6
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.38,
+          "awayOdds": 3.15,
+          "payout": 93.7
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 4,
+          "homeOdds": 1.23,
+          "awayOdds": 4.4,
+          "payout": 94
+        },
+        {
+          "handicap": 1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.14,
+          "awayOdds": 4.82,
+          "payout": 92.2
+        },
+        {
+          "handicap": 1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.11,
+          "awayOdds": 5.3,
+          "payout": 91.8
+        },
+        {
+          "handicap": 1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.06,
+          "awayOdds": 7.4,
+          "payout": 92.7
+        },
+        {
+          "handicap": 2,
+          "bookmakerCount": 3,
+          "homeOdds": 1.01,
+          "awayOdds": 11,
+          "payout": 92.5
+        },
+        {
+          "handicap": 2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.01,
+          "awayOdds": 12,
+          "payout": 93.2
+        }
+      ],
+      "mainLine": 0.25,
+      "scraped_at": "2026-08-25T08:05:10.277Z"
+    },
+    "Real Madrid - Real Sociedad_laliga": {
+      "match": "Real Madrid - Real Sociedad",
+      "url": "https://www.oddsportal.com/football/h2h/real-madrid-W8mj7MDD/real-sociedad-jNvak2f3/",
+      "lines": [
+        {
+          "handicap": -4.5,
+          "bookmakerCount": 3,
+          "homeOdds": 11.5,
+          "awayOdds": 1.01,
+          "payout": 92.8
+        },
+        {
+          "handicap": -4,
+          "bookmakerCount": 3,
+          "homeOdds": 10.5,
+          "awayOdds": 1.02,
+          "payout": 93
+        },
+        {
+          "handicap": -3.5,
+          "bookmakerCount": 3,
+          "homeOdds": 5.35,
+          "awayOdds": 1.09,
+          "payout": 90.6
+        },
+        {
+          "handicap": -3.25,
+          "bookmakerCount": 3,
+          "homeOdds": 5,
+          "awayOdds": 1.1,
+          "payout": 90.2
+        },
+        {
+          "handicap": -3,
+          "bookmakerCount": 3,
+          "homeOdds": 4.65,
+          "awayOdds": 1.12,
+          "payout": 90.3
+        },
+        {
+          "handicap": -2.75,
+          "bookmakerCount": 3,
+          "homeOdds": 3.58,
+          "awayOdds": 1.23,
+          "payout": 91.5
+        },
+        {
+          "handicap": -2.5,
+          "bookmakerCount": 4,
+          "homeOdds": 3.29,
+          "awayOdds": 1.36,
+          "payout": 92.7
+        },
+        {
+          "handicap": -2.25,
+          "bookmakerCount": 4,
+          "homeOdds": 2.96,
+          "awayOdds": 1.42,
+          "payout": 93.5
+        },
+        {
+          "handicap": -2,
+          "bookmakerCount": 4,
+          "homeOdds": 2.62,
+          "awayOdds": 1.53,
+          "payout": 93.5
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 4,
+          "homeOdds": 2.19,
+          "awayOdds": 1.79,
+          "payout": 96.3
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 4,
+          "homeOdds": 1.97,
+          "awayOdds": 1.97,
+          "payout": 96.4
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.76,
+          "awayOdds": 2.24,
+          "payout": 96.4
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 4,
+          "homeOdds": 1.48,
+          "awayOdds": 2.77,
+          "payout": 93.6
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.38,
+          "awayOdds": 3.15,
+          "payout": 93.1
+        },
+        {
+          "handicap": -0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.32,
+          "awayOdds": 3.54,
+          "payout": 96.1
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.26,
+          "awayOdds": 4.13,
+          "payout": 92.5
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 3,
+          "homeOdds": 1.09,
+          "awayOdds": 5.7,
+          "payout": 91.5
+        }
+      ],
+      "mainLine": -1.5,
+      "scraped_at": "2026-08-25T08:02:15.831Z"
+    },
+    "Celta Vigo - Osasuna_laliga": {
+      "match": "Celta Vigo - Osasuna",
+      "url": "https://www.oddsportal.com/football/h2h/celta-vigo-8pvUZFhf/osasuna-ETdxjU8a/",
+      "lines": [
+        {
+          "handicap": -2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 7.8,
+          "awayOdds": 1.02,
+          "payout": 90.2
+        },
+        {
+          "handicap": -2.25,
+          "bookmakerCount": 3,
+          "homeOdds": 7.4,
+          "awayOdds": 1.03,
+          "payout": 90.4
+        },
+        {
+          "handicap": -2,
+          "bookmakerCount": 3,
+          "homeOdds": 6.95,
+          "awayOdds": 1.04,
+          "payout": 90.5
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 4.68,
+          "awayOdds": 1.13,
+          "payout": 91
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 4,
+          "homeOdds": 3.82,
+          "awayOdds": 1.28,
+          "payout": 92.2
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 3.37,
+          "awayOdds": 1.34,
+          "payout": 93.1
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 4,
+          "homeOdds": 2.95,
+          "awayOdds": 1.44,
+          "payout": 93.2
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 2.31,
+          "awayOdds": 1.66,
+          "payout": 93.5
+        },
+        {
+          "handicap": -0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.99,
+          "awayOdds": 1.9,
+          "payout": 97.2
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.78,
+          "awayOdds": 2.22,
+          "payout": 96.2
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 4,
+          "homeOdds": 1.49,
+          "awayOdds": 2.89,
+          "payout": 96.2
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.34,
+          "awayOdds": 3.38,
+          "payout": 93.8
+        },
+        {
+          "handicap": 0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.28,
+          "awayOdds": 3.88,
+          "payout": 96.2
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.14,
+          "awayOdds": 4.82,
+          "payout": 92.2
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 3,
+          "homeOdds": 1.04,
+          "awayOdds": 7.8,
+          "payout": 91.8
+        },
+        {
+          "handicap": 1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.02,
+          "awayOdds": 8.25,
+          "payout": 90.8
+        },
+        {
+          "handicap": 1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.02,
+          "awayOdds": 8.7,
+          "payout": 91.3
+        }
+      ],
+      "mainLine": -0.5,
+      "scraped_at": "2026-08-25T08:02:29.173Z"
+    },
+    "Barcelona - Ath Bilbao_laliga": {
+      "match": "Barcelona - Ath Bilbao",
+      "url": "https://www.oddsportal.com/football/h2h/ath-bilbao-IP5zl0cJ/barcelona-SKbpVP5K/",
+      "lines": [
+        {
+          "handicap": -4.5,
+          "bookmakerCount": 3,
+          "homeOdds": 11.5,
+          "awayOdds": 1.01,
+          "payout": 92.8
+        },
+        {
+          "handicap": -4,
+          "bookmakerCount": 3,
+          "homeOdds": 10.5,
+          "awayOdds": 1.02,
+          "payout": 93
+        },
+        {
+          "handicap": -3.75,
+          "bookmakerCount": 3,
+          "homeOdds": 7.1,
+          "awayOdds": 1.04,
+          "payout": 90.7
+        },
+        {
+          "handicap": -3.5,
+          "bookmakerCount": 3,
+          "homeOdds": 5.5,
+          "awayOdds": 1.08,
+          "payout": 90.3
+        },
+        {
+          "handicap": -3.25,
+          "bookmakerCount": 3,
+          "homeOdds": 5.15,
+          "awayOdds": 1.1,
+          "payout": 90.6
+        },
+        {
+          "handicap": -3,
+          "bookmakerCount": 3,
+          "homeOdds": 4.8,
+          "awayOdds": 1.12,
+          "payout": 90.8
+        },
+        {
+          "handicap": -2.75,
+          "bookmakerCount": 3,
+          "homeOdds": 3.6,
+          "awayOdds": 1.23,
+          "payout": 91.7
+        },
+        {
+          "handicap": -2.5,
+          "bookmakerCount": 4,
+          "homeOdds": 3.38,
+          "awayOdds": 1.34,
+          "payout": 92.6
+        },
+        {
+          "handicap": -2.25,
+          "bookmakerCount": 4,
+          "homeOdds": 3.03,
+          "awayOdds": 1.41,
+          "payout": 93.6
+        },
+        {
+          "handicap": -2,
+          "bookmakerCount": 4,
+          "homeOdds": 2.68,
+          "awayOdds": 1.51,
+          "payout": 93.6
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 4,
+          "homeOdds": 2.2,
+          "awayOdds": 1.79,
+          "payout": 96.2
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 4,
+          "homeOdds": 1.97,
+          "awayOdds": 1.97,
+          "payout": 96.4
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.71,
+          "awayOdds": 2.21,
+          "payout": 93.5
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 4,
+          "homeOdds": 1.49,
+          "awayOdds": 2.75,
+          "payout": 93.6
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.39,
+          "awayOdds": 3.13,
+          "payout": 93.2
+        },
+        {
+          "handicap": -0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.32,
+          "awayOdds": 3.53,
+          "payout": 96.1
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.25,
+          "awayOdds": 4.23,
+          "payout": 92.3
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 3,
+          "homeOdds": 1.08,
+          "awayOdds": 5.8,
+          "payout": 91
+        }
+      ],
+      "mainLine": -1.25,
+      "scraped_at": "2026-08-25T08:02:42.567Z"
+    },
+    "Racing Santander - Elche_laliga": {
+      "match": "Racing Santander - Elche",
+      "url": "https://www.oddsportal.com/football/h2h/elche-4jl02tPF/racing-santander-nVpEwOrl/",
+      "lines": [
+        {
+          "handicap": -2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 8.7,
+          "awayOdds": 1.01,
+          "payout": 90.5
+        },
+        {
+          "handicap": -2,
+          "bookmakerCount": 3,
+          "homeOdds": 7.8,
+          "awayOdds": 1.02,
+          "payout": 90.2
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 5.23,
+          "awayOdds": 1.1,
+          "payout": 90.9
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 4.05,
+          "awayOdds": 1.18,
+          "payout": 91.4
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 3.77,
+          "awayOdds": 1.29,
+          "payout": 93.2
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 4,
+          "homeOdds": 3.31,
+          "awayOdds": 1.35,
+          "payout": 93.1
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 2.56,
+          "awayOdds": 1.55,
+          "payout": 93.5
+        },
+        {
+          "handicap": -0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 2.16,
+          "awayOdds": 1.75,
+          "payout": 96.7
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.96,
+          "awayOdds": 2.01,
+          "payout": 96.5
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 4,
+          "homeOdds": 1.66,
+          "awayOdds": 2.49,
+          "payout": 96.4
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.44,
+          "awayOdds": 2.93,
+          "payout": 93.9
+        },
+        {
+          "handicap": 0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.35,
+          "awayOdds": 3.34,
+          "payout": 96.1
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.24,
+          "awayOdds": 4.24,
+          "payout": 92.8
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 4,
+          "homeOdds": 1.17,
+          "awayOdds": 5.9,
+          "payout": 92.8
+        },
+        {
+          "handicap": 1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.06,
+          "awayOdds": 6.36,
+          "payout": 90.9
+        },
+        {
+          "handicap": 1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.05,
+          "awayOdds": 6.85,
+          "payout": 91
+        },
+        {
+          "handicap": 2,
+          "bookmakerCount": 3,
+          "homeOdds": 1.01,
+          "awayOdds": 11.5,
+          "payout": 92.8
+        }
+      ],
+      "mainLine": -0.5,
+      "scraped_at": "2026-08-25T08:02:55.704Z"
+    },
+    "Alaves - Villarreal_laliga": {
+      "match": "Alaves - Villarreal",
+      "url": "https://www.oddsportal.com/football/h2h/alaves-hxt57t2q/villarreal-lUatW5jE/",
+      "lines": [
+        {
+          "handicap": -2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 11.5,
+          "awayOdds": 1.01,
+          "payout": 92.8
+        },
+        {
+          "handicap": -2,
+          "bookmakerCount": 3,
+          "homeOdds": 12,
+          "awayOdds": 1.01,
+          "payout": 93.2
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 8.05,
+          "awayOdds": 1.03,
+          "payout": 91.3
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 5.95,
+          "awayOdds": 1.08,
+          "payout": 91.4
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 5.57,
+          "awayOdds": 1.1,
+          "payout": 91.9
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 3,
+          "homeOdds": 5.1,
+          "awayOdds": 1.12,
+          "payout": 91.8
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 3.85,
+          "awayOdds": 1.28,
+          "payout": 93.4
+        },
+        {
+          "handicap": -0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 3.06,
+          "awayOdds": 1.4,
+          "payout": 96.1
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 2.68,
+          "awayOdds": 1.58,
+          "payout": 96.3
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 4,
+          "homeOdds": 2.28,
+          "awayOdds": 1.75,
+          "payout": 96.3
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.9,
+          "awayOdds": 1.99,
+          "payout": 94.1
+        },
+        {
+          "handicap": 0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.68,
+          "awayOdds": 2.28,
+          "payout": 96.7
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.5,
+          "awayOdds": 2.7,
+          "payout": 93.1
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 4,
+          "homeOdds": 1.32,
+          "awayOdds": 3.52,
+          "payout": 93.1
+        },
+        {
+          "handicap": 1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.27,
+          "awayOdds": 3.98,
+          "payout": 92.3
+        },
+        {
+          "handicap": 1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.16,
+          "awayOdds": 4.25,
+          "payout": 91.1
+        },
+        {
+          "handicap": 1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.08,
+          "awayOdds": 5.44,
+          "payout": 90.1
+        },
+        {
+          "handicap": 2,
+          "bookmakerCount": 3,
+          "homeOdds": 1.02,
+          "awayOdds": 8.1,
+          "payout": 90.6
+        },
+        {
+          "handicap": 2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.01,
+          "awayOdds": 8.9,
+          "payout": 90.7
+        }
+      ],
+      "mainLine": 0.25,
+      "scraped_at": "2026-08-25T08:03:10.781Z"
+    },
+    "Levante - Betis_laliga": {
+      "match": "Levante - Betis",
+      "url": "https://www.oddsportal.com/football/h2h/betis-vJbTeCGP/levante-G8FL0ShI/",
+      "lines": [
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 9.15,
+          "awayOdds": 1.01,
+          "payout": 91
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 6.85,
+          "awayOdds": 1.05,
+          "payout": 91
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 6.43,
+          "awayOdds": 1.07,
+          "payout": 91.7
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 3,
+          "homeOdds": 5.9,
+          "awayOdds": 1.09,
+          "payout": 92
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 4.17,
+          "awayOdds": 1.25,
+          "payout": 93.4
+        },
+        {
+          "handicap": -0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 3.24,
+          "awayOdds": 1.36,
+          "payout": 95.8
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 2.82,
+          "awayOdds": 1.51,
+          "payout": 96.2
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 4,
+          "homeOdds": 2.37,
+          "awayOdds": 1.69,
+          "payout": 96.3
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.93,
+          "awayOdds": 1.96,
+          "payout": 94
+        },
+        {
+          "handicap": 0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.69,
+          "awayOdds": 2.26,
+          "payout": 96.7
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.5,
+          "awayOdds": 2.7,
+          "payout": 93.1
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 4,
+          "homeOdds": 1.31,
+          "awayOdds": 3.57,
+          "payout": 93
+        },
+        {
+          "handicap": 1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.26,
+          "awayOdds": 4.05,
+          "payout": 92.2
+        },
+        {
+          "handicap": 1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.16,
+          "awayOdds": 4.3,
+          "payout": 91.4
+        },
+        {
+          "handicap": 1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.08,
+          "awayOdds": 5.54,
+          "payout": 90.4
+        },
+        {
+          "handicap": 2,
+          "bookmakerCount": 3,
+          "homeOdds": 1.01,
+          "awayOdds": 8.6,
+          "payout": 90.4
+        },
+        {
+          "handicap": 2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.03,
+          "awayOdds": 9.2,
+          "payout": 92.6
+        }
+      ],
+      "mainLine": 0.25,
+      "scraped_at": "2026-08-25T08:03:23.744Z"
+    },
+    "Real Sociedad - Espanyol_laliga": {
+      "match": "Real Sociedad - Espanyol",
+      "url": "https://www.oddsportal.com/football/h2h/espanyol-QFfPdh1J/real-sociedad-jNvak2f3/",
+      "lines": [
+        {
+          "handicap": -2.75,
+          "bookmakerCount": 3,
+          "homeOdds": 7.8,
+          "awayOdds": 1.02,
+          "payout": 90.2
+        },
+        {
+          "handicap": -2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 6.35,
+          "awayOdds": 1.06,
+          "payout": 90.8
+        },
+        {
+          "handicap": -2.25,
+          "bookmakerCount": 3,
+          "homeOdds": 6.03,
+          "awayOdds": 1.08,
+          "payout": 91.6
+        },
+        {
+          "handicap": -2,
+          "bookmakerCount": 3,
+          "homeOdds": 5.65,
+          "awayOdds": 1.09,
+          "payout": 91.4
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 4.07,
+          "awayOdds": 1.2,
+          "payout": 92.7
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 4,
+          "homeOdds": 3.39,
+          "awayOdds": 1.34,
+          "payout": 93.5
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 3.01,
+          "awayOdds": 1.41,
+          "payout": 95.3
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 4,
+          "homeOdds": 2.63,
+          "awayOdds": 1.52,
+          "payout": 95.3
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 2.15,
+          "awayOdds": 1.76,
+          "payout": 94
+        },
+        {
+          "handicap": -0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.89,
+          "awayOdds": 2,
+          "payout": 97.2
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.68,
+          "awayOdds": 2.38,
+          "payout": 96.4
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 4,
+          "homeOdds": 1.4,
+          "awayOdds": 3.41,
+          "payout": 96.4
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.31,
+          "awayOdds": 3.59,
+          "payout": 92.7
+        },
+        {
+          "handicap": 0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.26,
+          "awayOdds": 4.09,
+          "payout": 96.3
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.11,
+          "awayOdds": 4.87,
+          "payout": 90.4
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 3,
+          "homeOdds": 1.03,
+          "awayOdds": 7.6,
+          "payout": 90.7
+        },
+        {
+          "handicap": 1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.02,
+          "awayOdds": 8.05,
+          "payout": 90.5
+        },
+        {
+          "handicap": 1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.01,
+          "awayOdds": 8.5,
+          "payout": 90.3
+        }
+      ],
+      "mainLine": -0.5,
+      "scraped_at": "2026-08-25T08:03:37.216Z"
+    },
+    "Sevilla - Atl. Madrid_laliga": {
+      "match": "Sevilla - Atl. Madrid",
+      "url": "https://www.oddsportal.com/football/h2h/atl-madrid-jaarqpLQ/sevilla-h8oAv4Ts/",
+      "lines": [
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 7.9,
+          "awayOdds": 1.03,
+          "payout": 91.1
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 7.5,
+          "awayOdds": 1.05,
+          "payout": 92.1
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 3,
+          "homeOdds": 6.9,
+          "awayOdds": 1.06,
+          "payout": 91.9
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 4.52,
+          "awayOdds": 1.2,
+          "payout": 93.2
+        },
+        {
+          "handicap": -0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 3.62,
+          "awayOdds": 1.31,
+          "payout": 96.2
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 3.35,
+          "awayOdds": 1.4,
+          "payout": 96
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 4,
+          "homeOdds": 2.68,
+          "awayOdds": 1.57,
+          "payout": 96.3
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 2.1,
+          "awayOdds": 1.79,
+          "payout": 93.9
+        },
+        {
+          "handicap": 0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.83,
+          "awayOdds": 2.08,
+          "payout": 97.4
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.61,
+          "awayOdds": 2.43,
+          "payout": 93.2
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 4,
+          "homeOdds": 1.4,
+          "awayOdds": 3.11,
+          "payout": 93.1
+        },
+        {
+          "handicap": 1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.32,
+          "awayOdds": 3.54,
+          "payout": 92.2
+        },
+        {
+          "handicap": 1.5,
+          "bookmakerCount": 4,
+          "homeOdds": 1.27,
+          "awayOdds": 3.98,
+          "payout": 92.6
+        },
+        {
+          "handicap": 1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.11,
+          "awayOdds": 4.9,
+          "payout": 90.5
+        },
+        {
+          "handicap": 2,
+          "bookmakerCount": 3,
+          "homeOdds": 1.03,
+          "awayOdds": 7.4,
+          "payout": 90.4
+        },
+        {
+          "handicap": 2.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.02,
+          "awayOdds": 7.85,
+          "payout": 90.3
+        },
+        {
+          "handicap": 2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.02,
+          "awayOdds": 8.3,
+          "payout": 90.8
+        }
+      ],
+      "mainLine": 0.25,
+      "scraped_at": "2026-08-25T08:03:50.289Z"
+    },
+    "Real Madrid - Malaga_laliga": {
+      "match": "Real Madrid - Malaga",
+      "url": "https://www.oddsportal.com/football/h2h/malaga-25tIqYiJ/real-madrid-W8mj7MDD/",
+      "lines": [
+        {
+          "handicap": -4.5,
+          "bookmakerCount": 3,
+          "homeOdds": 6.15,
+          "awayOdds": 1.06,
+          "payout": 90.4
+        },
+        {
+          "handicap": -4.25,
+          "bookmakerCount": 3,
+          "homeOdds": 5.89,
+          "awayOdds": 1.07,
+          "payout": 90.6
+        },
+        {
+          "handicap": -4,
+          "bookmakerCount": 3,
+          "homeOdds": 5.6,
+          "awayOdds": 1.08,
+          "payout": 90.5
+        },
+        {
+          "handicap": -3.75,
+          "bookmakerCount": 3,
+          "homeOdds": 4.25,
+          "awayOdds": 1.15,
+          "payout": 90.5
+        },
+        {
+          "handicap": -3.5,
+          "bookmakerCount": 3,
+          "homeOdds": 3.5,
+          "awayOdds": 1.22,
+          "payout": 90.5
+        },
+        {
+          "handicap": -3.25,
+          "bookmakerCount": 4,
+          "homeOdds": 3.56,
+          "awayOdds": 1.3,
+          "payout": 92.6
+        },
+        {
+          "handicap": -3,
+          "bookmakerCount": 4,
+          "homeOdds": 3.2,
+          "awayOdds": 1.35,
+          "payout": 92.4
+        },
+        {
+          "handicap": -2.75,
+          "bookmakerCount": 4,
+          "homeOdds": 2.63,
+          "awayOdds": 1.57,
+          "payout": 95.9
+        },
+        {
+          "handicap": -2.5,
+          "bookmakerCount": 4,
+          "homeOdds": 2.31,
+          "awayOdds": 1.72,
+          "payout": 96.2
+        },
+        {
+          "handicap": -2.25,
+          "bookmakerCount": 4,
+          "homeOdds": 2.08,
+          "awayOdds": 1.87,
+          "payout": 96.3
+        },
+        {
+          "handicap": -2,
+          "bookmakerCount": 4,
+          "homeOdds": 1.79,
+          "awayOdds": 2.09,
+          "payout": 95.3
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.59,
+          "awayOdds": 2.36,
+          "payout": 93.1
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 4,
+          "homeOdds": 1.49,
+          "awayOdds": 2.64,
+          "payout": 93.2
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.35,
+          "awayOdds": 3.24,
+          "payout": 92.4
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 4,
+          "homeOdds": 1.23,
+          "awayOdds": 4.1,
+          "payout": 92.4
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.18,
+          "awayOdds": 3.95,
+          "payout": 90.9
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.07,
+          "awayOdds": 7.1,
+          "payout": 93
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 3,
+          "homeOdds": 1.03,
+          "awayOdds": 9.6,
+          "payout": 93
+        }
+      ],
+      "mainLine": -2,
+      "scraped_at": "2026-08-25T08:04:03.782Z"
+    },
+    "Dep. A Coruna - Valencia_laliga": {
+      "match": "Dep. A Coruna - Valencia",
+      "url": "https://www.oddsportal.com/football/h2h/dep-a-coruna-Q51ZzMS6/valencia-CQeaytrD/",
+      "lines": [
+        {
+          "handicap": -2,
+          "bookmakerCount": 3,
+          "homeOdds": 11,
+          "awayOdds": 1.01,
+          "payout": 92.5
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 7.55,
+          "awayOdds": 1.03,
+          "payout": 90.6
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 5.5,
+          "awayOdds": 1.09,
+          "payout": 91
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 5.08,
+          "awayOdds": 1.13,
+          "payout": 92.4
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 4,
+          "homeOdds": 4.66,
+          "awayOdds": 1.21,
+          "payout": 93.3
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 3.23,
+          "awayOdds": 1.37,
+          "payout": 93.5
+        },
+        {
+          "handicap": -0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 2.61,
+          "awayOdds": 1.53,
+          "payout": 96.5
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 2.28,
+          "awayOdds": 1.74,
+          "payout": 96.4
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 4,
+          "homeOdds": 1.89,
+          "awayOdds": 2.1,
+          "payout": 96.5
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.56,
+          "awayOdds": 2.56,
+          "payout": 94
+        },
+        {
+          "handicap": 0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.42,
+          "awayOdds": 3.02,
+          "payout": 96.6
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.28,
+          "awayOdds": 3.84,
+          "payout": 92.9
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 4,
+          "homeOdds": 1.15,
+          "awayOdds": 5.86,
+          "payout": 93.3
+        },
+        {
+          "handicap": 1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.08,
+          "awayOdds": 5.76,
+          "payout": 90.9
+        },
+        {
+          "handicap": 1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.06,
+          "awayOdds": 6.3,
+          "payout": 90.7
+        },
+        {
+          "handicap": 1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.01,
+          "awayOdds": 8.5,
+          "payout": 90.3
+        }
+      ],
+      "mainLine": 0,
+      "scraped_at": "2026-08-25T08:04:18.136Z"
+    },
+    "Celta Vigo - Ath Bilbao_laliga": {
+      "match": "Celta Vigo - Ath Bilbao",
+      "url": "https://www.oddsportal.com/football/h2h/ath-bilbao-IP5zl0cJ/celta-vigo-8pvUZFhf/",
+      "lines": [
+        {
+          "handicap": -2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 10.5,
+          "awayOdds": 1.01,
+          "payout": 92.1
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 6.03,
+          "awayOdds": 1.07,
+          "payout": 90.9
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 4.6,
+          "awayOdds": 1.14,
+          "payout": 91.4
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 4.53,
+          "awayOdds": 1.22,
+          "payout": 93.2
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 4,
+          "homeOdds": 4.02,
+          "awayOdds": 1.26,
+          "payout": 93
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 2.95,
+          "awayOdds": 1.44,
+          "payout": 93.6
+        },
+        {
+          "handicap": -0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 2.43,
+          "awayOdds": 1.61,
+          "payout": 96.8
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 2.09,
+          "awayOdds": 1.87,
+          "payout": 96.5
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 4,
+          "homeOdds": 1.76,
+          "awayOdds": 2.24,
+          "payout": 96.4
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.52,
+          "awayOdds": 2.65,
+          "payout": 93.9
+        },
+        {
+          "handicap": 0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.4,
+          "awayOdds": 3.08,
+          "payout": 96.3
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.27,
+          "awayOdds": 3.92,
+          "payout": 92.8
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 3,
+          "homeOdds": 1.11,
+          "awayOdds": 5.45,
+          "payout": 92.2
+        },
+        {
+          "handicap": 1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.08,
+          "awayOdds": 5.81,
+          "payout": 91.1
+        },
+        {
+          "handicap": 1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.06,
+          "awayOdds": 6.3,
+          "payout": 90.7
+        },
+        {
+          "handicap": 1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.02,
+          "awayOdds": 8.4,
+          "payout": 91
+        }
+      ],
+      "mainLine": -0.25,
+      "scraped_at": "2026-08-25T08:04:31.543Z"
+    },
+    "Osasuna - Getafe_laliga": {
+      "match": "Osasuna - Getafe",
+      "url": "https://www.oddsportal.com/football/h2h/getafe-dboeiWOt/osasuna-ETdxjU8a/",
+      "lines": [
+        {
+          "handicap": -2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 10,
+          "awayOdds": 1.02,
+          "payout": 92.6
+        },
+        {
+          "handicap": -2,
+          "bookmakerCount": 3,
+          "homeOdds": 8.7,
+          "awayOdds": 1.01,
+          "payout": 90.5
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 5.57,
+          "awayOdds": 1.09,
+          "payout": 91.2
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 4,
+          "homeOdds": 4.25,
+          "awayOdds": 1.21,
+          "payout": 91.8
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 3.92,
+          "awayOdds": 1.27,
+          "payout": 93.1
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 4,
+          "homeOdds": 3.39,
+          "awayOdds": 1.33,
+          "payout": 92.9
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 2.53,
+          "awayOdds": 1.55,
+          "payout": 93.4
+        },
+        {
+          "handicap": -0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 2.11,
+          "awayOdds": 1.77,
+          "payout": 96.3
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.88,
+          "awayOdds": 2.08,
+          "payout": 96.3
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 4,
+          "homeOdds": 1.57,
+          "awayOdds": 2.72,
+          "payout": 96.3
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.36,
+          "awayOdds": 3.25,
+          "payout": 93.7
+        },
+        {
+          "handicap": 0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.28,
+          "awayOdds": 3.77,
+          "payout": 95.6
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.18,
+          "awayOdds": 5.09,
+          "payout": 93.1
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 3,
+          "homeOdds": 1.05,
+          "awayOdds": 7.7,
+          "payout": 92.4
+        },
+        {
+          "handicap": 1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.03,
+          "awayOdds": 8.05,
+          "payout": 91.3
+        },
+        {
+          "handicap": 1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.02,
+          "awayOdds": 8.6,
+          "payout": 91.2
+        }
+      ],
+      "mainLine": -0.5,
+      "scraped_at": "2026-08-25T08:04:44.666Z"
+    },
+    "Barcelona - Rayo Vallecano_laliga": {
+      "match": "Barcelona - Rayo Vallecano",
+      "url": "https://www.oddsportal.com/football/h2h/barcelona-SKbpVP5K/rayo-vallecano-8bcjFy6O/",
+      "lines": [
+        {
+          "handicap": -4.5,
+          "bookmakerCount": 3,
+          "homeOdds": 8.3,
+          "awayOdds": 1.02,
+          "payout": 90.8
+        },
+        {
+          "handicap": -4,
+          "bookmakerCount": 3,
+          "homeOdds": 7.5,
+          "awayOdds": 1.03,
+          "payout": 90.6
+        },
+        {
+          "handicap": -3.75,
+          "bookmakerCount": 3,
+          "homeOdds": 5.36,
+          "awayOdds": 1.09,
+          "payout": 90.6
+        },
+        {
+          "handicap": -3.5,
+          "bookmakerCount": 3,
+          "homeOdds": 4.3,
+          "awayOdds": 1.15,
+          "payout": 90.7
+        },
+        {
+          "handicap": -3.25,
+          "bookmakerCount": 3,
+          "homeOdds": 3.95,
+          "awayOdds": 1.18,
+          "payout": 90.9
+        },
+        {
+          "handicap": -3,
+          "bookmakerCount": 4,
+          "homeOdds": 3.85,
+          "awayOdds": 1.27,
+          "payout": 91.8
+        },
+        {
+          "handicap": -2.75,
+          "bookmakerCount": 4,
+          "homeOdds": 3.01,
+          "awayOdds": 1.39,
+          "payout": 92.4
+        },
+        {
+          "handicap": -2.5,
+          "bookmakerCount": 4,
+          "homeOdds": 2.55,
+          "awayOdds": 1.53,
+          "payout": 92.5
+        },
+        {
+          "handicap": -2.25,
+          "bookmakerCount": 4,
+          "homeOdds": 2.29,
+          "awayOdds": 1.64,
+          "payout": 93.4
+        },
+        {
+          "handicap": -2,
+          "bookmakerCount": 4,
+          "homeOdds": 2.04,
+          "awayOdds": 1.83,
+          "payout": 93.6
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.87,
+          "awayOdds": 2.08,
+          "payout": 96
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 4,
+          "homeOdds": 1.71,
+          "awayOdds": 2.32,
+          "payout": 96
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.47,
+          "awayOdds": 2.71,
+          "payout": 93.1
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 4,
+          "homeOdds": 1.3,
+          "awayOdds": 3.54,
+          "payout": 93.2
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.26,
+          "awayOdds": 3.93,
+          "payout": 93
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.09,
+          "awayOdds": 5.57,
+          "payout": 91.2
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 3,
+          "homeOdds": 1.04,
+          "awayOdds": 7.2,
+          "payout": 90.9
+        }
+      ],
+      "mainLine": -2,
+      "scraped_at": "2026-08-25T08:04:57.649Z"
+    },
+    "Bayern Munich - Stuttgart_bundesliga": {
+      "match": "Bayern Munich - Stuttgart",
+      "url": "https://www.oddsportal.com/football/h2h/bayern-munich-nVp0wiqd/vfb-stuttgart-nJQmYp1B/",
+      "lines": [
+        {
+          "handicap": -5,
+          "bookmakerCount": 3,
+          "homeOdds": 11.5,
+          "awayOdds": 1.01,
+          "payout": 92.8
+        },
+        {
+          "handicap": -4.5,
+          "bookmakerCount": 3,
+          "homeOdds": 7,
+          "awayOdds": 1.04,
+          "payout": 90.5
+        },
+        {
+          "handicap": -4,
+          "bookmakerCount": 3,
+          "homeOdds": 6.4,
+          "awayOdds": 1.05,
+          "payout": 90.2
+        },
+        {
+          "handicap": -3.75,
+          "bookmakerCount": 3,
+          "homeOdds": 4.81,
+          "awayOdds": 1.12,
+          "payout": 90.8
+        },
+        {
+          "handicap": -3.5,
+          "bookmakerCount": 3,
+          "homeOdds": 3.94,
+          "awayOdds": 1.18,
+          "payout": 90.8
+        },
+        {
+          "handicap": -3.25,
+          "bookmakerCount": 3,
+          "homeOdds": 3.7,
+          "awayOdds": 1.22,
+          "payout": 91.7
+        },
+        {
+          "handicap": -3,
+          "bookmakerCount": 3,
+          "homeOdds": 3.42,
+          "awayOdds": 1.25,
+          "payout": 91.5
+        },
+        {
+          "handicap": -2.75,
+          "bookmakerCount": 4,
+          "homeOdds": 3,
+          "awayOdds": 1.39,
+          "payout": 93.3
+        },
+        {
+          "handicap": -2.5,
+          "bookmakerCount": 4,
+          "homeOdds": 2.55,
+          "awayOdds": 1.51,
+          "payout": 93.1
+        },
+        {
+          "handicap": -2.25,
+          "bookmakerCount": 4,
+          "homeOdds": 2.3,
+          "awayOdds": 1.63,
+          "payout": 94.9
+        },
+        {
+          "handicap": -2,
+          "bookmakerCount": 4,
+          "homeOdds": 2.07,
+          "awayOdds": 1.79,
+          "payout": 95.2
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.9,
+          "awayOdds": 2.04,
+          "payout": 96.4
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 4,
+          "homeOdds": 1.76,
+          "awayOdds": 2.25,
+          "payout": 96.2
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.51,
+          "awayOdds": 2.55,
+          "payout": 92.3
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 4,
+          "homeOdds": 1.36,
+          "awayOdds": 3.16,
+          "payout": 92.4
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.3,
+          "awayOdds": 3.52,
+          "payout": 92.1
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.13,
+          "awayOdds": 4.55,
+          "payout": 90.5
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 3,
+          "homeOdds": 1.08,
+          "awayOdds": 5.75,
+          "payout": 90.9
+        }
+      ],
+      "mainLine": -2,
+      "scraped_at": "2026-08-25T08:05:53.100Z"
+    },
+    "FC Koln - Hoffenheim_bundesliga": {
+      "match": "FC Koln - Hoffenheim",
+      "url": "https://www.oddsportal.com/football/h2h/1-fc-koln-WG9pOTse/hoffenheim-hQAtP9Sl/",
+      "lines": [
+        {
+          "handicap": -2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 12,
+          "awayOdds": 1.01,
+          "payout": 93.2
+        },
+        {
+          "handicap": -2,
+          "bookmakerCount": 3,
+          "homeOdds": 11,
+          "awayOdds": 1.01,
+          "payout": 92.5
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 7.7,
+          "awayOdds": 1.03,
+          "payout": 90.8
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 5.75,
+          "awayOdds": 1.08,
+          "payout": 90.9
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 5.37,
+          "awayOdds": 1.11,
+          "payout": 92
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 3,
+          "homeOdds": 4.9,
+          "awayOdds": 1.13,
+          "payout": 91.8
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 3.71,
+          "awayOdds": 1.3,
+          "payout": 93.5
+        },
+        {
+          "handicap": -0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 3,
+          "awayOdds": 1.42,
+          "payout": 96.4
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 2.63,
+          "awayOdds": 1.58,
+          "payout": 96.2
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 4,
+          "homeOdds": 2.25,
+          "awayOdds": 1.75,
+          "payout": 96.3
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.89,
+          "awayOdds": 2,
+          "payout": 94.1
+        },
+        {
+          "handicap": 0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.67,
+          "awayOdds": 2.29,
+          "payout": 96.6
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.5,
+          "awayOdds": 2.7,
+          "payout": 93.2
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 4,
+          "homeOdds": 1.33,
+          "awayOdds": 3.44,
+          "payout": 93
+        },
+        {
+          "handicap": 1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.28,
+          "awayOdds": 3.86,
+          "payout": 92.6
+        },
+        {
+          "handicap": 1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.18,
+          "awayOdds": 4.05,
+          "payout": 91.4
+        },
+        {
+          "handicap": 1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.1,
+          "awayOdds": 5.1,
+          "payout": 90.5
+        },
+        {
+          "handicap": 2,
+          "bookmakerCount": 3,
+          "homeOdds": 1.03,
+          "awayOdds": 7.5,
+          "payout": 90.6
+        },
+        {
+          "handicap": 2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.02,
+          "awayOdds": 8.3,
+          "payout": 90.8
+        }
+      ],
+      "mainLine": 0.25,
+      "scraped_at": "2026-08-25T08:06:05.899Z"
+    },
+    "RB Leipzig - B. Monchengladbach_bundesliga": {
+      "match": "RB Leipzig - B. Monchengladbach",
+      "url": "https://www.oddsportal.com/football/h2h/b-monchengladbach-88HSzjDr/rb-leipzig-KbS1suSm/",
+      "lines": [
+        {
+          "handicap": -3.5,
+          "bookmakerCount": 3,
+          "homeOdds": 7.1,
+          "awayOdds": 1.04,
+          "payout": 90.7
+        },
+        {
+          "handicap": -3,
+          "bookmakerCount": 3,
+          "homeOdds": 6.4,
+          "awayOdds": 1.05,
+          "payout": 90.2
+        },
+        {
+          "handicap": -2.75,
+          "bookmakerCount": 3,
+          "homeOdds": 4.78,
+          "awayOdds": 1.13,
+          "payout": 91.4
+        },
+        {
+          "handicap": -2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 3.88,
+          "awayOdds": 1.2,
+          "payout": 91.7
+        },
+        {
+          "handicap": -2.25,
+          "bookmakerCount": 3,
+          "homeOdds": 3.58,
+          "awayOdds": 1.25,
+          "payout": 92.7
+        },
+        {
+          "handicap": -2,
+          "bookmakerCount": 4,
+          "homeOdds": 3.57,
+          "awayOdds": 1.31,
+          "payout": 93.5
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 4,
+          "homeOdds": 2.82,
+          "awayOdds": 1.51,
+          "payout": 96.1
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 4,
+          "homeOdds": 2.43,
+          "awayOdds": 1.66,
+          "payout": 96.3
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 2.16,
+          "awayOdds": 1.81,
+          "payout": 96.2
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 4,
+          "homeOdds": 1.86,
+          "awayOdds": 2.03,
+          "payout": 93.7
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.66,
+          "awayOdds": 2.31,
+          "payout": 93.2
+        },
+        {
+          "handicap": -0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.53,
+          "awayOdds": 2.6,
+          "payout": 96.3
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.38,
+          "awayOdds": 3.17,
+          "payout": 92.1
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 4,
+          "homeOdds": 1.23,
+          "awayOdds": 4.41,
+          "payout": 92.2
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.17,
+          "awayOdds": 4.05,
+          "payout": 90.8
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.06,
+          "awayOdds": 6.14,
+          "payout": 90.4
+        },
+        {
+          "handicap": 1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.02,
+          "awayOdds": 10,
+          "payout": 92.6
+        }
+      ],
+      "mainLine": -1,
+      "scraped_at": "2026-08-25T08:06:20.226Z"
+    },
+    "Elversberg - Bayer Leverkusen_bundesliga": {
+      "match": "Elversberg - Bayer Leverkusen",
+      "url": "https://www.oddsportal.com/football/h2h/bayer-leverkusen-4jcj2zMd/elversberg-6in2Eknb/",
+      "lines": [
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 9.6,
+          "awayOdds": 1.03,
+          "payout": 93
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 3,
+          "homeOdds": 8.6,
+          "awayOdds": 1.04,
+          "payout": 92.8
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 3,
+          "homeOdds": 6.5,
+          "awayOdds": 1.05,
+          "payout": 90.4
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 3,
+          "homeOdds": 4.2,
+          "awayOdds": 1.16,
+          "payout": 90.9
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 4,
+          "homeOdds": 4,
+          "awayOdds": 1.27,
+          "payout": 92.4
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 2.96,
+          "awayOdds": 1.42,
+          "payout": 92.5
+        },
+        {
+          "handicap": 0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 2.47,
+          "awayOdds": 1.59,
+          "payout": 96.7
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 2.2,
+          "awayOdds": 1.71,
+          "payout": 93.5
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 4,
+          "homeOdds": 1.95,
+          "awayOdds": 1.94,
+          "payout": 93.7
+        },
+        {
+          "handicap": 1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.78,
+          "awayOdds": 2.21,
+          "payout": 96.2
+        },
+        {
+          "handicap": 1.5,
+          "bookmakerCount": 4,
+          "homeOdds": 1.63,
+          "awayOdds": 2.5,
+          "payout": 96.3
+        },
+        {
+          "handicap": 1.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.44,
+          "awayOdds": 2.89,
+          "payout": 93.4
+        },
+        {
+          "handicap": 2,
+          "bookmakerCount": 4,
+          "homeOdds": 1.3,
+          "awayOdds": 3.71,
+          "payout": 93.5
+        },
+        {
+          "handicap": 2.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.2,
+          "awayOdds": 3.82,
+          "payout": 91.3
+        },
+        {
+          "handicap": 2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.17,
+          "awayOdds": 4.2,
+          "payout": 91.5
+        },
+        {
+          "handicap": 2.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.09,
+          "awayOdds": 5.26,
+          "payout": 90.3
+        },
+        {
+          "handicap": 3,
+          "bookmakerCount": 3,
+          "homeOdds": 1.03,
+          "awayOdds": 7.5,
+          "payout": 90.6
+        },
+        {
+          "handicap": 3.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.02,
+          "awayOdds": 7.85,
+          "payout": 90.3
+        },
+        {
+          "handicap": 3.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.02,
+          "awayOdds": 8.3,
+          "payout": 90.8
+        }
+      ],
+      "mainLine": 1,
+      "scraped_at": "2026-08-25T08:06:33.588Z"
+    },
+    "Union Berlin - Eintracht Frankfurt_bundesliga": {
+      "match": "Union Berlin - Eintracht Frankfurt",
+      "url": "https://www.oddsportal.com/football/h2h/eintracht-frankfurt-8vndvXTk/union-berlin-pzHW4oaE/",
+      "lines": [
+        {
+          "handicap": -2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 8.6,
+          "awayOdds": 1.01,
+          "payout": 90.4
+        },
+        {
+          "handicap": -2,
+          "bookmakerCount": 3,
+          "homeOdds": 7.9,
+          "awayOdds": 1.02,
+          "payout": 90.3
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 5.53,
+          "awayOdds": 1.09,
+          "payout": 91.1
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 4.4,
+          "awayOdds": 1.15,
+          "payout": 91.2
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 4.07,
+          "awayOdds": 1.19,
+          "payout": 92.1
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 4,
+          "homeOdds": 4,
+          "awayOdds": 1.26,
+          "payout": 93
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 3,
+          "awayOdds": 1.41,
+          "payout": 93.4
+        },
+        {
+          "handicap": -0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 2.5,
+          "awayOdds": 1.57,
+          "payout": 96.4
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 2.18,
+          "awayOdds": 1.8,
+          "payout": 96.4
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 4,
+          "homeOdds": 1.88,
+          "awayOdds": 2.07,
+          "payout": 96.4
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.62,
+          "awayOdds": 2.41,
+          "payout": 94
+        },
+        {
+          "handicap": 0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.48,
+          "awayOdds": 2.77,
+          "payout": 96.5
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.34,
+          "awayOdds": 3.37,
+          "payout": 93.3
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 4,
+          "homeOdds": 1.21,
+          "awayOdds": 4.67,
+          "payout": 93
+        },
+        {
+          "handicap": 1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.13,
+          "awayOdds": 4.62,
+          "payout": 90.8
+        },
+        {
+          "handicap": 1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.11,
+          "awayOdds": 5,
+          "payout": 90.8
+        },
+        {
+          "handicap": 1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.06,
+          "awayOdds": 6.34,
+          "payout": 90.8
+        },
+        {
+          "handicap": 2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.01,
+          "awayOdds": 11,
+          "payout": 92.5
+        }
+      ],
+      "mainLine": 0,
+      "scraped_at": "2026-08-25T08:06:47.396Z"
+    },
+    "Mainz - Paderborn_bundesliga": {
+      "match": "Mainz - Paderborn",
+      "url": "https://www.oddsportal.com/football/h2h/mainz-EuakNmc1/paderborn-G2Op923t/",
+      "lines": [
+        {
+          "handicap": -3.5,
+          "bookmakerCount": 3,
+          "homeOdds": 11,
+          "awayOdds": 1.01,
+          "payout": 92.5
+        },
+        {
+          "handicap": -3,
+          "bookmakerCount": 3,
+          "homeOdds": 10,
+          "awayOdds": 1.02,
+          "payout": 92.6
+        },
+        {
+          "handicap": -2.75,
+          "bookmakerCount": 3,
+          "homeOdds": 6.46,
+          "awayOdds": 1.05,
+          "payout": 90.3
+        },
+        {
+          "handicap": -2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 5.05,
+          "awayOdds": 1.1,
+          "payout": 90.3
+        },
+        {
+          "handicap": -2.25,
+          "bookmakerCount": 3,
+          "homeOdds": 4.73,
+          "awayOdds": 1.14,
+          "payout": 91.9
+        },
+        {
+          "handicap": -2,
+          "bookmakerCount": 3,
+          "homeOdds": 4.35,
+          "awayOdds": 1.16,
+          "payout": 91.6
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 4,
+          "homeOdds": 3.94,
+          "awayOdds": 1.33,
+          "payout": 95.9
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 4,
+          "homeOdds": 2.86,
+          "awayOdds": 1.5,
+          "payout": 96.3
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 2.52,
+          "awayOdds": 1.57,
+          "payout": 95.4
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 4,
+          "homeOdds": 2.18,
+          "awayOdds": 1.73,
+          "payout": 95.4
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.88,
+          "awayOdds": 2.01,
+          "payout": 94.2
+        },
+        {
+          "handicap": -0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.68,
+          "awayOdds": 2.27,
+          "payout": 96.5
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.49,
+          "awayOdds": 2.75,
+          "payout": 93.1
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 4,
+          "homeOdds": 1.29,
+          "awayOdds": 3.76,
+          "payout": 93
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.24,
+          "awayOdds": 4.3,
+          "payout": 92.8
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.08,
+          "awayOdds": 5.71,
+          "payout": 90.8
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 3,
+          "homeOdds": 1.01,
+          "awayOdds": 9,
+          "payout": 90.8
+        },
+        {
+          "handicap": 1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.03,
+          "awayOdds": 9.7,
+          "payout": 93.1
+        }
+      ],
+      "mainLine": -0.75,
+      "scraped_at": "2026-08-25T08:07:00.783Z"
+    },
+    "Dortmund - Hamburger SV_bundesliga": {
+      "match": "Dortmund - Hamburger SV",
+      "url": "https://www.oddsportal.com/football/h2h/dortmund-nP1i5US1/hamburger-v9k3aY5F/",
+      "lines": [
+        {
+          "handicap": -4,
+          "bookmakerCount": 3,
+          "homeOdds": 11.5,
+          "awayOdds": 1.01,
+          "payout": 92.8
+        },
+        {
+          "handicap": -3.75,
+          "bookmakerCount": 3,
+          "homeOdds": 7.2,
+          "awayOdds": 1.04,
+          "payout": 90.9
+        },
+        {
+          "handicap": -3.5,
+          "bookmakerCount": 3,
+          "homeOdds": 5.65,
+          "awayOdds": 1.08,
+          "payout": 90.7
+        },
+        {
+          "handicap": -3.25,
+          "bookmakerCount": 3,
+          "homeOdds": 5.25,
+          "awayOdds": 1.09,
+          "payout": 90.3
+        },
+        {
+          "handicap": -3,
+          "bookmakerCount": 3,
+          "homeOdds": 4.85,
+          "awayOdds": 1.11,
+          "payout": 90.3
+        },
+        {
+          "handicap": -2.75,
+          "bookmakerCount": 3,
+          "homeOdds": 3.6,
+          "awayOdds": 1.23,
+          "payout": 91.7
+        },
+        {
+          "handicap": -2.5,
+          "bookmakerCount": 4,
+          "homeOdds": 3.27,
+          "awayOdds": 1.36,
+          "payout": 92.6
+        },
+        {
+          "handicap": -2.25,
+          "bookmakerCount": 4,
+          "homeOdds": 2.94,
+          "awayOdds": 1.43,
+          "payout": 93.6
+        },
+        {
+          "handicap": -2,
+          "bookmakerCount": 4,
+          "homeOdds": 2.6,
+          "awayOdds": 1.53,
+          "payout": 93.5
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 4,
+          "homeOdds": 2.19,
+          "awayOdds": 1.79,
+          "payout": 96.2
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 4,
+          "homeOdds": 1.96,
+          "awayOdds": 1.98,
+          "payout": 96.4
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.69,
+          "awayOdds": 2.24,
+          "payout": 93.4
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 4,
+          "homeOdds": 1.48,
+          "awayOdds": 2.78,
+          "payout": 93.5
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.38,
+          "awayOdds": 3.15,
+          "payout": 93.1
+        },
+        {
+          "handicap": -0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.32,
+          "awayOdds": 3.54,
+          "payout": 96.1
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.15,
+          "awayOdds": 4.33,
+          "payout": 90.9
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 3,
+          "homeOdds": 1.08,
+          "awayOdds": 5.95,
+          "payout": 91.4
+        }
+      ],
+      "mainLine": -1.25,
+      "scraped_at": "2026-08-25T08:07:13.851Z"
+    },
+    "Freiburg - Werder Bremen_bundesliga": {
+      "match": "Freiburg - Werder Bremen",
+      "url": "https://www.oddsportal.com/football/h2h/freiburg-fiEQZ7C7/werder-bremen-Ig1f1fy3/",
+      "lines": [
+        {
+          "handicap": -2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 6.5,
+          "awayOdds": 1.05,
+          "payout": 90.4
+        },
+        {
+          "handicap": -2.25,
+          "bookmakerCount": 3,
+          "homeOdds": 6.28,
+          "awayOdds": 1.07,
+          "payout": 91.4
+        },
+        {
+          "handicap": -2,
+          "bookmakerCount": 3,
+          "homeOdds": 5.95,
+          "awayOdds": 1.08,
+          "payout": 91.4
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 4.32,
+          "awayOdds": 1.18,
+          "payout": 92.7
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 4,
+          "homeOdds": 3.7,
+          "awayOdds": 1.3,
+          "payout": 93.4
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 3.3,
+          "awayOdds": 1.36,
+          "payout": 95.4
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 4,
+          "homeOdds": 2.92,
+          "awayOdds": 1.44,
+          "payout": 95.4
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 2.33,
+          "awayOdds": 1.65,
+          "payout": 93.9
+        },
+        {
+          "handicap": -0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 2.02,
+          "awayOdds": 1.87,
+          "payout": 97.1
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.8,
+          "awayOdds": 2.18,
+          "payout": 96.4
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 4,
+          "homeOdds": 1.54,
+          "awayOdds": 2.76,
+          "payout": 96.4
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.37,
+          "awayOdds": 3.21,
+          "payout": 92.6
+        },
+        {
+          "handicap": 0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.3,
+          "awayOdds": 3.68,
+          "payout": 96.1
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.15,
+          "awayOdds": 4.22,
+          "payout": 90.4
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 3,
+          "homeOdds": 1.06,
+          "awayOdds": 6.15,
+          "payout": 90.4
+        },
+        {
+          "handicap": 1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.05,
+          "awayOdds": 6.55,
+          "payout": 90.5
+        },
+        {
+          "handicap": 1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.04,
+          "awayOdds": 6.95,
+          "payout": 90.5
+        }
+      ],
+      "mainLine": -0.5,
+      "scraped_at": "2026-08-25T08:07:26.720Z"
+    },
+    "Augsburg - Schalke_bundesliga": {
+      "match": "Augsburg - Schalke",
+      "url": "https://www.oddsportal.com/football/h2h/augsburg-fTVNku3I/schalke-0Ija0Ej9/",
+      "lines": [
+        {
+          "handicap": -2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 7.7,
+          "awayOdds": 1.03,
+          "payout": 90.8
+        },
+        {
+          "handicap": -2,
+          "bookmakerCount": 3,
+          "homeOdds": 6.85,
+          "awayOdds": 1.04,
+          "payout": 90.3
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 4.78,
+          "awayOdds": 1.12,
+          "payout": 90.7
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 3.78,
+          "awayOdds": 1.2,
+          "payout": 91.1
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 3.67,
+          "awayOdds": 1.3,
+          "payout": 93.2
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 4,
+          "homeOdds": 3.26,
+          "awayOdds": 1.36,
+          "payout": 93.1
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 2.58,
+          "awayOdds": 1.54,
+          "payout": 93.5
+        },
+        {
+          "handicap": -0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 2.2,
+          "awayOdds": 1.73,
+          "payout": 96.8
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.96,
+          "awayOdds": 1.98,
+          "payout": 96.4
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 4,
+          "homeOdds": 1.67,
+          "awayOdds": 2.39,
+          "payout": 96.4
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.49,
+          "awayOdds": 2.74,
+          "payout": 93.7
+        },
+        {
+          "handicap": 0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.39,
+          "awayOdds": 3.11,
+          "payout": 96.1
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.27,
+          "awayOdds": 3.9,
+          "payout": 92.8
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 3,
+          "homeOdds": 1.12,
+          "awayOdds": 5.25,
+          "payout": 92.3
+        },
+        {
+          "handicap": 1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.08,
+          "awayOdds": 5.66,
+          "payout": 90.7
+        },
+        {
+          "handicap": 1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.07,
+          "awayOdds": 6.05,
+          "payout": 90.9
+        },
+        {
+          "handicap": 1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.03,
+          "awayOdds": 10.1,
+          "payout": 93.5
+        },
+        {
+          "handicap": 2,
+          "bookmakerCount": 3,
+          "homeOdds": 1.01,
+          "awayOdds": 12,
+          "payout": 93.2
+        }
+      ],
+      "mainLine": -0.5,
+      "scraped_at": "2026-08-25T08:07:39.860Z"
+    },
+    "AC Milan - Venezia_seriea": {
+      "match": "AC Milan - Venezia",
+      "url": "https://www.oddsportal.com/football/h2h/ac-milan-8Sa8HInO/venezia-MkPmVv50/",
+      "lines": [
+        {
+          "handicap": -3.75,
+          "bookmakerCount": 3,
+          "homeOdds": 8.65,
+          "awayOdds": 1.01,
+          "payout": 90.4
+        },
+        {
+          "handicap": -3.5,
+          "bookmakerCount": 3,
+          "homeOdds": 6.95,
+          "awayOdds": 1.04,
+          "payout": 90.5
+        },
+        {
+          "handicap": -3.25,
+          "bookmakerCount": 3,
+          "homeOdds": 6.55,
+          "awayOdds": 1.05,
+          "payout": 90.5
+        },
+        {
+          "handicap": -3,
+          "bookmakerCount": 3,
+          "homeOdds": 6.2,
+          "awayOdds": 1.06,
+          "payout": 90.5
+        },
+        {
+          "handicap": -2.75,
+          "bookmakerCount": 3,
+          "homeOdds": 4.47,
+          "awayOdds": 1.15,
+          "payout": 91.5
+        },
+        {
+          "handicap": -2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 3.5,
+          "awayOdds": 1.24,
+          "payout": 91.6
+        },
+        {
+          "handicap": -2.25,
+          "bookmakerCount": 4,
+          "homeOdds": 3.51,
+          "awayOdds": 1.32,
+          "payout": 93.3
+        },
+        {
+          "handicap": -2,
+          "bookmakerCount": 4,
+          "homeOdds": 3.11,
+          "awayOdds": 1.39,
+          "payout": 93.4
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 4,
+          "homeOdds": 2.47,
+          "awayOdds": 1.64,
+          "payout": 96.3
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 4,
+          "homeOdds": 2.14,
+          "awayOdds": 1.82,
+          "payout": 96.2
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.89,
+          "awayOdds": 2.05,
+          "payout": 96.4
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 4,
+          "homeOdds": 1.59,
+          "awayOdds": 2.45,
+          "payout": 93.5
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.46,
+          "awayOdds": 2.85,
+          "payout": 93.1
+        },
+        {
+          "handicap": -0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.37,
+          "awayOdds": 3.22,
+          "payout": 96.1
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.24,
+          "awayOdds": 4.31,
+          "payout": 92.5
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 3,
+          "homeOdds": 1.07,
+          "awayOdds": 6.05,
+          "payout": 90.9
+        }
+      ],
+      "mainLine": -1.25,
+      "scraped_at": "2026-08-25T08:09:41.344Z"
+    },
+    "Fiorentina - Frosinone_seriea": {
+      "match": "Fiorentina - Frosinone",
+      "url": "https://www.oddsportal.com/football/h2h/fiorentina-Q3A3IbXH/frosinone-pfo9H1Wp/",
+      "lines": [
+        {
+          "handicap": -3.5,
+          "bookmakerCount": 3,
+          "homeOdds": 11.5,
+          "awayOdds": 1.01,
+          "payout": 92.8
+        },
+        {
+          "handicap": -3,
+          "bookmakerCount": 3,
+          "homeOdds": 10.5,
+          "awayOdds": 1.02,
+          "payout": 93
+        },
+        {
+          "handicap": -2.75,
+          "bookmakerCount": 3,
+          "homeOdds": 6.6,
+          "awayOdds": 1.05,
+          "payout": 90.6
+        },
+        {
+          "handicap": -2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 5.1,
+          "awayOdds": 1.1,
+          "payout": 90.5
+        },
+        {
+          "handicap": -2.25,
+          "bookmakerCount": 3,
+          "homeOdds": 4.78,
+          "awayOdds": 1.13,
+          "payout": 91.4
+        },
+        {
+          "handicap": -2,
+          "bookmakerCount": 3,
+          "homeOdds": 4.4,
+          "awayOdds": 1.16,
+          "payout": 91.8
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 4,
+          "homeOdds": 3.94,
+          "awayOdds": 1.33,
+          "payout": 95.9
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 4,
+          "homeOdds": 2.86,
+          "awayOdds": 1.5,
+          "payout": 96.2
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 2.51,
+          "awayOdds": 1.62,
+          "payout": 96.2
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 4,
+          "homeOdds": 2.13,
+          "awayOdds": 1.76,
+          "payout": 95.5
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.84,
+          "awayOdds": 2.06,
+          "payout": 94
+        },
+        {
+          "handicap": -0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.65,
+          "awayOdds": 2.33,
+          "payout": 96.6
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.46,
+          "awayOdds": 2.86,
+          "payout": 93.1
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 4,
+          "homeOdds": 1.26,
+          "awayOdds": 4.01,
+          "payout": 93
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.22,
+          "awayOdds": 4.59,
+          "payout": 92.8
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.07,
+          "awayOdds": 6.79,
+          "payout": 92.4
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 3,
+          "homeOdds": 1.02,
+          "awayOdds": 9.8,
+          "payout": 92.4
+        },
+        {
+          "handicap": 1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.01,
+          "awayOdds": 11,
+          "payout": 92.5
+        }
+      ],
+      "mainLine": -1,
+      "scraped_at": "2026-08-25T08:09:54.554Z"
+    },
+    "Monza - Udinese_seriea": {
+      "match": "Monza - Udinese",
+      "url": "https://www.oddsportal.com/football/h2h/monza-4YSMlwj7/udinese-rXw8YKDE/",
+      "lines": [
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 9.15,
+          "awayOdds": 1.01,
+          "payout": 91
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 7.7,
+          "awayOdds": 1.03,
+          "payout": 90.8
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 7.25,
+          "awayOdds": 1.05,
+          "payout": 91.7
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 3,
+          "homeOdds": 6.65,
+          "awayOdds": 1.07,
+          "payout": 92.2
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 4.44,
+          "awayOdds": 1.23,
+          "payout": 93.6
+        },
+        {
+          "handicap": -0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 3.39,
+          "awayOdds": 1.34,
+          "payout": 96
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 2.91,
+          "awayOdds": 1.49,
+          "payout": 96.2
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 4,
+          "homeOdds": 2.43,
+          "awayOdds": 1.66,
+          "payout": 96.3
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.92,
+          "awayOdds": 1.97,
+          "payout": 94.1
+        },
+        {
+          "handicap": 0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.67,
+          "awayOdds": 2.3,
+          "payout": 96.8
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.48,
+          "awayOdds": 2.79,
+          "payout": 93.2
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 4,
+          "homeOdds": 1.29,
+          "awayOdds": 3.79,
+          "payout": 93
+        },
+        {
+          "handicap": 1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.24,
+          "awayOdds": 4.32,
+          "payout": 92.2
+        },
+        {
+          "handicap": 1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.14,
+          "awayOdds": 4.5,
+          "payout": 91
+        },
+        {
+          "handicap": 1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.08,
+          "awayOdds": 6.65,
+          "payout": 92.9
+        },
+        {
+          "handicap": 2,
+          "bookmakerCount": 3,
+          "homeOdds": 1.03,
+          "awayOdds": 9.1,
+          "payout": 92.5
+        },
+        {
+          "handicap": 2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.02,
+          "awayOdds": 10.5,
+          "payout": 93
+        }
+      ],
+      "mainLine": 0.25,
+      "scraped_at": "2026-08-25T08:10:07.324Z"
+    },
+    "Sassuolo - Torino_seriea": {
+      "match": "Sassuolo - Torino",
+      "url": "https://www.oddsportal.com/football/h2h/sassuolo-QDdvI0zl/torino-MZFZnvX4/",
+      "lines": [
+        {
+          "handicap": -2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 9.4,
+          "awayOdds": 1.03,
+          "payout": 92.8
+        },
+        {
+          "handicap": -2.25,
+          "bookmakerCount": 3,
+          "homeOdds": 8.65,
+          "awayOdds": 1.01,
+          "payout": 90.4
+        },
+        {
+          "handicap": -2,
+          "bookmakerCount": 3,
+          "homeOdds": 8.6,
+          "awayOdds": 1.01,
+          "payout": 90.4
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 5.53,
+          "awayOdds": 1.09,
+          "payout": 91.1
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 4.25,
+          "awayOdds": 1.16,
+          "payout": 91.1
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 4.05,
+          "awayOdds": 1.26,
+          "payout": 93.2
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 4,
+          "homeOdds": 3.56,
+          "awayOdds": 1.32,
+          "payout": 93.1
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 2.69,
+          "awayOdds": 1.51,
+          "payout": 93.6
+        },
+        {
+          "handicap": -0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 2.25,
+          "awayOdds": 1.69,
+          "payout": 96.5
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.97,
+          "awayOdds": 1.97,
+          "payout": 96.4
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 4,
+          "homeOdds": 1.65,
+          "awayOdds": 2.45,
+          "payout": 96.4
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.44,
+          "awayOdds": 2.91,
+          "payout": 93.8
+        },
+        {
+          "handicap": 0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.35,
+          "awayOdds": 3.36,
+          "payout": 96.3
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.23,
+          "awayOdds": 4.36,
+          "payout": 93.1
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 3,
+          "homeOdds": 1.08,
+          "awayOdds": 6.3,
+          "payout": 92.2
+        },
+        {
+          "handicap": 1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.05,
+          "awayOdds": 6.76,
+          "payout": 90.9
+        },
+        {
+          "handicap": 1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.04,
+          "awayOdds": 7.3,
+          "payout": 91
+        }
+      ],
+      "mainLine": -0.5,
+      "scraped_at": "2026-08-25T08:10:20.118Z"
+    },
+    "Juventus - Parma_seriea": {
+      "match": "Juventus - Parma",
+      "url": "https://www.oddsportal.com/football/h2h/juventus-C06aJvIB/parma-6DxlaxHN/",
+      "lines": [
+        {
+          "handicap": -4.5,
+          "bookmakerCount": 3,
+          "homeOdds": 9,
+          "awayOdds": 1.01,
+          "payout": 90.8
+        },
+        {
+          "handicap": -4,
+          "bookmakerCount": 3,
+          "homeOdds": 8.4,
+          "awayOdds": 1.01,
+          "payout": 90.2
+        },
+        {
+          "handicap": -3.75,
+          "bookmakerCount": 3,
+          "homeOdds": 5.91,
+          "awayOdds": 1.07,
+          "payout": 90.6
+        },
+        {
+          "handicap": -3.5,
+          "bookmakerCount": 3,
+          "homeOdds": 4.7,
+          "awayOdds": 1.12,
+          "payout": 90.4
+        },
+        {
+          "handicap": -3.25,
+          "bookmakerCount": 3,
+          "homeOdds": 4.34,
+          "awayOdds": 1.14,
+          "payout": 90.3
+        },
+        {
+          "handicap": -3,
+          "bookmakerCount": 4,
+          "homeOdds": 4.33,
+          "awayOdds": 1.23,
+          "payout": 91.8
+        },
+        {
+          "handicap": -2.75,
+          "bookmakerCount": 4,
+          "homeOdds": 3.24,
+          "awayOdds": 1.36,
+          "payout": 92.7
+        },
+        {
+          "handicap": -2.5,
+          "bookmakerCount": 4,
+          "homeOdds": 2.7,
+          "awayOdds": 1.49,
+          "payout": 92.6
+        },
+        {
+          "handicap": -2.25,
+          "bookmakerCount": 4,
+          "homeOdds": 2.38,
+          "awayOdds": 1.61,
+          "payout": 93.4
+        },
+        {
+          "handicap": -2,
+          "bookmakerCount": 4,
+          "homeOdds": 2.18,
+          "awayOdds": 1.71,
+          "payout": 93.4
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.91,
+          "awayOdds": 2.03,
+          "payout": 96.4
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 4,
+          "homeOdds": 1.73,
+          "awayOdds": 2.35,
+          "payout": 96.2
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.45,
+          "awayOdds": 2.86,
+          "payout": 93.3
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 4,
+          "homeOdds": 1.27,
+          "awayOdds": 3.96,
+          "payout": 93.3
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.24,
+          "awayOdds": 4.2,
+          "payout": 93
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.09,
+          "awayOdds": 6.16,
+          "payout": 92.6
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 3,
+          "homeOdds": 1.03,
+          "awayOdds": 9.2,
+          "payout": 92.6
+        }
+      ],
+      "mainLine": -2,
+      "scraped_at": "2026-08-25T08:10:33.035Z"
+    },
+    "Napoli - Como_seriea": {
+      "match": "Napoli - Como",
+      "url": "https://www.oddsportal.com/football/h2h/como-ttyLthOA/napoli-69Dxbc61/",
+      "lines": [
+        {
+          "handicap": -2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 11.5,
+          "awayOdds": 1.01,
+          "payout": 92.8
+        },
+        {
+          "handicap": -2,
+          "bookmakerCount": 3,
+          "homeOdds": 11,
+          "awayOdds": 1.01,
+          "payout": 92.5
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 7.02,
+          "awayOdds": 1.05,
+          "payout": 91.3
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 5.15,
+          "awayOdds": 1.11,
+          "payout": 91.3
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 4.87,
+          "awayOdds": 1.2,
+          "payout": 93.5
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 4,
+          "homeOdds": 4.31,
+          "awayOdds": 1.24,
+          "payout": 93.2
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 3.08,
+          "awayOdds": 1.41,
+          "payout": 93.5
+        },
+        {
+          "handicap": -0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 2.51,
+          "awayOdds": 1.58,
+          "payout": 97
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 2.15,
+          "awayOdds": 1.82,
+          "payout": 96.4
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 4,
+          "homeOdds": 1.8,
+          "awayOdds": 2.17,
+          "payout": 96.4
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.54,
+          "awayOdds": 2.6,
+          "payout": 94
+        },
+        {
+          "handicap": 0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.41,
+          "awayOdds": 3.03,
+          "payout": 96.2
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.28,
+          "awayOdds": 3.88,
+          "payout": 92.9
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 3,
+          "homeOdds": 1.1,
+          "awayOdds": 5.7,
+          "payout": 92.2
+        },
+        {
+          "handicap": 1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.07,
+          "awayOdds": 6.21,
+          "payout": 91.3
+        },
+        {
+          "handicap": 1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.05,
+          "awayOdds": 6.75,
+          "payout": 90.9
+        }
+      ],
+      "mainLine": -0.25,
+      "scraped_at": "2026-08-25T08:10:47.395Z"
+    },
+    "Cagliari - Inter_seriea": {
+      "match": "Cagliari - Inter",
+      "url": "https://www.oddsportal.com/football/h2h/cagliari-SCGVmKHb/inter-Iw7eKK25/",
+      "lines": [
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 3,
+          "homeOdds": 8.5,
+          "awayOdds": 1.02,
+          "payout": 91.1
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 3,
+          "homeOdds": 5.47,
+          "awayOdds": 1.11,
+          "payout": 92.3
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 4,
+          "homeOdds": 5.5,
+          "awayOdds": 1.16,
+          "payout": 92.9
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 3.72,
+          "awayOdds": 1.3,
+          "payout": 93.4
+        },
+        {
+          "handicap": 0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 2.87,
+          "awayOdds": 1.45,
+          "payout": 96.3
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 2.52,
+          "awayOdds": 1.62,
+          "payout": 96.2
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 4,
+          "homeOdds": 2.16,
+          "awayOdds": 1.74,
+          "payout": 95.5
+        },
+        {
+          "handicap": 1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.87,
+          "awayOdds": 2.09,
+          "payout": 96.6
+        },
+        {
+          "handicap": 1.5,
+          "bookmakerCount": 4,
+          "homeOdds": 1.68,
+          "awayOdds": 2.38,
+          "payout": 96.4
+        },
+        {
+          "handicap": 1.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.48,
+          "awayOdds": 2.78,
+          "payout": 92.7
+        },
+        {
+          "handicap": 2,
+          "bookmakerCount": 4,
+          "homeOdds": 1.3,
+          "awayOdds": 3.65,
+          "payout": 92.6
+        },
+        {
+          "handicap": 2.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.25,
+          "awayOdds": 4.11,
+          "payout": 91.8
+        },
+        {
+          "handicap": 2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.17,
+          "awayOdds": 4,
+          "payout": 90.5
+        },
+        {
+          "handicap": 2.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.1,
+          "awayOdds": 5.04,
+          "payout": 90.3
+        },
+        {
+          "handicap": 3,
+          "bookmakerCount": 3,
+          "homeOdds": 1.04,
+          "awayOdds": 7.1,
+          "payout": 90.7
+        },
+        {
+          "handicap": 3.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.02,
+          "awayOdds": 7.8,
+          "payout": 90.2
+        }
+      ],
+      "mainLine": 1,
+      "scraped_at": "2026-08-25T08:11:00.176Z"
+    },
+    "Lazio - Genoa_seriea": {
+      "match": "Lazio - Genoa",
+      "url": "https://www.oddsportal.com/football/h2h/genoa-d0PJxeie/lazio-URcSl02h/",
+      "lines": [
+        {
+          "handicap": -2.75,
+          "bookmakerCount": 3,
+          "homeOdds": 8.65,
+          "awayOdds": 1.01,
+          "payout": 90.4
+        },
+        {
+          "handicap": -2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 7.8,
+          "awayOdds": 1.02,
+          "payout": 90.2
+        },
+        {
+          "handicap": -2.25,
+          "bookmakerCount": 3,
+          "homeOdds": 7.3,
+          "awayOdds": 1.03,
+          "payout": 90.3
+        },
+        {
+          "handicap": -2,
+          "bookmakerCount": 3,
+          "homeOdds": 6.9,
+          "awayOdds": 1.04,
+          "payout": 90.4
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 4.63,
+          "awayOdds": 1.13,
+          "payout": 90.8
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 4,
+          "homeOdds": 3.88,
+          "awayOdds": 1.28,
+          "payout": 92.3
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 3.42,
+          "awayOdds": 1.33,
+          "payout": 93.1
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 4,
+          "homeOdds": 2.99,
+          "awayOdds": 1.43,
+          "payout": 93.1
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 2.33,
+          "awayOdds": 1.65,
+          "payout": 93.5
+        },
+        {
+          "handicap": -0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 2,
+          "awayOdds": 1.89,
+          "payout": 97.2
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.74,
+          "awayOdds": 2.28,
+          "payout": 96.5
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 4,
+          "homeOdds": 1.44,
+          "awayOdds": 3.16,
+          "payout": 96.2
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.29,
+          "awayOdds": 3.81,
+          "payout": 93.9
+        },
+        {
+          "handicap": 0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.23,
+          "awayOdds": 4.45,
+          "payout": 96.4
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.11,
+          "awayOdds": 5.46,
+          "payout": 92.2
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 3,
+          "homeOdds": 1.02,
+          "awayOdds": 9.2,
+          "payout": 91.8
+        },
+        {
+          "handicap": 1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.01,
+          "awayOdds": 9.65,
+          "payout": 91.4
+        },
+        {
+          "handicap": 1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.01,
+          "awayOdds": 10.2,
+          "payout": 91.9
+        }
+      ],
+      "mainLine": -0.5,
+      "scraped_at": "2026-08-25T08:11:13.279Z"
+    },
+    "Lecce - AS Roma_seriea": {
+      "match": "Lecce - AS Roma",
+      "url": "https://www.oddsportal.com/football/h2h/as-roma-zVqqL0ma/lecce-G8lYsMgU/",
+      "lines": [
+        {
+          "handicap": -1,
+          "bookmakerCount": 3,
+          "homeOdds": 12,
+          "awayOdds": 1.01,
+          "payout": 93.2
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 3,
+          "homeOdds": 8.6,
+          "awayOdds": 1.02,
+          "payout": 91.2
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 5.04,
+          "awayOdds": 1.18,
+          "payout": 93
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 4,
+          "homeOdds": 4.91,
+          "awayOdds": 1.19,
+          "payout": 93.2
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 3.17,
+          "awayOdds": 1.37,
+          "payout": 93.3
+        },
+        {
+          "handicap": 0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 2.51,
+          "awayOdds": 1.56,
+          "payout": 96.2
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 2.18,
+          "awayOdds": 1.72,
+          "payout": 95.4
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 4,
+          "homeOdds": 1.86,
+          "awayOdds": 2.02,
+          "payout": 95.4
+        },
+        {
+          "handicap": 1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.68,
+          "awayOdds": 2.37,
+          "payout": 96.2
+        },
+        {
+          "handicap": 1.5,
+          "bookmakerCount": 4,
+          "homeOdds": 1.54,
+          "awayOdds": 2.72,
+          "payout": 96.2
+        },
+        {
+          "handicap": 1.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.34,
+          "awayOdds": 3.34,
+          "payout": 92.5
+        },
+        {
+          "handicap": 2,
+          "bookmakerCount": 4,
+          "homeOdds": 1.2,
+          "awayOdds": 4.71,
+          "payout": 92.7
+        },
+        {
+          "handicap": 2.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.13,
+          "awayOdds": 4.62,
+          "payout": 90.8
+        },
+        {
+          "handicap": 2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.1,
+          "awayOdds": 5.05,
+          "payout": 90.3
+        },
+        {
+          "handicap": 2.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.05,
+          "awayOdds": 8,
+          "payout": 92.8
+        },
+        {
+          "handicap": 3,
+          "bookmakerCount": 3,
+          "homeOdds": 1.02,
+          "awayOdds": 10.5,
+          "payout": 93
+        },
+        {
+          "handicap": 3.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.01,
+          "awayOdds": 11.5,
+          "payout": 92.8
+        }
+      ],
+      "mainLine": 1,
+      "scraped_at": "2026-08-25T08:11:26.382Z"
+    },
+    "Atalanta - Bologna_seriea": {
+      "match": "Atalanta - Bologna",
+      "url": "https://www.oddsportal.com/football/h2h/atalanta-8C9JjMXu/bologna-0M9xNN8N/",
+      "lines": [
+        {
+          "handicap": -2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 6.45,
+          "awayOdds": 1.05,
+          "payout": 90.3
+        },
+        {
+          "handicap": -2.25,
+          "bookmakerCount": 3,
+          "homeOdds": 6.13,
+          "awayOdds": 1.08,
+          "payout": 91.8
+        },
+        {
+          "handicap": -2,
+          "bookmakerCount": 3,
+          "homeOdds": 5.75,
+          "awayOdds": 1.09,
+          "payout": 91.6
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 4.12,
+          "awayOdds": 1.19,
+          "payout": 92.3
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 4,
+          "homeOdds": 3.44,
+          "awayOdds": 1.32,
+          "payout": 93.3
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 3.06,
+          "awayOdds": 1.39,
+          "payout": 95.1
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 4,
+          "homeOdds": 2.68,
+          "awayOdds": 1.5,
+          "payout": 95.3
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 2.17,
+          "awayOdds": 1.73,
+          "payout": 93.8
+        },
+        {
+          "handicap": -0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.9,
+          "awayOdds": 1.96,
+          "payout": 96.5
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.69,
+          "awayOdds": 2.35,
+          "payout": 96.1
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 4,
+          "homeOdds": 1.4,
+          "awayOdds": 3.41,
+          "payout": 96.3
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.31,
+          "awayOdds": 3.53,
+          "payout": 92.6
+        },
+        {
+          "handicap": 0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.25,
+          "awayOdds": 4.03,
+          "payout": 95.4
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.11,
+          "awayOdds": 4.87,
+          "payout": 90.4
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 3,
+          "homeOdds": 1.03,
+          "awayOdds": 7.6,
+          "payout": 90.7
+        },
+        {
+          "handicap": 1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.02,
+          "awayOdds": 8.1,
+          "payout": 90.6
+        },
+        {
+          "handicap": 1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.01,
+          "awayOdds": 8.6,
+          "payout": 90.4
+        }
+      ],
+      "mainLine": -0.5,
+      "scraped_at": "2026-08-25T08:11:39.800Z"
+    },
+    "Lille - PSG_ligue1": {
+      "match": "Lille - PSG",
+      "url": "https://www.oddsportal.com/football/h2h/lille-pfDZL71o/psg-CjhkPw0k/",
+      "lines": [
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 9.4,
+          "awayOdds": 1.03,
+          "payout": 92.8
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 3,
+          "homeOdds": 8.5,
+          "awayOdds": 1.01,
+          "payout": 90.3
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 3,
+          "homeOdds": 5.45,
+          "awayOdds": 1.09,
+          "payout": 90.8
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 4.01,
+          "awayOdds": 1.26,
+          "payout": 93.2
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 4,
+          "homeOdds": 3.48,
+          "awayOdds": 1.33,
+          "payout": 93.1
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 2.59,
+          "awayOdds": 1.54,
+          "payout": 93.5
+        },
+        {
+          "handicap": 0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 2.16,
+          "awayOdds": 1.75,
+          "payout": 96.7
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.95,
+          "awayOdds": 1.99,
+          "payout": 96.4
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 4,
+          "homeOdds": 1.64,
+          "awayOdds": 2.34,
+          "payout": 95.4
+        },
+        {
+          "handicap": 1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.55,
+          "awayOdds": 2.71,
+          "payout": 96.3
+        },
+        {
+          "handicap": 1.5,
+          "bookmakerCount": 4,
+          "homeOdds": 1.4,
+          "awayOdds": 3.33,
+          "payout": 96.1
+        },
+        {
+          "handicap": 1.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.29,
+          "awayOdds": 3.8,
+          "payout": 92.6
+        },
+        {
+          "handicap": 2,
+          "bookmakerCount": 3,
+          "homeOdds": 1.13,
+          "awayOdds": 4.8,
+          "payout": 91.5
+        },
+        {
+          "handicap": 2.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.1,
+          "awayOdds": 5.12,
+          "payout": 90.5
+        },
+        {
+          "handicap": 2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.08,
+          "awayOdds": 5.5,
+          "payout": 90.3
+        },
+        {
+          "handicap": 2.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.04,
+          "awayOdds": 8.3,
+          "payout": 92.4
+        },
+        {
+          "handicap": 3,
+          "bookmakerCount": 3,
+          "homeOdds": 1.01,
+          "awayOdds": 11,
+          "payout": 92.5
+        }
+      ],
+      "mainLine": 0.5,
+      "scraped_at": "2026-08-25T08:15:33.905Z"
+    },
+    "Strasbourg - Lens_ligue1": {
+      "match": "Strasbourg - Lens",
+      "url": "https://www.oddsportal.com/football/h2h/lens-IBmris38/strasbourg-nP6UzIU1/",
+      "lines": [
+        {
+          "handicap": -2,
+          "bookmakerCount": 3,
+          "homeOdds": 11.5,
+          "awayOdds": 1.01,
+          "payout": 92.8
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 8.7,
+          "awayOdds": 1.02,
+          "payout": 91.3
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 6.6,
+          "awayOdds": 1.06,
+          "payout": 91.3
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 6.33,
+          "awayOdds": 1.08,
+          "payout": 92.3
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 3,
+          "homeOdds": 6,
+          "awayOdds": 1.09,
+          "payout": 92.2
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 4.56,
+          "awayOdds": 1.22,
+          "payout": 93.6
+        },
+        {
+          "handicap": -0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 3.57,
+          "awayOdds": 1.31,
+          "payout": 95.8
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 3.33,
+          "awayOdds": 1.4,
+          "payout": 96.2
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 4,
+          "homeOdds": 2.66,
+          "awayOdds": 1.57,
+          "payout": 96.4
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 2.05,
+          "awayOdds": 1.85,
+          "payout": 94.2
+        },
+        {
+          "handicap": 0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.77,
+          "awayOdds": 2.14,
+          "payout": 96.9
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.57,
+          "awayOdds": 2.5,
+          "payout": 93.2
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 4,
+          "homeOdds": 1.38,
+          "awayOdds": 3.16,
+          "payout": 93.1
+        },
+        {
+          "handicap": 1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.31,
+          "awayOdds": 3.57,
+          "payout": 92.2
+        },
+        {
+          "handicap": 1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.24,
+          "awayOdds": 3.42,
+          "payout": 91
+        },
+        {
+          "handicap": 1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.15,
+          "awayOdds": 4.2,
+          "payout": 90.3
+        },
+        {
+          "handicap": 2,
+          "bookmakerCount": 3,
+          "homeOdds": 1.07,
+          "awayOdds": 5.75,
+          "payout": 90.2
+        },
+        {
+          "handicap": 2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.05,
+          "awayOdds": 6.4,
+          "payout": 90.2
+        }
+      ],
+      "mainLine": 0.25,
+      "scraped_at": "2026-08-25T08:15:47.969Z"
+    },
+    "Auxerre - Angers_ligue1": {
+      "match": "Auxerre - Angers",
+      "url": "https://www.oddsportal.com/football/h2h/angers-SAlF91iL/auxerre-MTLr36WA/",
+      "lines": [
+        {
+          "handicap": -2.75,
+          "bookmakerCount": 3,
+          "homeOdds": 8.15,
+          "awayOdds": 1.02,
+          "payout": 90.7
+        },
+        {
+          "handicap": -2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 6.9,
+          "awayOdds": 1.04,
+          "payout": 90.4
+        },
+        {
+          "handicap": -2.25,
+          "bookmakerCount": 3,
+          "homeOdds": 6.65,
+          "awayOdds": 1.06,
+          "payout": 91.4
+        },
+        {
+          "handicap": -2,
+          "bookmakerCount": 3,
+          "homeOdds": 6.3,
+          "awayOdds": 1.07,
+          "payout": 91.5
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 4.42,
+          "awayOdds": 1.17,
+          "payout": 92.5
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 4,
+          "homeOdds": 3.73,
+          "awayOdds": 1.29,
+          "payout": 93.3
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 3.3,
+          "awayOdds": 1.36,
+          "payout": 95.4
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 4,
+          "homeOdds": 2.88,
+          "awayOdds": 1.45,
+          "payout": 95.3
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 2.28,
+          "awayOdds": 1.68,
+          "payout": 94
+        },
+        {
+          "handicap": -0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.97,
+          "awayOdds": 1.92,
+          "payout": 97.2
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.72,
+          "awayOdds": 2.3,
+          "payout": 96.3
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 4,
+          "homeOdds": 1.45,
+          "awayOdds": 3.08,
+          "payout": 96.3
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.32,
+          "awayOdds": 3.53,
+          "payout": 92.7
+        },
+        {
+          "handicap": 0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.26,
+          "awayOdds": 4.07,
+          "payout": 96.2
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.12,
+          "awayOdds": 4.77,
+          "payout": 90.7
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 3,
+          "homeOdds": 1.03,
+          "awayOdds": 7.4,
+          "payout": 90.4
+        },
+        {
+          "handicap": 1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.02,
+          "awayOdds": 7.8,
+          "payout": 90.2
+        },
+        {
+          "handicap": 1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.02,
+          "awayOdds": 8.3,
+          "payout": 90.8
+        }
+      ],
+      "mainLine": -0.5,
+      "scraped_at": "2026-08-25T08:16:01.170Z"
+    },
+    "Brest - Toulouse_ligue1": {
+      "match": "Brest - Toulouse",
+      "url": "https://www.oddsportal.com/football/h2h/brest-Cr4VGaUl/toulouse-MLmY2yB1/",
+      "lines": [
+        {
+          "handicap": -2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 11.5,
+          "awayOdds": 1.01,
+          "payout": 92.8
+        },
+        {
+          "handicap": -2,
+          "bookmakerCount": 3,
+          "homeOdds": 11,
+          "awayOdds": 1.01,
+          "payout": 92.5
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 6.57,
+          "awayOdds": 1.06,
+          "payout": 91.3
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 5.05,
+          "awayOdds": 1.11,
+          "payout": 91
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 4.73,
+          "awayOdds": 1.14,
+          "payout": 91.9
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 4,
+          "homeOdds": 4.71,
+          "awayOdds": 1.21,
+          "payout": 93.1
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 3.32,
+          "awayOdds": 1.35,
+          "payout": 93.4
+        },
+        {
+          "handicap": -0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 2.7,
+          "awayOdds": 1.5,
+          "payout": 96.4
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 2.33,
+          "awayOdds": 1.71,
+          "payout": 96.3
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 4,
+          "homeOdds": 1.97,
+          "awayOdds": 1.97,
+          "payout": 96.4
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.67,
+          "awayOdds": 2.3,
+          "payout": 94
+        },
+        {
+          "handicap": 0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.51,
+          "awayOdds": 2.66,
+          "payout": 96.3
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.36,
+          "awayOdds": 3.26,
+          "payout": 93
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 4,
+          "homeOdds": 1.22,
+          "awayOdds": 4.59,
+          "payout": 93.4
+        },
+        {
+          "handicap": 1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.13,
+          "awayOdds": 4.63,
+          "payout": 90.8
+        },
+        {
+          "handicap": 1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.11,
+          "awayOdds": 5.05,
+          "payout": 91
+        },
+        {
+          "handicap": 1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.06,
+          "awayOdds": 7.34,
+          "payout": 92.6
+        },
+        {
+          "handicap": 2,
+          "bookmakerCount": 3,
+          "homeOdds": 1.01,
+          "awayOdds": 11,
+          "payout": 92.5
+        },
+        {
+          "handicap": 2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.01,
+          "awayOdds": 11,
+          "payout": 92.5
+        }
+      ],
+      "mainLine": 0,
+      "scraped_at": "2026-08-25T08:16:15.396Z"
+    },
+    "Lyon - Le Havre_ligue1": {
+      "match": "Lyon - Le Havre",
+      "url": "https://www.oddsportal.com/football/h2h/le-havre-CIEe04GT/lyon-2akflumR/",
+      "lines": [
+        {
+          "handicap": -3.5,
+          "bookmakerCount": 3,
+          "homeOdds": 7.8,
+          "awayOdds": 1.02,
+          "payout": 90.2
+        },
+        {
+          "handicap": -3,
+          "bookmakerCount": 3,
+          "homeOdds": 7.1,
+          "awayOdds": 1.04,
+          "payout": 90.7
+        },
+        {
+          "handicap": -2.75,
+          "bookmakerCount": 3,
+          "homeOdds": 5.06,
+          "awayOdds": 1.1,
+          "payout": 90.4
+        },
+        {
+          "handicap": -2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 4.05,
+          "awayOdds": 1.17,
+          "payout": 90.8
+        },
+        {
+          "handicap": -2.25,
+          "bookmakerCount": 3,
+          "homeOdds": 3.7,
+          "awayOdds": 1.22,
+          "payout": 91.7
+        },
+        {
+          "handicap": -2,
+          "bookmakerCount": 4,
+          "homeOdds": 3.71,
+          "awayOdds": 1.3,
+          "payout": 92.7
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 4,
+          "homeOdds": 2.84,
+          "awayOdds": 1.51,
+          "payout": 96.4
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 4,
+          "homeOdds": 2.42,
+          "awayOdds": 1.66,
+          "payout": 96.3
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 2.14,
+          "awayOdds": 1.83,
+          "payout": 96.2
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 4,
+          "homeOdds": 1.82,
+          "awayOdds": 2.09,
+          "payout": 95.7
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 1.61,
+          "awayOdds": 2.4,
+          "payout": 93.8
+        },
+        {
+          "handicap": -0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.49,
+          "awayOdds": 2.73,
+          "payout": 96.4
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.33,
+          "awayOdds": 3.43,
+          "payout": 92.9
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 4,
+          "homeOdds": 1.18,
+          "awayOdds": 5.17,
+          "payout": 93
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.13,
+          "awayOdds": 4.9,
+          "payout": 91.8
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.04,
+          "awayOdds": 7.5,
+          "payout": 91.3
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 3,
+          "homeOdds": 1.01,
+          "awayOdds": 11.5,
+          "payout": 92.8
+        }
+      ],
+      "mainLine": -1,
+      "scraped_at": "2026-08-25T08:16:28.685Z"
+    },
+    "Lorient - Troyes_ligue1": {
+      "match": "Lorient - Troyes",
+      "url": "https://www.oddsportal.com/football/h2h/lorient-jgNAYRGi/troyes-fsfAHubD/",
+      "lines": [
+        {
+          "handicap": -2.75,
+          "bookmakerCount": 3,
+          "homeOdds": 8.65,
+          "awayOdds": 1.01,
+          "payout": 90.4
+        },
+        {
+          "handicap": -2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 6.65,
+          "awayOdds": 1.05,
+          "payout": 90.7
+        },
+        {
+          "handicap": -2.25,
+          "bookmakerCount": 3,
+          "homeOdds": 6.36,
+          "awayOdds": 1.07,
+          "payout": 91.6
+        },
+        {
+          "handicap": -2,
+          "bookmakerCount": 3,
+          "homeOdds": 5.95,
+          "awayOdds": 1.08,
+          "payout": 91.4
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 4.17,
+          "awayOdds": 1.19,
+          "payout": 92.6
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 4,
+          "homeOdds": 3.44,
+          "awayOdds": 1.33,
+          "payout": 93.4
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 4,
+          "homeOdds": 3.05,
+          "awayOdds": 1.4,
+          "payout": 95.2
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 4,
+          "homeOdds": 2.65,
+          "awayOdds": 1.52,
+          "payout": 95.4
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 4,
+          "homeOdds": 2.14,
+          "awayOdds": 1.76,
+          "payout": 93.9
+        },
+        {
+          "handicap": -0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.88,
+          "awayOdds": 2.02,
+          "payout": 97.4
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.66,
+          "awayOdds": 2.42,
+          "payout": 96.4
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 4,
+          "homeOdds": 1.37,
+          "awayOdds": 3.55,
+          "payout": 96.3
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 4,
+          "homeOdds": 1.29,
+          "awayOdds": 3.78,
+          "payout": 92.7
+        },
+        {
+          "handicap": 0.5,
+          "bookmakerCount": 1,
+          "homeOdds": 1.24,
+          "awayOdds": 4.34,
+          "payout": 96.4
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.1,
+          "awayOdds": 5.17,
+          "payout": 90.7
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 3,
+          "homeOdds": 1.02,
+          "awayOdds": 8.4,
+          "payout": 91
+        },
+        {
+          "handicap": 1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.01,
+          "awayOdds": 8.6,
+          "payout": 90.4
+        }
+      ],
+      "mainLine": -0.5,
+      "scraped_at": "2026-08-25T08:16:41.756Z"
+    },
+    "Paris FC - Nice_ligue1": {
+      "match": "Paris FC - Nice",
+      "url": "https://www.oddsportal.com/football/h2h/nice-YagoQJpq/paris-fc-0OEHEprs/",
+      "lines": [
+        {
+          "handicap": -2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 8.3,
+          "awayOdds": 1.02,
+          "payout": 90.8
+        },
+        {
+          "handicap": -2.25,
+          "bookmakerCount": 3,
+          "homeOdds": 7.75,
+          "awayOdds": 1.02,
+          "payout": 90.1
+        },
+        {
+          "handicap": -2,
+          "bookmakerCount": 3,
+          "homeOdds": 7.4,
+          "awayOdds": 1.03,
+          "payout": 90.4
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 4.97,
+          "awayOdds": 1.11,
+          "payout": 90.7
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 3.85,
+          "awayOdds": 1.19,
+          "payout": 90.9
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 3.44,
+          "awayOdds": 1.26,
+          "payout": 92.2
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 3,
+          "homeOdds": 3.04,
+          "awayOdds": 1.32,
+          "payout": 92
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 3,
+          "homeOdds": 2.36,
+          "awayOdds": 1.52,
+          "payout": 92.5
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.85,
+          "awayOdds": 2.11,
+          "payout": 96.1
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 3,
+          "homeOdds": 1.56,
+          "awayOdds": 2.69,
+          "payout": 96.2
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.35,
+          "awayOdds": 2.99,
+          "payout": 93
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.16,
+          "awayOdds": 4.47,
+          "payout": 92.1
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 3,
+          "homeOdds": 1.06,
+          "awayOdds": 7,
+          "payout": 92.1
+        },
+        {
+          "handicap": 1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.04,
+          "awayOdds": 7.45,
+          "payout": 91.3
+        },
+        {
+          "handicap": 1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.03,
+          "awayOdds": 7.9,
+          "payout": 91.1
+        }
+      ],
+      "mainLine": -0.75,
+      "scraped_at": "2026-08-25T08:14:55.005Z"
+    },
+    "Rennes - Le Mans_ligue1": {
+      "match": "Rennes - Le Mans",
+      "url": "https://www.oddsportal.com/football/h2h/le-mans-ER0NeOOp/rennes-d2nnj1IE/",
+      "lines": [
+        {
+          "handicap": -3.5,
+          "bookmakerCount": 3,
+          "homeOdds": 6.9,
+          "awayOdds": 1.04,
+          "payout": 90.4
+        },
+        {
+          "handicap": -3.25,
+          "bookmakerCount": 3,
+          "homeOdds": 6.54,
+          "awayOdds": 1.05,
+          "payout": 90.5
+        },
+        {
+          "handicap": -3,
+          "bookmakerCount": 3,
+          "homeOdds": 6.15,
+          "awayOdds": 1.06,
+          "payout": 90.4
+        },
+        {
+          "handicap": -2.75,
+          "bookmakerCount": 3,
+          "homeOdds": 4.46,
+          "awayOdds": 1.14,
+          "payout": 90.8
+        },
+        {
+          "handicap": -2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 3.6,
+          "awayOdds": 1.21,
+          "payout": 90.6
+        },
+        {
+          "handicap": -2.25,
+          "bookmakerCount": 3,
+          "homeOdds": 3.3,
+          "awayOdds": 1.27,
+          "payout": 91.7
+        },
+        {
+          "handicap": -2,
+          "bookmakerCount": 3,
+          "homeOdds": 2.98,
+          "awayOdds": 1.32,
+          "payout": 91.5
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 2.58,
+          "awayOdds": 1.59,
+          "payout": 96.2
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 2.25,
+          "awayOdds": 1.76,
+          "payout": 96.3
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.99,
+          "awayOdds": 1.95,
+          "payout": 96.2
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 3,
+          "homeOdds": 1.67,
+          "awayOdds": 2.21,
+          "payout": 95.1
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.49,
+          "awayOdds": 2.48,
+          "payout": 93.1
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.25,
+          "awayOdds": 3.46,
+          "payout": 91.8
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 3,
+          "homeOdds": 1.13,
+          "awayOdds": 5.05,
+          "payout": 92.3
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.03,
+          "awayOdds": 8.1,
+          "payout": 91.4
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 3,
+          "homeOdds": 1.01,
+          "awayOdds": 11.5,
+          "payout": 92.8
+        }
+      ],
+      "mainLine": -1,
+      "scraped_at": "2026-08-25T08:15:08.070Z"
+    },
+    "Monaco - Marseille_ligue1": {
+      "match": "Monaco - Marseille",
+      "url": "https://www.oddsportal.com/football/h2h/marseille-SblU3Hee/monaco-2PIvr8o4/",
+      "lines": [
+        {
+          "handicap": -2.5,
+          "bookmakerCount": 3,
+          "homeOdds": 10,
+          "awayOdds": 1.02,
+          "payout": 92.6
+        },
+        {
+          "handicap": -2,
+          "bookmakerCount": 3,
+          "homeOdds": 8.9,
+          "awayOdds": 1.01,
+          "payout": 90.7
+        },
+        {
+          "handicap": -1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 6.03,
+          "awayOdds": 1.07,
+          "payout": 90.9
+        },
+        {
+          "handicap": -1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 4.7,
+          "awayOdds": 1.13,
+          "payout": 91.1
+        },
+        {
+          "handicap": -1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 4.37,
+          "awayOdds": 1.17,
+          "payout": 92.3
+        },
+        {
+          "handicap": -1,
+          "bookmakerCount": 3,
+          "homeOdds": 3.98,
+          "awayOdds": 1.2,
+          "payout": 92.2
+        },
+        {
+          "handicap": -0.75,
+          "bookmakerCount": 3,
+          "homeOdds": 2.99,
+          "awayOdds": 1.34,
+          "payout": 92.5
+        },
+        {
+          "handicap": -0.25,
+          "bookmakerCount": 3,
+          "homeOdds": 2.32,
+          "awayOdds": 1.71,
+          "payout": 96
+        },
+        {
+          "handicap": 0,
+          "bookmakerCount": 3,
+          "homeOdds": 1.99,
+          "awayOdds": 1.95,
+          "payout": 96.2
+        },
+        {
+          "handicap": 0.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.66,
+          "awayOdds": 2.12,
+          "payout": 93.1
+        },
+        {
+          "handicap": 0.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.36,
+          "awayOdds": 2.86,
+          "payout": 92.2
+        },
+        {
+          "handicap": 1,
+          "bookmakerCount": 3,
+          "homeOdds": 1.22,
+          "awayOdds": 3.74,
+          "payout": 92
+        },
+        {
+          "handicap": 1.25,
+          "bookmakerCount": 3,
+          "homeOdds": 1.17,
+          "awayOdds": 4.18,
+          "payout": 91.4
+        },
+        {
+          "handicap": 1.5,
+          "bookmakerCount": 3,
+          "homeOdds": 1.14,
+          "awayOdds": 4.55,
+          "payout": 91.2
+        },
+        {
+          "handicap": 1.75,
+          "bookmakerCount": 3,
+          "homeOdds": 1.07,
+          "awayOdds": 5.79,
+          "payout": 90.3
+        },
+        {
+          "handicap": 2,
+          "bookmakerCount": 3,
+          "homeOdds": 1.01,
+          "awayOdds": 8.5,
+          "payout": 90.3
+        }
+      ],
+      "mainLine": 0.25,
+      "scraped_at": "2026-08-25T08:15:21.214Z"
+    }
+  }
+}
