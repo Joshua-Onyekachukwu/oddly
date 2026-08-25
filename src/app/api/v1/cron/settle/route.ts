@@ -176,23 +176,39 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Archive settled predictions to Convex (non-blocking)
+    // Write to settlement_feed in Supabase (replaces Convex)
     let archived = 0;
-    if (settled > 0 && process.env.CONVEX_URL) {
+    if (settled > 0) {
       try {
-        const origin =
-          process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL
-            ? `https://${process.env.VERCEL_URL}`
-            : "http://localhost:3000";
-        const archiveRes = await fetch(`${origin}/api/v1/cron/archive`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ limit: Math.min(settled * 2, 500) }),
-        });
-        if (archiveRes.ok) {
-          const archiveData = await archiveRes.json();
-          archived = archiveData.archived || 0;
-          console.log(`[SETTLE] Archived ${archived} predictions to Convex`);
+        // Re-read the settled predictions to get full data for the feed
+        const { data: feedData } = await supabaseAdmin
+          .from("predictions")
+          .select("fixture_id, market, selection, model_probability, model_version, result, settled_at, match_name")
+          .not("result", "is", null)
+          .neq("result", "pending")
+          .order("settled_at", { ascending: false })
+          .limit(500);
+
+        if (feedData && feedData.length > 0) {
+          // Clear and replace settlement_feed
+          await supabaseAdmin.from("settlement_feed").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+          const rows = feedData.map((p: any) => ({
+            fixture_id: p.fixture_id || "",
+            market: p.market,
+            selection: p.selection,
+            model_probability: p.model_probability || 0,
+            model_version: p.model_version || "v5.1",
+            result: p.result,
+            match_name: p.match_name || null,
+            settled_at: p.settled_at || new Date().toISOString(),
+          }));
+          const BATCH = 100;
+          for (let i = 0; i < rows.length; i += BATCH) {
+            const batch = rows.slice(i, i + BATCH);
+            await supabaseAdmin.from("settlement_feed").insert(batch);
+            archived += batch.length;
+          }
+          console.log(`[SETTLE] Archived ${archived} predictions to settlement_feed`);
         }
       } catch (archiveErr) {
         console.error("[SETTLE] Archive warning (non-blocking):", archiveErr);

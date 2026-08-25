@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { useQuery } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
+import { useLiveStats, useSettlementFeed } from "@/hooks/useSupabaseRealtime";
 
 // ─── UI Components ──────────────────────────────────────────
 
@@ -93,9 +92,11 @@ interface SettlementItem {
 // ─── Main Dashboard ─────────────────────────────────────────
 
 export default function AccuracyPage() {
-  // Real-time stats from Convex (lightweight)
-  const liveStats = useQuery(api.realtime.getLiveStats);
-  const settlementUpdates = useQuery(api.realtime.getSettlementUpdates, { limit: 50 });
+  // Real-time stats from Supabase (replaces Convex)
+  const liveStatsData = useLiveStats();
+  const settlementData = useSettlementFeed(50);
+  const liveStats = liveStatsData ? { totalPredictions: liveStatsData.total_predictions, correct: liveStatsData.correct_predictions, accuracy: liveStatsData.accuracy } : undefined;
+  const settlementUpdates = settlementData;
 
   // Analytics from Supabase API (heavy queries)
   const [calibration, setCalibration] = useState<CalibrationBucket[]>([]);

@@ -45,43 +45,7 @@ const ODDS_API_KEY = env.THE_ODDS_API_KEY || '';
 const CLV_PATH = path.join(__dirname, '../data/clv-snapshots.json');
 const CLV_FEATURES_PATH = path.join(__dirname, '../data/clv-features.json');
 
-// ─── Convex HTTP helpers ─────────────────────────────────────────────
-const https = require('https');
-const CONVEX_URL = 'https://limitless-mole-387.convex.cloud';
-
-function convexMutate(mutationPath, args) {
-  return new Promise((resolve, reject) => {
-    const body = JSON.stringify({ path: mutationPath, args });
-    const req = https.request(`${CONVEX_URL}/api/mutation`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) },
-    }, (res) => {
-      let d = '';
-      res.on('data', c => d += c);
-      res.on('end', () => { try { resolve(JSON.parse(d)); } catch { resolve({}); } });
-    });
-    req.on('error', () => resolve({}));
-    req.write(body);
-    req.end();
-  });
-}
-
-function convexQuery(queryPath, args = {}) {
-  return new Promise((resolve) => {
-    const body = JSON.stringify({ path: queryPath, args });
-    const req = https.request(`${CONVEX_URL}/api/query`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) },
-    }, (res) => {
-      let d = '';
-      res.on('data', c => d += c);
-      res.on('end', () => { try { resolve(JSON.parse(d)); } catch { resolve({}); } });
-    });
-    req.on('error', () => resolve({}));
-    req.write(body);
-    req.end();
-  });
-}
+// Convex helpers removed — all data now lives in Supabase
 
 // ─── Load existing snapshots ─────────────────────────────────────────
 function loadSnapshots() {
@@ -337,28 +301,7 @@ async function computeCLVFeatures() {
     features,
   }, null, 2));
   
-  console.log(`Computed CLV features for ${computed} fixtures\n`);
-  
-  // Also store in Convex for real-time access
-  let convexOk = 0;
-  for (const [fixtureKey, feat] of Object.entries(features)) {
-    try {
-      await convexMutate('predictions:bulkInsertOdds', {
-        odds: [{
-          fixtureId: fixtureKey,
-          bookmaker: 'CLV_ANALYSIS',
-          market: 'h2h',
-          selection: `home_clv_${feat.clvHome}`,
-          odds: feat.clvHome,
-          impliedProb: feat.impliedShiftHome,
-          timestamp: new Date().toISOString(),
-        }],
-      });
-      convexOk++;
-    } catch {}
-  }
-  
-  if (convexOk > 0) console.log(`Stored ${convexOk} CLV features in Convex`);
+  console.log(`Computed CLV features for ${computed} fixtures\n`);  // CLV features stored in data/clv-features.json for pipeline consumption
   
   return features;
 }

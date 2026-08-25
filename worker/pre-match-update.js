@@ -36,25 +36,7 @@ function loadEnv() {
 const env = loadEnv();
 const sb = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
-const https = require('https');
-const CONVEX_URL = 'https://limitless-mole-387.convex.cloud';
-
-function convexMutate(mutationPath, args) {
-  return new Promise((resolve) => {
-    const body = JSON.stringify({ path: mutationPath, args });
-    const req = https.request(`${CONVEX_URL}/api/mutation`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) },
-    }, (res) => {
-      let d = '';
-      res.on('data', c => d += c);
-      res.on('end', () => { try { resolve(JSON.parse(d)); } catch { resolve({}); } });
-    });
-    req.on('error', () => resolve({}));
-    req.write(body);
-    req.end();
-  });
-}
+// Convex helpers removed — all data now lives in Supabase
 
 const PIPELINE_PATH = path.join(__dirname, '../data/pipeline-state.json');
 const PREDICTIONS_PATH = path.join(__dirname, '../data/predicted-lineups.json');
@@ -400,20 +382,7 @@ async function runPhase3() {
   state.picks.push(pickRecord);
   savePipelineState(state);
   
-  // Store in Convex
-  try {
-    await convexMutate('predictions:bulkInsertOdds', {
-      odds: [{
-        fixtureId: thePick.fixture_id,
-        bookmaker: 'PICK_ENGINE',
-        market: 'h2h',
-        selection: thePick.bestPrediction.selection,
-        odds: thePick.odds.selection,
-        impliedProb: thePick.odds.impliedProb,
-        timestamp: now.toISOString(),
-      }],
-    });
-  } catch {}
+  // Pick stored in pipeline state and settlement feed
   
   return pickRecord;
 }
