@@ -111,12 +111,29 @@ async function runPredictionPipeline() {
 
   console.log(`[PREDICT] Loaded ${histFixtures?.length || 0} historical matches for Elo/form`);
 
-  // Generate predictions using the ensemble
+  // IDEMPOTENCY: Check which fixtures already have pending predictions
+  const fixtureIds = fixtures.map((f) => f.id);
+  const { data: existingPreds } = await supabaseAdmin
+    .from("predictions")
+    .select("fixture_id")
+    .in("fixture_id", fixtureIds)
+    .eq("result", "pending");
+
+  const existingFixtureIds = new Set((existingPreds || []).map((p) => p.fixture_id));
+  const skipCount = existingFixtureIds.size;
+  if (skipCount > 0) {
+    console.log(`[PREDICT] Skipping ${skipCount} fixtures with existing pending predictions`);
+  }
+
+  // Generate predictions using the ensemble (only for fixtures without pending predictions)
   const predictions: any[] = [];
   let ensembleHits = 0;
   let ensembleMisses = 0;
 
   for (const fixture of fixtures) {
+    // IDEMPOTENCY: Skip fixtures that already have pending predictions
+    if (existingFixtureIds.has(fixture.id)) continue;
+
     const home = (fixture as any).home?.canonical_name;
     const away = (fixture as any).away?.canonical_name;
     if (!home || !away) continue;
