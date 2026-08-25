@@ -1,261 +1,210 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
-// ─── Predictions Queries ────────────────────────────────────────
+/**
+ * SLIM PREDICTIONS — write-only mutations for live data.
+ *
+ * All read queries now go through Supabase API routes.
+ * Convex only stores:
+ *   - livePick (current pick)
+ *   - valuePicks (live value bets)
+ *   - settlementFeed (last 500 settlements)
+ *   - liveStats (counters)
+ *   - teams/leagues (reference)
+ */
 
-export const getHistoricalPredictions = query({
+// ─── Live Pick Mutations ──────────────────────────────────────
+
+export const upsertLivePick = mutation({
   args: {
-    market: v.optional(v.string()),
-    limit: v.optional(v.number()),
-    result: v.optional(v.string()),
-    minProb: v.optional(v.number()),
-    maxProb: v.optional(v.number()),
+    fixtureId: v.string(),
+    match: v.string(),
+    market: v.string(),
+    selection: v.string(),
+    probability: v.number(),
+    odds: v.number(),
+    edge: v.number(),
+    compositeScore: v.number(),
+    confidenceTier: v.string(),
+    decision: v.string(),
+    clvSignal: v.optional(v.string()),
+    leagueName: v.optional(v.string()),
+    kickoffTime: v.string(),
+    decidedAt: v.string(),
   },
   handler: async (ctx, args) => {
-    let q = ctx.db.query("predictions").fullTableScan();
-
-    if (args.result) {
-      q = ctx.db.query("predictions").withIndex("by_result", (q) => q.eq("result", args.result!));
-    } else if (args.market) {
-      q = ctx.db.query("predictions").withIndex("by_market", (q) => q.eq("market", args.market!));
+    // Delete old live picks (keep only latest)
+    const existing = await ctx.db.query("livePick").order("desc").take(10);
+    for (const old of existing) {
+      await ctx.db.delete(old._id);
     }
-
-    let results = await q.collect();
-
-    if (args.minProb) results = results.filter((r) => r.modelProbability >= args.minProb!);
-    if (args.maxProb) results = results.filter((r) => r.modelProbability <= args.maxProb!);
-    if (args.market && !args.result) results = results.filter((r) => r.market === args.market);
-
-    return results.slice(0, args.limit ?? 10000);
+    return await ctx.db.insert("livePick", args);
   },
 });
 
-export const getMarketAccuracy = query({
-  handler: async (ctx) => {
-    const correct = await ctx.db
-      .query("predictions")
-      .withIndex("by_result", (q) => q.eq("result", "correct"))
-      .collect();
-    const wrong = await ctx.db
-      .query("predictions")
-      .withIndex("by_result", (q) => q.eq("result", "wrong"))
-      .collect();
+// ─── Value Picks Mutations ────────────────────────────────────
 
-    const all = [...correct, ...wrong];
-    const byMarket: Record<string, { total: number; correct: number }> = {};
-
-    for (const p of all) {
-      if (!byMarket[p.market]) byMarket[p.market] = { total: 0, correct: 0 };
-      byMarket[p.market].total++;
-      if (p.result === "correct") byMarket[p.market].correct++;
-    }
-
-    return Object.entries(byMarket)
-      .map(([market, stats]) => ({
-        market,
-        total: stats.total,
-        correct: stats.correct,
-        accuracy: stats.total > 0 ? Math.round((stats.correct / stats.total) * 1000) / 10 : 0,
-      }))
-      .sort((a, b) => b.total - a.total);
-  },
-});
-
-export const getCalibrationBuckets = query({
-  handler: async (ctx) => {
-    const settled = await ctx.db
-      .query("predictions")
-      .fullTableScan()
-      .filter((q) =>
-        q.or(q.eq("result", "correct"), q.eq("result", "wrong"))
-      )
-      .collect();
-
-    const buckets: Record<string, { total: number; correct: number; sumProb: number }> = {};
-
-    for (const p of settled) {
-      let bucket: string;
-      if (p.modelProbability < 0.5) bucket = "40-49%";
-      else if (p.modelProbability < 0.55) bucket = "50-54%";
-      else if (p.modelProbability < 0.6) bucket = "55-59%";
-      else if (p.modelProbability < 0.65) bucket = "60-64%";
-      else if (p.modelProbability < 0.7) bucket = "65-69%";
-      else if (p.modelProbability < 0.75) bucket = "70-74%";
-      else if (p.modelProbability < 0.8) bucket = "75-79%";
-      else if (p.modelProbability < 0.85) bucket = "80-84%";
-      else if (p.modelProbability < 0.9) bucket = "85-89%";
-      else bucket = "90%+";
-
-      if (!buckets[bucket]) buckets[bucket] = { total: 0, correct: 0, sumProb: 0 };
-      buckets[bucket].total++;
-      if (p.result === "correct") buckets[bucket].correct++;
-      buckets[bucket].sumProb += p.modelProbability;
-    }
-
-    return Object.entries(buckets)
-      .map(([bucket, stats]) => ({
-        bucket,
-        total: stats.total,
-        correct: stats.correct,
-        actualAccuracy: stats.total > 0 ? Math.round((stats.correct / stats.total) * 1000) / 10 : 0,
-        avgPredicted: stats.total > 0 ? Math.round((stats.sumProb / stats.total) * 1000) / 10 : 0,
-      }))
-      .sort((a, b) => a.avgPredicted - b.avgPredicted);
-  },
-});
-
-// ─── Fixtures Queries ───────────────────────────────────────────
-
-export const getUpcomingFixtures = query({
+export const upsertValuePicks = mutation({
   args: {
-    limit: v.optional(v.number()),
+    picks: v.array(
+      v.object({
+        fixtureId: v.optional(v.string()),
+        matchName: v.optional(v.string()),
+        market: v.string(),
+        selection: v.string(),
+        modelProb: v.number(),
+        bookmakerOdds: v.optional(v.number()),
+        impliedProb: v.optional(v.number()),
+        edge: v.optional(v.number()),
+        ev: v.optional(v.number()),
+        tier: v.string(),
+      })
+    ),
   },
   handler: async (ctx, args) => {
-    return await ctx.db
-      .query("fixtures")
-      .withIndex("by_status", (q) => q.eq("status", "scheduled"))
-      .order("asc")
-      .collect()
-      .then((r) => r.slice(0, args.limit ?? 500));
-  },
-});
-
-// ─── Teams Queries ──────────────────────────────────────────────
-
-export const getTeamByName = query({
-  args: { name: v.string() },
-  handler: async (ctx, args) => {
-    const results = await ctx.db
-      .query("teams")
-      .withIndex("by_name", (q) => q.eq("canonicalName", args.name))
-      .collect();
-    return results[0] ?? null;
-  },
-});
-
-// ─── xG Features Queries ────────────────────────────────────────
-
-export const getXgByTeam = query({
-  args: { teamName: v.string() },
-  handler: async (ctx, args) => {
-    const results = await ctx.db
-      .query("xgFeatures")
-      .withIndex("by_team", (q) => q.eq("teamName", args.teamName))
-      .collect();
-    return results[0] ?? null;
-  },
-});
-
-// ─── Referee Queries ────────────────────────────────────────────
-
-export const getRefereeByName = query({
-  args: { name: v.string() },
-  handler: async (ctx, args) => {
-    const results = await ctx.db
-      .query("refereeProfiles")
-      .withIndex("by_name", (q) => q.eq("name", args.name))
-      .collect();
-    return results[0] ?? null;
-  },
-});
-
-export const getRefereeRanking = query({
-  args: {
-    sortBy: v.optional(v.string()),
-    limit: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    let refs = await ctx.db.query("refereeProfiles").fullTableScan().collect();
-
-    const sortBy = (args.sortBy ?? "matchesOfficiated") as keyof typeof refs[0];
-    refs.sort((a, b) => {
-      const aVal = typeof a[sortBy] === "number" ? (a[sortBy] as number) : 0;
-      const bVal = typeof b[sortBy] === "number" ? (b[sortBy] as number) : 0;
-      return bVal - aVal;
-    });
-
-    return refs.slice(0, args.limit ?? 50);
-  },
-});
-
-// ─── Value Picks Queries ────────────────────────────────────────
-
-export const getValuePicks = query({
-  args: {
-    tier: v.optional(v.string()),
-    market: v.optional(v.string()),
-    limit: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    let q = ctx.db.query("valuePicks").fullTableScan();
-
-    if (args.tier) {
-      q = ctx.db.query("valuePicks").withIndex("by_tier", (q) => q.eq("tier", args.tier!));
-    } else if (args.market) {
-      q = ctx.db.query("valuePicks").withIndex("by_market", (q) => q.eq("market", args.market!));
+    // Clear old value picks
+    const existing = await ctx.db.query("valuePicks").fullTableScan().take(500);
+    for (const old of existing) {
+      await ctx.db.delete(old._id);
     }
-
-    let results = await q.collect();
-
-    if (args.market && !args.tier) {
-      results = results.filter((r) => r.market === args.market);
+    // Insert new
+    let count = 0;
+    for (const pick of args.picks) {
+      await ctx.db.insert("valuePicks", pick);
+      count++;
     }
-
-    return results.slice(0, args.limit ?? 100);
+    return { count };
   },
 });
 
-// ─── Mutations (Write Operations) ──────────────────────────────
+// ─── Settlement Feed Mutations ────────────────────────────────
 
-export const archivePrediction = mutation({
+export const addSettlement = mutation({
   args: {
     fixtureId: v.string(),
     market: v.string(),
     selection: v.string(),
     modelProbability: v.number(),
-    confidenceLower: v.optional(v.number()),
-    confidenceUpper: v.optional(v.number()),
     modelVersion: v.string(),
-    poissonProb: v.optional(v.number()),
-    eloProb: v.optional(v.number()),
-    regressionProb: v.optional(v.number()),
-    xgAdjustedProb: v.optional(v.number()),
-    bookmakerOdds: v.optional(v.number()),
-    impliedProbability: v.optional(v.number()),
-    edge: v.optional(v.number()),
-    result: v.optional(v.string()),
-    actualOutcome: v.optional(v.string()),
-    settledAt: v.optional(v.string()),
+    result: v.string(),
+    settledAt: v.string(),
+    matchName: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    return await ctx.db.insert("predictions", args);
+    // Keep only last 500 settlements
+    const count = await ctx.db
+      .query("settlementFeed")
+      .withIndex("by_settled")
+      .collect()
+      .then((r) => r.length);
+
+    if (count >= 500) {
+      const oldest = await ctx.db
+        .query("settlementFeed")
+        .withIndex("by_settled")
+        .order("asc")
+        .take(count - 499);
+      for (const old of oldest) {
+        await ctx.db.delete(old._id);
+      }
+    }
+
+    return await ctx.db.insert("settlementFeed", args);
   },
 });
 
-export const archiveBatch = mutation({
+export const addSettlementBatch = mutation({
   args: {
-    predictions: v.array(
+    settlements: v.array(
       v.object({
         fixtureId: v.string(),
         market: v.string(),
         selection: v.string(),
         modelProbability: v.number(),
         modelVersion: v.string(),
-        result: v.optional(v.string()),
-        actualOutcome: v.optional(v.string()),
-        settledAt: v.optional(v.string()),
+        result: v.string(),
+        settledAt: v.string(),
+        matchName: v.optional(v.string()),
       })
     ),
   },
   handler: async (ctx, args) => {
-    const ids = [];
-    for (const pred of args.predictions) {
-      const id = await ctx.db.insert("predictions", pred);
-      ids.push(id);
+    let count = 0;
+    for (const s of args.settlements) {
+      await ctx.db.insert("settlementFeed", s);
+      count++;
     }
-    return { count: ids.length, ids };
+
+    // Trim to 500
+    const all = await ctx.db.query("settlementFeed").fullTableScan().take(600);
+    if (all.length > 500) {
+      const toDelete = all.slice(0, all.length - 500);
+      for (const old of toDelete) {
+        await ctx.db.delete(old._id);
+      }
+    }
+
+    return { count };
   },
 });
+
+// ─── Live Stats Mutations ─────────────────────────────────────
+
+export const updateLiveStats = mutation({
+  args: {
+    key: v.string(),
+    value: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("liveStats")
+      .withIndex("by_key", (q) => q.eq("key", args.key))
+      .first();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        value: args.value,
+        updatedAt: new Date().toISOString(),
+      });
+      return existing._id;
+    }
+
+    return await ctx.db.insert("liveStats", {
+      key: args.key,
+      value: args.value,
+      updatedAt: new Date().toISOString(),
+    });
+  },
+});
+
+export const incrementLiveStats = mutation({
+  args: {
+    key: v.string(),
+    delta: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("liveStats")
+      .withIndex("by_key", (q) => q.eq("key", args.key))
+      .first();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        value: existing.value + args.delta,
+        updatedAt: new Date().toISOString(),
+      });
+      return existing._id;
+    }
+
+    return await ctx.db.insert("liveStats", {
+      key: args.key,
+      value: args.delta,
+      updatedAt: new Date().toISOString(),
+    });
+  },
+});
+
+// ─── Reference Data Mutations ─────────────────────────────────
 
 export const upsertTeam = mutation({
   args: {
@@ -270,43 +219,11 @@ export const upsertTeam = mutation({
       .query("teams")
       .withIndex("by_name", (q) => q.eq("canonicalName", args.canonicalName))
       .first();
-
     if (existing) {
       await ctx.db.patch(existing._id, args);
       return existing._id;
     }
     return await ctx.db.insert("teams", args);
-  },
-});
-
-export const bulkUpsertTeams = mutation({
-  args: {
-    teams: v.array(
-      v.object({
-        canonicalName: v.string(),
-        country: v.optional(v.string()),
-        logo: v.optional(v.string()),
-        eloRating: v.number(),
-      })
-    ),
-  },
-  handler: async (ctx, args) => {
-    let inserted = 0;
-    let updated = 0;
-    for (const team of args.teams) {
-      const existing = await ctx.db
-        .query("teams")
-        .withIndex("by_name", (q) => q.eq("canonicalName", team.canonicalName))
-        .first();
-      if (existing) {
-        await ctx.db.patch(existing._id, team);
-        updated++;
-      } else {
-        await ctx.db.insert("teams", team);
-        inserted++;
-      }
-    }
-    return { inserted, updated, total: inserted + updated };
   },
 });
 
@@ -324,7 +241,6 @@ export const upsertLeague = mutation({
       .query("leagues")
       .withIndex("by_externalId", (q) => q.eq("externalId", args.externalId))
       .first();
-
     if (existing) {
       await ctx.db.patch(existing._id, args);
       return existing._id;
@@ -333,256 +249,23 @@ export const upsertLeague = mutation({
   },
 });
 
-export const insertRefereeProfile = mutation({
-  args: {
-    name: v.string(),
-    matchesOfficiated: v.number(),
-    avgGoals: v.optional(v.number()),
-    homeWinPct: v.optional(v.number()),
-    drawPct: v.optional(v.number()),
-    awayWinPct: v.optional(v.number()),
-    avgYellow: v.optional(v.number()),
-    avgRed: v.optional(v.number()),
-    avgFouls: v.optional(v.number()),
-    homeBias: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    const existing = await ctx.db
-      .query("refereeProfiles")
-      .withIndex("by_name", (q) => q.eq("name", args.name))
-      .first();
-
-    if (existing) {
-      await ctx.db.patch(existing._id, args);
-      return existing._id;
-    }
-    return await ctx.db.insert("refereeProfiles", args);
-  },
-});
-
-export const upsertXgFeature = mutation({
-  args: {
-    teamName: v.string(),
-    league: v.optional(v.string()),
-    season: v.optional(v.string()),
-    source: v.string(),
-    matchesPlayed: v.optional(v.number()),
-    totalXg: v.optional(v.number()),
-    totalXga: v.optional(v.number()),
-    totalNpxg: v.optional(v.number()),
-    avgXg: v.optional(v.number()),
-    avgXga: v.optional(v.number()),
-    avgNpxg: v.optional(v.number()),
-    avgNpxga: v.optional(v.number()),
-    homeXg: v.optional(v.number()),
-    homeXga: v.optional(v.number()),
-    homeGoals: v.optional(v.number()),
-    homeMatches: v.optional(v.number()),
-    awayXg: v.optional(v.number()),
-    awayXga: v.optional(v.number()),
-    awayGoals: v.optional(v.number()),
-    awayMatches: v.optional(v.number()),
-    xgLast5: v.optional(v.number()),
-    xgaLast5: v.optional(v.number()),
-    xgLast10: v.optional(v.number()),
-    xgaLast10: v.optional(v.number()),
-    avgPpda: v.optional(v.number()),
-    avgDeep: v.optional(v.number()),
-    avgDeepAllowed: v.optional(v.number()),
-    xgDiff: v.optional(v.number()),
-    npxgRatio: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.db.insert("xgFeatures", args);
-  },
-});
-
-export const insertRefereeMatch = mutation({
-  args: {
-    refereeName: v.string(),
-    matchDate: v.string(),
-    homeTeam: v.string(),
-    awayTeam: v.string(),
-    homeGoals: v.number(),
-    awayGoals: v.number(),
-    yellowCards: v.optional(v.number()),
-    redCards: v.optional(v.number()),
-    fouls: v.optional(v.number()),
-    league: v.optional(v.string()),
-    season: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.db.insert("refereeMatches", args);
-  },
-});
-
-export const bulkInsertRefereeMatches = mutation({
-  args: {
-    matches: v.array(v.object({
-      refereeName: v.string(),
-      matchDate: v.string(),
-      homeTeam: v.string(),
-      awayTeam: v.string(),
-      homeGoals: v.number(),
-      awayGoals: v.number(),
-      yellowCards: v.optional(v.number()),
-      redCards: v.optional(v.number()),
-      fouls: v.optional(v.number()),
-      league: v.optional(v.string()),
-      season: v.optional(v.string()),
-    })),
-  },
-  handler: async (ctx, args) => {
-    let ok = 0, fail = 0;
-    for (const m of args.matches) {
-      try {
-        await ctx.db.insert("refereeMatches", m);
-        ok++;
-      } catch { fail++; }
-    }
-    return { ok, fail };
-  },
-});
-
-export const bulkInsertRefFeatureProfiles = mutation({
-  args: {
-    profiles: v.array(v.object({
-      refereeName: v.string(),
-      matchesOfficiated: v.number(),
-      homeWinRate: v.optional(v.number()),
-      avgGoals: v.optional(v.number()),
-      avgCards: v.optional(v.number()),
-      homeBias: v.optional(v.number()),
-      features: v.any(),
-    })),
-  },
-  handler: async (ctx, args) => {
-    let ok = 0, fail = 0;
-    for (const p of args.profiles) {
-      try {
-        await ctx.db.insert("refereeFeatureProfiles", p);
-        ok++;
-      } catch { fail++; }
-    }
-    return { ok, fail };
-  },
-});
-
-export const insertAuditLog = mutation({
-  args: {
-    action: v.string(),
-    details: v.optional(v.any()),
-    rowsAffected: v.optional(v.number()),
-    durationMs: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.db.insert("auditLog", args);
-  },
-});
-
-export const bulkInsertOdds = mutation({
-  args: {
-    odds: v.array(
-      v.object({
-        fixtureId: v.string(),
-        bookmaker: v.string(),
-        market: v.string(),
-        selection: v.string(),
-        odds: v.number(),
-        impliedProb: v.number(),
-        timestamp: v.string(),
-      })
-    ),
-  },
-  handler: async (ctx, args) => {
-    let count = 0;
-    for (const o of args.odds) {
-      await ctx.db.insert("odds", o);
-      count++;
-    }
-    return { count };
-  },
-});
-
-// ─── Stats Query ────────────────────────────────────────────────
+// ─── Stats Query ──────────────────────────────────────────────
 
 export const getStats = query({
   handler: async (ctx) => {
-    // Use indexed queries to stay under 32K read limit
     const leagues = await ctx.db.query("leagues").fullTableScan().take(200);
-    const referees = await ctx.db.query("refereeProfiles").fullTableScan().take(500);
     const teams = await ctx.db.query("teams").fullTableScan().take(1000);
-    const xgFeatures = await ctx.db.query("xgFeatures").fullTableScan().take(1000);
-    const refereeMatches = await ctx.db.query("refereeMatches").fullTableScan().take(1000);
-    const refFeatureProfiles = await ctx.db.query("refereeFeatureProfiles").fullTableScan().take(200);
-    // Use by_result index for fast counts (limited to avoid 32K)
-    const correct = await ctx.db
-      .query("predictions")
-      .withIndex("by_result", (q) => q.eq("result", "correct"))
-      .take(1000);
-    const wrong = await ctx.db
-      .query("predictions")
-      .withIndex("by_result", (q) => q.eq("result", "wrong"))
-      .take(1000);
-    const totalSettled = correct.length + wrong.length;
-    // Use by_status index for fixtures
-    const scheduled = await ctx.db
-      .query("fixtures")
-      .withIndex("by_status", (q) => q.eq("status", "scheduled"))
-      .take(100);
-    const finished = await ctx.db
-      .query("fixtures")
-      .withIndex("by_status", (q) => q.eq("status", "finished"))
-      .take(100);
-    // Sample odds
-    const oddsSample = await ctx.db.query("odds").fullTableScan().take(100);
+    const valuePicks = await ctx.db.query("valuePicks").fullTableScan().take(500);
+    const settlements = await ctx.db.query("settlementFeed").fullTableScan().take(500);
+    const livePick = await ctx.db.query("livePick").order("desc").take(1);
+
     return {
-      predictions: totalSettled >= 2000 ? `~599K settled` : `${totalSettled} settled`,
-      fixtures: `${scheduled.length} scheduled, ${finished.length}+ finished`,
-      teams: teams.length,
       leagues: leagues.length,
-      referees: referees.length,
-      refereeMatches: refereeMatches.length >= 1000 ? `~9.7K` : `${refereeMatches.length}`,
-      refFeatureProfiles: refFeatureProfiles.length,
-      odds: oddsSample.length >= 100 ? `~14.8K` : `${oddsSample.length}`,
-      xgFeatures: xgFeatures.length,
+      teams: teams.length,
+      valuePicks: valuePicks.length,
+      settlements: settlements.length,
+      hasLivePick: livePick.length > 0,
+      note: "Slim schema — historical data in Supabase",
     };
-  },
-});
-
-export const getRefereeFeatureProfile = query({
-  args: { name: v.string() },
-  handler: async (ctx, args) => {
-    const results = await ctx.db
-      .query("refereeFeatureProfiles")
-      .withIndex("by_name", (q) => q.eq("refereeName", args.name))
-      .take(1);
-    return results[0] || null;
-  },
-});
-
-export const getRefereeMatches = query({
-  args: {
-    refereeName: v.string(),
-    limit: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    const results = await ctx.db
-      .query("refereeMatches")
-      .withIndex("by_referee", (q) => q.eq("refereeName", args.refereeName))
-      .order("desc")
-      .take(args.limit ?? 50);
-    return results;
-  },
-});
-
-export const getTopReferees = query({
-  args: { limit: v.optional(v.number()) },
-  handler: async (ctx, args) => {
-    const results = await ctx.db
-      .query("refereeFeatureProfiles")
-      .order("desc")
-      .take(args.limit ?? 20);
-    return results;
   },
 });

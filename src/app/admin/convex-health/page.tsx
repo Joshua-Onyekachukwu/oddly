@@ -134,7 +134,7 @@ export default function ConvexHealthPage() {
 
   // Real-time Convex queries
   const liveStats = useQuery(api.realtime.getLiveStats);
-  const latestPredictions = useQuery(api.realtime.getLatestPredictions, { limit: 20 });
+  const latestPredictions = useQuery(api.realtime.getSettlementUpdates, { limit: 20 });
   const settlementUpdates = useQuery(api.realtime.getSettlementUpdates, { limit: 20 });
   const valuePicks = useQuery(api.realtime.getValuePicksLive, { limit: 30 });
   const marketAccuracy = useQuery(api.realtime.getSettlementByMarket);
@@ -652,10 +652,10 @@ export default function ConvexHealthPage() {
 │ ✓ Active Predictions (Live)     │     │ ✓ ${String(getConvexCount("leagues")).padStart(6)} Leagues                   │
 │ ✓ Odds Snapshots (Real-time)    │     │ ✓ ${String(getConvexCount("predictions")).padStart(6)}+ Predictions (Historical) │
 │ ✓ User Accumulators             │     │ ✓ ${String(getConvexCount("odds")).padStart(6)} Odds Snapshots            │
-│ ✓ Profile & Subscription        │     │ ✓ ${String(getConvexCount("xgFeatures")).padStart(6)} xG Feature Profiles      │
-│ ✓ ${String(getSupabaseCount("fixtures")).padStart(6)} Fixtures              │     │ ✓ ${String(getConvexCount("referees")).padStart(6)} Referee Profiles         │
-│                                 │     │ ✓ ${String(getConvexCount("refereeMatches")).padStart(6)} Referee Match History    │
-│                                 │     │ ✓ ${String(getConvexCount("refFeatureProfiles")).padStart(6)} Ref Feature Profiles    │
+│ ✓ Profile & Subscription        │     │ ✓ Live Pick (real-time)              │
+│ ✓ ${String(getSupabaseCount("fixtures")).padStart(6)} Fixtures              │     │ ✓ Value Picks (real-time)             │
+│                                 │     │ ✓ Settlement Feed (last 500)          │
+│                                 │     │ ✓ Live Stats Counters                 │
 └──────────────┬──────────────────┘     └──────────────┬──────────────────┘
                │                                        │
                └────────────┬───────────────────────────┘
@@ -667,7 +667,8 @@ export default function ConvexHealthPage() {
                   └────────────────────┘
 
   Real-time Subscriptions: ✓ Active (ConvexReactClient → limitless-mole-387.convex.cloud)
-  Pipeline: Ensemble v5.1 (Isotonic Calibrated) → CLV Tracker → One-Game Pick Engine`}
+  Pipeline: Ensemble v5.1 → CLV Tracker → One-Game Pick Engine
+  Analytics: Supabase API (/api/v1/analytics) → calibration, markets, daily stats`}
           </pre>
         </div>
       </Card>

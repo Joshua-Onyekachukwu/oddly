@@ -11,14 +11,15 @@ import { api } from "../../convex/_generated/api";
  * @returns { predictions, isLoading, error }
  */
 export function useRealTimePredictions(options?: { limit?: number }) {
-  const predictions = useQuery(api.realtime.getLatestPredictions, {
+  // Use settlement feed instead of old predictions query
+  const settlements = useQuery(api.realtime.getSettlementUpdates, {
     limit: options?.limit ?? 50,
   });
 
   return {
-    predictions: predictions ?? [],
-    isLoading: predictions === undefined,
-    error: null, // Convex handles errors internally
+    predictions: settlements ?? [],
+    isLoading: settlements === undefined,
+    error: null,
   };
 }
 
