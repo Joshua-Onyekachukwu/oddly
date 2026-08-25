@@ -41,11 +41,11 @@ function loadJSON(filename) {
   }
 }
 
-async function upsertBatch(table, records, batchSize = 200) {
+async function upsertBatch(table, records, batchSize = 200, conflictCol = "referee_name") {
   let inserted = 0;
   for (let i = 0; i < records.length; i += batchSize) {
     const batch = records.slice(i, i + batchSize);
-    const { error } = await sb.from(table).upsert(batch, { onConflict: "name" });
+    const { error } = await sb.from(table).upsert(batch, { onConflict: conflictCol });
     if (error) {
       // Try without onConflict
       const { error: err2 } = await sb.from(table).upsert(batch);
@@ -65,22 +65,22 @@ async function syncRefereeProfiles() {
   if (!profiles || !Array.isArray(profiles)) return 0;
 
   const records = profiles.map((r) => ({
-    name: r.name,
-    matches_officiated: r.matches || 0,
+    referee_name: r.name,
+    total_matches: r.matches || 0,
     home_win_pct: r.homeWinPct || null,
     draw_pct: r.drawPct || null,
     away_win_pct: r.awayWinPct || null,
     avg_total_goals: r.avgGoals || null,
-    avg_yellow_cards: r.avgYellow || null,
-    avg_red_cards: r.avgRed || null,
-    avg_total_fouls: r.avgFouls || null,
+    avg_yellow_per_match: r.avgYellow || null,
+    avg_red_per_match: r.avgRed || null,
+    avg_fouls_per_match: r.avgFouls || null,
     btts_pct: r.bttsPct || null,
-    over25_pct: r.over25Pct || null,
+    over_2_5_pct: r.over25Pct || null,
     home_bias: r.homeBias || null,
-    leagues: r.leagues || [],
+    leagues_officiated: r.leagues || [],
   }));
 
-  const count = await upsertBatch("referee_profiles", records);
+  const count = await upsertBatch("referee_profiles", records, 200, "referee_name");
   console.log(`  ✅ ${count} referee profiles synced`);
   return count;
 }
