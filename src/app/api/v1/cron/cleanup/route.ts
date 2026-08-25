@@ -237,6 +237,9 @@ export async function GET(request: NextRequest) {
  * Manual trigger from admin dashboard.
  */
 export async function POST(request: NextRequest) {
+  if (!isAuthorizedCron(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     console.log("[MANUAL] Cleanup triggered");
     const result = await runCleanup();

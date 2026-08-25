@@ -13,6 +13,16 @@ export const dynamic = "force-dynamic";
 const CONVEX_URL = process.env.CONVEX_URL || "https://limitless-mole-387.convex.cloud";
 const CONVEX_ACCESS_TOKEN = process.env.CONVEX_ACCESS_TOKEN;
 
+function isAuthorizedCron(request: NextRequest): boolean {
+  const authHeader = request.headers.get("authorization");
+  const cronSecret = process.env.VERCEL_CRON_SECRET;
+  if (!cronSecret) {
+    console.error("[CRON] CRITICAL: VERCEL_CRON_SECRET not set");
+    return false;
+  }
+  return authHeader === `Bearer ${cronSecret}`;
+}
+
 async function convexQuery(functionName: string, args: Record<string, any> = {}) {
   if (!CONVEX_URL) return null;
   try {
@@ -46,6 +56,9 @@ async function convexMutation(functionName: string, args: Record<string, any> = 
 }
 
 export async function POST(request: NextRequest) {
+  if (!isAuthorizedCron(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL || "",

@@ -31,13 +31,25 @@ export async function POST(request: NextRequest) {
     const startTime = Date.now();
     console.log("[LEARN] Starting learning cycle...");
 
-    // 1. Compute accuracy by market
-    const { data: settledPreds } = await supabaseAdmin
+    // 1. Compute accuracy by market (use materialized view if available)
+    let settledPreds: any[] = [];
+    try {
+      const { data: mv } = await supabaseAdmin.from("mv_market_accuracy").select("*");
+      if (mv && mv.length > 0) {
+        // Use materialized view — zero disk I/O
+        console.log("[LEARN] Using materialized view for market accuracy");
+        return NextResponse.json({ success: true, source: "materialized_view", data: mv });
+      }
+    } catch {}
+    // Fallback: indexed query with limit
+    const { data: preds } = await supabaseAdmin
       .from("predictions")
       .select("market, selection, model_probability, result, fixture_id")
       .not("result", "is", null)
       .neq("result", "pending")
-      .gte("settled_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
+      .gte("settled_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+      .limit(20000);
+    settledPreds = preds || [];
 
     if (!settledPreds || settledPreds.length === 0) {
       return NextResponse.json({
@@ -120,6 +132,12 @@ export async function POST(request: NextRequest) {
     } catch {
       // Table might not exist — that's fine
     }
+
+    // Refresh materialized views for analytics (reduces disk I/O on next query)
+    try {
+      await supabaseAdmin.rpc("refresh_analytics_views");
+      console.log("[LEARN] Refreshed analytics materialized views");
+    } catch {}
 
     const duration = Date.now() - startTime;
     console.log(`[LEARN] Done: ${(overallAccuracy * 100).toFixed(1)}% overall, ${(highConfAccuracy * 100).toFixed(1)}% high-conf (${duration}ms)`);
