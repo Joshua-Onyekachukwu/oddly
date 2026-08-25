@@ -1091,7 +1091,26 @@ async function main() {
   console.log(`${"━".repeat(60)}`);
 }
 
-main().catch((e) => {
-  console.error("❌", e.message);
-  process.exit(1);
-});
+// Only run main when called directly (not when imported as module)
+if (require.main === module) {
+  main().catch((e) => {
+    console.error("❌", e.message);
+    process.exit(1);
+  });
+}
+
+// ─── Exports (for use by daily-loop.js and other modules) ──────
+module.exports = {
+  EnhancedTracker,
+  poissonGoals,
+  computeMarkets,
+  eloWinProb,
+  regressionProb,
+  ensembleCombine,
+  getRefereeFeatures,
+  applyCalibration,
+  clamp,
+  sigmoid,
+  findXGProfile,
+  getInjuryImpact,
+};
