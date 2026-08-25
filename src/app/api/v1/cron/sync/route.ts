@@ -14,7 +14,7 @@ function isAuthorizedCron(request: NextRequest): boolean {
   const cronSecret = process.env.VERCEL_CRON_SECRET;
 
   // If no cron secret configured, allow all (dev mode)
-  if (!cronSecret) { console.warn('[CRON] VERCEL_CRON_SECRET not set — cron auth disabled'); return true; }
+  if (!cronSecret) { console.error('[CRON] CRITICAL: VERCEL_CRON_SECRET not set — cron auth disabled'); return false; }
 
   // Verify Vercel cron secret
   if (authHeader === `Bearer ${cronSecret}`) return true;

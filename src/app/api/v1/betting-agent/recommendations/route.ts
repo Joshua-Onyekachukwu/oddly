@@ -14,6 +14,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
+import { requireAuth } from "@/lib/api/utils";
 
 const supabaseAdmin = createClient<Database>(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -34,6 +35,9 @@ function clamp(v: number, lo = 0.01, hi = 0.99) {
 
 export async function POST(request: NextRequest) {
   try {
+    // SECURITY: Require authentication
+    await requireAuth(request);
+    
     let body: Record<string, unknown> = {};
     try {
       body = await request.json();

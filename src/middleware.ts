@@ -40,8 +40,12 @@ export async function middleware(request: NextRequest) {
   const publicRoutes = ["/", "/login", "/signup", "/forgot-password"];
   const isPublicRoute = publicRoutes.some((route) => pathname === route);
 
-  // API routes are handled separately
+  // API routes — add security headers but allow individual routes to handle auth
   if (pathname.startsWith("/api/")) {
+    // Add security headers to all API responses
+    supabaseResponse.headers.set("X-Content-Type-Options", "nosniff");
+    supabaseResponse.headers.set("X-Frame-Options", "DENY");
+    supabaseResponse.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
     return supabaseResponse;
   }
 
