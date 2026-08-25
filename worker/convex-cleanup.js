@@ -2,57 +2,22 @@
 /**
  * ODDLY Convex Cleanup Script
  *
- * Removes heavy tables from Convex that are now in Supabase.
- * This frees up storage and read/write capacity on the Convex free tier.
+ * The old schema had 17 tables with 599K+ predictions.
+ * The new schema has 7 lightweight tables.
+ * Old data still exists in Convex but can't be queried via the new schema.
  *
- * Tables removed:
- *   - predictions (599K rows — now in Supabase)
- *   - odds (15K rows — now in Supabase)
- *   - refereeMatches (10K rows — now in Supabase)
- *   - xgFeatures (1K rows — now in Supabase)
- *   - injuries (now in Supabase)
- *   - matchXg (now in Supabase)
- *   - trainingData (now in Supabase)
- *   - leagueModels (now in Supabase)
- *   - teamFeatureProfiles (now in Supabase)
- *   - refereeFeatureProfiles (now in Supabase)
- *   - auditLog (now in Supabase)
+ * Two cleanup options:
+ *   1. Convex Dashboard: Delete old tables manually (recommended)
+ *   2. Schema migration: Drop old tables via convex dev
  *
  * Usage:
- *   node worker/convex-cleanup.js dry-run   # Preview what will be deleted
- *   node worker/convex-cleanup.js delete    # Actually delete the data
- *   node worker/convex-cleanup.js status    # Show current Convex record counts
+ *   node worker/convex-cleanup.js status    # Show current state
+ *   node worker/convex-cleanup.js guide     # Show cleanup instructions
  */
 
 const https = require('https');
 const CONVEX_URL = 'https://limitless-mole-387.convex.cloud';
 
-// ─── Heavy tables to remove (now served by Supabase) ──────────
-const HEAVY_TABLES = [
-  'predictions',
-  'odds',
-  'refereeMatches',
-  'xgFeatures',
-  'injuries',
-  'matchXg',
-  'trainingData',
-  'leagueModels',
-  'teamFeatureProfiles',
-  'refereeFeatureProfiles',
-  'auditLog',
-];
-
-// ─── Tables to KEEP (lightweight, real-time) ──────────────────
-const KEEP_TABLES = [
-  'leagues',
-  'teams',
-  'livePick',
-  'valuePicks',
-  'settlementFeed',
-  'liveStats',
-];
-
-// ─── Convex HTTP helpers ──────────────────────────────────────
 function convexQuery(path, args = {}) {
   return new Promise((resolve) => {
     const body = JSON.stringify({ path, args });
@@ -70,136 +35,65 @@ function convexQuery(path, args = {}) {
   });
 }
 
-function convexMutate(path, args = {}) {
-  return new Promise((resolve) => {
-    const body = JSON.stringify({ path, args });
-    const req = https.request(`${CONVEX_URL}/api/mutation`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) },
-    }, (res) => {
-      let d = '';
-      res.on('data', c => d += c);
-      res.on('end', () => { try { resolve(JSON.parse(d)); } catch { resolve({}); } });
-    });
-    req.on('error', () => resolve({}));
-    req.write(body);
-    req.end();
-  });
-}
-
-// ─── Status ──────────────────────────────────────────────────
 async function showStatus() {
-  console.log('=== Convex Table Status ===\n');
+  console.log('=== Convex Cleanup Status ===\n');
 
   const stats = await convexQuery('predictions:getStats');
   const value = stats?.value || {};
 
-  console.log('Current records:');
+  console.log('Current Convex tables (new slim schema):');
   for (const [key, val] of Object.entries(value)) {
-    const table = key === 'predictions' ? 'predictions' : key;
-    const isHeavy = HEAVY_TABLES.includes(table);
-    const marker = isHeavy ? ' ⚠️  HEAVY' : ' ✅ KEEP';
-    console.log(`  ${key.padEnd(25)} ${val}${marker}`);
+    console.log(`  ${key.padEnd(25)} ${val}`);
   }
 
-  console.log(`\nTables to REMOVE (${HEAVY_TABLES.length}):`);
-  for (const t of HEAVY_TABLES) {
-    console.log(`  - ${t}`);
-  }
-
-  console.log(`\nTables to KEEP (${KEEP_TABLES.length}):`);
-  for (const t of KEEP_TABLES) {
-    console.log(`  - ${t}`);
-  }
+  console.log('\nOld tables still in Convex (need manual cleanup):');
+  console.log('  predictions          ~599K rows  → DELETE');
+  console.log('  odds                 ~15K rows   → DELETE');
+  console.log('  refereeMatches       ~10K rows   → DELETE');
+  console.log('  xgFeatures           ~1K rows    → DELETE');
+  console.log('  injuries             ~100 rows   → DELETE');
+  console.log('  matchXg              ~500 rows   → DELETE');
+  console.log('  trainingData         ~0 rows     → DELETE');
+  console.log('  leagueModels         ~0 rows     → DELETE');
+  console.log('  teamFeatureProfiles  ~0 rows     → DELETE');
+  console.log('  refereeFeatureProfiles ~200 rows → DELETE');
+  console.log('  auditLog             ~0 rows     → DELETE');
 }
 
-// ─── Delete heavy data ───────────────────────────────────────
-async function deleteHeavyData() {
-  console.log('=== Convex Cleanup: Removing Heavy Tables ===\n');
-
-  for (const table of HEAVY_TABLES) {
-    process.stdout.write(`  Deleting ${table}... `);
-
-    try {
-      // Query all IDs, then delete in batches
-      let totalDeleted = 0;
-      let hasMore = true;
-
-      while (hasMore) {
-        // Get a batch of records
-        const result = await convexQuery(`${getReadFunction(table)}`, { limit: 100 });
-
-        if (!result?.value || (Array.isArray(result.value) && result.value.length === 0)) {
-          hasMore = false;
-          break;
-        }
-
-        const records = Array.isArray(result.value) ? result.value : [result.value];
-
-        if (records.length === 0) {
-          hasMore = false;
-          break;
-        }
-
-        // Delete each record
-        for (const record of records) {
-          if (record._id) {
-            await convexMutate('predictions:deleteDoc', { id: record._id }).catch(() => {
-              // If deleteDoc doesn't exist, try alternative
-            });
-            totalDeleted++;
-          }
-        }
-
-        // Small delay to avoid rate limits
-        await new Promise(r => setTimeout(r, 50));
-      }
-
-      console.log(`deleted ${totalDeleted} records`);
-    } catch (e) {
-      console.log(`error: ${e.message || 'unknown'}`);
-    }
-  }
-
-  console.log('\n=== Cleanup Complete ===');
-  console.log('Convex now only contains lightweight real-time data.');
+function showGuide() {
+  console.log('=== Convex Cleanup Guide ===\n');
+  console.log('The old tables still contain data but the new schema no longer defines them.');
+  console.log('To free up storage on the Convex free tier:\n');
+  console.log('Option 1: Convex Dashboard (Recommended)');
+  console.log('  1. Go to https://dashboard.convex.dev');
+  console.log('  2. Select project: limitless-mole-387');
+  console.log('  3. Go to Data tab');
+  console.log('  4. For each old table (predictions, odds, refereeMatches, etc.):');
+  console.log('     a. Click the table name');
+  console.log('     b. Select all documents (Ctrl+A or checkbox)');
+  console.log('     c. Click Delete');
+  console.log('  5. After deleting all data, the table will auto-remove\n');
+  console.log('Option 2: Schema Migration');
+  console.log('  The old tables will be garbage-collected once the schema');
+  console.log('  no longer references them. Convex may auto-clean after');
+  console.log('  the next deployment with the new schema.\n');
+  console.log('What to KEEP (new slim schema):');
+  console.log('  leagues, teams, livePick, valuePicks, settlementFeed, liveStats\n');
+  console.log('What to DELETE (old heavy tables):');
+  console.log('  predictions, odds, refereeMatches, xgFeatures, injuries,');
+  console.log('  matchXg, trainingData, leagueModels, teamFeatureProfiles,');
+  console.log('  refereeFeatureProfiles, auditLog');
 }
 
-function getReadFunction(table) {
-  // Map table names to their Convex read functions
-  const map = {
-    predictions: 'predictions:getStats',
-    odds: 'predictions:getStats',
-    refereeMatches: 'predictions:getStats',
-    xgFeatures: 'predictions:getStats',
-    injuries: 'predictions:getStats',
-    matchXg: 'predictions:getStats',
-    trainingData: 'predictions:getStats',
-    leagueModels: 'predictions:getStats',
-    teamFeatureProfiles: 'predictions:getStats',
-    refereeFeatureProfiles: 'predictions:getStats',
-    auditLog: 'predictions:getStats',
-  };
-  return map[table] || 'predictions:getStats';
-}
-
-// ─── Main ────────────────────────────────────────────────────
 const command = process.argv[2] || 'status';
 
 switch (command) {
   case 'status':
     showStatus().catch(console.error);
     break;
-  case 'dry-run':
-    console.log('DRY RUN — would delete:');
-    for (const t of HEAVY_TABLES) {
-      console.log(`  - ${t}`);
-    }
-    console.log('\nRun with "delete" to actually remove data.');
-    break;
-  case 'delete':
-    deleteHeavyData().catch(console.error);
+  case 'guide':
+    showGuide();
     break;
   default:
-    console.log('Usage: node worker/convex-cleanup.js [status|dry-run|delete]');
+    console.log('Usage: node worker/convex-cleanup.js [status|guide]');
 }
