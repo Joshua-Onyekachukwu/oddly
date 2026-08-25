@@ -17,6 +17,14 @@
       "schedule": "0 */6 * * *"
     },
     {
+      "path": "/api/v1/cron/archive",
+      "schedule": "30 */4 * * *"
+    },
+    {
+      "path": "/api/v1/cron/cleanup",
+      "schedule": "0 4 * * *"
+    },
+    {
       "path": "/api/v1/cron/daily",
       "schedule": "0 6 * * *"
     },
