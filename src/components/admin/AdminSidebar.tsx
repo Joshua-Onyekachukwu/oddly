@@ -32,6 +32,7 @@ const ADMIN_NAV_GROUPS: NavGroup[] = [
     label: "Data",
     items: [
       { label: "Pipeline", href: "/admin/pipeline", icon: "ri-plug-line" },
+      { label: "One Game Pick", href: "/admin/picks", icon: "ri-crosshair-2-line" },
       { label: "AI Monitor", href: "/admin/ai-monitor", icon: "ri-robot-2-line" },
       { label: "Model Health", href: "/admin/model-health", icon: "ri-heart-pulse-line" },
       { label: "Accuracy Analysis", href: "/admin/accuracy", icon: "ri-line-chart-line" },
