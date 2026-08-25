@@ -1,20 +1,12 @@
 {
   "crons": [
     {
-      "path": "/api/v1/cron/daily",
-      "schedule": "0 6 * * *"
-    },
-    {
-      "path": "/api/v1/cron/settle",
-      "schedule": "30 */4 * * *"
+      "path": "/api/v1/cron/pipeline",
+      "schedule": "*/30 * * * *"
     },
     {
       "path": "/api/v1/cron/sync",
       "schedule": "0 */6 * * *"
-    },
-    {
-      "path": "/api/v1/cron/predict",
-      "schedule": "0 8 * * *"
     },
     {
       "path": "/api/v1/cron/learn",
