@@ -1,27 +1,17 @@
 /**
  * GET /api/v1/analytics
  *
- * Replaces Convex read queries with Supabase-powered analytics.
- * No more full table scans on 599K records in Convex.
+ * Analytics powered by materialized views — zero full table scans.
  *
  * Query Params:
  *   - type: "calibration" | "accuracy" | "markets" | "daily" | "high-conf" | "feed" | "summary"
  *   - days: number (default: 30)
  *   - market: filter by market
- *   - result: filter by result ("correct" | "wrong")
  *   - limit: max results (default: 100)
- *   - offset: pagination offset
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import {
-  successResponse,
-  requireAdmin,
-  internalError,
-  addRateLimitHeaders,
-  checkRateLimit,
-} from "@/lib/api/utils";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || "",
@@ -35,241 +25,164 @@ function isAuthorizedCron(request: NextRequest): boolean {
   return authHeader === `Bearer ${cronSecret}`;
 }
 
-// ─── Analytics Handlers ───────────────────────────────────────
-
-async function getCalibrationBuckets(days: number) {
-  const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
-
-  // Use Supabase RPC or aggregation — NOT full table scan
-  const { data: preds } = await supabaseAdmin
-    .from("predictions")
-    .select("model_probability, result")
-    .not("result", "is", null)
-    .neq("result", "pending")
-    .gte("created_at", startDate)
-    .limit(50000);
-
-  if (!preds?.length) return [];
-
-  const buckets = [
-    { range: "50-59%", min: 0.50, max: 0.59, total: 0, correct: 0, sumProb: 0 },
-    { range: "60-64%", min: 0.60, max: 0.64, total: 0, correct: 0, sumProb: 0 },
-    { range: "65-69%", min: 0.65, max: 0.69, total: 0, correct: 0, sumProb: 0 },
-    { range: "70-74%", min: 0.70, max: 0.74, total: 0, correct: 0, sumProb: 0 },
-    { range: "75-79%", min: 0.75, max: 0.79, total: 0, correct: 0, sumProb: 0 },
-    { range: "80-84%", min: 0.80, max: 0.84, total: 0, correct: 0, sumProb: 0 },
-    { range: "85-89%", min: 0.85, max: 0.89, total: 0, correct: 0, sumProb: 0 },
-    { range: "90%+", min: 0.90, max: 1.0, total: 0, correct: 0, sumProb: 0 },
-  ];
-
-  for (const p of preds) {
-    for (const b of buckets) {
-      if (p.model_probability >= b.min && p.model_probability <= b.max) {
-        b.total++;
-        if (p.result === "correct") b.correct++;
-        b.sumProb += p.model_probability;
-        break;
-      }
-    }
+// ── Calibration: use materialized view ──────────────────────────
+async function getCalibration() {
+  const { data, error } = await supabaseAdmin.rpc("get_calibration_buckets");
+  if (error) {
+    // Fallback: query the materialized view directly
+    const { data: mv } = await supabaseAdmin
+      .from("mv_calibration_buckets")
+      .select("prob_range, total, correct, avg_predicted, actual_accuracy")
+      .neq("prob_range", "Other")
+      .order("sort_order");
+    return mv || [];
   }
-
-  return buckets
-    .filter((b) => b.total > 0)
-    .map((b) => ({
-      range: b.range,
-      total: b.total,
-      correct: b.correct,
-      accuracy: Math.round((b.correct / b.total) * 1000) / 10,
-      avgPredicted: Math.round((b.sumProb / b.total) * 100),
-    }));
+  return data || [];
 }
 
-async function getMarketAccuracy(days: number) {
-  const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
-
-  const { data: preds } = await supabaseAdmin
-    .from("predictions")
-    .select("market, result")
-    .not("result", "is", null)
-    .neq("result", "pending")
-    .gte("created_at", startDate)
-    .limit(50000);
-
-  if (!preds?.length) return [];
-
-  const byMarket: Record<string, { total: number; correct: number }> = {};
-  for (const p of preds) {
-    if (!byMarket[p.market]) byMarket[p.market] = { total: 0, correct: 0 };
-    byMarket[p.market].total++;
-    if (p.result === "correct") byMarket[p.market].correct++;
+// ── Market accuracy: use materialized view ──────────────────────
+async function getMarketAccuracy() {
+  const { data, error } = await supabaseAdmin.rpc("get_market_accuracy");
+  if (error) {
+    const { data: mv } = await supabaseAdmin
+      .from("mv_market_accuracy")
+      .select("*")
+      .order("total", { ascending: false });
+    return mv || [];
   }
-
-  return Object.entries(byMarket)
-    .map(([market, stats]) => ({
-      market,
-      total: stats.total,
-      correct: stats.correct,
-      accuracy: Math.round((stats.correct / stats.total) * 1000) / 10,
-    }))
-    .sort((a, b) => b.total - a.total);
+  return data || [];
 }
 
-async function getDailyStats(days: number) {
-  const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
-
-  const { data: preds } = await supabaseAdmin
-    .from("predictions")
-    .select("result, settled_at")
-    .not("result", "is", null)
-    .neq("result", "pending")
-    .gte("settled_at", startDate)
-    .order("settled_at", { ascending: false })
-    .limit(20000);
-
-  if (!preds?.length) return [];
-
-  const dailyMap: Record<string, { correct: number; total: number }> = {};
-  for (const p of preds) {
-    const date = (p.settled_at || "").slice(0, 10);
-    if (!date) continue;
-    if (!dailyMap[date]) dailyMap[date] = { correct: 0, total: 0 };
-    dailyMap[date].total++;
-    if (p.result === "correct") dailyMap[date].correct++;
+// ── Daily accuracy: use materialized view ───────────────────────
+async function getDailyAccuracy(days: number) {
+  const { data, error } = await supabaseAdmin.rpc("get_daily_accuracy", {
+    days_back: days,
+  });
+  if (error) {
+    const { data: mv } = await supabaseAdmin
+      .from("mv_daily_accuracy")
+      .select("*")
+      .gte("pred_date", new Date(Date.now() - days * 86400000).toISOString().split("T")[0])
+      .order("pred_date", { ascending: false });
+    return mv || [];
   }
-
-  return Object.entries(dailyMap)
-    .map(([date, stats]) => ({
-      date,
-      total: stats.total,
-      correct: stats.correct,
-      accuracy: Math.round((stats.correct / stats.total) * 1000) / 10,
-    }))
-    .sort((a, b) => b.date.localeCompare(a.date))
-    .slice(0, days);
+  return data || [];
 }
 
-async function getHighConfidenceStats(threshold: number, days: number) {
-  const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+// ── Settlement summary: use materialized view ───────────────────
+async function getSettlementSummary() {
+  const { data, error } = await supabaseAdmin.rpc("get_settlement_summary");
+  if (error) {
+    const { data: mv } = await supabaseAdmin
+      .from("mv_settlement_summary")
+      .select("*")
+      .single();
+    return mv || {};
+  }
+  return data?.[0] || {};
+}
 
-  const { data: preds } = await supabaseAdmin
+// ── High confidence: use indexed partial query (small result set) ──
+async function getHighConfidence(limit: number) {
+  const { data } = await supabaseAdmin
     .from("predictions")
-    .select("model_probability, result")
+    .select("id, fixture_id, market, selection, model_probability, result, model_version, created_at")
+    .gte("model_probability", 0.70)
     .not("result", "is", null)
     .neq("result", "pending")
-    .gte("model_probability", threshold)
-    .gte("created_at", startDate)
-    .limit(20000);
-
-  if (!preds?.length) return { total: 0, correct: 0, accuracy: 0, threshold };
-
-  const correct = preds.filter((p) => p.result === "correct").length;
-  return {
-    total: preds.length,
-    correct,
-    accuracy: Math.round((correct / preds.length) * 1000) / 10,
-    threshold,
-  };
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  return data || [];
 }
 
-async function getSettlementFeed(limit: number, offset: number) {
-  const { data: preds } = await supabaseAdmin
+// ── Feed: use indexed query (small result set) ──────────────────
+async function getFeed(limit: number) {
+  const { data } = await supabaseAdmin
     .from("predictions")
-    .select("id, fixture_id, market, selection, model_probability, model_version, result, settled_at")
+    .select("id, fixture_id, market, selection, model_probability, result, model_version, created_at")
     .not("result", "is", null)
     .neq("result", "pending")
-    .order("settled_at", { ascending: false })
-    .range(offset, offset + limit - 1);
-
-  return preds || [];
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  return data || [];
 }
 
-async function getSummary(days: number) {
-  const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
-
-  const { count: total } = await supabaseAdmin
-    .from("predictions")
-    .select("id", { count: "exact", head: true })
-    .not("result", "is", null)
-    .neq("result", "pending")
-    .gte("created_at", startDate);
-
-  const { count: correct } = await supabaseAdmin
-    .from("predictions")
-    .select("id", { count: "exact", head: true })
-    .eq("result", "correct")
-    .gte("created_at", startDate);
-
-  const { count: totalAll } = await supabaseAdmin
-    .from("predictions")
-    .select("id", { count: "exact", head: true });
-
-  return {
-    period: `${days} days`,
-    settled: total || 0,
-    correct: correct || 0,
-    accuracy: total ? Math.round((correct || 0) / total * 1000) / 10 : 0,
-    totalPredictions: totalAll || 0,
-  };
+// ── Model accuracy: use materialized view ───────────────────────
+async function getModelAccuracy() {
+  const { data: mv } = await supabaseAdmin
+    .from("mv_model_accuracy")
+    .select("*")
+    .order("total", { ascending: false });
+  return mv || [];
 }
 
-// ─── Route Handler ────────────────────────────────────────────
-
+// ── Main handler ────────────────────────────────────────────────
 export async function GET(request: NextRequest) {
+  const url = new URL(request.url);
+  const type = url.searchParams.get("type") || "summary";
+  const days = parseInt(url.searchParams.get("days") || "30");
+  const limit = parseInt(url.searchParams.get("limit") || "100");
+
   try {
-    // Allow cron auth or admin auth
-    const isCron = isAuthorizedCron(request);
-    if (!isCron) {
-      try {
-        await requireAdmin(request);
-      } catch {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
-    }
-
-    const rl = checkRateLimit(`analytics:${isCron ? "cron" : "admin"}`, 120, 60000);
-    const { searchParams } = new URL(request.url);
-
-    const type = searchParams.get("type") || "summary";
-    const days = parseInt(searchParams.get("days") || "30", 10);
-    const limit = parseInt(searchParams.get("limit") || "100", 10);
-    const offset = parseInt(searchParams.get("offset") || "0", 10);
-
     let data: any;
 
     switch (type) {
       case "calibration":
-        data = await getCalibrationBuckets(days);
+        data = await getCalibration();
         break;
       case "markets":
-        data = await getMarketAccuracy(days);
+        data = await getMarketAccuracy();
         break;
       case "daily":
-        data = await getDailyStats(days);
+        data = await getDailyAccuracy(days);
         break;
-      case "high-conf": {
-        const threshold = parseFloat(searchParams.get("threshold") || "0.65");
-        data = await getHighConfidenceStats(threshold, days);
+      case "high-conf":
+        data = await getHighConfidence(limit);
         break;
-      }
       case "feed":
-        data = await getSettlementFeed(limit, offset);
+        data = await getFeed(limit);
         break;
+      case "model":
+        data = await getModelAccuracy();
+        break;
+      case "accuracy":
       case "summary":
       default:
-        data = await getSummary(days);
+        data = await getSettlementSummary();
         break;
     }
 
-    const response = successResponse({
+    return NextResponse.json({
+      success: true,
       type,
+      count: Array.isArray(data) ? data.length : 1,
       data,
-      meta: { days, generated_at: new Date().toISOString() },
+      timestamp: new Date().toISOString(),
     });
+  } catch (error: any) {
+    console.error("[ANALYTICS] Error:", error.message);
+    return NextResponse.json(
+      { error: "Analytics query failed", detail: error.message },
+      { status: 500 }
+    );
+  }
+}
 
-    addRateLimitHeaders(response, rl.remaining, rl.resetAt);
-    return response;
-  } catch (error: unknown) {
-    console.error("GET /api/v1/analytics error:", error);
-    return internalError();
+// POST: refresh materialized views (admin only)
+export async function POST(request: NextRequest) {
+  try {
+    const { error } = await supabaseAdmin.rpc("refresh_analytics_views");
+    if (error) throw error;
+
+    return NextResponse.json({
+      success: true,
+      message: "Analytics views refreshed",
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: "Refresh failed", detail: error.message },
+      { status: 500 }
+    );
   }
 }

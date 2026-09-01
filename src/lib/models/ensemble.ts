@@ -150,6 +150,9 @@ export interface EnsemblePrediction {
   models: any;
   signals: any;
   modelVersion: string;
+  // Traceability snapshots
+  featureSnapshot: Record<string, any>;
+  ensembleOutputs: Record<string, any>;
 }
 
 /**
@@ -259,6 +262,44 @@ export async function predictMatchEnsemble(
   // Run ensemble prediction
   try {
     const result = ensemble.predictMatch(features, storeData);
+
+    // Attach traceability snapshots
+    result.featureSnapshot = {
+      // Core features
+      eloDiff: features.eloDiff,
+      homePPG: features.homePPG,
+      awayPPG: features.awayPPG,
+      homeGF: features.homeGF,
+      homeGA: features.homeGA,
+      awayGF: features.awayGF,
+      awayGA: features.awayGA,
+      cleanSheet: features.cleanSheet,
+      homeWinRate: features.homeWinRate,
+      awayWinRate: features.awayWinRate,
+      streak: features.streak,
+      // Goals features
+      leagueAvgGoals: features.leagueAvgGoals,
+      homeScoresRate: features.homeScoresRate,
+      awayScoresRate: features.awayScoresRate,
+      // Team stats snapshot
+      homeTeamStats: homeStats,
+      awayTeamStats: awayStats,
+      // Elo snapshot
+      homeElo: elo[homeName] || 1500,
+      awayElo: elo[awayName] || 1500,
+      // Store data used
+      hasLeagueParams: !!storeData.leagueParams,
+      hasWeightConfig: !!storeData.weightConfig,
+    };
+
+    result.ensembleOutputs = {
+      models: result.models,
+      signals: result.signals,
+      bestPick: result.bestPick,
+      modelVersion: result.modelVersion,
+      marketsCount: Object.keys(result.markets).length,
+    };
+
     return result as EnsemblePrediction;
   } catch (e: any) {
     console.error("[ENSEMBLE] Prediction failed:", e.message);
