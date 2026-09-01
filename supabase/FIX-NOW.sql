@@ -9,10 +9,10 @@ RETURNS boolean
 LANGUAGE sql
 SECURITY DEFINER
 STABLE
-AS $$
+AS $fn$
   SELECT current_setting('request.jwt.claims', true)::json->>'role' = 'service_role'
   OR current_setting('role') = 'service_role';
-$$;
+$fn$;
 
 -- 2. Create is_admin() function
 CREATE OR REPLACE FUNCTION public.is_admin()
@@ -20,12 +20,12 @@ RETURNS boolean
 LANGUAGE sql
 SECURITY DEFINER
 STABLE
-AS $$
+AS $fn$
   SELECT EXISTS (
     SELECT 1 FROM public.profiles
     WHERE id = auth.uid() AND role = 'admin'
   );
-$$;
+$fn$;
 
 -- 3. Create cron_runs table
 CREATE TABLE IF NOT EXISTS cron_runs (
