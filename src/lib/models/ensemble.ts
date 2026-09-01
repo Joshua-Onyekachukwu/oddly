@@ -108,11 +108,28 @@ function buildFeatures(
   elo: Record<string, number>,
   homeName: string,
   awayName: string,
-  leagueAvgGoals?: number
+  leagueAvgGoals?: number,
+  extras?: {
+    restDaysHome?: number;
+    restDaysAway?: number;
+    leagueHomeAdvantage?: number;
+    homeHomeWinRate?: number;
+    awayHomeWinRate?: number;
+  }
 ) {
   const homeElo = elo[homeName] || 1500;
   const awayElo = elo[awayName] || 1500;
-  const eloDiff = homeElo - awayElo + 65; // +65 for home advantage
+  // League-specific home advantage (default 65, overridden by historical data)
+  const ha = extras?.leagueHomeAdvantage ?? 65;
+  const eloDiff = homeElo - awayElo + ha;
+
+  // Rest days (fatigue feature): fewer rest days = more fatigue = negative impact
+  // Optimal is 3-4 days; <2 days is very tired; >7 days is rusty
+  const restHome = extras?.restDaysHome ?? 4;
+  const restAway = extras?.restDaysAway ?? 4;
+  const fatigueHome = restHome < 2 ? -0.15 : restHome < 3 ? -0.05 : restHome > 7 ? -0.03 : 0;
+  const fatigueAway = restAway < 2 ? -0.15 : restAway < 3 ? -0.05 : restAway > 7 ? -0.03 : 0;
+  const fatigue = fatigueHome - fatigueAway; // positive = home less tired
 
   return {
     eloDiff,
@@ -126,7 +143,7 @@ function buildFeatures(
     homeWinRate: homeStats.homeWinRate,
     awayWinRate: awayStats.awayWinRate,
     streak: homeStats.streak - awayStats.streak,
-    fatigue: 0, // Would need match dates to compute
+    fatigue,
     h2h: 0.5, // Default neutral H2H
     // Goals model features
     homeGFavg: homeStats.homeGF,
@@ -139,6 +156,10 @@ function buildFeatures(
     awayScoresRate: awayStats.scoresRate,
     homeConcedesRate: homeStats.concedesRate,
     awayConcedesRate: awayStats.concedesRate,
+    // New features
+    restDaysHome: restHome,
+    restDaysAway: restAway,
+    leagueHomeAdvantage: ha,
   };
 }
 
@@ -234,8 +255,47 @@ export async function predictMatchEnsemble(
   const homeStats = getTeamStats(form[homeName] || []);
   const awayStats = getTeamStats(form[awayName] || []);
 
-  // Build features
-  const features = buildFeatures(homeStats, awayStats, elo, homeName, awayName);
+  // ── Compute rest days from fixture dates ──
+  let restDaysHome = 4;
+  let restDaysAway = 4;
+  try {
+    // Get last 2 finished fixtures for each team
+    const { data: homeFixtures } = await supabaseAdmin
+      .from("fixtures")
+      .select("id, kickoff_time, home:teams!fixtures_home_team_id_fkey(canonical_name), away:teams!fixtures_away_team_id_fkey(canonical_name)")
+      .eq("status", "finished")
+      .or(`home.team.canonical_name.eq.${homeName},away.team.canonical_name.eq.${homeName}`)
+      .order("kickoff_time", { ascending: false })
+      .limit(2);
+
+    const { data: awayFixtures } = await supabaseAdmin
+      .from("fixtures")
+      .select("id, kickoff_time, home:teams!fixtures_home_team_id_fkey(canonical_name), away:teams!fixtures_away_team_id_fkey(canonical_name)")
+      .eq("status", "finished")
+      .or(`home.team.canonical_name.eq.${awayName},away.team.canonical_name.eq.${awayName}`)
+      .order("kickoff_time", { ascending: false })
+      .limit(2);
+
+    // Use the most recent fixture's kickoff_time to compute rest days
+    // (predictMatchEnsemble is called from predict cron which knows the upcoming kickoff)
+    // For now, estimate from last known fixture
+    if (homeFixtures?.length && (homeFixtures[0] as any).kickoff_time) {
+      const lastKickoff = new Date((homeFixtures[0] as any).kickoff_time);
+      const now = new Date();
+      const diffDays = (now.getTime() - lastKickoff.getTime()) / (1000 * 60 * 60 * 24);
+      restDaysHome = Math.max(1, Math.min(14, Math.round(diffDays)));
+    }
+    if (awayFixtures?.length && (awayFixtures[0] as any).kickoff_time) {
+      const lastKickoff = new Date((awayFixtures[0] as any).kickoff_time);
+      const now = new Date();
+      const diffDays = (now.getTime() - lastKickoff.getTime()) / (1000 * 60 * 60 * 24);
+      restDaysAway = Math.max(1, Math.min(14, Math.round(diffDays)));
+    }
+  } catch {}
+
+  // ── Compute league-specific home advantage ──
+  let leagueHomeAdvantage = 65; // default
+  let leagueAvgGoals = 2.6;
 
   // Get store data (league params, weight config)
   const storeData: any = {};
@@ -246,7 +306,12 @@ export async function predictMatchEnsemble(
         .select("*")
         .eq("league_id", leagueId)
         .single();
-      if (lp) storeData.leagueParams = lp;
+      if (lp) {
+        storeData.leagueParams = lp;
+        // Use league-specific home advantage if available
+        if (lp.home_advantage) leagueHomeAdvantage = lp.home_advantage;
+        if (lp.goal_expectancy) leagueAvgGoals = lp.goal_expectancy;
+      }
     } catch {}
   }
 
@@ -258,6 +323,13 @@ export async function predictMatchEnsemble(
       .single();
     if (wc) storeData.weightConfig = wc;
   } catch {}
+
+  // Build features with rest days and league-specific home advantage
+  const features = buildFeatures(homeStats, awayStats, elo, homeName, awayName, leagueAvgGoals, {
+    restDaysHome,
+    restDaysAway,
+    leagueHomeAdvantage,
+  });
 
   // Run ensemble prediction
   try {
