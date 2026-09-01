@@ -137,20 +137,24 @@ BEGIN
   IF FOUND THEN
     -- Check if lease expired (stale lock)
     IF NOW() > v_existing_lock.locked_at + (v_existing_lock.lease_seconds || ' seconds')::interval THEN
-      -- Stale lock — force release and acquire new one
-      UPDATE cron_locks SET released_at = NOW()
-      WHERE job_name = p_job_name AND released_at IS NULL;
-      INSERT INTO cron_locks (job_name, locked_by, locked_at, lease_seconds)
-      VALUES (p_job_name, v_lock_id, NOW(), p_lease_seconds);
+      -- Stale lock — UPSERT to avoid duplicate key on re-acquire
+      INSERT INTO cron_locks (job_name, locked_by, locked_at, lease_seconds, released_at)
+      VALUES (p_job_name, v_lock_id, NOW(), p_lease_seconds, NULL)
+      ON CONFLICT (job_name) DO UPDATE SET
+        locked_by = v_lock_id, locked_at = NOW(),
+        lease_seconds = p_lease_seconds, released_at = NULL;
       RETURN v_lock_id;
     ELSE
       -- Lock is still active — reject
       RETURN NULL;
     END IF;
   ELSE
-    -- No existing lock — acquire
-    INSERT INTO cron_locks (job_name, locked_by, locked_at, lease_seconds)
-    VALUES (p_job_name, v_lock_id, NOW(), p_lease_seconds);
+    -- No existing lock — UPSERT handles stale released rows too
+    INSERT INTO cron_locks (job_name, locked_by, locked_at, lease_seconds, released_at)
+    VALUES (p_job_name, v_lock_id, NOW(), p_lease_seconds, NULL)
+    ON CONFLICT (job_name) DO UPDATE SET
+      locked_by = v_lock_id, locked_at = NOW(),
+      lease_seconds = p_lease_seconds, released_at = NULL;
     RETURN v_lock_id;
   END IF;
 END;
