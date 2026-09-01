@@ -260,7 +260,81 @@ END;
 $fn$;
 
 -- ============================================================
--- 6. MATERIALIZED VIEWS (Disk IO optimization)
+-- 6. RLS POLICIES — Block anon access to sensitive tables
+-- ============================================================
+
+-- predictions: only service_role and authenticated can read
+ALTER TABLE predictions ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Service role full access predictions" ON predictions;
+CREATE POLICY "Service role full access predictions" ON predictions
+  FOR ALL USING (public.is_service_role());
+DROP POLICY IF EXISTS "Authenticated read predictions" ON predictions;
+CREATE POLICY "Authenticated read predictions" ON predictions
+  FOR SELECT USING (auth.role() = 'authenticated');
+REVOKE ALL ON predictions FROM anon;
+
+-- odds_snapshots: only service_role and authenticated
+ALTER TABLE odds_snapshots ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Service role full access odds" ON odds_snapshots;
+CREATE POLICY "Service role full access odds" ON odds_snapshots
+  FOR ALL USING (public.is_service_role());
+DROP POLICY IF EXISTS "Authenticated read odds" ON odds_snapshots;
+CREATE POLICY "Authenticated read odds" ON odds_snapshots
+  FOR SELECT USING (auth.role() = 'authenticated');
+REVOKE ALL ON odds_snapshots FROM anon;
+
+-- profiles: only service_role and authenticated (own profile)
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Service role full access profiles" ON profiles;
+CREATE POLICY "Service role full access profiles" ON profiles
+  FOR ALL USING (public.is_service_role());
+DROP POLICY IF EXISTS "Authenticated read profiles" ON profiles;
+CREATE POLICY "Authenticated read profiles" ON profiles
+  FOR SELECT USING (auth.role() = 'authenticated');
+REVOKE ALL ON profiles FROM anon;
+
+-- user_bets: only service_role and authenticated
+ALTER TABLE user_bets ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Service role full access user_bets" ON user_bets;
+CREATE POLICY "Service role full access user_bets" ON user_bets
+  FOR ALL USING (public.is_service_role());
+DROP POLICY IF EXISTS "Authenticated read user_bets" ON user_bets;
+CREATE POLICY "Authenticated read user_bets" ON user_bets
+  FOR SELECT USING (auth.role() = 'authenticated');
+REVOKE ALL ON user_bets FROM anon;
+
+-- fixtures: allow authenticated read, service_role full
+ALTER TABLE fixtures ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Service role full access fixtures" ON fixtures;
+CREATE POLICY "Service role full access fixtures" ON fixtures
+  FOR ALL USING (public.is_service_role());
+DROP POLICY IF EXISTS "Authenticated read fixtures" ON fixtures;
+CREATE POLICY "Authenticated read fixtures" ON fixtures
+  FOR SELECT USING (auth.role() = 'authenticated');
+REVOKE ALL ON fixtures FROM anon;
+
+-- teams: allow authenticated read, service_role full
+ALTER TABLE teams ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Service role full access teams" ON teams;
+CREATE POLICY "Service role full access teams" ON teams
+  FOR ALL USING (public.is_service_role());
+DROP POLICY IF EXISTS "Authenticated read teams" ON teams;
+CREATE POLICY "Authenticated read teams" ON teams
+  FOR SELECT USING (auth.role() = 'authenticated');
+REVOKE ALL ON teams FROM anon;
+
+-- leagues: allow authenticated read, service_role full
+ALTER TABLE leagues ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Service role full access leagues" ON leagues;
+CREATE POLICY "Service role full access leagues" ON leagues
+  FOR ALL USING (public.is_service_role());
+DROP POLICY IF EXISTS "Authenticated read leagues" ON leagues;
+CREATE POLICY "Authenticated read leagues" ON leagues
+  FOR SELECT USING (auth.role() = 'authenticated');
+REVOKE ALL ON leagues FROM anon;
+
+-- ============================================================
+-- 7. MATERIALIZED VIEWS (Disk IO optimization)
 -- ============================================================
 
 DROP MATERIALIZED VIEW IF EXISTS mv_calibration_buckets;
@@ -469,7 +543,7 @@ FROM latest l LEFT JOIN failures f ON l.job_name = f.job_name;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_cron_status_job ON mv_cron_status(job_name);
 
 -- ============================================================
--- 7. LEAGUE DRAW CALIBRATION TABLE
+-- 8. LEAGUE DRAW CALIBRATION TABLE
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS league_draw_calibration (
@@ -500,7 +574,7 @@ CREATE POLICY "Authenticated can read draw calibration" ON league_draw_calibrati
   FOR SELECT USING (auth.role() = 'authenticated');
 
 -- ============================================================
--- 8. RPC FUNCTIONS
+-- 9. RPC FUNCTIONS
 -- ============================================================
 
 CREATE OR REPLACE FUNCTION get_calibration_buckets(days_back integer DEFAULT 30)
@@ -559,7 +633,7 @@ END;
 $fn$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- ============================================================
--- 9. GRANTS
+-- 10. GRANTS
 -- ============================================================
 
 GRANT SELECT ON cron_runs TO authenticated;
@@ -592,7 +666,7 @@ REVOKE ALL ON cron_alerts FROM anon;
 REVOKE ALL ON league_draw_calibration FROM anon;
 
 -- ============================================================
--- 10. COMMENTS
+-- 11. COMMENTS
 -- ============================================================
 
 COMMENT ON TABLE cron_runs IS 'Cron execution log — one row per run';
