@@ -183,6 +183,21 @@ async function getDrawTrend(days: number) {
   return trend || [];
 }
 
+// ── Calibration (league-level calibration status) ──────────────
+async function getCalibration() {
+  try {
+    const { data: cal } = await supabaseAdmin
+      .from("league_draw_calibration")
+      .select("*")
+      .eq("status", "champion")
+      .order("sample_size", { ascending: false });
+
+    return cal || [];
+  } catch {
+    return [];
+  }
+}
+
 // ── Main handler ───────────────────────────────────────────────
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
@@ -204,6 +219,9 @@ export async function GET(request: NextRequest) {
         break;
       case "trend":
         data = await getDrawTrend(days);
+        break;
+      case "calibration":
+        data = await getCalibration();
         break;
       case "summary":
       default:
