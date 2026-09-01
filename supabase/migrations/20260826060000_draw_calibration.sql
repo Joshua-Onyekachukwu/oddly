@@ -34,8 +34,10 @@ CREATE TABLE IF NOT EXISTS league_draw_calibration (
 );
 
 ALTER TABLE league_draw_calibration ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Service role manages draw calibration" ON league_draw_calibration;
 CREATE POLICY "Service role manages draw calibration" ON league_draw_calibration
   FOR ALL USING (public.is_service_role());
+DROP POLICY IF EXISTS "Authenticated can read draw calibration" ON league_draw_calibration;
 CREATE POLICY "Authenticated can read draw calibration" ON league_draw_calibration
   FOR SELECT USING (auth.role() = 'authenticated');
 
