@@ -29,6 +29,8 @@ const QUICK_LINKS = [
   { label: "One Game Pick", href: "/admin/picks", icon: "ri-crosshair-2-line", desc: "Today's pick + CLV" },
   { label: "AI Monitor", href: "/admin/ai-monitor", icon: "ri-robot-2-line", desc: "NVIDIA API & model stats" },
   { label: "Model Health", href: "/admin/model-health", icon: "ri-heart-pulse-line", desc: "Accuracy & calibration" },
+  { label: "Draw Analysis", href: "/admin/draw-analysis", icon: "ri-equalizer-line", desc: "Draw model performance" },
+  { label: "RLS Audit", href: "/admin/rls", icon: "ri-shield-keyhole-line", desc: "Table security status" },
   { label: "Users", href: "/admin/users", icon: "ri-user-settings-line", desc: "Roles & subscriptions" },
   { label: "Security", href: "/admin/security", icon: "ri-shield-check-line", desc: "Auth, RLS & rate limits" },
 ];

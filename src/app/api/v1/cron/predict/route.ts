@@ -2,14 +2,17 @@
  * GET /api/v1/cron/predict
  *
  * Generates predictions for upcoming fixtures using the meta-ensemble.
- * Calls the same ensemble wrapper as the settle cron - no duplicate math.
+ * Uses the centralized ensemble wrapper - no duplicate math.
+ * Includes cron logging and execution locking.
  *
- * Schedule: every 2 hours (every 2 hours)
+ * Schedule: every 4 hours (vercel.json)
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { predictMatchEnsemble } from "@/lib/models/ensemble";
+import { withLock } from "@/lib/cron/lock";
+import { startRun, completeRun, type CronRunResult } from "@/lib/cron/logger";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || "",
@@ -28,12 +31,16 @@ function isAuthorizedCron(request: NextRequest): boolean {
 
 /**
  * Run prediction pipeline using the ensemble wrapper.
- * ONE prediction engine - no inline Poisson, no duplicate formulas.
  */
-async function runPredictionPipeline() {
+async function runPredictionPipeline(): Promise<{
+  total: number;
+  predictions: number;
+  skipped: number;
+  ensembleHits: number;
+  ensembleMisses: number;
+  modelVersion: string;
+}> {
   const startTime = Date.now();
-
-  // Get upcoming fixtures (12-48h window)
   const now = new Date();
   const windowEnd = new Date(now.getTime() + 48 * 60 * 60 * 1000);
 
@@ -49,27 +56,14 @@ async function runPredictionPipeline() {
     .lte("kickoff_time", windowEnd.toISOString())
     .order("kickoff_time");
 
-  if (fixErr) {
-    console.error("[PREDICT] Fixture query error:", fixErr);
-    return {
-      success: false,
-      duration: `${Date.now() - startTime}ms`,
-      error: fixErr.message,
-    };
-  }
-
+  if (fixErr) throw new Error(`Fixture query error: ${fixErr.message}`);
   if (!fixtures?.length) {
-    return {
-      success: true,
-      duration: `${Date.now() - startTime}ms`,
-      results: { total: 0, predictions: 0, details: "No fixtures in 12-48h window" },
-      timestamp: new Date().toISOString(),
-    };
+    return { total: 0, predictions: 0, skipped: 0, ensembleHits: 0, ensembleMisses: 0, modelVersion: "meta-ensemble-v2.0" };
   }
 
   console.log(`[PREDICT] Found ${fixtures.length} fixtures in prediction window`);
 
-  // Pre-load Elo and form (shared across all fixtures)
+  // Pre-load Elo and form
   const eloMap: Record<string, number> = {};
   const formMap: Record<string, { gf: number; ga: number; isHome: boolean }[]> = {};
 
@@ -90,16 +84,12 @@ async function runPredictionPipeline() {
       const home = (f as any).home?.canonical_name;
       const away = (f as any).away?.canonical_name;
       if (!home || !away) continue;
-
-      // Elo update
       const h = (eloMap[home] || 1500) + 65;
       const a = eloMap[away] || 1500;
       const eH = 1 / (1 + Math.pow(10, (a - h) / 400));
       const actual = f.home_score > f.away_score ? 1 : f.home_score < f.away_score ? 0 : 0.5;
       eloMap[home] = (eloMap[home] || 1500) + 32 * (actual - eH);
-      eloMap[away] = (eloMap[away] || 1500) + 32 * ((1 - actual) - (1 - eH));
-
-      // Form
+      eloMap[away] = (eloMap[away] || 1500) + 32 * (1 - actual - (1 - eH));
       if (!formMap[home]) formMap[home] = [];
       if (!formMap[away]) formMap[away] = [];
       formMap[home].push({ gf: f.home_score, ga: f.away_score, isHome: true });
@@ -125,13 +115,12 @@ async function runPredictionPipeline() {
     console.log(`[PREDICT] Skipping ${skipCount} fixtures with existing pending predictions`);
   }
 
-  // Generate predictions using the ensemble (only for fixtures without pending predictions)
+  // Generate predictions using the ensemble
   const predictions: any[] = [];
   let ensembleHits = 0;
   let ensembleMisses = 0;
 
   for (const fixture of fixtures) {
-    // IDEMPOTENCY: Skip fixtures that already have pending predictions
     if (existingFixtureIds.has(fixture.id)) continue;
 
     const home = (fixture as any).home?.canonical_name;
@@ -139,22 +128,10 @@ async function runPredictionPipeline() {
     if (!home || !away) continue;
 
     try {
-      const result = await predictMatchEnsemble(
-        home,
-        away,
-        fixture.league_id,
-        eloMap,
-        formMap
-      );
-
-      if (!result) {
-        ensembleMisses++;
-        continue;
-      }
+      const result = await predictMatchEnsemble(home, away, fixture.league_id, eloMap, formMap);
+      if (!result) { ensembleMisses++; continue; }
 
       ensembleHits++;
-
-      // Store all market predictions
       for (const [market, prob] of Object.entries(result.markets)) {
         const parts = market.split("_");
         predictions.push({
@@ -192,16 +169,12 @@ async function runPredictionPipeline() {
   );
 
   return {
-    success: true,
-    duration: `${duration}ms`,
-    results: {
-      total: fixtures.length,
-      predictions: inserted,
-      ensembleHits,
-      ensembleMisses,
-      modelVersion: "meta-ensemble-v2.0",
-    },
-    timestamp: new Date().toISOString(),
+    total: fixtures.length,
+    predictions: inserted,
+    skipped: skipCount,
+    ensembleHits,
+    ensembleMisses,
+    modelVersion: "meta-ensemble-v2.0",
   };
 }
 
@@ -211,10 +184,44 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    console.log("[CRON] Starting prediction pipeline...");
-    const result = await runPredictionPipeline();
-    console.log(`[CRON] Prediction pipeline completed in ${result.duration}`);
-    return NextResponse.json(result);
+    const executionId = await startRun("predict", "cron");
+    const lockResult = await withLock("predict", runPredictionPipeline, { leaseSeconds: 300 });
+
+    if (!lockResult.acquired) {
+      await completeRun(executionId, { status: "SKIPPED", errorMessage: lockResult.error });
+      return NextResponse.json({ success: true, skipped: true, reason: lockResult.error });
+    }
+
+    if (lockResult.error) {
+      await completeRun(executionId, {
+        status: "FAILED",
+        errorMessage: lockResult.error,
+        durationMs: lockResult.durationMs,
+      });
+      return NextResponse.json({ error: lockResult.error }, { status: 500 });
+    }
+
+    const result = lockResult.result!;
+    const cronResult: CronRunResult = {
+      status: "SUCCESS",
+      recordsProcessed: result.total,
+      predictionsGenerated: result.predictions,
+      metadata: {
+        skipped: result.skipped,
+        ensembleHits: result.ensembleHits,
+        ensembleMisses: result.ensembleMisses,
+        modelVersion: result.modelVersion,
+      },
+    };
+
+    await completeRun(executionId, cronResult);
+
+    return NextResponse.json({
+      success: true,
+      duration: `${lockResult.durationMs}ms`,
+      results: result,
+      timestamp: new Date().toISOString(),
+    });
   } catch (error) {
     console.error("[CRON] Prediction pipeline error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -225,8 +232,7 @@ export async function POST(request: NextRequest) {
   try {
     console.log("[MANUAL] Prediction pipeline triggered");
     const result = await runPredictionPipeline();
-    console.log(`[MANUAL] Prediction pipeline completed in ${result.duration}`);
-    return NextResponse.json(result);
+    return NextResponse.json({ success: true, results: result, timestamp: new Date().toISOString() });
   } catch (error) {
     console.error("[MANUAL] Prediction pipeline error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
