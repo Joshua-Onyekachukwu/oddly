@@ -67,12 +67,12 @@ export default function DrawAnalysisPage() {
       const [sum, conf, buc, lea, tre, cal] = await Promise.all([
         sumRes.json(), confRes.json(), bucRes.json(), leaRes.json(), treRes.json(), calRes.json(),
       ]);
-      setSummary(sum.data?.data || null);
-      setConfusion(conf.data?.data || null);
-      setBuckets(buc.data?.data || []);
-      setLeagues(lea.data?.data || []);
-      setTrend(tre.data?.data || []);
-      setCalibration(cal.data?.data || []);
+      setSummary(sum.data || null);
+      setConfusion(conf.data || null);
+      setBuckets(buc.data || []);
+      setLeagues(lea.data || []);
+      setTrend(tre.data || []);
+      setCalibration(cal.data || []);
     } catch {}
     setLoading(false);
   }, []);
