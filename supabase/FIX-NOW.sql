@@ -238,13 +238,18 @@ $fn$ LANGUAGE plpgsql SECURITY DEFINER;
 -- 5. PREDICTION IDEMPOTENCY
 -- ============================================================
 
--- Find duplicate predictions (same fixture+market+selection)
--- DO NOT DELETE — just report. Run this manually:
--- SELECT fixture_id, market, selection, COUNT(*) as dupes
--- FROM predictions GROUP BY fixture_id, market, selection HAVING COUNT(*) > 1;
+-- Dedup: remove duplicate predictions (keep newest per fixture+market+selection)
+WITH ranked AS (
+  SELECT id,
+    ROW_NUMBER() OVER (
+      PARTITION BY fixture_id, market, selection
+      ORDER BY created_at DESC, id DESC
+    ) as rn
+  FROM predictions
+)
+DELETE FROM predictions WHERE id IN (SELECT id FROM ranked WHERE rn > 1);
 
--- Add unique constraint (after dedup if needed)
--- This will fail if duplicates exist — run the dedup query first
+-- Add unique constraint (safe after dedup)
 DO $fn$
 BEGIN
   IF NOT EXISTS (
@@ -253,9 +258,10 @@ BEGIN
     ALTER TABLE predictions
       ADD CONSTRAINT uq_prediction_fixture_market_selection
       UNIQUE (fixture_id, market, selection);
+    RAISE NOTICE 'UNIQUE constraint added';
   END IF;
 EXCEPTION WHEN OTHERS THEN
-  RAISE NOTICE 'Could not add unique constraint (duplicates may exist): %', SQLERRM;
+  RAISE NOTICE 'Could not add unique constraint: %', SQLERRM;
 END;
 $fn$;
 
