@@ -137,7 +137,7 @@ async function runPredictionPipeline(): Promise<{
         predictions.push({
           fixture_id: fixture.id,
           market: parts[0],
-          selection: parts.slice(1).join("_"),
+          selection: parts.slice(1).join("_").toLowerCase(),
           model_probability: Math.round(prob * 10000) / 10000,
           model_version: result.modelVersion,
           feature_snapshot: result.featureSnapshot || null,
