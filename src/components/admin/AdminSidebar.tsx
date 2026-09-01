@@ -36,6 +36,7 @@ const ADMIN_NAV_GROUPS: NavGroup[] = [
       { label: "AI Monitor", href: "/admin/ai-monitor", icon: "ri-robot-2-line" },
       { label: "Model Health", href: "/admin/model-health", icon: "ri-heart-pulse-line" },
       { label: "Accuracy Analysis", href: "/admin/accuracy", icon: "ri-line-chart-line" },
+      { label: "Draw Analysis", href: "/admin/draw-analysis", icon: "ri-equalizer-line" },
       { label: "Referee Intelligence", href: "/admin/referees", icon: "ri-user-star-line" },
       { label: "Scoring Config", href: "/admin/scoring", icon: "ri-settings-5-line" },
     ],
@@ -51,6 +52,7 @@ const ADMIN_NAV_GROUPS: NavGroup[] = [
     label: "System",
     items: [
       { label: "Cron Jobs", href: "/admin/crons", icon: "ri-timer-line" },
+      { label: "RLS Audit", href: "/admin/rls", icon: "ri-shield-keyhole-line" },
       { label: "Security", href: "/admin/security", icon: "ri-shield-check-line" },
       { label: "System Health", href: "/admin/system-health", icon: "ri-heart-pulse-line" },
       { label: "Database Health", href: "/admin/db-health", icon: "ri-database-2-line" },
