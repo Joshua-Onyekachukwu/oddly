@@ -128,7 +128,7 @@ async function runPredictionPipeline(): Promise<{
     if (!home || !away) continue;
 
     try {
-      const result = await predictMatchEnsemble(home, away, fixture.league_id, eloMap, formMap);
+      const result = await predictMatchEnsemble(home, away, fixture.league_id, eloMap, formMap, fixture.kickoff_time);
       if (!result) { ensembleMisses++; continue; }
 
       ensembleHits++;
