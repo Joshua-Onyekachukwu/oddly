@@ -101,8 +101,26 @@ export async function GET(request: NextRequest) {
     results.learn = learnResult;
     console.log(`[DAILY CRON] Learn completed in ${learnResult.duration}`);
 
-    // Step 5: Cleanup old data
-    console.log("[DAILY CRON] Step 5/5: Cleaning up old data...");
+    // Step 5: Refresh materialized views (reduces Disk IO)
+    console.log("[DAILY CRON] Step 5/6: Refreshing materialized views...");
+    try {
+      const { createClient } = await import("@supabase/supabase-js");
+      const admin = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+        process.env.SUPABASE_SERVICE_ROLE_KEY || ""
+      );
+      const start = Date.now();
+      await admin.rpc("refresh_analytics_views");
+      const dur = Date.now() - start;
+      results.refreshViews = { success: true, duration: `${dur}ms` };
+      console.log(`[DAILY CRON] Views refreshed in ${dur}ms`);
+    } catch (err: any) {
+      results.refreshViews = { success: false, error: err.message };
+      console.error(`[DAILY CRON] View refresh failed (non-blocking):`, err.message);
+    }
+
+    // Step 6: Cleanup old data
+    console.log("[DAILY CRON] Step 6/6: Cleaning up old data...");
     await new Promise((resolve) => setTimeout(resolve, 5000));
     const cleanupResult = await callInternal("/api/v1/cron/cleanup", "POST");
     results.cleanup = cleanupResult;
