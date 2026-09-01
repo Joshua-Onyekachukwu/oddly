@@ -221,7 +221,7 @@ async function phasePredict(now: Date, isPeak: boolean): Promise<PhaseResult> {
     // Get fixtures needing predictions
     const { data: fixtures } = await supabaseAdmin
       .from("fixtures")
-      .select("id, league_id, home_team_id, away_team_id")
+      .select("id, league_id, home_team_id, away_team_id, kickoff_time")
       .eq("status", "scheduled")
       .gte("kickoff_time", in12h.toISOString())
       .lte("kickoff_time", in48h.toISOString())
@@ -259,7 +259,7 @@ async function phasePredict(now: Date, isPeak: boolean): Promise<PhaseResult> {
       if (!home || !away) continue;
 
       try {
-        const result = await predictMatchEnsemble(home, away, fixture.league_id, eloMap, formMap);
+        const result = await predictMatchEnsemble(home, away, fixture.league_id, eloMap, formMap, fixture.kickoff_time);
         if (!result) { ensembleMisses++; continue; }
 
         ensembleHits++;

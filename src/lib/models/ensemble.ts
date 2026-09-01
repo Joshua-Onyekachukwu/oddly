@@ -190,7 +190,8 @@ export async function predictMatchEnsemble(
   awayName: string,
   leagueId?: string,
   eloMap?: Record<string, number>,
-  formMap?: Record<string, TeamMatch[]>
+  formMap?: Record<string, TeamMatch[]>,
+  matchKickoff?: string
 ): Promise<EnsemblePrediction | null> {
   const ensemble = loadEnsemble();
   if (!ensemble) return null;
@@ -276,19 +277,16 @@ export async function predictMatchEnsemble(
       .order("kickoff_time", { ascending: false })
       .limit(2);
 
-    // Use the most recent fixture's kickoff_time to compute rest days
-    // (predictMatchEnsemble is called from predict cron which knows the upcoming kickoff)
-    // For now, estimate from last known fixture
+    // Compute rest days relative to the upcoming match kickoff (not now)
+    const matchTime = matchKickoff ? new Date(matchKickoff) : new Date();
     if (homeFixtures?.length && (homeFixtures[0] as any).kickoff_time) {
       const lastKickoff = new Date((homeFixtures[0] as any).kickoff_time);
-      const now = new Date();
-      const diffDays = (now.getTime() - lastKickoff.getTime()) / (1000 * 60 * 60 * 24);
+      const diffDays = (matchTime.getTime() - lastKickoff.getTime()) / (1000 * 60 * 60 * 24);
       restDaysHome = Math.max(1, Math.min(14, Math.round(diffDays)));
     }
     if (awayFixtures?.length && (awayFixtures[0] as any).kickoff_time) {
       const lastKickoff = new Date((awayFixtures[0] as any).kickoff_time);
-      const now = new Date();
-      const diffDays = (now.getTime() - lastKickoff.getTime()) / (1000 * 60 * 60 * 24);
+      const diffDays = (matchTime.getTime() - lastKickoff.getTime()) / (1000 * 60 * 60 * 24);
       restDaysAway = Math.max(1, Math.min(14, Math.round(diffDays)));
     }
   } catch {}
