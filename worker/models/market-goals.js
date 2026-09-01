@@ -49,9 +49,33 @@ function totalGoalsDist(grid) {
  * Compute lambdas for this match, preferring xG data when available.
  */
 function computeLambdas(features) {
-  // Base lambdas from form ratings
-  let homeLambda = (features.homeGF || 1.4) * ((features.awayGA || 1.2) / 1.3);
-  let awayLambda = (features.awayGF || 1.1) * ((features.homeGA || 1.1) / 1.3);
+  const homeAttack = features.homeGF || 1.4;
+  const homeDefense = features.homeGA || 1.1;
+  const awayAttack = features.awayGF || 1.1;
+  const awayDefense = features.awayGA || 1.2;
+  const leagueAvgGoals = features.leagueAvgGoals || 2.6;
+  const leagueAvgPerTeam = leagueAvgGoals / 2;
+
+  // APPROACH: Log-ratio amplification for realistic lambda spread
+  // Team features are noisy but the RATIO to league avg is informative
+  // We amplify these ratios to create meaningful differentiation
+  
+  // Attack strength: how much better/worse than average
+  const homeAttackStr = Math.log(homeAttack / leagueAvgPerTeam); // positive = good attack
+  const awayAttackStr = Math.log(awayAttack / leagueAvgPerTeam);
+  // Defensive weakness: how much worse/better than average defense
+  const awayDefWeak = Math.log(awayDefense / leagueAvgPerTeam); // positive = weak defense
+  const homeDefWeak = Math.log(homeDefense / leagueAvgPerTeam);
+
+  // Lambda = league_avg * exp(amplified_strength)
+  // Amplification factor of 1.5 creates realistic spread
+  const AMP = 1.5;
+  let homeLambda = leagueAvgPerTeam * Math.exp((homeAttackStr + awayDefWeak) * AMP);
+  let awayLambda = leagueAvgPerTeam * Math.exp((awayAttackStr + homeDefWeak) * AMP);
+
+  // Clamp to realistic range
+  homeLambda = clamp(homeLambda, 0.5, 4.5);
+  awayLambda = clamp(awayLambda, 0.3, 3.5);
 
   // xG-enhanced lambdas (much more accurate)
   if (features.homeXG && features.awayXG) {
@@ -115,28 +139,19 @@ function predict(features, crossSignals = {}) {
   const over35 = 1 - (totalDist.slice(0, 4).reduce((s, v) => s + v, 0));
   const over45 = 1 - (totalDist.slice(0, 5).reduce((s, v) => s + v, 0));
 
-  // Cross-model adjustment: if 1X2 model says strong favorite, fewer goals expected
-  if (crossSignals.homeWinProb > 0.65) {
-    // Strong favorite → might be a controlled win → slightly fewer goals
+  // Cross-model adjustment: nuanced based on match type
+  if (crossSignals.homeWinProb > 0.70) {
+    // Very strong favorite → slight reduction (controlled game)
     const adj = 0.97;
-    return {
-      over05: clamp(over05 * adj), over15: clamp(over15 * adj),
-      over25: clamp(over25 * adj), over35: clamp(over35 * adj),
-      over45: clamp(over45 * adj),
-      under05: clamp(1 - over05 * adj), under15: clamp(1 - over15 * adj),
-      under25: clamp(1 - over25 * adj), under35: clamp(1 - over35 * adj),
-      under45: clamp(1 - over45 * adj),
-      homeLambda, awayLambda, expectedGoals, grid,
-      confidence: over25 > 0.65 || over25 < 0.35 ? "high" : "medium",
-      reasoning: `Expected ${(expectedGoals).toFixed(2)} goals (${homeLambda.toFixed(2)} home, ${awayLambda.toFixed(2)} away)`,
-    };
-  }
-
-  return {
+    over25 = clamp(over25 * adj);
+  } else if (crossSignals.homeWinProb > 0.55 && crossSignals.balanced) {
+    // Moderate favorite + both teams score → slightly MORE goals
+    const adj = 1.03;
+    over25 = clamp(over25 * adj);
+  }  return {
     over05: clamp(over05), over15: clamp(over15),
     over25: clamp(over25), over35: clamp(over35),
-    over45: clamp(over45),
-    under05: clamp(1 - over05), under15: clamp(1 - over15),
+    over45: clamp(over45), under05: clamp(1 - over05), under15: clamp(1 - over15),
     under25: clamp(1 - over25), under35: clamp(1 - over35),
     under45: clamp(1 - over45),
     homeLambda, awayLambda, expectedGoals, grid,
