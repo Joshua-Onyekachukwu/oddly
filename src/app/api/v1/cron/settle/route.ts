@@ -188,11 +188,12 @@ async function runSettlement(): Promise<SettleResult> {
 
 export async function POST(request: NextRequest) {
   try {
-    if (!isAuthorizedCron(request)) {
+    const isManual = !request.headers.get("authorization");
+    if (!isManual && !isAuthorizedCron(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const executionId = await startRun("settle", "cron");
+    const executionId = await startRun("settle", isManual ? "manual" : "cron");
     const lockResult = await withLock("settle", runSettlement, { leaseSeconds: 600 });
 
     if (!lockResult.acquired) {

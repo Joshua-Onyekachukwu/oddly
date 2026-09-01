@@ -140,8 +140,6 @@ async function runPredictionPipeline(): Promise<{
           selection: parts.slice(1).join("_").toLowerCase(),
           model_probability: Math.round(prob * 10000) / 10000,
           model_version: result.modelVersion,
-          feature_snapshot: result.featureSnapshot || null,
-          ensemble_outputs: result.ensembleOutputs || null,
         });
       }
     } catch (err: any) {
