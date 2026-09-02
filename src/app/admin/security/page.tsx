@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { ErrorBoundary } from "@/components/ui";
 
 /* ─── Types ──────────────────────────────────────────────── */
 
@@ -131,8 +132,9 @@ export default function SecurityPage() {
   const { summary, authCoverage, unauthedRoutes, rlsAudit, tablesPubliclyReadable, tablesWithoutRls } = data;
 
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-6">
-      {/* Header */}
+    <ErrorBoundary>
+      <div className="p-8 max-w-7xl mx-auto space-y-6">
+        {/* Header */}
       <div className="flex items-start justify-between">
         <div>
           <h1 className="font-display text-[22px] md:text-[26px] font-bold text-[#0A0F1C]">
@@ -317,5 +319,6 @@ export default function SecurityPage() {
         Last scan: {new Date(data.timestamp).toLocaleString()}
       </div>
     </div>
+    </ErrorBoundary>
   );
 }

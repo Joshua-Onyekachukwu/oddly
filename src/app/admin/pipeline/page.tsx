@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/providers/AuthProvider";
 import { createClient } from "@/lib/supabase/client";
+import { ErrorBoundary } from "@/components/ui";
 
 interface SyncStatus {
   lastSync: string | null;
@@ -425,8 +426,9 @@ export default function AdminPipelinePage() {
   };
 
   return (
-    <div>
-      {/* Header */}
+    <ErrorBoundary>
+      <div>
+        {/* Header */}
       <div className="flex items-center justify-between mb-[24px]">
         <div>
           <h1 className="font-display text-[24px] md:text-[28px] font-bold text-[#0A0F1C] mb-[4px]">
@@ -811,5 +813,6 @@ export default function AdminPipelinePage() {
         </div>
       </div>
     </div>
+    </ErrorBoundary>
   );
 }

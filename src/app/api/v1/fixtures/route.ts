@@ -102,6 +102,13 @@ export async function GET(request: NextRequest) {
     const meta = buildPaginationMeta(page, pageSize, total);
 
     const response = successResponse(data || [], meta, rl.allowed ? 200 : 429);
+    
+    // Cache-Control: cache for 5 minutes, stale-while-revalidate for 10 minutes
+    response.headers.set(
+      "Cache-Control",
+      "public, s-maxage=300, stale-while-revalidate=600"
+    );
+    
     addRateLimitHeaders(response, rl.remaining, rl.resetAt);
 
     return response;

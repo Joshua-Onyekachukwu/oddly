@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { PageHeader, Card, Badge, StatCard, EmptyState } from "@/components/ui";
+import { PageHeader, Card, Badge, StatCard, EmptyState, ErrorBoundary } from "@/components/ui";
 
 interface UserProfile {
   id: string;
@@ -106,11 +106,12 @@ export default function AdminUsersPage() {
   const formatTime = (d: string) => new Date(d).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
 
   return (
-    <div>
-      <PageHeader
-        title="User Management"
-        description="Manage user roles, subscriptions, and access."
-      />
+    <ErrorBoundary>
+      <div>
+        <PageHeader
+          title="User Management"
+          description="Manage user roles, subscriptions, and access."
+        />
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-[12px] mb-[20px]">
@@ -417,5 +418,6 @@ export default function AdminUsersPage() {
         </div>
       )}
     </div>
+    </ErrorBoundary>
   );
 }
