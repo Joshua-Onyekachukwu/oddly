@@ -118,6 +118,13 @@ async function getModelAccuracy() {
 
 // ── Main handler ────────────────────────────────────────────────
 export async function GET(request: NextRequest) {
+  try {
+    const { requireAdmin } = await import("@/lib/api/utils");
+    await requireAdmin(request);
+  } catch {
+    return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+  }
+
   const url = new URL(request.url);
   const type = url.searchParams.get("type") || "summary";
   const days = parseInt(url.searchParams.get("days") || "30");
@@ -171,6 +178,9 @@ export async function GET(request: NextRequest) {
 // POST: refresh materialized views (admin only)
 export async function POST(request: NextRequest) {
   try {
+    const { requireAdmin } = await import("@/lib/api/utils");
+    await requireAdmin(request);
+
     const { error } = await supabaseAdmin.rpc("refresh_analytics_views");
     if (error) throw error;
 

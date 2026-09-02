@@ -342,13 +342,10 @@ async function runLearn(): Promise<LearnResult> {
 
 export async function POST(request: NextRequest) {
   try {
-    // Allow manual triggers without auth (like predict cron)
-    const isManual = !request.headers.get("authorization");
-    if (!isManual && !isAuthorizedCron(request)) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { requireAdmin } = await import("@/lib/api/utils");
+    await requireAdmin(request);
 
-    const executionId = await startRun("learn", isManual ? "manual" : "cron");
+    const executionId = await startRun("learn", "manual");
     const lockResult = await withLock("learn", runLearn, { leaseSeconds: 1800 }); // 30min lease for training
 
     if (!lockResult.acquired) {

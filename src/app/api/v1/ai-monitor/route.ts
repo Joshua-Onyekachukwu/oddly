@@ -25,32 +25,30 @@ export async function GET(request: NextRequest) {
     const authHeader = request.headers.get("authorization");
     const apiKey = request.headers.get("x-api-key");
 
-    if (!authHeader && !apiKey) {
+    if (!authHeader) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (authHeader?.startsWith("Bearer ")) {
-      const token = authHeader.slice(7);
-      const {
-        data: { user },
-      } = await supabaseAdmin.auth.getUser(token);
+    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : authHeader;
+    const {
+      data: { user },
+    } = await supabaseAdmin.auth.getUser(token);
 
-      if (!user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-      const { data: profile } = await supabaseAdmin
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single();
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
 
-      if (profile?.role !== "admin") {
-        return NextResponse.json(
-          { error: "Admin access required" },
-          { status: 403 }
-        );
-      }
+    if (profile?.role !== "admin") {
+      return NextResponse.json(
+        { error: "Admin access required" },
+        { status: 403 }
+      );
     }
 
     // 1. NVIDIA client usage stats

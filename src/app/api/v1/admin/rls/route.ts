@@ -19,7 +19,7 @@ const KNOWN_TABLES = [
   "profiles", "user_bets", "rollover_chains", "cron_runs", "cron_locks",
   "cron_alerts", "league_draw_calibration", "model_performance",
   "match_features", "league_model_params", "model_weight_config",
-  "admin_activity_log", "learning_snapshots", "live_pick",
+  "admin_activity_log", "learning_snapshots", "validation_results", "live_pick",
   "value_picks", "settlement_feed", "live_stats", "referee_profiles",
   "match_stats", "team_referee_stats", "notification_preferences",
   "player_availability", "referee_matches", "xg_features", "injuries",
@@ -33,6 +33,7 @@ const SHOULD_HAVE_RLS = [
   "cron_runs", "cron_locks", "cron_alerts", "league_draw_calibration",
   "model_performance", "admin_activity_log", "notification_preferences",
   "agent_audit", "live_pick", "value_picks", "settlement_feed", "live_stats",
+  "learning_snapshots", "validation_results",
 ];
 
 export async function GET(request: NextRequest) {

@@ -4,6 +4,8 @@ import { syncAllOdds, getOddsApiUsage } from "@/lib/sync/odds";
 import { notifyValueBets, notifyCrownJewel } from "@/lib/notifications";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
+import { withLock } from "@/lib/cron/lock";
+import { startRun, completeRun, type CronRunResult } from "@/lib/cron/logger";
 
 /**
  * Verify the request is from Vercel Cron or an authorized caller.
@@ -151,35 +153,35 @@ async function runSync(type: string = "all") {
  */
 export async function GET(request: NextRequest) {
   try {
-    // If this is a Vercel cron request, run the sync
-    if (isAuthorizedCron(request)) {
-      // Check if this is a cron call (has auth header) or a status check (no auth)
-      const authHeader = request.headers.get("authorization");
-      const cronSecret = process.env.VERCEL_CRON_SECRET;
-
-      if (cronSecret && authHeader === `Bearer ${cronSecret}`) {
-        console.log("[CRON] Starting scheduled sync...");
-        const result = await runSync("all");
-        console.log(`[CRON] Sync completed in ${result.duration}`);
-        return NextResponse.json(result);
-      }
+    if (!isAuthorizedCron(request)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Status check (no auth or dev mode)
-    const usage = await getOddsApiUsage();
-    return NextResponse.json({
-      status: "ready",
-      usage,
-      schedule: "Every 6 hours (0 */6 * * *)",
-      endpoints: {
-        POST_fixtures: "Sync fixtures from API-Football",
-        POST_odds: "Sync odds from The Odds API",
-        POST_all: "Sync everything (fixtures + odds)",
-        GET_cron: "Vercel cron trigger (auto-sync all)",
-      },
+    console.log("[CRON] Starting scheduled sync...");
+    const executionId = await startRun("sync", "cron");
+    const lockResult = await withLock("sync", () => runSync("all"), { leaseSeconds: 600 });
+
+    if (!lockResult.acquired) {
+      await completeRun(executionId, { status: "SKIPPED", errorMessage: lockResult.error });
+      return NextResponse.json({ success: true, skipped: true, reason: lockResult.error });
+    }
+
+    if (lockResult.error) {
+      await completeRun(executionId, { status: "FAILED", errorMessage: lockResult.error, durationMs: lockResult.durationMs });
+      return NextResponse.json({ error: lockResult.error }, { status: 500 });
+    }
+
+    const result = lockResult.result!;
+    await completeRun(executionId, {
+      status: "SUCCESS",
+      durationMs: lockResult.durationMs,
+      metadata: { type: result.type },
     });
+
+    console.log(`[CRON] Sync completed in ${result.duration}`);
+    return NextResponse.json(result);
   } catch (error) {
-    console.error("Sync status error:", error);
+    console.error("Sync error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -198,13 +200,34 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
+    const { requireAdmin } = await import("@/lib/api/utils");
+    await requireAdmin(request);
+
     const body = await request.json().catch(() => ({ type: "all" }));
     const type = body.type || "all";
 
     console.log(`[MANUAL] Sync triggered: ${type}`);
-    const result = await runSync(type);
-    console.log(`[MANUAL] Sync completed in ${result.duration}`);
+    const executionId = await startRun("sync", "manual");
+    const lockResult = await withLock("sync", () => runSync(type), { leaseSeconds: 600 });
 
+    if (!lockResult.acquired) {
+      await completeRun(executionId, { status: "SKIPPED", errorMessage: lockResult.error });
+      return NextResponse.json({ success: true, skipped: true, reason: lockResult.error });
+    }
+
+    if (lockResult.error) {
+      await completeRun(executionId, { status: "FAILED", errorMessage: lockResult.error, durationMs: lockResult.durationMs });
+      return NextResponse.json({ error: lockResult.error }, { status: 500 });
+    }
+
+    const result = lockResult.result!;
+    await completeRun(executionId, {
+      status: "SUCCESS",
+      durationMs: lockResult.durationMs,
+      metadata: { type: result.type },
+    });
+
+    console.log(`[MANUAL] Sync completed in ${result.duration}`);
     return NextResponse.json(result);
   } catch (error) {
     console.error("Sync error:", error);

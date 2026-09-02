@@ -244,8 +244,37 @@ export async function POST(request: NextRequest) {
     await requireAdmin(request);
 
     console.log("[MANUAL] Prediction pipeline triggered from admin");
-    const result = await runPredictionPipeline();
-    return NextResponse.json({ success: true, results: result, timestamp: new Date().toISOString() });
+    const executionId = await startRun("predict", "manual");
+    const lockResult = await withLock("predict", runPredictionPipeline, { leaseSeconds: 300 });
+
+    if (!lockResult.acquired) {
+      await completeRun(executionId, { status: "SKIPPED", errorMessage: lockResult.error });
+      return NextResponse.json({ success: true, skipped: true, reason: lockResult.error });
+    }
+
+    if (lockResult.error) {
+      await completeRun(executionId, {
+        status: "FAILED",
+        errorMessage: lockResult.error,
+        durationMs: lockResult.durationMs,
+      });
+      return NextResponse.json({ error: lockResult.error }, { status: 500 });
+    }
+
+    const result = lockResult.result!;
+    await completeRun(executionId, {
+      status: "SUCCESS",
+      recordsProcessed: result.total,
+      predictionsGenerated: result.predictions,
+      durationMs: lockResult.durationMs,
+      metadata: {
+        skipped: result.skipped,
+        ensembleHits: result.ensembleHits,
+        ensembleMisses: result.ensembleMisses,
+      },
+    });
+
+    return NextResponse.json({ success: true, results: result, duration: `${lockResult.durationMs}ms`, timestamp: new Date().toISOString() });
   } catch (error) {
     console.error("[MANUAL] Prediction pipeline error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
