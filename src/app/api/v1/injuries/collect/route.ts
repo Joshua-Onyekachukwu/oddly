@@ -27,7 +27,7 @@ const injuryFeaturesPostSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const rl = checkRateLimit("injuries:collect", 10, 60000);
+    const rl = checkRateLimit("injuries:collect", request, 10, 60000);
 
     // Authenticate
     const authHeader = request.headers.get("authorization");
@@ -120,9 +120,9 @@ export async function POST(request: NextRequest) {
  * GET /api/v1/injuries/collect
  * Get collection status and recent logs.
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const rl = checkRateLimit("injuries:collect:get", 30, 60000);
+    const rl = checkRateLimit("injuries:collect:get", request, 30, 60000);
 
     // Get recent collection logs
     const { data: logs, error: logsError } = await supabaseAdmin

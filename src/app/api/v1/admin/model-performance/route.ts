@@ -31,7 +31,7 @@ const querySchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     const { user, supabase } = await requireAdmin(request);
-    const rl = checkRateLimit(`admin:model-perf:${user.id}`, 30, 60000);
+    const rl = checkRateLimit(`admin:model-perf:${user.id}`, request, 30, 60000);
 
     const { searchParams } = new URL(request.url);
     const validation = validateQuery(querySchema, searchParams);
@@ -155,7 +155,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const { user } = await requireAdmin(request);
-    const rl = checkRateLimit(`admin:model-track:${user.id}`, 5, 60000);
+    const rl = checkRateLimit(`admin:model-track:${user.id}`, request, 5, 60000);
 
     if (!rl.allowed) {
       return NextResponse.json(

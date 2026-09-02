@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
   try {
     await requireAuth(request);
 
-    const rl = checkRateLimit("notifications:post", 30, 60000);
+    const rl = checkRateLimit("notifications:post", request, 30, 60000);
 
     let rawBody: unknown;
     try {
@@ -151,7 +151,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Authentication required" }, { status: 401 });
   }
 
-  const rl = checkRateLimit("notifications:get", 60, 60000);
+  const rl = checkRateLimit("notifications:get", request, 60, 60000);
 
   const notifications = JSON.parse(
     typeof globalThis !== "undefined"

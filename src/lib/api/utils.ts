@@ -267,30 +267,124 @@ export class AuthError extends Error {
 }
 
 // ==========================================
-// Rate Limiting (in-memory, per-key)
+// Rate Limiting (sliding window, per-IP)
 // ==========================================
 
-const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
+/**
+ * Extract client IP from standard proxy headers.
+ * Works with Vercel, Cloudflare, nginx, and direct connections.
+ */
+function getClientIp(request: NextRequest): string {
+  // x-forwarded-for: first IP is the original client
+  const forwarded = request.headers.get("x-forwarded-for");
+  if (forwarded) {
+    return forwarded.split(",")[0].trim();
+  }
+  // x-real-ip: set by nginx/cloudflare
+  const realIp = request.headers.get("x-real-ip");
+  if (realIp) {
+    return realIp.trim();
+  }
+  // fallback
+  return "127.0.0.1";
+}
 
+/**
+ * Sliding window log rate limiter.
+ * Stores timestamps of requests and counts those within the window.
+ * More accurate than fixed-window: no burst at window boundaries.
+ */
+const slidingWindowStore = new Map<string, number[]>();
+
+// Periodic cleanup to prevent memory leaks (every 5 min)
+let lastCleanup = Date.now();
+const CLEANUP_INTERVAL = 5 * 60 * 1000;
+
+function cleanupExpiredEntries() {
+  const now = Date.now();
+  if (now - lastCleanup < CLEANUP_INTERVAL) return;
+  lastCleanup = now;
+
+  for (const [key, timestamps] of slidingWindowStore) {
+    // Remove entries older than max window (10 min safety net)
+    const cutoff = now - 10 * 60 * 1000;
+    const filtered = timestamps.filter((t) => t > cutoff);
+    if (filtered.length === 0) {
+      slidingWindowStore.delete(key);
+    } else {
+      slidingWindowStore.set(key, filtered);
+    }
+  }
+}
+
+export interface RateLimitResult {
+  allowed: boolean;
+  remaining: number;
+  resetAt: number;
+  limit: number;
+  windowMs: number;
+}
+
+/**
+ * Check rate limit using a sliding window log algorithm.
+ *
+ * @param key - Route identifier (e.g. "stats", "fixtures")
+ * @param request - NextRequest to extract client IP
+ * @param limit - Max requests per window (default 60)
+ * @param windowMs - Window duration in ms (default 60000)
+ * @returns Rate limit result with allowed, remaining, resetAt
+ */
 export function checkRateLimit(
   key: string,
+  request: NextRequest | null,
   limit: number = 60,
   windowMs: number = 60000
-): { allowed: boolean; remaining: number; resetAt: number } {
+): RateLimitResult {
   const now = Date.now();
-  const record = rateLimitStore.get(key);
+  cleanupExpiredEntries();
 
-  if (!record || now > record.resetAt) {
-    rateLimitStore.set(key, { count: 1, resetAt: now + windowMs });
-    return { allowed: true, remaining: limit - 1, resetAt: now + windowMs };
+  // Build composite key: route + IP (or user-provided key)
+  const ip = request ? getClientIp(request) : "no-request";
+  const compositeKey = `${ip}:${key}`;
+
+  // Get or create timestamp array
+  let timestamps = slidingWindowStore.get(compositeKey);
+  if (!timestamps) {
+    timestamps = [];
+    slidingWindowStore.set(compositeKey, timestamps);
   }
 
-  if (record.count >= limit) {
-    return { allowed: false, remaining: 0, resetAt: record.resetAt };
+  // Remove timestamps outside the window
+  const windowStart = now - windowMs;
+  while (timestamps.length > 0 && timestamps[0] <= windowStart) {
+    timestamps.shift();
   }
 
-  record.count++;
-  return { allowed: true, remaining: limit - record.count, resetAt: record.resetAt };
+  // Check if under limit
+  if (timestamps.length >= limit) {
+    // Rate limited — resetAt is when the oldest request in window expires
+    const resetAt = timestamps[0] + windowMs;
+    return {
+      allowed: false,
+      remaining: 0,
+      resetAt,
+      limit,
+      windowMs,
+    };
+  }
+
+  // Allowed — record this request
+  timestamps.push(now);
+  const remaining = limit - timestamps.length;
+  const resetAt = timestamps[0] + windowMs;
+
+  return {
+    allowed: true,
+    remaining,
+    resetAt,
+    limit,
+    windowMs,
+  };
 }
 
 /**

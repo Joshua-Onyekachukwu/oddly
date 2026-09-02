@@ -36,7 +36,7 @@ const valueBetsQuerySchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
-  const rl = checkRateLimit("value-bets", 60, 60000);
+  const rl = checkRateLimit("value-bets", request, 60, 60000);
   const { searchParams } = new URL(request.url);
 
   const validation = validateQuery(valueBetsQuerySchema, searchParams);

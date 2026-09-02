@@ -29,7 +29,7 @@ const injuryFeaturesPostSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const rl = checkRateLimit("injuries:features", 60, 60000);
+    const rl = checkRateLimit("injuries:features", request, 60, 60000);
 
     const { searchParams } = new URL(request.url);
     const validation = validateQuery(injuryFeaturesQuerySchema, searchParams);
@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const rl = checkRateLimit("injuries:features:post", 10, 60000);
+    const rl = checkRateLimit("injuries:features:post", request, 10, 60000);
 
     // Authenticate
     const authHeader = request.headers.get("authorization");

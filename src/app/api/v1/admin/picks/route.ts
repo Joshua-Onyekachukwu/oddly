@@ -40,7 +40,7 @@ function getTodayISO(): string {
 export async function GET(request: NextRequest) {
   try {
     const { user, supabase } = await requireAdmin(request);
-    const rl = checkRateLimit(`admin:picks:${user.id}`, 60, 60000);
+    const rl = checkRateLimit(`admin:picks:${user.id}`, request, 60, 60000);
 
     const { searchParams } = new URL(request.url);
     const fixtureId = searchParams.get("fixtureId") || undefined;

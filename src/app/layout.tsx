@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Space_Grotesk, DM_Sans, JetBrains_Mono } from "next/font/google";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { ToastContainer } from "@/components/notifications/Toast";
+import { GlobalErrorBoundary } from "@/components/ui";
 import { validateEnv } from "@/lib/env";
 import "./globals.css";
 
@@ -85,10 +86,12 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="font-body antialiased bg-[#FAFBFC] text-[#0A0F1C]">
-        <AuthProvider>
-          {children}
-          <ToastContainer />
-        </AuthProvider>
+        <GlobalErrorBoundary>
+          <AuthProvider>
+            {children}
+            <ToastContainer />
+          </AuthProvider>
+        </GlobalErrorBoundary>
       </body>
     </html>
   );
