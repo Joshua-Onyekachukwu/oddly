@@ -337,10 +337,10 @@ export async function predictMatchEnsemble(
   let homeInjuriesRuledOut = 0;
   let awayInjuriesRuledOut = 0;
   try {
+    // Load ALL injury data and match by normalized name (case-insensitive)
     const { data: injData } = await supabaseAdmin
       .from("player_injury_data")
-      .select("team_name, status, player_importance")
-      .in("team_name", [homeName, awayName]);
+      .select("team_name, status, player_importance");
     if (injData) {
       const calcImpact = (teamInjuries: any[]) => {
         const injured = teamInjuries.filter((i: any) => i.status === "injured");
@@ -355,8 +355,9 @@ export async function predictMatchEnsemble(
         const douScore = doubtful.length * (avgImp(doubtful) / 5) * 0.008;
         return { impact: -(injScore + susScore + douScore), ruledOut: injured.length };
       };
-      const homeInj = calcImpact(injData.filter((i: any) => i.team_name === homeName));
-      const awayInj = calcImpact(injData.filter((i: any) => i.team_name === awayName));
+      // Match by normalized name (case-insensitive)
+      const homeInj = calcImpact(injData.filter((i: any) => i.team_name?.toLowerCase() === homeName.toLowerCase()));
+      const awayInj = calcImpact(injData.filter((i: any) => i.team_name?.toLowerCase() === awayName.toLowerCase()));
       homeInjuryImpact = homeInj.impact;
       awayInjuryImpact = awayInj.impact;
       homeInjuriesRuledOut = homeInj.ruledOut;
