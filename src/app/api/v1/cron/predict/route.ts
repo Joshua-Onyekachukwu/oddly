@@ -10,7 +10,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { predictMatchEnsemble } from "@/lib/models/ensemble";
+import { predictMatchEnsemble, resetBatchCaches } from "@/lib/models/ensemble";
 import { withLock } from "@/lib/cron/lock";
 import { startRun, completeRun, type CronRunResult } from "@/lib/cron/logger";
 
@@ -40,6 +40,7 @@ async function runPredictionPipeline(): Promise<{
   ensembleMisses: number;
   modelVersion: string;
 }> {
+  resetBatchCaches();
   const startTime = Date.now();
   const now = new Date();
   const windowEnd = new Date(now.getTime() + 48 * 60 * 60 * 1000);
@@ -239,7 +240,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    console.log("[MANUAL] Prediction pipeline triggered");
+    const { requireAdmin } = await import("@/lib/api/utils");
+    await requireAdmin(request);
+
+    console.log("[MANUAL] Prediction pipeline triggered from admin");
     const result = await runPredictionPipeline();
     return NextResponse.json({ success: true, results: result, timestamp: new Date().toISOString() });
   } catch (error) {

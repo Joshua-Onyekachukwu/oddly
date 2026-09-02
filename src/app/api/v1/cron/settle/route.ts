@@ -188,12 +188,11 @@ async function runSettlement(): Promise<SettleResult> {
 
 export async function POST(request: NextRequest) {
   try {
-    const isManual = !request.headers.get("authorization");
-    if (!isManual && !isAuthorizedCron(request)) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { requireAdmin } = await import("@/lib/api/utils");
+    await requireAdmin(request);
 
-    const executionId = await startRun("settle", isManual ? "manual" : "cron");
+    console.log("[MANUAL] Settlement triggered from admin");
+    const executionId = await startRun("settle", "manual");
     const lockResult = await withLock("settle", runSettlement, { leaseSeconds: 600 });
 
     if (!lockResult.acquired) {
@@ -249,11 +248,64 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET() {
-  return NextResponse.json({
-    status: "ready",
-    endpoint: "POST /api/v1/cron/settle",
-    model: "meta-ensemble-v2.0",
-    description: "Settles predictions against actual match results using ensemble model",
-  });
+export async function GET(request: NextRequest) {
+  try {
+    if (!isAuthorizedCron(request)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const executionId = await startRun("settle", "cron");
+    const lockResult = await withLock("settle", runSettlement, { leaseSeconds: 600 });
+
+    if (!lockResult.acquired) {
+      await completeRun(executionId, { status: "SKIPPED", errorMessage: lockResult.error });
+      return NextResponse.json({ success: true, skipped: true, reason: lockResult.error });
+    }
+
+    if (lockResult.error) {
+      await completeRun(executionId, {
+        status: "FAILED",
+        errorMessage: lockResult.error,
+        durationMs: lockResult.durationMs,
+      });
+      return NextResponse.json({ error: lockResult.error }, { status: 500 });
+    }
+
+    const result = lockResult.result!;
+    const accuracy = result.settled > 0 ? ((result.correct / result.settled) * 100).toFixed(1) + "%" : "N/A";
+
+    const cronResult: CronRunResult = {
+      status: "SUCCESS",
+      recordsProcessed: result.fixturesProcessed,
+      predictionsSettled: result.settled,
+      recordsCreated: result.archived,
+      metadata: {
+        correct: result.correct,
+        incorrect: result.incorrect,
+        accuracy,
+        ensembleHits: result.ensembleHits,
+        ensembleMisses: result.ensembleMisses,
+      },
+    };
+
+    await completeRun(executionId, cronResult);
+
+    return NextResponse.json({
+      success: true,
+      model: "meta-ensemble-v2.0",
+      settled: result.settled,
+      correct: result.correct,
+      incorrect: result.incorrect,
+      accuracy,
+      ensembleHits: result.ensembleHits,
+      ensembleMisses: result.ensembleMisses,
+      fixturesProcessed: result.fixturesProcessed,
+      archived: result.archived,
+      duration: `${lockResult.durationMs}ms`,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error("[SETTLE] Error:", error);
+    return NextResponse.json({ error: "Settle failed" }, { status: 500 });
+  }
 }

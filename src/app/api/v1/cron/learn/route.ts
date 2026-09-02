@@ -397,10 +397,55 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET() {
-  return NextResponse.json({
-    status: "ready",
-    endpoint: "POST /api/v1/cron/learn",
-    description: "Computes accuracy metrics, league draw calibration, and refreshes analytics views",
-  });
+export async function GET(request: NextRequest) {
+  try {
+    if (!isAuthorizedCron(request)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const executionId = await startRun("learn", "cron");
+    const lockResult = await withLock("learn", runLearn, { leaseSeconds: 1800 });
+
+    if (!lockResult.acquired) {
+      await completeRun(executionId, { status: "SKIPPED", errorMessage: lockResult.error });
+      return NextResponse.json({ success: true, skipped: true, reason: lockResult.error });
+    }
+
+    if (lockResult.error) {
+      await completeRun(executionId, { status: "FAILED", errorMessage: lockResult.error, durationMs: lockResult.durationMs });
+      return NextResponse.json({ error: lockResult.error }, { status: 500 });
+    }
+
+    const result = lockResult.result!;
+    const cronResult: CronRunResult = {
+      status: "SUCCESS",
+      recordsProcessed: result.totalPredictions,
+      metadata: {
+        overallAccuracy: `${(result.overallAccuracy * 100).toFixed(1)}%`,
+        highConfidence: `${(result.highConfAccuracy * 100).toFixed(1)}%`,
+        brierScore: result.brierScore.toFixed(4),
+        drawCalibration: result.drawCalibration,
+        viewsRefreshed: result.viewsRefreshed,
+      },
+    };
+
+    await completeRun(executionId, cronResult);
+
+    return NextResponse.json({
+      success: true,
+      accuracy: `${(result.overallAccuracy * 100).toFixed(1)}%`,
+      highConfidence: `${(result.highConfAccuracy * 100).toFixed(1)}%`,
+      brier: result.brierScore.toFixed(4),
+      totalPredictions: result.totalPredictions,
+      marketBreakdown: result.marketBreakdown,
+      calibration: result.calibration,
+      drawCalibration: result.drawCalibration,
+      viewsRefreshed: result.viewsRefreshed,
+      duration: `${lockResult.durationMs}ms`,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error("[LEARN] Error:", error);
+    return NextResponse.json({ error: "Learn failed" }, { status: 500 });
+  }
 }

@@ -37,6 +37,20 @@ function loadEnsemble() {
   }
 }
 
+// ── Batch caches (per predict cron run) ──────────────────────────────
+// These caches prevent N+1 DB queries when predicting many fixtures.
+// Call resetBatchCaches() at the start of each predict cron run.
+let leagueParamsCache: Record<string, any> = {};
+let injuryCache: { data: any[]; loaded: boolean } = { data: [], loaded: false };
+let weightConfigCache: any = null;
+
+export function resetBatchCaches() {
+  leagueParamsCache = {};
+  injuryCache = { data: [], loaded: false };
+  weightConfigCache = null;
+  console.log("[ENSEMBLE] Batch caches reset");
+}
+
 // ── Team stats from historical matches ────────────────────────────────
 
 interface TeamMatch {
@@ -300,48 +314,69 @@ export async function predictMatchEnsemble(
     }
   } catch {}
 
-  // ── Compute league-specific home advantage ──
+  // ── Compute league-specific home advantage (with cache) ──
   let leagueHomeAdvantage = 65; // default
   let leagueAvgGoals = 2.6;
 
   // Get store data (league params, weight config)
   const storeData: any = {};
-  if (leagueId) {
+  if (leagueId && !leagueParamsCache[leagueId]) {
     try {
-      const { data: lp } = await supabaseAdmin
-        .from("league_model_params")
-        .select("*")
-        .eq("league_id", leagueId)
+      // Resolve league UUID to name
+      const { data: league } = await supabaseAdmin
+        .from("leagues")
+        .select("name")
+        .eq("id", leagueId)
         .single();
-      if (lp) {
-        storeData.leagueParams = lp;
-        // Use league-specific home advantage if available
-        if (lp.home_advantage) leagueHomeAdvantage = lp.home_advantage;
-        if (lp.goal_expectancy) leagueAvgGoals = lp.goal_expectancy;
+      const leagueName = league?.name;
+      if (leagueName) {
+        const { data: lp } = await supabaseAdmin
+          .from("league_model_params")
+          .select("*")
+          .eq("league_name", leagueName)
+          .single();
+        leagueParamsCache[leagueId] = lp || { home_advantage: 65, goal_expectancy: 2.6 };
+      } else {
+        leagueParamsCache[leagueId] = { home_advantage: 65, goal_expectancy: 2.6 };
       }
-    } catch {}
+    } catch {
+      leagueParamsCache[leagueId] = { home_advantage: 65, goal_expectancy: 2.6 };
+    }
+  }
+  if (leagueId && leagueParamsCache[leagueId]) {
+    const lp = leagueParamsCache[leagueId];
+    storeData.leagueParams = lp;
+    if (lp.home_advantage) leagueHomeAdvantage = lp.home_advantage;
+    if (lp.goal_expectancy) leagueAvgGoals = lp.goal_expectancy;
   }
 
-  try {
-    const { data: wc } = await supabaseAdmin
-      .from("model_weight_config")
-      .select("*")
-      .eq("config_name", "default")
-      .single();
-    if (wc) storeData.weightConfig = wc;
-  } catch {}
+  if (!weightConfigCache) {
+    try {
+      const { data: wc } = await supabaseAdmin
+        .from("model_weight_config")
+        .select("*")
+        .eq("config_name", "default")
+        .single();
+      weightConfigCache = wc || null;
+    } catch {}
+  }
+  if (weightConfigCache) storeData.weightConfig = weightConfigCache;
 
-  // ── Load injury data from feature store ──
+  // ── Load injury data from feature store (with cache) ──
   let homeInjuryImpact = 0;
   let awayInjuryImpact = 0;
   let homeInjuriesRuledOut = 0;
   let awayInjuriesRuledOut = 0;
   try {
-    // Load ALL injury data and match by normalized name (case-insensitive)
-    const { data: injData } = await supabaseAdmin
-      .from("player_injury_data")
-      .select("team_name, status, player_importance");
-    if (injData) {
+    if (!injuryCache.loaded) {
+      const { data: injData } = await supabaseAdmin
+        .from("player_injury_data")
+        .select("team_name, status, player_importance");
+      injuryCache.data = injData || [];
+      injuryCache.loaded = true;
+    }
+    const injData = injuryCache.data;
+    if (injData.length > 0) {
       const calcImpact = (teamInjuries: any[]) => {
         const injured = teamInjuries.filter((i: any) => i.status === "injured");
         const suspended = teamInjuries.filter((i: any) => i.status === "suspended");
