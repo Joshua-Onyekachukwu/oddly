@@ -13,7 +13,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import * as fs from "fs";
 import * as path from "path";
-import { predictMatchEnsemble } from "@/lib/models/ensemble";
+import { predictMatchEnsemble, resetBatchCaches } from "@/lib/models/ensemble";
 import { withLock } from "@/lib/cron/lock";
 import { startRun, completeRun, type CronRunResult } from "@/lib/cron/logger";
 
@@ -634,6 +634,7 @@ async function phaseFinalPick(now: Date): Promise<PhaseResult> {
 /* ── Main Handler ─────────────────────────────────────────── */
 
 async function runPipeline() {
+  resetBatchCaches();
   const now = new Date();
   const peak = isPeakHour(now);
   console.log(`[PIPELINE] Starting at ${now.toISOString()} (peak: ${peak})`);
