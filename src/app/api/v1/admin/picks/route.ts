@@ -171,8 +171,8 @@ export async function GET(request: NextRequest) {
           (bestPred?.model_probability || 0) * 40 +
           Math.max(0, edge) * 100 * 30 +
           (clvFeat?.consensusStrength || 0.5) * 15 +
-          ((clvFeat?.sharpMoneyHome === 1 && bestPred?.selection === "Home") ||
-          (clvFeat?.sharpMoneyAway === 1 && bestPred?.selection === "Away")
+          ((clvFeat?.sharpMoneyHome === 1 && (bestPred?.selection || "").toLowerCase() === "home") ||
+          (clvFeat?.sharpMoneyAway === 1 && (bestPred?.selection || "").toLowerCase() === "away")
             ? 15
             : 0);
 

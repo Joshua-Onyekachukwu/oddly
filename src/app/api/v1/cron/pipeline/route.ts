@@ -13,7 +13,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import * as fs from "fs";
 import * as path from "path";
-import { predictMatchEnsemble, resetBatchCaches } from "@/lib/models/ensemble";
+import { predictMatchEnsemble, checkPrediction, resetBatchCaches } from "@/lib/models/ensemble";
 import { withLock } from "@/lib/cron/lock";
 import { startRun, completeRun, type CronRunResult } from "@/lib/cron/logger";
 
@@ -132,32 +132,12 @@ async function phaseSettle(now: Date): Promise<PhaseResult> {
 
     for (const fixture of fixtures) {
       const predsFor = (preds || []).filter((p) => p.fixture_id === fixture.id);
-      const total = (fixture.home_score || 0) + (fixture.away_score || 0);
-      const homeWin = (fixture.home_score || 0) > (fixture.away_score || 0);
-      const draw = (fixture.home_score || 0) === (fixture.away_score || 0);
-      const bothScore = (fixture.home_score || 0) > 0 && (fixture.away_score || 0) > 0;
+      const homeScore = fixture.home_score || 0;
+      const awayScore = fixture.away_score || 0;
 
       for (const p of predsFor) {
         if (p.result && p.result !== "pending") continue;
-        const sel = (p.selection || "").toLowerCase();
-        let isCorrect = false;
-
-        if (p.market === "1X2") {
-          isCorrect = (sel === "home" && homeWin) || (sel === "draw" && draw) || (sel === "away" && !homeWin && !draw);
-        } else if (p.market === "ou_over_0.5" || p.selection === "Over_0.5") isCorrect = total > 0.5;
-        else if (p.market === "ou_over_1.5" || p.selection === "Over_1.5") isCorrect = total > 1.5;
-        else if (p.market === "ou_over_2.5" || p.selection === "Over_2.5") isCorrect = total > 2.5;
-        else if (p.market === "ou_over_3.5" || p.selection === "Over_3.5") isCorrect = total > 3.5;
-        else if (p.market === "ou_over_4.5" || p.selection === "Over_4.5") isCorrect = total > 4.5;
-        else if (p.market === "ou_under_0.5" || p.selection === "Under_0.5") isCorrect = total < 0.5;
-        else if (p.market === "ou_under_1.5" || p.selection === "Under_1.5") isCorrect = total < 1.5;
-        else if (p.market === "ou_under_2.5" || p.selection === "Under_2.5") isCorrect = total < 2.5;
-        else if (p.market === "ou_under_3.5" || p.selection === "Under_3.5") isCorrect = total < 3.5;
-        else if (p.market === "ou_under_4.5" || p.selection === "Under_4.5") isCorrect = total < 4.5;
-        else if (p.market === "btts") isCorrect = sel === "yes" ? bothScore : !bothScore;
-        else if (p.market === "dc_1x") isCorrect = (fixture.home_score || 0) >= (fixture.away_score || 0);
-        else if (p.market === "dc_x2") isCorrect = (fixture.home_score || 0) <= (fixture.away_score || 0);
-        else if (p.market === "dc_12") isCorrect = !draw;
+        const isCorrect = checkPrediction({}, p.market, p.selection, homeScore, awayScore);
 
         if (isCorrect) correct++;
         settled++;
@@ -495,9 +475,10 @@ async function phasePreMatchUpdate(now: Date): Promise<PhaseResult> {
       for (const pred of preds) {
         const oldProb = pred.model_probability || 0.5;
         let newProb = oldProb;
-        if (pred.selection === "Home") newProb += clvAdjustment;
-        else if (pred.selection === "Away") newProb -= clvAdjustment;
-        else if (pred.selection === "Draw") newProb -= Math.abs(clvAdjustment) * 0.3;
+        const sel = (pred.selection || "").toLowerCase();
+        if (sel === "home") newProb += clvAdjustment;
+        else if (sel === "away") newProb -= clvAdjustment;
+        else if (sel === "draw") newProb -= Math.abs(clvAdjustment) * 0.3;
         newProb = Math.max(0.05, Math.min(0.95, newProb));
 
         if (Math.abs(newProb - oldProb) > 0.005) {
@@ -589,8 +570,8 @@ async function phaseFinalPick(now: Date): Promise<PhaseResult> {
         bestProb * 40 +
         Math.max(0, edge) * 100 * 30 +
         (clv.consensusStrength || 0.5) * 15 +
-        ((clv.sharpMoneyHome === 1 && best.selection === "Home") ||
-        (clv.sharpMoneyAway === 1 && best.selection === "Away") ? 15 : 0);
+        ((clv.sharpMoneyHome === 1 && (best.selection || "").toLowerCase() === "home") ||
+        (clv.sharpMoneyAway === 1 && (best.selection || "").toLowerCase() === "away") ? 15 : 0);
 
       candidates.push({
         fixture_id: fixture.id,

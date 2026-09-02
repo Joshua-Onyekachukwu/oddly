@@ -471,9 +471,10 @@ async function stepSettle() {
       let result = "wrong";
 
       if (pred.market === "1X2") {
-        if (pred.selection === homeName && hg > ag) result = "correct";
-        else if (pred.selection === awayName && ag > hg) result = "correct";
-        else if (pred.selection === "Draw" && hg === ag) result = "correct";
+        const pSel = (pred.selection || "").toLowerCase();
+        if ((pSel === "home" || pSel === homeName.toLowerCase()) && hg > ag) result = "correct";
+        else if ((pSel === "away" || pSel === awayName.toLowerCase()) && ag > hg) result = "correct";
+        else if (pSel === "draw" && hg === ag) result = "correct";
       } else if (pred.market === "over_under") {
         // Handle all O/U lines
         const sel = (pred.selection || "").toLowerCase();
