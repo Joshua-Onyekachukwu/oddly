@@ -40,7 +40,10 @@ export async function GET(request: NextRequest) {
   try {
     const { requireAdmin } = await import("@/lib/api/utils");
     await requireAdmin(request);
-  } catch {
+  } catch (err: any) {
+    if (err?.code === "FORBIDDEN") {
+      return NextResponse.json({ error: err.message || "Admin access required" }, { status: 403 });
+    }
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
