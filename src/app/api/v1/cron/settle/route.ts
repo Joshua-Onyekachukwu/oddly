@@ -140,13 +140,13 @@ async function runSettlement(): Promise<SettleResult> {
     }
   }
 
-  // Archive to settlement_feed
+  // Archive to settlement_feed (only use columns that exist on the predictions table)
   let archived = 0;
   if (settled > 0) {
     try {
       const { data: feedData } = await supabaseAdmin
         .from("predictions")
-        .select("fixture_id, market, selection, model_probability, model_version, result, settled_at, match_name")
+        .select("fixture_id, market, selection, model_probability, model_version, result, settled_at, confidence_tier")
         .not("result", "is", null)
         .neq("result", "pending")
         .order("settled_at", { ascending: false })
@@ -161,19 +161,95 @@ async function runSettlement(): Promise<SettleResult> {
           model_probability: p.model_probability || 0,
           model_version: p.model_version || "v5.1",
           result: p.result,
-          match_name: p.match_name || null,
+          confidence_tier: p.confidence_tier || null,
           settled_at: p.settled_at || new Date().toISOString(),
         }));
         const BATCH = 100;
         for (let i = 0; i < rows.length; i += BATCH) {
           const batch = rows.slice(i, i + BATCH);
-          await supabaseAdmin.from("settlement_feed").insert(batch);
-          archived += batch.length;
+          const { error: insertErr } = await supabaseAdmin.from("settlement_feed").insert(batch);
+          if (insertErr) {
+            console.error("[SETTLE] Archive insert error:", insertErr.message);
+          } else {
+            archived += batch.length;
+          }
         }
         console.log(`[SETTLE] Archived ${archived} predictions to settlement_feed`);
       }
     } catch (archiveErr) {
       console.error("[SETTLE] Archive warning (non-blocking):", archiveErr);
+    }
+  }
+
+  // Update model_performance after settlement
+  if (settled > 0) {
+    try {
+      // Get recent settled predictions (last 24h) for each market
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const { data: recentSettled } = await supabaseAdmin
+        .from("predictions")
+        .select("market, model_version, selection, result, model_probability")
+        .not("result", "is", null)
+        .neq("result", "pending")
+        .gte("settled_at", oneDayAgo)
+        .limit(10000);
+
+      if (recentSettled && recentSettled.length > 0) {
+        // Group by market
+        const byMarket: Record<string, { total: number; correct: number; probs: number[] }> = {};
+        for (const p of recentSettled) {
+          const mkt = p.market || "unknown";
+          if (!byMarket[mkt]) byMarket[mkt] = { total: 0, correct: 0, probs: [] };
+          byMarket[mkt].total++;
+          if (p.result === "correct") byMarket[mkt].correct++;
+          if (p.model_probability) byMarket[mkt].probs.push(p.model_probability);
+        }
+
+        for (const [mkt, stats] of Object.entries(byMarket)) {
+          const accuracy = stats.total > 0 ? stats.correct / stats.total : 0;
+          const brier = stats.probs.length > 0
+            ? stats.probs.reduce((sum, prob, i) => {
+                const actual = recentSettled.find(p => p.market === mkt && p.model_probability === prob)?.result === "correct" ? 1 : 0;
+                return sum + Math.pow(prob - actual, 2);
+              }, 0) / stats.probs.length
+            : 0;
+
+          // Delete existing row for this model+market, then insert fresh
+          await supabaseAdmin
+            .from("model_performance")
+            .delete()
+            .eq("model_version", "v2.0-meta-ensemble")
+            .eq("market", mkt)
+            .is("league_id", null);
+
+          const { error: insertErr } = await supabaseAdmin
+            .from("model_performance")
+            .insert({
+              model_version: "v2.0-meta-ensemble",
+              market: mkt,
+              total_predictions: stats.total,
+              correct_predictions: stats.correct,
+              brier_score: Math.round(brier * 10000) / 10000,
+              calibration_data: {
+                source: "settle_cron",
+                accuracy_pct: Math.round(accuracy * 1000) / 10,
+                avg_brier: Math.round(brier * 10000) / 10000,
+                tracked_at: new Date().toISOString(),
+                window: "24h",
+              },
+              period_start: oneDayAgo,
+              period_end: new Date().toISOString(),
+            });
+
+          if (insertErr) {
+            console.error(`[SETTLE] model_performance insert error for ${mkt}:`, insertErr.message);
+          } else {
+            console.log(`[SETTLE] Updated model_performance for ${mkt}: ${(accuracy * 100).toFixed(1)}% (${stats.total} predictions)`);
+          }
+        }
+      }
+    } catch (perfErr) {
+      console.error("[SETTLE] model_performance update warning (non-blocking):", perfErr);
     }
   }
 

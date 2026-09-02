@@ -481,22 +481,34 @@ export function checkPrediction(
   if (mkt === "1x2") {
     return (sel === "home" && homeWin) || (sel === "draw" && draw) || (sel === "away" && awayWin);
   }
-  // Over/Under: market is "over_under", selection is "over_2.5" or "under_2.5"
-  if (mkt === "over_under" || mkt.startsWith("ou")) {
+  // Over/Under: market is "ou" or "over_under", selection is "over_2.5" or "under_2.5"
+  if (mkt === "over_under" || mkt === "ou") {
     const line = parseFloat(sel.split("_").pop() || "2.5");
     if (sel.startsWith("over")) return total > line;
     if (sel.startsWith("under")) return total < line;
   }
   if (mkt === "btts") return sel === "yes" ? bothScore : !bothScore;
-  if (mkt === "dc_1x" || mkt === "dc" && sel === "1x") return homeScore >= awayScore;
-  if (mkt === "dc_x2" || mkt === "dc" && sel === "x2") return homeScore <= awayScore;
-  if (mkt === "dc_12" || mkt === "dc" && sel === "12") return homeScore !== awayScore;
-  if (mkt === "dnb_home" || mkt === "dnb" && sel === "home") return homeWin;
-  if (mkt === "dnb_away" || mkt === "dnb" && sel === "away") return awayWin;
-  if (mkt === "homegoals_over_0.5" || mkt === "homegoals" && sel === "over_0.5") return homeScore > 0.5;
-  if (mkt === "homegoals_over_1.5" || mkt === "homegoals" && sel === "over_1.5") return homeScore > 1.5;
-  if (mkt === "awaygoals_over_0.5" || mkt === "awaygoals" && sel === "over_0.5") return awayScore > 0.5;
-  if (mkt === "awaygoals_over_1.5" || mkt === "awaygoals" && sel === "over_1.5") return awayScore > 1.5;
+  // Double Chance — explicit parentheses to avoid operator-precedence bug
+  if (mkt === "dc" || mkt.startsWith("dc_")) {
+    if (sel === "1x" || mkt === "dc_1x") return homeScore >= awayScore;
+    if (sel === "x2" || mkt === "dc_x2") return homeScore <= awayScore;
+    if (sel === "12" || mkt === "dc_12") return homeScore !== awayScore;
+  }
+  // Draw No Bet
+  if (mkt === "dnb") {
+    if (sel === "home") return homeWin;
+    if (sel === "away") return awayWin;
+  }
+  // Home Goals
+  if (mkt === "homegoals") {
+    const line = parseFloat(sel.split("_").pop() || "0.5");
+    return homeScore > line;
+  }
+  // Away Goals
+  if (mkt === "awaygoals") {
+    const line = parseFloat(sel.split("_").pop() || "0.5");
+    return awayScore > line;
+  }
   if (mkt === "smart_selection") {
     const ss = pred["smart_selection"];
     if (!ss) return false;
