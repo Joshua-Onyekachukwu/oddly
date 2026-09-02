@@ -1,20 +1,41 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/api/utils";
+import { requireAuth, checkRateLimit, addRateLimitHeaders } from "@/lib/api/utils";
+import { z } from "zod";
+import { validateBody } from "@/lib/api/validation";
 
-/**
- * Push Notification API for ELITE Picks
- *
- * Supports:
- * - Web Push (via VAPID keys)
- * - Email notifications
- * - In-app notifications
- *
- * POST /api/v1/notifications
- * Body: { type: "elite_pick", data: { fixture_id, match, market, probability, tier } }
- */
+// ── Schemas ────────────────────────────────────────────────────────
 
-// In-memory subscription store (use database in production)
-const subscriptions: Map<string, PushSubscription> = new Map();
+const notificationSubscribeSchema = z.object({
+  type: z.literal("subscribe"),
+  data: z.object({
+    endpoint: z.string().url("Invalid subscription endpoint"),
+    keys: z.object({
+      p256dh: z.string().min(1, "Missing p256dh key"),
+      auth: z.string().min(1, "Missing auth key"),
+    }),
+    userId: z.string().uuid().optional(),
+  }),
+});
+
+const notificationElitePickSchema = z.object({
+  type: z.literal("elite_pick"),
+  data: z.object({
+    match: z.string().min(1, "Match name required"),
+    market: z.string().min(1, "Market required"),
+    selection: z.string().min(1, "Selection required"),
+    probability: z.number().min(0).max(1, "Probability must be 0-1"),
+    tier: z.enum(["ELITE", "PREMIUM", "FREE"]),
+    edge: z.number().optional(),
+    fixture_id: z.string().uuid().optional(),
+  }),
+});
+
+const notificationPostSchema = z.discriminatedUnion("type", [
+  notificationSubscribeSchema,
+  notificationElitePickSchema,
+]);
+
+// ── In-memory subscription store ────────────────────────────────────
 
 interface PushSubscription {
   endpoint: string;
@@ -23,20 +44,35 @@ interface PushSubscription {
   createdAt: string;
 }
 
-// POST: Send notification
+const subscriptions: Map<string, PushSubscription> = new Map();
+
+// ── POST ───────────────────────────────────────────────────────────
+
 export async function POST(request: NextRequest) {
   try {
     await requireAuth(request);
 
-    const body = await request.json();
-    const { type, data } = body;
+    const rl = checkRateLimit("notifications:post", 30, 60000);
+
+    let rawBody: unknown;
+    try {
+      rawBody = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+
+    const validation = validateBody(notificationPostSchema, rawBody);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Invalid request", details: validation.error },
+        { status: 400 }
+      );
+    }
+
+    const { type, data } = validation.data;
 
     if (type === "subscribe") {
-      // Register push subscription
       const { endpoint, keys, userId } = data;
-      if (!endpoint || !keys) {
-        return NextResponse.json({ error: "Missing endpoint or keys" }, { status: 400 });
-      }
 
       subscriptions.set(endpoint, {
         endpoint,
@@ -45,16 +81,17 @@ export async function POST(request: NextRequest) {
         createdAt: new Date().toISOString(),
       });
 
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: true,
         message: "Subscription registered",
         totalSubscriptions: subscriptions.size,
       });
+      addRateLimitHeaders(response, rl.remaining, rl.resetAt);
+      return response;
     }
 
     if (type === "elite_pick") {
-      // Send ELITE pick notification to all subscribers
-      const { match, market, selection, probability, tier, edge } = data;
+      const { match, market, selection, probability, tier } = data;
 
       if (tier !== "ELITE") {
         return NextResponse.json({ success: true, message: "Not ELITE tier, skipping" });
@@ -62,7 +99,7 @@ export async function POST(request: NextRequest) {
 
       const notification = {
         title: `👑 ELITE Pick: ${match}`,
-        body: `${market} → ${selection} at ${Math.round(probability * 100)}% confidence${edge ? ` (+${Math.round(edge * 100)}% edge)` : ""}`,
+        body: `${market} → ${selection} at ${Math.round(probability * 100)}% confidence`,
         icon: "/icons/notification.png",
         badge: "/icons/badge.png",
         data: {
@@ -76,8 +113,7 @@ export async function POST(request: NextRequest) {
         timestamp: Date.now(),
       };
 
-      // In production, send via Web Push API
-      // For now, store for polling
+      // Store for polling (in production, use Web Push API)
       const notifications = JSON.parse(
         typeof globalThis !== "undefined"
           ? (globalThis as any).__notifications || "[]"
@@ -90,12 +126,14 @@ export async function POST(request: NextRequest) {
 
       console.log(`[NOTIFY] ELITE pick: ${match} — ${market} ${selection} ${Math.round(probability * 100)}%`);
 
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: true,
         message: "Notification sent",
         subscribers: subscriptions.size,
         notification,
       });
+      addRateLimitHeaders(response, rl.remaining, rl.resetAt);
+      return response;
     }
 
     return NextResponse.json({ error: "Unknown type" }, { status: 400 });
@@ -104,7 +142,8 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET: Get recent notifications
+// ── GET ────────────────────────────────────────────────────────────
+
 export async function GET(request: NextRequest) {
   try {
     await requireAuth(request);
@@ -112,15 +151,19 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Authentication required" }, { status: 401 });
   }
 
+  const rl = checkRateLimit("notifications:get", 60, 60000);
+
   const notifications = JSON.parse(
     typeof globalThis !== "undefined"
       ? (globalThis as any).__notifications || "[]"
       : "[]"
   );
 
-  return NextResponse.json({
+  const response = NextResponse.json({
     notifications: notifications.slice(-20),
     total: notifications.length,
     subscribers: subscriptions.size,
   });
+  addRateLimitHeaders(response, rl.remaining, rl.resetAt);
+  return response;
 }

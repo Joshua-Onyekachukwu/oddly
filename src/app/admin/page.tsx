@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { StatCard, Card, CardHeader, Badge, EmptyState } from "@/components/ui";
+import { StatCard, Card, CardHeader, Badge, EmptyState, ErrorBoundary } from "@/components/ui";
 
 interface AdminStats {
   totalUsers: number;
@@ -83,8 +83,9 @@ export default function AdminDashboardPage() {
   }, [fetchStats]);
 
   return (
-    <div>
-      {/* Page header */}
+    <ErrorBoundary>
+      <div>
+        {/* Page header */}
       <div className="mb-[24px]">
         <h1 className="font-display text-[22px] md:text-[26px] font-bold text-[#0A0F1C] mb-[4px]">
           Admin Dashboard
@@ -205,5 +206,6 @@ export default function AdminDashboardPage() {
         )}
       </Card>
     </div>
+    </ErrorBoundary>
   );
 }
