@@ -41,7 +41,8 @@ export async function POST(request: NextRequest) {
 
     // Rate limit: 10 requests per minute per user
     const rl = checkRateLimit(
-      ipRateLimitKey(auth.user.id, "betting-agent-recommendations"),
+      `user:${auth.user.id}:betting-agent-recommendations`,
+      request,
       RATE_LIMITS.bettingAgent.recommendations.limit,
       RATE_LIMITS.bettingAgent.recommendations.windowMs
     );

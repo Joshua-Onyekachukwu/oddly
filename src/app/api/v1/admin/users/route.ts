@@ -30,7 +30,7 @@ import {
 export async function GET(request: NextRequest) {
   try {
     const { user, supabase } = await requireAdmin(request);
-    const rl = checkRateLimit(`admin:users:${user.id}`, 60, 60000);
+    const rl = checkRateLimit(`admin:users:${user.id}`, request, 60, 60000);
 
     const { searchParams } = new URL(request.url);
     const { page, pageSize, offset } = parsePagination(searchParams);

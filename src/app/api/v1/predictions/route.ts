@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const rl = checkRateLimit("predictions", 60, 60000);
+  const rl = checkRateLimit("predictions", request, 60, 60000);
   const { searchParams } = new URL(request.url);
 
   const validation = validateQuery(predictionQuerySchema, searchParams);

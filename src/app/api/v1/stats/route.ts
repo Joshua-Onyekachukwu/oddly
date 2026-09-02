@@ -1,12 +1,12 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { checkRateLimit, addRateLimitHeaders } from "@/lib/api/utils";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
-  // Rate limit: 60 requests per minute
-  const rl = checkRateLimit("stats", 60, 60000);
+export async function GET(request: NextRequest) {
+  // Rate limit: 60 requests per minute per IP
+  const rl = checkRateLimit("stats", request, 60, 60000);
 
   if (!rl.allowed) {
     const response = NextResponse.json(
@@ -51,7 +51,7 @@ export async function GET() {
       timestamp: new Date().toISOString(),
     });
 
-    // Add Cache-Control headers: cache for 5 minutes, serve stale for 10 minutes while revalidating
+    // Cache-Control: cache for 5 minutes, serve stale for 10 minutes while revalidating
     response.headers.set(
       "Cache-Control",
       "public, s-maxage=300, stale-while-revalidate=600"

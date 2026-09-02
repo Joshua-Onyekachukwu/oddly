@@ -40,7 +40,7 @@ import { accumulatorQuerySchema, accumulatorCreateSchema, validateQuery, validat
 export async function GET(request: NextRequest) {
   try {
     const { user, supabase } = await requireAuth(request);
-    const rl = checkRateLimit(`acc:${user.id}`, 60, 60000);
+    const rl = checkRateLimit(`acc:${user.id}`, request, 60, 60000);
 
     const { searchParams } = new URL(request.url);
     const validation = validateQuery(accumulatorQuerySchema, searchParams);

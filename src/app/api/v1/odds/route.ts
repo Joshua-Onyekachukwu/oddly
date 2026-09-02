@@ -27,7 +27,7 @@ const oddsCache = new Map<string, { data: unknown; expiresAt: number }>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 export async function GET(request: NextRequest) {
-  const rl = checkRateLimit("odds", 30, 60000); // 30 req/min (external API has its own limits)
+  const rl = checkRateLimit("odds", request, 30, 60000); // 30 req/min (external API has its own limits)
 
   const { searchParams } = new URL(request.url);
   const sport = searchParams.get("sport") || "soccer_epl";

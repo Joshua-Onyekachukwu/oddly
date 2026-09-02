@@ -65,8 +65,8 @@ export async function POST(request: NextRequest) {
     // Rate limit check
     const dailyLimit = (RATE_LIMITS.aiChat as Record<string, number>)[userTier] ?? RATE_LIMITS.aiChat.free;
     if (userId && dailyLimit !== -1) {
-      const rlKey = userRateLimitKey(userId, "ai-chat-daily");
-      const rl = checkRateLimit(rlKey, dailyLimit, RATE_LIMITS.aiChat.windowMs);
+      const rlKey = `user:${userId}:ai-chat-daily`;
+      const rl = checkRateLimit(rlKey, request, dailyLimit, RATE_LIMITS.aiChat.windowMs);
       if (!rl.allowed) {
         return addRateLimitHeaders(
           NextResponse.json(

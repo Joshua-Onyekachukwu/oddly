@@ -44,7 +44,7 @@ interface FixtureRow {
 
 export async function GET(request: NextRequest) {
   // Rate limit
-  const rl = checkRateLimit("fixtures", 120, 60000);
+  const rl = checkRateLimit("fixtures", request, 120, 60000);
 
   const { searchParams } = new URL(request.url);
 

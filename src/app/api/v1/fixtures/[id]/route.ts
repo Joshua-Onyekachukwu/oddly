@@ -21,7 +21,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const rl = checkRateLimit(`fixture:${id}`, 120, 60000);
+  const rl = checkRateLimit(`fixture:${id}`, request, 120, 60000);
 
   try {
     const supabase = createClient<Database>(

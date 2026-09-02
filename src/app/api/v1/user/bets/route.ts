@@ -42,7 +42,7 @@ import { userBetCreateSchema, validateBody } from "@/lib/api/validation";
 export async function GET(request: NextRequest) {
   try {
     const { user, supabase } = await requireAuth(request);
-    const rl = checkRateLimit(`bets:${user.id}`, 60, 60000);
+    const rl = checkRateLimit(`bets:${user.id}`, request, 60, 60000);
 
     const { searchParams } = new URL(request.url);
     const { page, pageSize, offset } = parsePagination(searchParams);
