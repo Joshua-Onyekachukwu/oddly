@@ -63,9 +63,12 @@ async function runPredictionPipeline(): Promise<{
 
   console.log(`[PREDICT] Found ${fixtures.length} fixtures in prediction window`);
 
-  // Pre-load Elo and form
+  // Pre-load Elo and form with NORMALIZED team names
   const eloMap: Record<string, number> = {};
   const formMap: Record<string, { gf: number; ga: number; isHome: boolean }[]> = {};
+
+  // Import normalizer
+  const { normalizeTeamName } = await import("@/lib/football/team-normalizer");
 
   const { data: histFixtures } = await supabaseAdmin
     .from("fixtures")
@@ -81,8 +84,12 @@ async function runPredictionPipeline(): Promise<{
 
   if (histFixtures) {
     for (const f of histFixtures) {
-      const home = (f as any).home?.canonical_name;
-      const away = (f as any).away?.canonical_name;
+      const homeRaw = (f as any).home?.canonical_name;
+      const awayRaw = (f as any).away?.canonical_name;
+      if (!homeRaw || !awayRaw) continue;
+      // Normalize both team names for consistent lookups
+      const home = normalizeTeamName(homeRaw);
+      const away = normalizeTeamName(awayRaw);
       if (!home || !away) continue;
       const h = (eloMap[home] || 1500) + 65;
       const a = eloMap[away] || 1500;
@@ -99,7 +106,7 @@ async function runPredictionPipeline(): Promise<{
     }
   }
 
-  console.log(`[PREDICT] Loaded ${histFixtures?.length || 0} historical matches for Elo/form`);
+  console.log(`[PREDICT] Loaded ${histFixtures?.length || 0} historical matches for Elo/form (${Object.keys(eloMap).length} teams)`);
 
   // IDEMPOTENCY: Check which fixtures already have pending predictions
   const fixtureIds = fixtures.map((f) => f.id);
@@ -123,8 +130,12 @@ async function runPredictionPipeline(): Promise<{
   for (const fixture of fixtures) {
     if (existingFixtureIds.has(fixture.id)) continue;
 
-    const home = (fixture as any).home?.canonical_name;
-    const away = (fixture as any).away?.canonical_name;
+    const homeRaw = (fixture as any).home?.canonical_name;
+    const awayRaw = (fixture as any).away?.canonical_name;
+    if (!homeRaw || !awayRaw) continue;
+    // Normalize fixture team names to match form/Elo map keys
+    const home = normalizeTeamName(homeRaw);
+    const away = normalizeTeamName(awayRaw);
     if (!home || !away) continue;
 
     try {
