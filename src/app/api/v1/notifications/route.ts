@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireAuth } from "@/lib/api/utils";
 
 /**
  * Push Notification API for ELITE Picks
@@ -25,6 +26,8 @@ interface PushSubscription {
 // POST: Send notification
 export async function POST(request: NextRequest) {
   try {
+    await requireAuth(request);
+
     const body = await request.json();
     const { type, data } = body;
 
@@ -102,7 +105,13 @@ export async function POST(request: NextRequest) {
 }
 
 // GET: Get recent notifications
-export async function GET() {
+export async function GET(request: NextRequest) {
+  try {
+    await requireAuth(request);
+  } catch {
+    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+  }
+
   const notifications = JSON.parse(
     typeof globalThis !== "undefined"
       ? (globalThis as any).__notifications || "[]"
