@@ -14,6 +14,7 @@ import { createClient } from "@supabase/supabase-js";
 import * as fs from "fs";
 import * as path from "path";
 import { predictMatchEnsemble, checkPrediction, resetBatchCaches } from "@/lib/models/ensemble";
+import { normalizeTeamName } from "@/lib/football/team-normalizer";
 import { withLock } from "@/lib/cron/lock";
 import { startRun, completeRun, type CronRunResult } from "@/lib/cron/logger";
 
@@ -181,8 +182,8 @@ async function phasePredict(now: Date, isPeak: boolean): Promise<PhaseResult> {
       .limit(2000);
 
     for (const f of histFixtures || []) {
-      const home = (f as any).home?.canonical_name;
-      const away = (f as any).away?.canonical_name;
+      const home = normalizeTeamName((f as any).home?.canonical_name);
+      const away = normalizeTeamName((f as any).away?.canonical_name);
       if (!home || !away) continue;
       const h = (eloMap[home] || 1500) + 65;
       const a = eloMap[away] || 1500;
@@ -215,7 +216,7 @@ async function phasePredict(now: Date, isPeak: boolean): Promise<PhaseResult> {
     const teamIds = [...new Set(fixtures.flatMap((f) => [f.home_team_id, f.away_team_id]))];
     const { data: teams } = await supabaseAdmin.from("teams").select("id, canonical_name").in("id", teamIds);
     const teamMap: Record<string, string> = {};
-    for (const t of teams || []) teamMap[t.id] = t.canonical_name;
+    for (const t of teams || []) teamMap[t.id] = normalizeTeamName(t.canonical_name);
 
     // IDEMPOTENCY: Skip fixtures with existing pending predictions
     const fixtureIds = fixtures.map((f) => f.id);
@@ -296,7 +297,7 @@ async function phaseCLVSnapshot(now: Date): Promise<PhaseResult> {
     const teamIds = [...new Set(fixtures.flatMap((f) => [f.home_team_id, f.away_team_id]))];
     const { data: teams } = await supabaseAdmin.from("teams").select("id, canonical_name").in("id", teamIds);
     const teamMap: Record<string, string> = {};
-    for (const t of teams || []) teamMap[t.id] = t.canonical_name;
+    for (const t of teams || []) teamMap[t.id] = normalizeTeamName(t.canonical_name);
 
     const clvData = loadCLVSnapshots();
     let snapshotCount = 0;
@@ -453,7 +454,7 @@ async function phasePreMatchUpdate(now: Date): Promise<PhaseResult> {
     const teamIds = [...new Set(fixtures.flatMap((f) => [f.home_team_id, f.away_team_id]))];
     const { data: teams } = await supabaseAdmin.from("teams").select("id, canonical_name").in("id", teamIds);
     const teamMap: Record<string, string> = {};
-    for (const t of teams || []) teamMap[t.id] = t.canonical_name;
+    for (const t of teams || []) teamMap[t.id] = normalizeTeamName(t.canonical_name);
 
     const clvFeatures = loadCLVFeatures();
     let updated = 0;
@@ -519,7 +520,7 @@ async function phaseFinalPick(now: Date): Promise<PhaseResult> {
     const teamIds = [...new Set(fixtures.flatMap((f) => [f.home_team_id, f.away_team_id]))];
     const { data: teams } = await supabaseAdmin.from("teams").select("id, canonical_name").in("id", teamIds);
     const teamMap: Record<string, string> = {};
-    for (const t of teams || []) teamMap[t.id] = t.canonical_name;
+    for (const t of teams || []) teamMap[t.id] = normalizeTeamName(t.canonical_name);
 
     const clvFeatures = loadCLVFeatures();
     const candidates: any[] = [];
@@ -715,17 +716,29 @@ export async function POST(request: NextRequest) {
     await requireAdmin(request);
 
     console.log("[MANUAL] Pipeline triggered from admin");
+    const executionId = await startRun("pipeline", "manual");
     const lockResult = await withLock("pipeline", runPipeline, { leaseSeconds: 900 });
 
     if (!lockResult.acquired) {
+      await completeRun(executionId, { status: "SKIPPED", errorMessage: lockResult.error });
       return NextResponse.json({ success: true, skipped: true, reason: lockResult.error });
     }
 
     if (lockResult.error) {
+      await completeRun(executionId, {
+        status: "FAILED", errorMessage: lockResult.error, durationMs: lockResult.durationMs,
+      });
       return NextResponse.json({ error: lockResult.error }, { status: 500 });
     }
 
     const { results, phasesRun, totalActions, isPeak } = lockResult.result!;
+    await completeRun(executionId, {
+      status: "SUCCESS",
+      recordsProcessed: totalActions,
+      durationMs: lockResult.durationMs,
+      metadata: { phasesRun, isPeak },
+    });
+
     return NextResponse.json({
       success: true,
       duration: `${lockResult.durationMs}ms`,

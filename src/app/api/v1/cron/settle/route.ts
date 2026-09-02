@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { predictMatchEnsemble, checkPrediction } from "@/lib/models/ensemble";
+import { normalizeTeamName } from "@/lib/football/team-normalizer";
 import { withLock } from "@/lib/cron/lock";
 import { startRun, completeRun, type CronRunResult } from "@/lib/cron/logger";
 
@@ -71,15 +72,15 @@ async function runSettlement(): Promise<SettleResult> {
     predByFixture[p.fixture_id].push(p);
   }
 
-  // Pre-build Elo and form maps
+  // Pre-build Elo and form maps (normalized to match ensemble expectations)
   const eloMap: Record<string, number> = {};
   const formMap: Record<string, Array<{ gf: number; ga: number; isHome: boolean }>> = {};
   const sortedFixtures = [...fixtures].sort(
     (a, b) => (a.kickoff_time || "").localeCompare(b.kickoff_time || "")
   );
   for (const f of sortedFixtures) {
-    const hs = (f.home_team as any)?.canonical_name || "Home";
-    const as = (f.away_team as any)?.canonical_name || "Away";
+    const hs = normalizeTeamName((f.home_team as any)?.canonical_name || "Home");
+    const as = normalizeTeamName((f.away_team as any)?.canonical_name || "Away");
     const hg = f.home_score || 0;
     const ag = f.away_score || 0;
     const h = (eloMap[hs] || 1500) + 65;
@@ -106,8 +107,8 @@ async function runSettlement(): Promise<SettleResult> {
     const preds = predByFixture[fixture.id] || [];
     if (preds.length === 0) continue;
 
-    const hs = (fixture.home_team as any)?.canonical_name || "Home";
-    const as = (fixture.away_team as any)?.canonical_name || "Away";
+    const hs = normalizeTeamName((fixture.home_team as any)?.canonical_name || "Home");
+    const as = normalizeTeamName((fixture.away_team as any)?.canonical_name || "Away");
     const homeScore = fixture.home_score || 0;
     const awayScore = fixture.away_score || 0;
 
@@ -125,6 +126,18 @@ async function runSettlement(): Promise<SettleResult> {
       };
     }
 
+    // Pre-compute failure diagnostics from ensemble output
+    const subModelProbs = ensemblePred ? {
+      home: ensemblePred.models?.oneXtwo?.home ?? null,
+      draw: ensemblePred.models?.oneXtwo?.draw ?? null,
+      away: ensemblePred.models?.oneXtwo?.away ?? null,
+      over25: ensemblePred.models?.goals?.over25 ?? null,
+      bttsYes: ensemblePred.models?.btts?.bttsYes ?? null,
+      dc1X: ensemblePred.models?.dc?.dc1X ?? null,
+      expectedGoals: ensemblePred.models?.goals?.expectedGoals ?? null,
+      signals: ensemblePred.signals ?? null,
+    } : null;
+
     for (const p of preds) {
       if (p.result && p.result !== "pending") continue;
       const isCorrect = checkPrediction(pred, p.market, p.selection, homeScore, awayScore);
@@ -132,9 +145,62 @@ async function runSettlement(): Promise<SettleResult> {
       if (isCorrect) correct++;
       else incorrect++;
 
+      // Build update payload
+      const updatePayload: Record<string, any> = {
+        result: isCorrect ? "correct" : "wrong",
+        settled_at: new Date().toISOString(),
+      };
+
+      // On wrong predictions, store failure diagnostics
+      if (!isCorrect && ensemblePred) {
+        // Model disagreement: std dev of sub-model probabilities for the predicted selection
+        const sel = (p.selection || "").toLowerCase();
+        let disagreement = 0;
+        if (subModelProbs) {
+          const probs = [
+            subModelProbs.home,
+            subModelProbs.draw,
+            subModelProbs.away,
+          ].filter((v): v is number => v != null);
+          if (probs.length > 1) {
+            const mean = probs.reduce((s, v) => s + v, 0) / probs.length;
+            disagreement = Math.sqrt(probs.reduce((s, v) => s + Math.pow(v - mean, 2), 0) / probs.length);
+          }
+        }
+
+        // Actual outcome description
+        const totalGoals = homeScore + awayScore;
+        const outcome = homeScore > awayScore ? "home" : homeScore < awayScore ? "away" : "draw";
+        const bothScored = homeScore > 0 && awayScore > 0;
+
+        // Why it failed: compare ensemble prediction to actual
+        const ensembleProb = p.model_probability || 0;
+        const impliedEdge = ensembleProb - (p.odds_value || 0);
+
+        updatePayload.sub_model_probabilities = subModelProbs;
+        updatePayload.model_disagreement = Math.round(disagreement * 10000) / 10000;
+        updatePayload.features_used = {
+          failure_summary: {
+            predicted_selection: sel,
+            actual_outcome: outcome,
+            actual_score: `${homeScore}-${awayScore}`,
+            total_goals: totalGoals,
+            both_scored: bothScored,
+            ensemble_confidence: ensembleProb,
+            model_version: p.model_version || ensemblePred.modelVersion,
+            disagreement: Math.round(disagreement * 10000) / 10000,
+            key_signals: ensemblePred.signals ? Object.entries(ensemblePred.signals)
+              .filter(([, v]: [string, any]) => v && v.strength !== undefined)
+              .map(([k, v]: [string, any]) => ({ signal: k, strength: v.strength, direction: v.direction }))
+              : [],
+            settlement_date: new Date().toISOString(),
+          },
+        };
+      }
+
       await supabaseAdmin
         .from("predictions")
-        .update({ result: isCorrect ? "correct" : "wrong", settled_at: new Date().toISOString() })
+        .update(updatePayload)
         .eq("id", p.id)
         .eq("result", "pending");
     }

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
+import { withLock } from "@/lib/cron/lock";
+import { startRun, completeRun, type CronRunResult } from "@/lib/cron/logger";
 
 /**
  * Verify the request is from Vercel Cron or an authorized caller.
@@ -192,36 +194,33 @@ async function runCleanup(): Promise<{
  */
 export async function GET(request: NextRequest) {
   try {
-    if (isAuthorizedCron(request)) {
-      const authHeader = request.headers.get("authorization");
-      const cronSecret = process.env.VERCEL_CRON_SECRET;
-
-      if (cronSecret && authHeader === `Bearer ${cronSecret}`) {
-        console.log("[CRON] Starting daily cleanup...");
-        const result = await runCleanup();
-        console.log(`[CRON] Cleanup completed in ${result.duration} — ${result.totalDeleted} rows deleted`);
-        return NextResponse.json(result);
-      }
+    if (!isAuthorizedCron(request)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Status check
-    return NextResponse.json({
-      status: "ready",
-      schedule: "Daily at 03:00 UTC",
-      description: "Purges old notifications, expired predictions, stale odds, and finished fixtures",
-      retention: {
-        "notifications (>30d read >7d)": "30 / 7 days",
-        "odds_snapshots": "14 days",
-        "predictions": "7 days",
-        "recommendations": "30 days",
-        "ai_cache": "24 hours",
-        "admin_activity_log": "90 days",
-        "training_log": "60 days",
-        "model_performance": "90 days",
-        "fixtures (finished)": "30 days",
-        "rollover_chains (inactive)": "30 days",
-      },
+    console.log("[CRON] Starting daily cleanup...");
+    const executionId = await startRun("cleanup", "cron");
+    const lockResult = await withLock("cleanup", runCleanup, { leaseSeconds: 600 });
+
+    if (!lockResult.acquired) {
+      await completeRun(executionId, { status: "SKIPPED", errorMessage: lockResult.error });
+      return NextResponse.json({ success: true, skipped: true, reason: lockResult.error });
+    }
+
+    if (lockResult.error) {
+      await completeRun(executionId, { status: "FAILED", errorMessage: lockResult.error, durationMs: lockResult.durationMs });
+      return NextResponse.json({ error: lockResult.error }, { status: 500 });
+    }
+
+    const result = lockResult.result!;
+    await completeRun(executionId, {
+      status: "SUCCESS",
+      recordsProcessed: result.totalDeleted,
+      durationMs: lockResult.durationMs,
     });
+
+    console.log(`[CRON] Cleanup completed in ${result.duration} — ${result.totalDeleted} rows deleted`);
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Cleanup error:", error);
     return NextResponse.json(
@@ -237,12 +236,31 @@ export async function GET(request: NextRequest) {
  * Manual trigger from admin dashboard.
  */
 export async function POST(request: NextRequest) {
-  if (!isAuthorizedCron(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
   try {
+    const { requireAdmin } = await import("@/lib/api/utils");
+    await requireAdmin(request);
+
     console.log("[MANUAL] Cleanup triggered");
-    const result = await runCleanup();
+    const executionId = await startRun("cleanup", "manual");
+    const lockResult = await withLock("cleanup", runCleanup, { leaseSeconds: 600 });
+
+    if (!lockResult.acquired) {
+      await completeRun(executionId, { status: "SKIPPED", errorMessage: lockResult.error });
+      return NextResponse.json({ success: true, skipped: true, reason: lockResult.error });
+    }
+
+    if (lockResult.error) {
+      await completeRun(executionId, { status: "FAILED", errorMessage: lockResult.error, durationMs: lockResult.durationMs });
+      return NextResponse.json({ error: lockResult.error }, { status: 500 });
+    }
+
+    const result = lockResult.result!;
+    await completeRun(executionId, {
+      status: "SUCCESS",
+      recordsProcessed: result.totalDeleted,
+      durationMs: lockResult.durationMs,
+    });
+
     console.log(`[MANUAL] Cleanup completed in ${result.duration} — ${result.totalDeleted} rows deleted`);
     return NextResponse.json(result);
   } catch (error) {

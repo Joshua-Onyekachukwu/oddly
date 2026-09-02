@@ -9,6 +9,7 @@
  */
 
 import { createClient } from "@supabase/supabase-js";
+import { normalizeTeamName } from "@/lib/football/team-normalizer";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || "",
@@ -43,11 +44,15 @@ function loadEnsemble() {
 let leagueParamsCache: Record<string, any> = {};
 let injuryCache: { data: any[]; loaded: boolean } = { data: [], loaded: false };
 let weightConfigCache: any = null;
+let restDaysCache: Record<string, string> = {};
+let restDaysLoaded = false;
 
 export function resetBatchCaches() {
   leagueParamsCache = {};
   injuryCache = { data: [], loaded: false };
   weightConfigCache = null;
+  restDaysCache = {};
+  restDaysLoaded = false;
   console.log("[ENSEMBLE] Batch caches reset");
 }
 
@@ -279,37 +284,49 @@ export async function predictMatchEnsemble(
   const homeStats = getTeamStats(form[homeName] || []);
   const awayStats = getTeamStats(form[awayName] || []);
 
-  // ── Compute rest days from fixture dates ──
+  // ── Compute rest days from fixture dates (batch-cached) ──
   let restDaysHome = 4;
   let restDaysAway = 4;
   try {
-    // Get last 2 finished fixtures for each team
-    const { data: homeFixtures } = await supabaseAdmin
-      .from("fixtures")
-      .select("id, kickoff_time, home:teams!fixtures_home_team_id_fkey(canonical_name), away:teams!fixtures_away_team_id_fkey(canonical_name)")
-      .eq("status", "finished")
-      .or(`home.team.canonical_name.eq.${homeName},away.team.canonical_name.eq.${homeName}`)
-      .order("kickoff_time", { ascending: false })
-      .limit(2);
-
-    const { data: awayFixtures } = await supabaseAdmin
-      .from("fixtures")
-      .select("id, kickoff_time, home:teams!fixtures_home_team_id_fkey(canonical_name), away:teams!fixtures_away_team_id_fkey(canonical_name)")
-      .eq("status", "finished")
-      .or(`home.team.canonical_name.eq.${awayName},away.team.canonical_name.eq.${awayName}`)
-      .order("kickoff_time", { ascending: false })
-      .limit(2);
-
-    // Compute rest days relative to the upcoming match kickoff (not now)
     const matchTime = matchKickoff ? new Date(matchKickoff) : new Date();
-    if (homeFixtures?.length && (homeFixtures[0] as any).kickoff_time) {
-      const lastKickoff = new Date((homeFixtures[0] as any).kickoff_time);
-      const diffDays = (matchTime.getTime() - lastKickoff.getTime()) / (1000 * 60 * 60 * 24);
+
+    // Batch-load rest days for all teams on first call this cron run
+    if (!restDaysLoaded) {
+      const { data: recentFixtures } = await supabaseAdmin
+        .from("fixtures")
+        .select("kickoff_time, home:teams!fixtures_home_team_id_fkey(canonical_name), away:teams!fixtures_away_team_id_fkey(canonical_name)")
+        .eq("status", "finished")
+        .gte("kickoff_time", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+        .order("kickoff_time", { ascending: false })
+        .limit(2000);
+
+      // For each team, find their most recent fixture before the query cutoff
+      const teamLastFixture: Record<string, string> = {};
+      for (const f of recentFixtures || []) {
+        const teams = [
+          (f as any).home?.canonical_name,
+          (f as any).away?.canonical_name,
+        ].filter(Boolean);
+        for (const teamName of teams) {
+          const normalized = normalizeTeamName(teamName);
+          if (!teamLastFixture[normalized] && f.kickoff_time) {
+            teamLastFixture[normalized] = f.kickoff_time;
+          }
+        }
+      }
+      restDaysCache = teamLastFixture;
+      restDaysLoaded = true;
+    }
+
+    // Look up rest days from batch cache (try both raw and normalized keys)
+    const lastHome = restDaysCache[homeName] || restDaysCache[normalizeTeamName(homeName)];
+    const lastAway = restDaysCache[awayName] || restDaysCache[normalizeTeamName(awayName)];
+    if (lastHome) {
+      const diffDays = (matchTime.getTime() - new Date(lastHome).getTime()) / (1000 * 60 * 60 * 24);
       restDaysHome = Math.max(1, Math.min(14, Math.round(diffDays)));
     }
-    if (awayFixtures?.length && (awayFixtures[0] as any).kickoff_time) {
-      const lastKickoff = new Date((awayFixtures[0] as any).kickoff_time);
-      const diffDays = (matchTime.getTime() - lastKickoff.getTime()) / (1000 * 60 * 60 * 24);
+    if (lastAway) {
+      const diffDays = (matchTime.getTime() - new Date(lastAway).getTime()) / (1000 * 60 * 60 * 24);
       restDaysAway = Math.max(1, Math.min(14, Math.round(diffDays)));
     }
   } catch {}

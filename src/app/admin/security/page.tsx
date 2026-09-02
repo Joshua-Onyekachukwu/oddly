@@ -12,6 +12,16 @@ interface RouteAuthStatus {
   rateLimited: boolean;
 }
 
+interface RLSAuditResult {
+  table_name: string;
+  rls_enabled: boolean;
+  anon_readable: boolean;
+  service_readable: boolean;
+  should_have_rls: boolean;
+  policy_count: number;
+  status: "SECURE" | "PUBLICLY_READABLE" | "NO_RLS" | "UNKNOWN";
+}
+
 interface SecurityData {
   summary: {
     overallScore: number;
@@ -27,8 +37,9 @@ interface SecurityData {
   };
   authCoverage: RouteAuthStatus[];
   unauthedRoutes: RouteAuthStatus[];
-  rlsPolicies: Array<{ table_name: string; rls_enabled: boolean; policy_count: number }>;
-  tablesWithoutRLS: string[];
+  rlsAudit: RLSAuditResult[];
+  tablesPubliclyReadable: string[];
+  tablesWithoutRls: string[];
   timestamp: string;
 }
 
@@ -117,7 +128,7 @@ export default function SecurityPage() {
     );
   }
 
-  const { summary, authCoverage, unauthedRoutes, rlsPolicies, tablesWithoutRLS } = data;
+  const { summary, authCoverage, unauthedRoutes, rlsAudit, tablesPubliclyReadable, tablesWithoutRls } = data;
 
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-6">
@@ -173,16 +184,32 @@ export default function SecurityPage() {
         </div>
       )}
 
-      {tablesWithoutRLS.length > 0 && (
+      {tablesPubliclyReadable.length > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <i className="ri-error-warning-line text-red-500" />
+            <span className="text-[13px] font-semibold text-red-800">
+              {tablesPubliclyReadable.length} table{tablesPubliclyReadable.length > 1 ? "s" : ""} readable by anon key
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-2 ml-6">
+            {tablesPubliclyReadable.map((t, i) => (
+              <Badge key={i} variant="danger">{t}</Badge>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {tablesWithoutRls.length > 0 && tablesPubliclyReadable.length === 0 && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
             <i className="ri-shield-line text-amber-500" />
             <span className="text-[13px] font-semibold text-amber-800">
-              {tablesWithoutRLS.length} table{tablesWithoutRLS.length > 1 ? "s" : ""} without RLS
+              {tablesWithoutRls.length} table{tablesWithoutRls.length > 1 ? "s" : ""} without RLS policies
             </span>
           </div>
           <div className="flex flex-wrap gap-2 ml-6">
-            {tablesWithoutRLS.map((t, i) => (
+            {tablesWithoutRls.map((t, i) => (
               <Badge key={i} variant="warning">{t}</Badge>
             ))}
           </div>
@@ -235,13 +262,13 @@ export default function SecurityPage() {
         </div>
       </div>
 
-      {/* RLS Status */}
-      {rlsPolicies.length > 0 && (
+      {/* RLS Audit — Active Probing */}
+      {rlsAudit.length > 0 && (
         <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
           <div className="px-5 py-4 border-b border-gray-100">
-            <h2 className="text-[14px] font-semibold text-[#0A0F1C]">RLS Policy Status</h2>
+            <h2 className="text-[14px] font-semibold text-[#0A0F1C]">RLS Audit — Active Probing</h2>
             <p className="text-[11px] text-gray-400 mt-0.5">
-              {summary.tablesWithRLS}/{summary.totalTables} tables with RLS enabled
+              Each sensitive table probed with anon key. {summary.tablesWithRLS}/{summary.totalTables} secure
             </p>
           </div>
           <div className="overflow-x-auto">
@@ -249,19 +276,31 @@ export default function SecurityPage() {
               <thead>
                 <tr className="border-b border-gray-50">
                   <th className="text-left px-5 py-2.5 text-gray-400 font-medium">Table</th>
-                  <th className="text-left px-3 py-2.5 text-gray-400 font-medium">RLS</th>
+                  <th className="text-left px-3 py-2.5 text-gray-400 font-medium">Status</th>
+                  <th className="text-left px-3 py-2.5 text-gray-400 font-medium">Anon Access</th>
                   <th className="text-left px-3 py-2.5 text-gray-400 font-medium">Policies</th>
                 </tr>
               </thead>
               <tbody>
-                {rlsPolicies.map((table, i) => (
-                  <tr key={i} className="border-b border-gray-50 last:border-0 hover:bg-gray-50">
+                {rlsAudit.map((table, i) => (
+                  <tr key={i} className={`border-b border-gray-50 last:border-0 hover:bg-gray-50 ${table.status === "PUBLICLY_READABLE" ? "bg-red-50/50" : ""}`}>
                     <td className="px-5 py-2.5 font-mono text-[#0A0F1C]">{table.table_name}</td>
                     <td className="px-3 py-2.5">
-                      {table.rls_enabled ? (
-                        <Badge variant="success">Enabled</Badge>
+                      {table.status === "SECURE" ? (
+                        <Badge variant="success">Secure</Badge>
+                      ) : table.status === "PUBLICLY_READABLE" ? (
+                        <Badge variant="danger">Exposed</Badge>
+                      ) : table.status === "NO_RLS" ? (
+                        <Badge variant="warning">No RLS</Badge>
                       ) : (
-                        <Badge variant="danger">Disabled</Badge>
+                        <Badge variant="neutral">Unknown</Badge>
+                      )}
+                    </td>
+                    <td className="px-3 py-2.5">
+                      {table.anon_readable ? (
+                        <span className="text-red-600 font-medium">Yes</span>
+                      ) : (
+                        <span className="text-green-600">Blocked</span>
                       )}
                     </td>
                     <td className="px-3 py-2.5 font-mono">{table.policy_count}</td>
