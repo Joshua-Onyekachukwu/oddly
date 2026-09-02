@@ -376,6 +376,10 @@ export async function GET(request: NextRequest) {
         const { errorResponse: errResp } = await import("@/lib/api/utils");
         return errResp("FORBIDDEN", authErr.message, 403);
       }
+      if (authErr.code === "UNAUTHORIZED") {
+        const { errorResponse: errResp } = await import("@/lib/api/utils");
+        return errResp("UNAUTHORIZED", authErr.message, 401);
+      }
     }
     console.error("GET /api/v1/admin/picks error:", error);
     return internalError();

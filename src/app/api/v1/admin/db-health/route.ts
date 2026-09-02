@@ -85,6 +85,17 @@ export async function GET(request: NextRequest) {
       timestamp: new Date().toISOString(),
     });
   } catch (error: unknown) {
+    if (error && typeof error === "object" && "code" in error) {
+      const authErr = error as { code: string; message: string; status: number };
+      if (authErr.code === "FORBIDDEN") {
+        const { errorResponse } = await import("@/lib/api/utils");
+        return errorResponse("FORBIDDEN", authErr.message, 403);
+      }
+      if (authErr.code === "UNAUTHORIZED") {
+        const { errorResponse } = await import("@/lib/api/utils");
+        return errorResponse("UNAUTHORIZED", authErr.message, 401);
+      }
+    }
     console.error("GET /api/v1/admin/db-health error:", error);
     return internalError();
   }
