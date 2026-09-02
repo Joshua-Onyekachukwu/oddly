@@ -158,14 +158,33 @@ function getTeamInjuries(teamName) {
 
 /**
  * Compute injury impact for a team.
+ * Uses player_importance (1-10) to weight impact: key players hurt more.
  */
 function getInjuryImpact(teamName) {
   const injuries = getTeamInjuries(teamName);
-  const ruledOut = injuries.filter((i) => i.status === "injured").length;
-  const suspended = injuries.filter((i) => i.status === "suspended").length;
-  const doubtful = injuries.filter((i) => i.status?.startsWith("doubtful")).length;
-  const impact = -(ruledOut * 0.025 + suspended * 0.02 + doubtful * 0.01);
-  return { ruled_out: ruledOut, suspended, doubtful, impact };
+  const ruledOut = injuries.filter((i) => i.status === "injured");
+  const suspended = injuries.filter((i) => i.status === "suspended");
+  const doubtful = injuries.filter((i) =>
+    i.status?.startsWith("doubtful") || i.status === "questionable" || i.status === "likely"
+  );
+
+  // Weighted impact: key players (importance 8-10) cause 2-3x more damage
+  const avgImportance = (list) => {
+    if (list.length === 0) return 0;
+    return list.reduce((s, i) => s + (i.player_importance || 5), 0) / list.length;
+  };
+
+  const injScore = ruledOut.length * (avgImportance(ruledOut) / 5) * 0.02;
+  const susScore = suspended.length * (avgImportance(suspended) / 5) * 0.025;
+  const douScore = doubtful.length * (avgImportance(doubtful) / 5) * 0.008;
+  const impact = -(injScore + susScore + douScore);
+
+  return {
+    ruled_out: ruledOut.length,
+    suspended: suspended.length,
+    doubtful: doubtful.length,
+    impact,
+  };
 }
 
 /**
