@@ -85,7 +85,13 @@ export async function POST(request: NextRequest) {
       results,
       timestamp: new Date().toISOString(),
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.code === "FORBIDDEN") {
+      return NextResponse.json({ error: error.message }, { status: 403 });
+    }
+    if (error?.code === "UNAUTHORIZED") {
+      return NextResponse.json({ error: error.message }, { status: 401 });
+    }
     console.error("[ADMIN PIPELINE] Error:", error);
     return NextResponse.json({ error: "Pipeline failed" }, { status: 500 });
   }
