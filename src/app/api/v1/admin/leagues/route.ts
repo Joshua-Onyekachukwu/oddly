@@ -67,6 +67,10 @@ export async function GET(request: NextRequest) {
         const { errorResponse } = await import("@/lib/api/utils");
         return errorResponse("FORBIDDEN", authErr.message, 403);
       }
+      if (authErr.code === "UNAUTHORIZED") {
+        const { errorResponse } = await import("@/lib/api/utils");
+        return errorResponse("UNAUTHORIZED", authErr.message, 401);
+      }
     }
     console.error("GET /api/v1/admin/leagues error:", error);
     return internalError();
@@ -115,6 +119,10 @@ export async function POST(request: NextRequest) {
       if (authErr.code === "FORBIDDEN") {
         const { errorResponse } = await import("@/lib/api/utils");
         return errorResponse("FORBIDDEN", authErr.message, 403);
+      }
+      if (authErr.code === "UNAUTHORIZED") {
+        const { errorResponse } = await import("@/lib/api/utils");
+        return errorResponse("UNAUTHORIZED", authErr.message, 401);
       }
     }
     console.error("POST /api/v1/admin/leagues error:", error);
