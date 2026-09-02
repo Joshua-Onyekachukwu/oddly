@@ -441,29 +441,28 @@ export function checkPrediction(
   const awayWin = homeScore < awayScore;
   const bothScore = homeScore > 0 && awayScore > 0;
   const sel = (selection || "").toLowerCase();
+  const mkt = (market || "").toLowerCase();
 
-  if (market === "1X2") {
+  if (mkt === "1x2") {
     return (sel === "home" && homeWin) || (sel === "draw" && draw) || (sel === "away" && awayWin);
   }
-  if (market.startsWith("ou_over_") || selection?.startsWith("Over_")) {
-    const line = parseFloat(market.split("_").pop() || selection?.split("_").pop() || "2.5");
-    return total > line;
+  // Over/Under: market is "over_under", selection is "over_2.5" or "under_2.5"
+  if (mkt === "over_under" || mkt.startsWith("ou")) {
+    const line = parseFloat(sel.split("_").pop() || "2.5");
+    if (sel.startsWith("over")) return total > line;
+    if (sel.startsWith("under")) return total < line;
   }
-  if (market.startsWith("ou_under_") || selection?.startsWith("Under_")) {
-    const line = parseFloat(market.split("_").pop() || selection?.split("_").pop() || "2.5");
-    return total < line;
-  }
-  if (market === "btts") return sel === "yes" ? bothScore : !bothScore;
-  if (market === "dc_1x") return homeScore >= awayScore;
-  if (market === "dc_x2") return homeScore <= awayScore;
-  if (market === "dc_12") return homeScore !== awayScore;
-  if (market === "dnb_home") return homeWin;
-  if (market === "dnb_away") return awayWin;
-  if (market === "homegoals_over_0.5") return homeScore > 0.5;
-  if (market === "homegoals_over_1.5") return homeScore > 1.5;
-  if (market === "awaygoals_over_0.5") return awayScore > 0.5;
-  if (market === "awaygoals_over_1.5") return awayScore > 1.5;
-  if (market === "smart_selection") {
+  if (mkt === "btts") return sel === "yes" ? bothScore : !bothScore;
+  if (mkt === "dc_1x" || mkt === "dc" && sel === "1x") return homeScore >= awayScore;
+  if (mkt === "dc_x2" || mkt === "dc" && sel === "x2") return homeScore <= awayScore;
+  if (mkt === "dc_12" || mkt === "dc" && sel === "12") return homeScore !== awayScore;
+  if (mkt === "dnb_home" || mkt === "dnb" && sel === "home") return homeWin;
+  if (mkt === "dnb_away" || mkt === "dnb" && sel === "away") return awayWin;
+  if (mkt === "homegoals_over_0.5" || mkt === "homegoals" && sel === "over_0.5") return homeScore > 0.5;
+  if (mkt === "homegoals_over_1.5" || mkt === "homegoals" && sel === "over_1.5") return homeScore > 1.5;
+  if (mkt === "awaygoals_over_0.5" || mkt === "awaygoals" && sel === "over_0.5") return awayScore > 0.5;
+  if (mkt === "awaygoals_over_1.5" || mkt === "awaygoals" && sel === "over_1.5") return awayScore > 1.5;
+  if (mkt === "smart_selection") {
     const ss = pred["smart_selection"];
     if (!ss) return false;
     return checkPrediction(pred, ss.market, ss.selection, homeScore, awayScore);
