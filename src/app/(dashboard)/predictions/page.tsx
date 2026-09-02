@@ -122,9 +122,10 @@ export default function PredictionsPage() {
         if (tier === "HIGH") highCount++;
 
         let impliedProb = null;
-        if (pred.selection === "Home" && hOdds) impliedProb = 1 / hOdds;
-        else if (pred.selection === "Draw" && dOdds) impliedProb = 1 / dOdds;
-        else if (pred.selection === "Away" && aOdds) impliedProb = 1 / aOdds;
+        const sel = (pred.selection || "").toLowerCase();
+        if (sel === "home" && hOdds) impliedProb = 1 / hOdds;
+        else if (sel === "draw" && dOdds) impliedProb = 1 / dOdds;
+        else if (sel === "away" && aOdds) impliedProb = 1 / aOdds;
 
         allPicks.push({
           fixture_id: fixture.id,

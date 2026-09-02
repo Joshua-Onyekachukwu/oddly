@@ -167,11 +167,12 @@ function predictBTTS(hs, as, h2h, eloDiff, lgAvg, xgHome, xgAway) {
 
 function settle(market, selection, hs, as) {
   const total = hs + as;
+  const sel = (selection || "").toLowerCase();
   switch (market) {
     case "1X2":
-      if (selection === "Home" && hs > as) return "correct";
-      if (selection === "Draw" && hs === as) return "correct";
-      if (selection === "Away" && hs < as) return "correct";
+      if (sel === "home" && hs > as) return "correct";
+      if (sel === "draw" && hs === as) return "correct";
+      if (sel === "away" && hs < as) return "correct";
       return "wrong";
     case "over_under":
       if (selection === "over_2.5") return total > 2.5 ? "correct" : "wrong";
