@@ -115,6 +115,10 @@ function buildFeatures(
     leagueHomeAdvantage?: number;
     homeHomeWinRate?: number;
     awayHomeWinRate?: number;
+    homeInjuryImpact?: number;
+    awayInjuryImpact?: number;
+    homeInjuriesRuledOut?: number;
+    awayInjuriesRuledOut?: number;
   }
 ) {
   const homeElo = elo[homeName] || 1500;
@@ -156,6 +160,11 @@ function buildFeatures(
     awayScoresRate: awayStats.scoresRate,
     homeConcedesRate: homeStats.concedesRate,
     awayConcedesRate: awayStats.concedesRate,
+    // Injury features (from feature-store-loader or Supabase player_injury_data)
+    homeInjuryImpact: extras?.homeInjuryImpact ?? 0,
+    awayInjuryImpact: extras?.awayInjuryImpact ?? 0,
+    homeInjuriesRuledOut: extras?.homeInjuriesRuledOut ?? 0,
+    awayInjuriesRuledOut: extras?.awayInjuriesRuledOut ?? 0,
     // New features
     restDaysHome: restHome,
     restDaysAway: restAway,
@@ -322,11 +331,48 @@ export async function predictMatchEnsemble(
     if (wc) storeData.weightConfig = wc;
   } catch {}
 
-  // Build features with rest days and league-specific home advantage
+  // ── Load injury data from feature store ──
+  let homeInjuryImpact = 0;
+  let awayInjuryImpact = 0;
+  let homeInjuriesRuledOut = 0;
+  let awayInjuriesRuledOut = 0;
+  try {
+    const { data: injData } = await supabaseAdmin
+      .from("player_injury_data")
+      .select("team_name, status, player_importance")
+      .in("team_name", [homeName, awayName]);
+    if (injData) {
+      const calcImpact = (teamInjuries: any[]) => {
+        const injured = teamInjuries.filter((i: any) => i.status === "injured");
+        const suspended = teamInjuries.filter((i: any) => i.status === "suspended");
+        const doubtful = teamInjuries.filter((i: any) =>
+          i.status?.startsWith("doubtful") || i.status === "questionable" || i.status === "likely"
+        );
+        const avgImp = (list: any[]) =>
+          list.length > 0 ? list.reduce((s: number, i: any) => s + (i.player_importance || 5), 0) / list.length : 0;
+        const injScore = injured.length * (avgImp(injured) / 5) * 0.02;
+        const susScore = suspended.length * (avgImp(suspended) / 5) * 0.025;
+        const douScore = doubtful.length * (avgImp(doubtful) / 5) * 0.008;
+        return { impact: -(injScore + susScore + douScore), ruledOut: injured.length };
+      };
+      const homeInj = calcImpact(injData.filter((i: any) => i.team_name === homeName));
+      const awayInj = calcImpact(injData.filter((i: any) => i.team_name === awayName));
+      homeInjuryImpact = homeInj.impact;
+      awayInjuryImpact = awayInj.impact;
+      homeInjuriesRuledOut = homeInj.ruledOut;
+      awayInjuriesRuledOut = awayInj.ruledOut;
+    }
+  } catch {}
+
+  // Build features with rest days, league-specific home advantage, and injury data
   const features = buildFeatures(homeStats, awayStats, elo, homeName, awayName, leagueAvgGoals, {
     restDaysHome,
     restDaysAway,
     leagueHomeAdvantage,
+    homeInjuryImpact,
+    awayInjuryImpact,
+    homeInjuriesRuledOut,
+    awayInjuriesRuledOut,
   });
 
   // Run ensemble prediction
