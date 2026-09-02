@@ -15,7 +15,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { requireAuth, checkRateLimit, addRateLimitHeaders } from "@/lib/api/utils";
-import { RATE_LIMITS, ipRateLimitKey } from "@/lib/api/rate-limits";
+import { RATE_LIMITS } from "@/lib/api/rate-limits";
 
 const supabaseAdmin = createClient<Database>(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
