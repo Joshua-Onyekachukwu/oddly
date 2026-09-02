@@ -81,6 +81,10 @@ export async function GET(request: NextRequest) {
         const { errorResponse } = await import("@/lib/api/utils");
         return errorResponse("FORBIDDEN", authErr.message, 403);
       }
+      if (authErr.code === "UNAUTHORIZED") {
+        const { errorResponse } = await import("@/lib/api/utils");
+        return errorResponse("UNAUTHORIZED", authErr.message, 401);
+      }
     }
     console.error("GET /api/v1/admin/users error:", error);
     return internalError();

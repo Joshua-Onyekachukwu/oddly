@@ -164,6 +164,12 @@ export async function GET(request: NextRequest) {
       timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
+    if (error?.code === "FORBIDDEN") {
+      return NextResponse.json({ error: error.message }, { status: 403 });
+    }
+    if (error?.code === "UNAUTHORIZED") {
+      return NextResponse.json({ error: error.message }, { status: 401 });
+    }
     console.error("GET /api/v1/admin/crons error:", error);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }

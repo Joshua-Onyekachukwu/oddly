@@ -42,3 +42,28 @@ GRANT SELECT ON league_model_params TO authenticated;
 
 COMMENT ON TABLE player_injury_data IS 'Player injury status — used by ensemble model. RLS blocks anon.';
 COMMENT ON TABLE league_model_params IS 'Per-league model parameters (home advantage, goal expectancy). RLS blocks anon.';
+
+-- ============================================
+-- FIXTURES: Allow anon SELECT (public match data)
+-- The /api/v1/fixtures route uses the anon key for the public matches page.
+-- Fixtures are public data — anyone should be able to see upcoming matches.
+-- ============================================
+
+ALTER TABLE fixtures ENABLE ROW LEVEL SECURITY;
+
+-- Allow anyone (including anon) to read fixtures
+DROP POLICY IF EXISTS "Public can read fixtures" ON fixtures;
+CREATE POLICY "Public can read fixtures"
+  ON fixtures FOR SELECT
+  USING (true);
+
+-- Service role retains full access for writes
+DROP POLICY IF EXISTS "Service role manages fixtures" ON fixtures;
+CREATE POLICY "Service role manages fixtures"
+  ON fixtures FOR ALL
+  USING (public.is_service_role());
+
+GRANT SELECT ON fixtures TO anon;
+GRANT SELECT ON fixtures TO authenticated;
+
+COMMENT ON TABLE fixtures IS 'Match fixtures — public read for matches page, service_role writes.';

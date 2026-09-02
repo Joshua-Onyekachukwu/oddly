@@ -135,7 +135,7 @@ function predict(features, crossSignals = {}) {
   // Over/Under lines
   const over05 = 1 - (totalDist[0] || 0);
   const over15 = 1 - (totalDist[0] + totalDist[1] || 0);
-  const over25 = 1 - (totalDist[0] + totalDist[1] + totalDist[2] || 0);
+  let over25 = 1 - (totalDist[0] + totalDist[1] + totalDist[2] || 0);
   const over35 = 1 - (totalDist.slice(0, 4).reduce((s, v) => s + v, 0));
   const over45 = 1 - (totalDist.slice(0, 5).reduce((s, v) => s + v, 0));
 
