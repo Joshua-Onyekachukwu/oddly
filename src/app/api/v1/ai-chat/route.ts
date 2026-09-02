@@ -5,7 +5,7 @@ import { getNVIDIAClient } from "@/lib/nvidia/client";
 import { buildChatMessages } from "@/lib/nvidia/prompts";
 import { aiChatSchema, validateBody } from "@/lib/api/validation";
 import { checkRateLimit, addRateLimitHeaders } from "@/lib/api/utils";
-import { RATE_LIMITS, userRateLimitKey } from "@/lib/api/rate-limits";
+import { RATE_LIMITS } from "@/lib/api/rate-limits";
 
 const supabaseAdmin = createClient<Database>(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,

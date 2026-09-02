@@ -48,5 +48,9 @@ Thumbs.db
 Desktop.ini
 .freebuff/
 
+# Python
+__pycache__/
+*.pyc
+
 .vercel
 .env*
