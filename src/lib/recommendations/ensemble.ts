@@ -69,7 +69,42 @@ export function toOddsKey(
     return { market: `over_under_${line}`, selection: match[1] };
   }
 
-  // BTTS, DC, DNB, HomeGoals, AwayGoals — no bookmaker odds market synced.
+  // BTTS yes/no → odds_snapshots (market "btts", selection "yes"/"no")
+  // written by the per-event sync pass in src/lib/sync/odds.ts.
+  if (m === "btts" || m === "both_teams_to_score") {
+    let sel = s;
+    if (sel.startsWith("btts_")) sel = sel.slice("btts_".length);
+    if (sel === "yes" || sel === "no") {
+      return { market: "btts", selection: sel };
+    }
+    return null;
+  }
+
+  // Double chance 1x/x2/12 (also compound "dc_1x" selection form).
+  // Odds snapshots store market "double_chance" (canonicalMarket → "dc").
+  if (m === "dc" || m === "double_chance" || m.startsWith("dc_")) {
+    let sel = s;
+    if (sel.startsWith("dc_")) sel = sel.slice("dc_".length);
+    // NVIDIA prompt spellings → canonical 1x/x2/12
+    if (sel === "home_or_draw") sel = "1x";
+    else if (sel === "draw_or_away") sel = "x2";
+    else if (sel === "home_or_away") sel = "12";
+    if (sel === "1x" || sel === "x2" || sel === "12") {
+      return { market: "double_chance", selection: sel };
+    }
+    return null;
+  }
+
+  // Draw no bet home/away → odds_snapshots market "draw_no_bet"
+  // (canonicalMarket → "dnb").
+  if (m === "dnb" || m === "draw_no_bet") {
+    if (s === "home" || s === "away") {
+      return { market: "draw_no_bet", selection: s };
+    }
+    return null;
+  }
+
+  // HomeGoals, AwayGoals — no bookmaker odds market synced.
   return null;
 }
 

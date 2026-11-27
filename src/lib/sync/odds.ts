@@ -30,6 +30,101 @@ const ODDS_SPORTS = [
   { key: "soccer_uefa_champs_league", league: "Champions League", country: "Europe" },
 ];
 
+// ─── Markets & quota budget ────────────────────────────────────────────
+//
+// The Odds API quota model: each request costs
+//   [unique markets returned] × [regions specified]  credits.
+// The bulk /sports/{sport}/odds endpoint only accepts FEATURED markets —
+// btts / double_chance / draw_no_bet are rejected with
+// 422 INVALID_MARKET ("Markets not supported by this endpoint"). They are
+// "additional markets" that must be fetched per event via
+// /sports/{sport}/events/{eventId}/odds (verified 2025-… live probe:
+// 3 markets × uk,eu cost 3 credits for one EPL event).
+//
+// Quota math for this sync (10 sports, regions=uk,eu → 2 regions):
+//   bulk featured:  |markets| × 2 credits per sport  → h2h,totals = 4/sport = 40/run
+//   extra markets:  up to |extra| × 2 credits per event (only markets the
+//                   bookmakers actually return are billed; observed ~3/event)
+//
+// Env knobs:
+//   ODDS_MARKETS            comma list, featured markets for the bulk call.
+//                           Default "h2h,totals" (anything else 422s).
+//   ODDS_EXTRA_MARKETS      comma list, additional markets fetched per event.
+//                           Default "btts,double_chance,draw_no_bet".
+//                           Set to "" to disable the per-event pass entirely.
+//   ODDS_EXTRA_CREDIT_BUDGET  max *estimated* credits the extra-market pass
+//                           may spend per run. Default 60 (~10-20 events).
+//   ODDS_EXTRA_MAX_EVENTS   hard cap on per-event calls per run. Default 50.
+//   ODDS_QUOTA_RESERVE      stop extra-market calls once the API reports
+//                           x-requests-remaining <= this. Default 50 — keeps
+//                           headroom for other consumers of the 500/mo key.
+
+const ODDS_REGIONS = ["uk", "eu"];
+const REGIONS_PARAM = ODDS_REGIONS.join(",");
+const BOOKMAKERS_PARAM = "bet365,pinnacle,betway,1xbet";
+
+/** Markets accepted by the bulk /odds endpoint for soccer. */
+const FEATURED_MARKETS = ["h2h", "totals"] as const;
+/** "Additional markets" — only via the per-event odds endpoint. */
+const EXTRA_MARKETS = ["btts", "double_chance", "draw_no_bet"] as const;
+
+function parseMarketList(
+  envValue: string | undefined,
+  allowed: readonly string[],
+  fallback: readonly string[]
+): string[] {
+  if (envValue === undefined) return [...fallback];
+  const requested = envValue
+    .split(",")
+    .map((m) => m.trim().toLowerCase())
+    .filter(Boolean);
+  // Empty string → user explicitly disabled the list.
+  if (requested.length === 0) return [];
+  const valid = new Set(allowed as readonly string[]);
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const m of requested) {
+    if (valid.has(m) && !seen.has(m)) {
+      seen.add(m);
+      out.push(m);
+    }
+  }
+  return out;
+}
+
+function intEnv(name: string, fallback: number): number {
+  const raw = process.env[name];
+  if (raw === undefined || raw.trim() === "") return fallback;
+  const n = parseInt(raw, 10);
+  return Number.isFinite(n) && n >= 0 ? n : fallback;
+}
+
+/** Featured (bulk endpoint) markets for this run. Never empty — the bulk
+ *  pass is the core sync; an empty ODDS_MARKETS falls back to defaults. */
+export function getFeaturedMarkets(): string[] {
+  const markets = parseMarketList(process.env.ODDS_MARKETS, FEATURED_MARKETS, FEATURED_MARKETS);
+  return markets.length ? markets : [...FEATURED_MARKETS];
+}
+
+/** Additional (per-event endpoint) markets for this run. */
+export function getExtraMarkets(): string[] {
+  return parseMarketList(
+    process.env.ODDS_EXTRA_MARKETS,
+    EXTRA_MARKETS,
+    EXTRA_MARKETS
+  );
+}
+
+function getExtraCreditBudget(): number {
+  return intEnv("ODDS_EXTRA_CREDIT_BUDGET", 60);
+}
+function getExtraMaxEvents(): number {
+  return intEnv("ODDS_EXTRA_MAX_EVENTS", 50);
+}
+function getQuotaReserve(): number {
+  return intEnv("ODDS_QUOTA_RESERVE", 50);
+}
+
 /**
  * Normalize team name for matching.
  */
@@ -336,6 +431,111 @@ async function createFixtureFromOdds(
 }
 
 /**
+ * Map one API outcome to canonical (market, selection) names used in
+ * odds_snapshots. The names are chosen so the recommendation joins resolve:
+ *   - ensemble.ts toOddsKey()          (predictions → odds_snapshots)
+ *   - rollover/recommendation route    (canonicalMarket + normKey aliases)
+ *   - nvidia/prediction-engine.ts      (`${market}_${selection}` raw key)
+ *
+ * Stored market keys are the API market keys for the new markets
+ * ("btts", "double_chance", "draw_no_bet") — canonicalMarket() maps them to
+ * btts/dc/dnb, matching the `predictions.market` values the ensemble writes.
+ *
+ * Verified against live API responses (soccer_epl, 2026-11 fixture):
+ *   btts           outcomes "Yes" / "No"
+ *   double_chance  outcomes "<Team> or Draw" / "<TeamA> or <TeamB>"
+ *   draw_no_bet    outcomes are team names (home/away only, no draw)
+ */
+export function mapOutcomeToSnapshot(
+  marketKey: string,
+  outcome: { name: string; price: number; point?: number },
+  fixture: Pick<OddsFixture, "home_team" | "away_team">
+): { market: string; selection: string } | null {
+  const home = fixture.home_team;
+  const away = fixture.away_team;
+
+  // ── Market name ──
+  let marketName: string;
+  switch (marketKey) {
+    case "h2h":
+      marketName = "match_result";
+      break;
+    case "totals": {
+      // over_under_<line> for any half-goal line the API returns
+      // (observed: 1.5 / 2.5 / 3.5; toOddsKey accepts 0.5–4.5).
+      const point = typeof outcome.point === "number" ? outcome.point : 2.5;
+      marketName = `over_under_${point}`;
+      break;
+    }
+    case "btts":
+    case "double_chance":
+    case "draw_no_bet":
+      // Store the API key verbatim — canonicalMarket() aliases these to
+      // btts / dc / dnb, the same canonical markets predictions use.
+      marketName = marketKey;
+      break;
+    default:
+      // Unknown market (e.g. spreads if ever requested): keep raw key so the
+      // data is still captured rather than silently dropped.
+      marketName = marketKey;
+  }
+
+  // ── Selection name ──
+  let selection: string | null = null;
+  const rawName = outcome.name;
+
+  if (marketKey === "btts") {
+    const n = rawName.toLowerCase();
+    if (n === "yes" || n === "no") selection = n;
+  } else if (marketKey === "double_chance") {
+    selection = mapDoubleChanceSelection(rawName, home, away);
+  } else {
+    // h2h / totals / draw_no_bet / unknown: team names → home/away/draw,
+    // "Over"/"Under" → over/under (totals), otherwise keep raw name.
+    if (rawName === home) selection = "home";
+    else if (rawName === away) selection = "away";
+    else if (rawName === "Draw") selection = "draw";
+    else if (rawName === "Over") selection = "over";
+    else if (rawName === "Under") selection = "under";
+    else if (rawName === "Yes") selection = "yes";
+    else if (rawName === "No") selection = "no";
+    else selection = rawName;
+  }
+
+  if (!selection) return null;
+  return { market: marketName, selection };
+}
+
+/**
+ * Double-chance outcome names from The Odds API look like
+ * "<Away> or Draw", "<Home> or Draw", "<Away> or <Home>".
+ * Canonical selections (matching predictions + toOddsKey + selAliases):
+ *   home-or-draw → "1x", draw-or-away → "x2", either-team → "12".
+ */
+function mapDoubleChanceSelection(
+  name: string,
+  homeTeam: string,
+  awayTeam: string
+): string | null {
+  const n = name.toLowerCase();
+  const hasDraw = n.includes("draw");
+  const hasHome = n.includes(homeTeam.toLowerCase());
+  const hasAway = n.includes(awayTeam.toLowerCase());
+
+  if (hasDraw && hasHome) return "1x";
+  if (hasDraw && hasAway) return "x2";
+  if (!hasDraw && hasHome && hasAway) return "12";
+
+  // Fallback for shorthand spellings some books may use.
+  const compact = n.replace(/[^a-z0-9]/g, "");
+  if (compact === "1x" || compact === "homedraw" || compact === "homeordraw") return "1x";
+  if (compact === "x2" || compact === "drawaway" || compact === "draworaway") return "x2";
+  if (compact === "12" || compact === "homeaway" || compact === "homeoraway") return "12";
+
+  return null; // unrecognised shape — skip rather than write an unjoinable row
+}
+
+/**
  * Save odds snapshots to Supabase for a single fixture.
  */
 async function saveOddsSnapshots(
@@ -355,29 +555,15 @@ async function saveOddsSnapshots(
 
   for (const bookmaker of fixture.bookmakers) {
     for (const market of bookmaker.markets) {
-      let marketName = market.key;
-      if (market.key === "h2h") marketName = "match_result";
-      if (market.key === "totals") marketName = "over_under_2.5";
-
       for (const outcome of market.outcomes) {
-        let selection = outcome.name;
-        if (outcome.name === fixture.home_team) selection = "home";
-        else if (outcome.name === fixture.away_team) selection = "away";
-        else if (outcome.name === "Draw") selection = "draw";
-        else if (outcome.name === "Over") selection = "over";
-        else if (outcome.name === "Under") selection = "under";
-
-        if (market.key === "totals" && outcome.point) {
-          if (outcome.point === 2.5) marketName = "over_under_2.5";
-          else if (outcome.point === 1.5) marketName = "over_under_1.5";
-          else if (outcome.point === 3.5) marketName = "over_under_3.5";
-        }
+        const mapped = mapOutcomeToSnapshot(market.key, outcome, fixture);
+        if (!mapped) continue;
 
         snapshots.push({
           fixture_id: fixtureId,
           bookmaker: bookmaker.title.toLowerCase(),
-          market: marketName,
-          selection,
+          market: mapped.market,
+          selection: mapped.selection,
           odds: outcome.price,
           snapshot_time: now,
         });
@@ -432,15 +618,39 @@ async function saveOddsSnapshots(
   return changedSnapshots.length;
 }
 
+interface OddsApiResult {
+  fixtures: OddsFixture[];
+  /** Credits billed for this call, from x-requests-last (null if absent). */
+  creditsUsed: number | null;
+  /** Credits remaining after this call, from x-requests-remaining. */
+  creditsRemaining: number | null;
+}
+
+function readUsageHeaders(response: Response): {
+  creditsUsed: number | null;
+  creditsRemaining: number | null;
+} {
+  const last = response.headers?.get("x-requests-last");
+  const remaining = response.headers?.get("x-requests-remaining");
+  return {
+    creditsUsed: last === null ? null : parseInt(last, 10),
+    creditsRemaining: remaining === null ? null : parseInt(remaining, 10),
+  };
+}
+
 /**
- * Fetch odds for a single sport from The Odds API.
+ * Fetch odds for a single sport from The Odds API (bulk endpoint —
+ * featured markets only).
  */
-async function fetchOddsForSport(sportKey: string): Promise<OddsFixture[]> {
+async function fetchOddsForSport(
+  sportKey: string,
+  markets: string[]
+): Promise<OddsApiResult> {
   if (!THE_ODDS_API_KEY) {
     throw new Error("THE_ODDS_API_KEY not configured");
   }
 
-  const url = `https://api.the-odds-api.com/v4/sports/${sportKey}/odds/?apiKey=${THE_ODDS_API_KEY}&regions=uk,eu&markets=h2h,totals&bookmakers=bet365,pinnacle,betway,1xbet`;
+  const url = `https://api.the-odds-api.com/v4/sports/${sportKey}/odds/?apiKey=${THE_ODDS_API_KEY}&regions=${REGIONS_PARAM}&markets=${markets.join(",")}&bookmakers=${BOOKMAKERS_PARAM}`;
 
   const response = await fetch(url);
 
@@ -449,7 +659,38 @@ async function fetchOddsForSport(sportKey: string): Promise<OddsFixture[]> {
     throw new Error(`Odds API error ${response.status}: ${errorText}`);
   }
 
-  return response.json();
+  const fixtures: OddsFixture[] = await response.json();
+  return { fixtures, ...readUsageHeaders(response) };
+}
+
+/**
+ * Fetch "additional markets" (btts / double_chance / draw_no_bet) for a
+ * single event. These markets are NOT accepted by the bulk /odds endpoint
+ * (422 INVALID_MARKET) — they require this per-event endpoint.
+ *
+ * Cost: up to markets.length × regions credits, but only markets the
+ * bookmakers actually return are billed, and empty responses are free.
+ */
+async function fetchEventOdds(
+  sportKey: string,
+  eventId: string,
+  markets: string[]
+): Promise<OddsApiResult> {
+  if (!THE_ODDS_API_KEY) {
+    throw new Error("THE_ODDS_API_KEY not configured");
+  }
+
+  const url = `https://api.the-odds-api.com/v4/sports/${sportKey}/events/${eventId}/odds/?apiKey=${THE_ODDS_API_KEY}&regions=${REGIONS_PARAM}&markets=${markets.join(",")}&bookmakers=${BOOKMAKERS_PARAM}`;
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Odds API error ${response.status}: ${errorText}`);
+  }
+
+  const event = (await response.json()) as OddsFixture;
+  return { fixtures: [event], ...readUsageHeaders(response) };
 }
 
 /**
@@ -463,6 +704,14 @@ export async function syncAllOdds(): Promise<{
   createdFixtures: number;
   unmatchedFixtures: number;
   sportsProcessed: number;
+  /** Quota/market metadata for this run (see quota math comment above). */
+  markets: string[];
+  extraMarkets: string[];
+  estimatedCreditsUsed: number;
+  extraCreditsUsed: number;
+  creditsRemaining: number | null;
+  extraEventsEnriched: number;
+  extraEventsSkipped: number;
   errors: string[];
 }> {
   let totalSnapshots = 0;
@@ -472,10 +721,40 @@ export async function syncAllOdds(): Promise<{
   let sportsProcessed = 0;
   const errors: string[] = [];
 
+  const featuredMarkets = getFeaturedMarkets();
+  const extraMarkets = getExtraMarkets();
+
+  // Estimated bulk cost: featured markets × regions, per sport request.
+  // (API bills per unique market returned × regions; we budget on the
+  // requested count — conservative when a market has no coverage.)
+  const bulkCreditsPerSport = featuredMarkets.length * ODDS_REGIONS.length;
+  let estimatedCreditsUsed = 0;
+
+  // Events awaiting the additional-markets (per-event) pass.
+  const pendingEvents: Array<{
+    sportKey: string;
+    fixture: OddsFixture;
+    supabaseFixtureId: string;
+  }> = [];
+
+  // Quota state for the extra-market pass. Seeded from the free /sports
+  // endpoint (does not count against quota) and refined from
+  // x-requests-remaining headers on every odds response.
+  let creditsRemaining: number | null = null;
+  try {
+    const usage = await getOddsApiUsage();
+    if (usage.total > 0) creditsRemaining = usage.remaining;
+  } catch {
+    // Non-fatal — fall back to the per-run budget alone.
+  }
+
   for (const sport of ODDS_SPORTS) {
     try {
-      const fixtures = await fetchOddsForSport(sport.key);
+      const { fixtures, creditsUsed, creditsRemaining: rem } =
+        await fetchOddsForSport(sport.key, featuredMarkets);
       sportsProcessed++;
+      estimatedCreditsUsed += creditsUsed ?? bulkCreditsPerSport;
+      if (rem !== null) creditsRemaining = rem;
 
       // Get or create league (resolved via league_external_ids first)
       let leagueId: string;
@@ -520,6 +799,8 @@ export async function syncAllOdds(): Promise<{
           // Save odds snapshots
           const count = await saveOddsSnapshots(supabaseFixtureId, fixture);
           totalSnapshots += count;
+
+          pendingEvents.push({ sportKey: sport.key, fixture, supabaseFixtureId });
         } catch (error) {
           const msg = error instanceof Error ? error.message : String(error);
           errors.push(
@@ -537,12 +818,88 @@ export async function syncAllOdds(): Promise<{
     }
   }
 
+  // ── Phase 2: additional markets (btts / double_chance / draw_no_bet) ──
+  // These are only available per event. Quota-aware:
+  //   - per-run credit budget (ODDS_EXTRA_CREDIT_BUDGET, default 60)
+  //   - hard stop when the API reports remaining <= ODDS_QUOTA_RESERVE (50)
+  //   - hard cap on event calls (ODDS_EXTRA_MAX_EVENTS, default 50)
+  //   - soonest kickoffs first — nearest fixtures matter most for
+  //     upcoming predictions/recommendations.
+  let extraCreditsUsed = 0;
+  let extraEventsEnriched = 0;
+  let extraEventsSkipped = 0;
+
+  if (extraMarkets.length > 0 && pendingEvents.length > 0) {
+    const creditBudget = getExtraCreditBudget();
+    const maxEvents = getExtraMaxEvents();
+    const quotaReserve = getQuotaReserve();
+    // Worst-case estimate per event: markets × regions. The API only bills
+    // markets actually returned (observed ~3 credits/event for all three),
+    // so this is conservative.
+    const estCreditsPerEvent = extraMarkets.length * ODDS_REGIONS.length;
+
+    const ordered = [...pendingEvents].sort(
+      (a, b) =>
+        new Date(a.fixture.commence_time).getTime() -
+        new Date(b.fixture.commence_time).getTime()
+    );
+
+    for (const pending of ordered) {
+      if (extraEventsEnriched >= maxEvents) {
+        extraEventsSkipped += ordered.length - extraEventsEnriched;
+        break;
+      }
+      if (extraCreditsUsed + estCreditsPerEvent > creditBudget) {
+        extraEventsSkipped += ordered.length - extraEventsEnriched;
+        break;
+      }
+      if (
+        creditsRemaining !== null &&
+        creditsRemaining - estCreditsPerEvent <= quotaReserve
+      ) {
+        extraEventsSkipped += ordered.length - extraEventsEnriched;
+        break;
+      }
+
+      try {
+        const { fixtures, creditsUsed, creditsRemaining: rem } =
+          await fetchEventOdds(pending.sportKey, pending.fixture.id, extraMarkets);
+        if (rem !== null) creditsRemaining = rem;
+        extraCreditsUsed += creditsUsed ?? estCreditsPerEvent;
+
+        for (const eventFixture of fixtures) {
+          const count = await saveOddsSnapshots(
+            pending.supabaseFixtureId,
+            eventFixture
+          );
+          totalSnapshots += count;
+        }
+        extraEventsEnriched++;
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        // A failed event call bills nothing; keep going but don't spam errors.
+        console.warn(
+          `[ODDS] extra-market fetch failed for ${pending.fixture.id}: ${msg}`
+        );
+      }
+    }
+  } else if (extraMarkets.length > 0) {
+    extraEventsSkipped = pendingEvents.length;
+  }
+
   return {
     totalSnapshots,
     matchedFixtures,
     createdFixtures,
     unmatchedFixtures,
     sportsProcessed,
+    markets: featuredMarkets,
+    extraMarkets,
+    estimatedCreditsUsed,
+    extraCreditsUsed,
+    creditsRemaining,
+    extraEventsEnriched,
+    extraEventsSkipped,
     errors,
   };
 }

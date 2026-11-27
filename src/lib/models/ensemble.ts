@@ -191,6 +191,21 @@ function buildFeatures(
   };
 }
 
+// ── Market-odds features (opening odds only) ───────────────────────────
+// Loaded lazily so tests / callers without fixtureId never touch the DB.
+
+let marketFeatureModule: any = null;
+function loadMarketFeature() {
+  if (marketFeatureModule) return marketFeatureModule;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    marketFeatureModule = require("../../../worker/models/market-feature");
+    return marketFeatureModule;
+  } catch {
+    return null;
+  }
+}
+
 // ── Main prediction function ──────────────────────────────────────────
 
 export interface EnsemblePrediction {
@@ -212,6 +227,13 @@ export interface EnsemblePrediction {
  * @param leagueId - League ID for league-specific adjustments
  * @param eloMap - Optional pre-loaded Elo ratings
  * @param formMap - Optional pre-loaded form histories
+ * @param matchKickoff - Fixture kickoff (ISO). Used for rest-days and as the
+ *   leakage-guard boundary for opening-odds market features.
+ * @param options - Optional extras. `fixtureId` enables opening-odds market
+ *   features: odds_snapshots strictly before kickoff are devigged into
+ *   marketImpliedHome/Draw/Away (+ totals) and blended into the 1X2 output by
+ *   worker/models/market-feature.js. Closing/post-kickoff odds are excluded
+ *   by construction. Callers that do not pass fixtureId are unaffected.
  */
 export async function predictMatchEnsemble(
   homeName: string,
@@ -219,7 +241,8 @@ export async function predictMatchEnsemble(
   leagueId?: string,
   eloMap?: Record<string, number>,
   formMap?: Record<string, TeamMatch[]>,
-  matchKickoff?: string
+  matchKickoff?: string,
+  options?: { fixtureId?: string }
 ): Promise<EnsemblePrediction | null> {
   const ensemble = loadEnsemble();
   if (!ensemble) return null;
@@ -445,6 +468,31 @@ export async function predictMatchEnsemble(
     awayInjuriesRuledOut,
   });
 
+  // ── Opening-odds market features (opt-in via options.fixtureId) ──
+  // Only snapshots strictly before kickoff are eligible — see
+  // worker/models/market-feature.js leakage guards. Failures are silent:
+  // predictions must never depend on odds availability.
+  if (options?.fixtureId && matchKickoff) {
+    try {
+      const mf = loadMarketFeature();
+      if (mf) {
+        const { data: oddsRows } = await supabaseAdmin
+          .from("odds_snapshots")
+          .select("fixture_id, bookmaker, market, selection, odds, snapshot_time")
+          .eq("fixture_id", options.fixtureId)
+          .order("snapshot_time", { ascending: true })
+          .limit(2000);
+        if (oddsRows && oddsRows.length > 0) {
+          const marketFeats = mf.computeOpeningOddsFeatures(oddsRows, matchKickoff);
+          if (marketFeats.hasMarketOdds) {
+            Object.assign(features, marketFeats);
+            (features as any).hasMarketOdds = true;
+          }
+        }
+      }
+    } catch {}
+  }
+
   // Run ensemble prediction
   try {
     const result = ensemble.predictMatch(features, storeData);
@@ -476,6 +524,13 @@ export async function predictMatchEnsemble(
       // Store data used
       hasLeagueParams: !!storeData.leagueParams,
       hasWeightConfig: !!storeData.weightConfig,
+      // Opening-odds market features (present only when fixtureId was passed
+      // and provably pre-kickoff snapshots existed)
+      hasMarketOdds: !!(features as any).hasMarketOdds,
+      marketImpliedHome: (features as any).marketImpliedHome,
+      marketImpliedDraw: (features as any).marketImpliedDraw,
+      marketImpliedAway: (features as any).marketImpliedAway,
+      marketOpeningSnapshotTime: (features as any).marketOpeningSnapshotTime,
     };
 
     result.ensembleOutputs = {

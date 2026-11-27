@@ -261,6 +261,37 @@ function buildFeatures(homeName, awayName, tracker, leagueName) {
   };
 }
 
+/**
+ * Market-odds features (opening odds only — leakage-safe).
+ *
+ * Fetches odds_snapshots rows for a fixture and computes devigged implied
+ * probabilities via worker/models/market-feature.js. Only snapshots strictly
+ * before `kickoffTime` are eligible; closing/post-kickoff odds are discarded
+ * by construction (see market-feature.js guards).
+ *
+ * @param {string} fixtureId - fixtures.id (odds_snapshots.fixture_id)
+ * @param {string|Date} kickoffTime - fixture kickoff_time. REQUIRED: without
+ *   it no market feature is produced (we cannot prove pre-match timing).
+ * @returns {Promise<Object>} marketImplied* fields merged onto {} or {} when
+ *   unavailable.
+ */
+async function getMarketFeaturesForFixture(fixtureId, kickoffTime) {
+  const marketFeature = require("./market-feature");
+  if (!fixtureId || kickoffTime == null) return {};
+  try {
+    const { data, error } = await sb
+      .from("odds_snapshots")
+      .select("fixture_id, bookmaker, market, selection, odds, snapshot_time")
+      .eq("fixture_id", fixtureId)
+      .order("snapshot_time", { ascending: true })
+      .limit(2000);
+    if (error || !data || data.length === 0) return {};
+    return marketFeature.computeOpeningOddsFeatures(data, kickoffTime);
+  } catch (_) {
+    return {};
+  }
+}
+
 module.exports = {
   loadAll,
   getTeamProfile,
@@ -270,5 +301,6 @@ module.exports = {
   getTeamInjuries,
   getInjuryImpact,
   buildFeatures,
+  getMarketFeaturesForFixture,
   cache,
 };

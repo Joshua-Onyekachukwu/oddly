@@ -39,6 +39,14 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    label: "Explore",
+    items: [
+      { label: "Competitions", href: "/competitions", icon: "ri-trophy-line" },
+      { label: "Teams", href: "/teams", icon: "ri-team-line" },
+      { label: "Players", href: "/players", icon: "ri-user-star-line" },
+    ],
+  },
+  {
     label: "Intelligence",
     items: [
       { label: "AI Betting Agent", href: "/betting-agent", icon: "ri-robot-2-line", badge: "New", badgeColor: "bg-emerald-50 text-emerald-600" },
@@ -70,7 +78,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ toggleActive, active = false 
   const pathname = usePathname();
   const { profile } = useAuth();
   const [expandedGroups, setExpandedGroups] = React.useState<Set<number>>(
-    new Set([0, 1, 2, 3])
+    () => new Set(NAV_GROUPS.map((_, i) => i))
   );
 
   const toggleGroup = (index: number) => {

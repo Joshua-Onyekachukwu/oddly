@@ -11,6 +11,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { withLock } from "@/lib/cron/lock";
 import { startRun, completeRun, type CronRunResult } from "@/lib/cron/logger";
+import { collectAndPersistGates } from "@/lib/analytics/competition-gate";
+import { collectAndPersistDrift } from "@/lib/analytics/drift";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || "",
@@ -32,7 +34,22 @@ interface LearnResult {
   marketBreakdown: Array<{ market: string; accuracy: number; total: number; correct: number }>;
   calibration: Array<{ range: string; avgPredicted: number; actualAccuracy: number; samples: number }>;
   drawCalibration: DrawCalibrationResult | null;
+  competitionGates: CompetitionGatesResult | null;
+  modelDrift: ModelDriftResult | null;
   viewsRefreshed: boolean;
+}
+
+interface CompetitionGatesResult {
+  leaguesEvaluated: number;
+  persisted: number;
+  verdicts: Record<string, number>;
+}
+
+interface ModelDriftResult {
+  evaluated: number;
+  persisted: number;
+  alerts: number;
+  driftSuspected: number;
 }
 
 interface DrawCalibrationResult {
@@ -244,7 +261,8 @@ async function runLearn(): Promise<LearnResult> {
     return {
       overallAccuracy: 0, highConfAccuracy: 0, brierScore: 0,
       totalPredictions: 0, marketBreakdown: [], calibration: [],
-      drawCalibration: null, viewsRefreshed: false,
+      drawCalibration: null, competitionGates: null, modelDrift: null,
+      viewsRefreshed: false,
     };
   }
 
@@ -315,6 +333,40 @@ async function runLearn(): Promise<LearnResult> {
   const drawCalibration = await calibrateDrawByLeague();
   console.log(`[LEARN] Draw calibration: ${drawCalibration.leaguesCalibrated} leagues, ${drawCalibration.championPromotions} promotions`);
 
+  // Competition-specific gating: per-league verdicts (trusted/watch/exclude/
+  // insufficient) persisted to league_model_gates. Detection only — the
+  // predict route still records every prediction immutably.
+  let competitionGates: CompetitionGatesResult | null = null;
+  try {
+    const gateOut = await collectAndPersistGates(supabaseAdmin);
+    const verdicts: Record<string, number> = {};
+    for (const r of gateOut.results) verdicts[r.verdict] = (verdicts[r.verdict] ?? 0) + 1;
+    competitionGates = {
+      leaguesEvaluated: gateOut.results.length,
+      persisted: gateOut.persisted,
+      verdicts,
+    };
+    console.log(`[LEARN] Competition gates: ${JSON.stringify(verdicts)}`);
+  } catch (gateErr: any) {
+    console.error("[LEARN] Competition gate collection failed (non-fatal):", gateErr?.message);
+  }
+
+  // Model drift detection: rolling 30d vs prior 90d Brier z-test per
+  // model_version+market. Detection + cron_alerts only — NO auto model changes.
+  let modelDrift: ModelDriftResult | null = null;
+  try {
+    const driftOut = await collectAndPersistDrift(supabaseAdmin);
+    modelDrift = {
+      evaluated: driftOut.results.length,
+      persisted: driftOut.persisted,
+      alerts: driftOut.alerts,
+      driftSuspected: driftOut.results.filter((r) => r.driftStatus === "drift_suspected").length,
+    };
+    console.log(`[LEARN] Model drift: ${JSON.stringify(modelDrift)}`);
+  } catch (driftErr: any) {
+    console.error("[LEARN] Drift detection failed (non-fatal):", driftErr?.message);
+  }
+
   // Refresh materialized views
   let viewsRefreshed = false;
   try {
@@ -336,6 +388,8 @@ async function runLearn(): Promise<LearnResult> {
     })),
     calibration: calibration.filter(c => c.samples >= 5),
     drawCalibration,
+    competitionGates,
+    modelDrift,
     viewsRefreshed,
   };
 }
@@ -369,6 +423,8 @@ export async function POST(request: NextRequest) {
         highConfidence: `${(result.highConfAccuracy * 100).toFixed(1)}%`,
         brierScore: result.brierScore.toFixed(4),
         drawCalibration: result.drawCalibration,
+        competitionGates: result.competitionGates,
+        modelDrift: result.modelDrift,
         viewsRefreshed: result.viewsRefreshed,
       },
     };
@@ -384,6 +440,8 @@ export async function POST(request: NextRequest) {
       marketBreakdown: result.marketBreakdown,
       calibration: result.calibration,
       drawCalibration: result.drawCalibration,
+      competitionGates: result.competitionGates,
+      modelDrift: result.modelDrift,
       viewsRefreshed: result.viewsRefreshed,
       duration: `${lockResult.durationMs}ms`,
       timestamp: new Date().toISOString(),
@@ -422,6 +480,8 @@ export async function GET(request: NextRequest) {
         highConfidence: `${(result.highConfAccuracy * 100).toFixed(1)}%`,
         brierScore: result.brierScore.toFixed(4),
         drawCalibration: result.drawCalibration,
+        competitionGates: result.competitionGates,
+        modelDrift: result.modelDrift,
         viewsRefreshed: result.viewsRefreshed,
       },
     };
@@ -437,6 +497,8 @@ export async function GET(request: NextRequest) {
       marketBreakdown: result.marketBreakdown,
       calibration: result.calibration,
       drawCalibration: result.drawCalibration,
+      competitionGates: result.competitionGates,
+      modelDrift: result.modelDrift,
       viewsRefreshed: result.viewsRefreshed,
       duration: `${lockResult.durationMs}ms`,
       timestamp: new Date().toISOString(),

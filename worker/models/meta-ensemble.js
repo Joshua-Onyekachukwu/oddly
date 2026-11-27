@@ -21,6 +21,7 @@ const modelGoals = require("./market-goals");
 const modelBtts = require("./market-btts");
 const modelDc = require("./market-dc");
 const modelDraw = require("./market-draw");
+const marketFeature = require("./market-feature");
 const crossSignals = require("./cross-model-signals");
 
 /**
@@ -111,6 +112,29 @@ function predictMatch(features, storeData = {}) {
   result1x2.home = adjusted.home;
   result1x2.draw = adjusted.draw;
   result1x2.away = adjusted.away;
+
+  // ═══ MARKET-IMPLIED ODDS BLEND (opening odds only) ═══
+  // features.marketImplied* are produced by worker/models/market-feature.js
+  // which guarantees only snapshots strictly before kickoff are used —
+  // closing/post-kickoff odds can never leak in (see that file's guards).
+  // Blend weight is conservative & configurable; see DEFAULT_MARKET_ODDS_WEIGHT.
+  const market1x2 = marketFeature.fromFeatures(features);
+  let marketOddsApplied = null;
+  if (market1x2) {
+    const mw =
+      (weightConfig && typeof weightConfig.market_odds_weight === "number"
+        ? weightConfig.market_odds_weight
+        : marketFeature.DEFAULT_MARKET_ODDS_WEIGHT);
+    const blended = marketFeature.blend1x2(result1x2, market1x2, mw);
+    marketOddsApplied = {
+      weight: mw,
+      implied: market1x2,
+      blended: { home: blended.home, draw: blended.draw, away: blended.away },
+    };
+    result1x2.home = blended.home;
+    result1x2.draw = blended.draw;
+    result1x2.away = blended.away;
+  }
 
   // Goals Model
   const resultGoals = modelGoals.predict(features);
@@ -231,6 +255,7 @@ function predictMatch(features, storeData = {}) {
       },
       btts: { bttsYes: resultBtts.bttsYes },
       dc: { dc1X: resultDc.dc1X, dcX2: resultDc.dcX2, dc12: resultDc.dc12 },
+      marketOdds: marketOddsApplied,
     },
 
     // Cross-model signals
@@ -243,4 +268,4 @@ function predictMatch(features, storeData = {}) {
   };
 }
 
-module.exports = { predictMatch, model1x2, modelGoals, modelBtts, modelDc, crossSignals };
+module.exports = { predictMatch, model1x2, modelGoals, modelBtts, modelDc, marketFeature, crossSignals };

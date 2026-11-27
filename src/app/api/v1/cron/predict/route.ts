@@ -18,6 +18,7 @@ import {
   applyDataQualityToTier,
   probabilityTier,
 } from "@/lib/prediction/data-quality";
+import { getLeagueGateVerdicts } from "@/lib/analytics/competition-gate";
 import { withLock } from "@/lib/cron/lock";
 import { startRun, completeRun, type CronRunResult } from "@/lib/cron/logger";
 
@@ -173,6 +174,16 @@ async function runPredictionPipeline(): Promise<{
     console.error("[PREDICT] Data-quality collection failed (non-fatal):", dqErr?.message);
   }
 
+  // Competition gate verdicts (league_model_gates, refreshed weekly by learn
+  // cron). Advisory only — recorded into input_snapshot for audit/analysis;
+  // predictions are NEVER suppressed, even for 'exclude' leagues.
+  let leagueGateVerdicts = new Map<string, string>();
+  try {
+    leagueGateVerdicts = await getLeagueGateVerdicts(supabaseAdmin);
+  } catch (gateErr: any) {
+    console.error("[PREDICT] League gate lookup failed (non-fatal):", gateErr?.message);
+  }
+
   // Generate predictions using the ensemble
   const predictions: any[] = [];
   let ensembleHits = 0;
@@ -224,6 +235,7 @@ async function runPredictionPipeline(): Promise<{
         away_form: (formMap[away] || []).slice(-5),
         injury: injurySnapshot,
         data_quality: dataQuality,
+        league_gate: leagueGateVerdicts.get(fixture.league_id ?? "unknown") ?? null,
         captured_at: now.toISOString(),
       };
       for (const [market, prob] of Object.entries(result.markets)) {

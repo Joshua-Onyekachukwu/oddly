@@ -57,7 +57,7 @@ __pycache__/
 
 # Generated data artifacts (large/regenerable)
 data/research-dataset.json
-data/eval/replay-*.json
+data/eval/
 data/duplicate-prediction-ids.json
 data/weather-features.json
 data/clv-snapshots.json

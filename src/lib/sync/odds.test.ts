@@ -169,13 +169,16 @@ const ODDS_FIXTURE = {
 };
 
 let syncAllOdds: any;
+let mapOutcomeToSnapshot: any;
 
 beforeAll(() => {
   process.env.THE_ODDS_API_KEY = "test-odds-key";
   installSupabaseMock();
   // Require AFTER env + supabase mock are in place — the module reads
   // THE_ODDS_API_KEY and creates the supabase client at import time.
-  syncAllOdds = require("./odds").syncAllOdds;
+  const mod = require("./odds");
+  syncAllOdds = mod.syncAllOdds;
+  mapOutcomeToSnapshot = mod.mapOutcomeToSnapshot;
 });
 
 beforeEach(() => {
@@ -184,19 +187,50 @@ beforeEach(() => {
   mockState.teamInsertCount = 0;
   mockState.oddsInserts = [];
   jest.restoreAllMocks();
+  delete process.env.ODDS_MARKETS;
+  delete process.env.ODDS_EXTRA_MARKETS;
+  delete process.env.ODDS_EXTRA_CREDIT_BUDGET;
+  delete process.env.ODDS_EXTRA_MAX_EVENTS;
+  delete process.env.ODDS_QUOTA_RESERVE;
 });
 
-// First sport returns the fixture; remaining sports throw so the test
-// doesn't pay 9 × 1s inter-sport sleeps.
-function mockFetchOnce() {
-  let calls = 0;
-  global.fetch = jest.fn(async () => {
-    calls++;
-    if (calls === 1) {
-      return { ok: true, json: async () => [ODDS_FIXTURE] } as any;
+function jsonResponse(body: any, headers: Record<string, string> = {}) {
+  return {
+    ok: true,
+    status: 200,
+    json: async () => body,
+    text: async () => JSON.stringify(body),
+    headers: { get: (k: string) => headers[k] ?? null },
+  } as any;
+}
+
+// Routes fetch calls by URL:
+//   /v4/sports/ (list)      → usage headers only (free endpoint)
+//   /events/{id}/odds       → EXTRA_ODDS_EVENT fixture
+//   /odds/                  → first sport returns ODDS_FIXTURE, rest 429
+function mockFetchOnce(extraEvent?: any) {
+  let bulkCalls = 0;
+  global.fetch = jest.fn(async (url: any) => {
+    const u = String(url);
+    if (u.includes("/events/")) {
+      if (extraEvent) return jsonResponse(extraEvent);
+      return { ok: false, status: 500, text: async () => "no event" } as any;
     }
-    return { ok: false, status: 429, text: async () => "rate limited" } as any;
+    if (/\/v4\/sports\/\?/.test(u)) {
+      // usage probe — does not consume quota
+      return jsonResponse([], {
+        "x-requests-used": "10",
+        "x-requests-remaining": "490",
+      });
+    }
+    if (u.includes("/odds/")) {
+      bulkCalls++;
+      if (bulkCalls === 1) return jsonResponse([ODDS_FIXTURE]);
+      return { ok: false, status: 429, text: async () => "rate limited" } as any;
+    }
+    return { ok: false, status: 404, text: async () => "?" } as any;
   }) as any;
+  return global.fetch as any;
 }
 
 describe("syncAllOdds — market/selection normalization", () => {
@@ -276,5 +310,153 @@ describe("syncAllOdds — market/selection normalization", () => {
     const homeRow = rows.find((r) => r.market === "match_result" && r.selection === "home");
     expect(homeRow.odds).toBe(1.9);
     expect(rows.some((r) => r.selection === "draw" && r.market === "match_result")).toBe(false);
+  });
+});
+
+// ─── Additional markets (btts / double_chance / draw_no_bet) ──────────
+// These are NOT served by the bulk /odds endpoint (422 INVALID_MARKET) —
+// they come from the per-event /events/{id}/odds endpoint. Shape below is
+// copied from a live soccer_epl probe.
+
+const EXTRA_EVENT = {
+  id: "odds-fixture-1",
+  sport_key: "soccer_epl",
+  sport_title: "EPL",
+  commence_time: "2025-06-01T15:00:00Z",
+  home_team: "Home FC",
+  away_team: "Away United",
+  bookmakers: [
+    {
+      key: "pinnacle",
+      title: "Pinnacle",
+      markets: [
+        {
+          key: "btts",
+          last_update: "2025-05-30T10:00:00Z",
+          outcomes: [
+            { name: "Yes", price: 1.67 },
+            { name: "No", price: 2.3 },
+          ],
+        },
+        {
+          key: "double_chance",
+          last_update: "2025-05-30T10:00:00Z",
+          outcomes: [
+            { name: "Away United or Draw", price: 1.59 },   // x2
+            { name: "Home FC or Draw", price: 1.44 },      // 1x
+            { name: "Away United or Home FC", price: 1.35 },// 12
+          ],
+        },
+        {
+          key: "draw_no_bet",
+          last_update: "2025-05-30T10:00:00Z",
+          outcomes: [
+            { name: "Away United", price: 2.14 },  // away
+            { name: "Home FC", price: 1.76 },      // home
+          ],
+        },
+      ],
+    },
+  ],
+};
+
+describe("syncAllOdds — additional markets (per-event pass)", () => {
+  test("btts/double_chance/draw_no_bet land in odds_snapshots with joinable names", async () => {
+    mockFetchOnce(EXTRA_EVENT);
+    const res = await syncAllOdds();
+
+    expect(res.extraMarkets).toEqual(["btts", "double_chance", "draw_no_bet"]);
+    expect(res.extraEventsEnriched).toBe(1);
+
+    const rows = mockState.oddsInserts.flat();
+    const byKey = (market: string, selection: string) =>
+      rows.find((r) => r.market === market && r.selection === selection);
+
+    // BTTS → market "btts", selections yes/no (toOddsKey + canonicalMarket join)
+    expect(byKey("btts", "yes")!.odds).toBe(1.67);
+    expect(byKey("btts", "no")!.odds).toBe(2.3);
+
+    // Double chance → market "double_chance", selections 1x/x2/12
+    expect(byKey("double_chance", "1x")!.odds).toBe(1.44);
+    expect(byKey("double_chance", "x2")!.odds).toBe(1.59);
+    expect(byKey("double_chance", "12")!.odds).toBe(1.35);
+
+    // Draw no bet → market "draw_no_bet", selections home/away
+    expect(byKey("draw_no_bet", "home")!.odds).toBe(1.76);
+    expect(byKey("draw_no_bet", "away")!.odds).toBe(2.14);
+
+    // Quota metadata is reported
+    expect(res.markets).toEqual(["h2h", "totals"]);
+    expect(res.estimatedCreditsUsed).toBeGreaterThan(0);
+    expect(res.creditsRemaining).toBe(490);
+  });
+
+  test("ODDS_EXTRA_MARKETS='' disables the per-event pass", async () => {
+    process.env.ODDS_EXTRA_MARKETS = "";
+    const fetchMock = mockFetchOnce(EXTRA_EVENT);
+    const res = await syncAllOdds();
+
+    expect(res.extraMarkets).toEqual([]);
+    expect(res.extraEventsEnriched).toBe(0);
+    // No /events/ calls were made
+    const urls = (fetchMock.mock.calls as any[][]).map((c) => String(c[0]));
+    expect(urls.some((u: string) => u.includes("/events/"))).toBe(false);
+  });
+
+  test("credit budget 0 skips all extra-market events", async () => {
+    process.env.ODDS_EXTRA_CREDIT_BUDGET = "0";
+    mockFetchOnce(EXTRA_EVENT);
+    const res = await syncAllOdds();
+
+    expect(res.extraEventsEnriched).toBe(0);
+    expect(res.extraEventsSkipped).toBe(1);
+    // bulk snapshots still written
+    expect(res.totalSnapshots).toBe(7);
+  });
+
+  test("quota reserve stops enrichment when remaining is low", async () => {
+    process.env.ODDS_QUOTA_RESERVE = "495"; // remaining=490 → 490-6 <= 495
+    mockFetchOnce(EXTRA_EVENT);
+    const res = await syncAllOdds();
+
+    expect(res.extraEventsEnriched).toBe(0);
+    expect(res.extraEventsSkipped).toBe(1);
+  });
+});
+
+describe("mapOutcomeToSnapshot — unit mapping", () => {
+  const fixture = { home_team: "Home FC", away_team: "Away United" };
+
+  test("btts Yes/No → yes/no", () => {
+    expect(mapOutcomeToSnapshot("btts", { name: "Yes", price: 1.5 }, fixture))
+      .toEqual({ market: "btts", selection: "yes" });
+    expect(mapOutcomeToSnapshot("btts", { name: "No", price: 2.5 }, fixture))
+      .toEqual({ market: "btts", selection: "no" });
+  });
+
+  test("double_chance team-or-X names → 1x/x2/12", () => {
+    expect(mapOutcomeToSnapshot("double_chance", { name: "Home FC or Draw", price: 1.4 }, fixture))
+      .toEqual({ market: "double_chance", selection: "1x" });
+    expect(mapOutcomeToSnapshot("double_chance", { name: "Away United or Draw", price: 1.6 }, fixture))
+      .toEqual({ market: "double_chance", selection: "x2" });
+    expect(mapOutcomeToSnapshot("double_chance", { name: "Home FC or Away United", price: 1.3 }, fixture))
+      .toEqual({ market: "double_chance", selection: "12" });
+    // unrecognised shape → skipped, not written as junk
+    expect(mapOutcomeToSnapshot("double_chance", { name: "Something weird", price: 9 }, fixture))
+      .toBeNull();
+  });
+
+  test("draw_no_bet team names → home/away", () => {
+    expect(mapOutcomeToSnapshot("draw_no_bet", { name: "Home FC", price: 1.8 }, fixture))
+      .toEqual({ market: "draw_no_bet", selection: "home" });
+    expect(mapOutcomeToSnapshot("draw_no_bet", { name: "Away United", price: 2.1 }, fixture))
+      .toEqual({ market: "draw_no_bet", selection: "away" });
+  });
+
+  test("totals any half-line → over_under_<point>", () => {
+    expect(mapOutcomeToSnapshot("totals", { name: "Over", price: 1.9, point: 2.75 }, fixture))
+      .toEqual({ market: "over_under_2.75", selection: "over" });
+    expect(mapOutcomeToSnapshot("totals", { name: "Under", price: 1.9, point: 3.5 }, fixture))
+      .toEqual({ market: "over_under_3.5", selection: "under" });
   });
 });
