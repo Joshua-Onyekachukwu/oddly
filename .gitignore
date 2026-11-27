@@ -54,3 +54,17 @@ __pycache__/
 
 .vercel
 .env*
+
+# Generated data artifacts (large/regenerable)
+data/research-dataset.json
+data/eval/replay-*.json
+data/duplicate-prediction-ids.json
+data/weather-features.json
+data/clv-snapshots.json
+data/pending-notifications.json
+data/pipeline-state.json
+data/migration-checkpoint.json
+data/walk-forward-report.json
+data/xgboost-results/
+data/_*.txt
+data/_*.json
