@@ -38,7 +38,11 @@ BEGIN
   END IF;
 
   -- Remove existing job if present (idempotent)
-  PERFORM cron.unschedule('refresh-analytics-views-daily');
+  BEGIN
+    PERFORM cron.unschedule('refresh-analytics-views-daily');
+  EXCEPTION WHEN OTHERS THEN
+    NULL; -- job does not exist yet
+  END;
 
   -- Create daily refresh job at 4:00 AM UTC
   PERFORM cron.schedule(
@@ -68,7 +72,11 @@ BEGIN
     RETURN;
   END IF;
 
-  PERFORM cron.unschedule('refresh-draw-views-6h');
+  BEGIN
+    PERFORM cron.unschedule('refresh-draw-views-6h');
+  EXCEPTION WHEN OTHERS THEN
+    NULL; -- job does not exist yet
+  END;
 
   PERFORM cron.schedule(
     'refresh-draw-views-6h',

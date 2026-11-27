@@ -296,12 +296,12 @@ as $$
     f.kickoff_time,
     f.status,
     l.name,
-    (select count(*) from predictions p where p.fixture_id = f.id),
-    (select max(r.edge) from recommendations r where r.fixture_id = f.id)
-  from fixtures f
-  left join teams ht on ht.id = f.home_team_id
-  left join teams at on at.id = f.away_team_id
-  left join leagues l on l.id = f.league_id
+    (select count(*) from public.predictions p where p.fixture_id = f.id),
+    (select max(r.edge) from public.recommendations r where r.fixture_id = f.id)
+  from public.fixtures f
+  left join public.teams ht on ht.id = f.home_team_id
+  left join public.teams at on at.id = f.away_team_id
+  left join public.leagues l on l.id = f.league_id
   where f.kickoff_time::date = current_date
   order by f.kickoff_time;
 $$;
