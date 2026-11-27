@@ -2,7 +2,9 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { useAuth } from "@/providers/AuthProvider";
 import { PageHeader, Card, CardHeader, StatCard, Badge, EmptyState } from "@/components/ui";
 
 // ─── Types ───────────────────────────────────────────────────────────────
@@ -46,6 +48,17 @@ interface SettlementItem {
   result: string;
   settled_at: string;
   matchLabel: string;
+}
+
+interface FavouriteMatch {
+  id: string;
+  kickoff_time: string;
+  status: string;
+  home_team_name: string;
+  away_team_name: string;
+  home_team_logo: string | null;
+  away_team_logo: string | null;
+  league_name: string;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────
@@ -298,11 +311,112 @@ const QUICK_LINKS = [
 // ─── Main Page ───────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
+  const { user, profile, loading: authLoading } = useAuth();
+  const router = useRouter();
   const [picks, setPicks] = useState<ElitePick[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ elite: 0, total: 0, leagues: 0, fixturesToday: 0 });
   const [recentSettlements, setRecentSettlements] = useState<SettlementItem[]>([]);
   const [weekAccuracy, setWeekAccuracy] = useState<{ pct: number; n: number } | null>(null);
+  const [favouriteMatches, setFavouriteMatches] = useState<FavouriteMatch[]>([]);
+  const [favouritesCount, setFavouritesCount] = useState(0);
+
+  // First-run onboarding: send incomplete users through /onboarding once per
+  // browser session. The onboarding page's "Skip" marks the profile flag, so
+  // users are never trapped — at most one redirect per session.
+  useEffect(() => {
+    if (authLoading || !user || !profile) return;
+    if (profile.onboarding_completed !== false) return;
+    try {
+      if (sessionStorage.getItem("oddly_onboarding_prompt")) return;
+      sessionStorage.setItem("oddly_onboarding_prompt", "1");
+    } catch {
+      // sessionStorage unavailable — still redirect once
+    }
+    router.push("/onboarding");
+  }, [authLoading, user, profile, router]);
+
+  // Load upcoming fixtures involving the user's favourited teams/leagues.
+  useEffect(() => {
+    if (!user) {
+      setFavouriteMatches([]);
+      setFavouritesCount(0);
+      return;
+    }
+
+    let cancelled = false;
+    const loadFavourites = async () => {
+      const sb = createClient();
+      const { data: favs } = await sb
+        .from("user_favourites")
+        .select("entity_type, entity_id")
+        .eq("user_id", user.id);
+
+      if (cancelled) return;
+      const rows = favs || [];
+      setFavouritesCount(rows.length);
+
+      // Only UUID entity_ids can be matched against fixtures.team/league FK
+      // columns — non-UUID favourites (e.g. player names) are ignored here.
+      const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const teamIds = rows
+        .filter((f) => f.entity_type === "team" && uuidRe.test(f.entity_id))
+        .map((f) => f.entity_id);
+      const leagueIds = rows
+        .filter((f) => f.entity_type === "league" && uuidRe.test(f.entity_id))
+        .map((f) => f.entity_id);
+      if (teamIds.length === 0 && leagueIds.length === 0) {
+        setFavouriteMatches([]);
+        return;
+      }
+
+      const now = new Date().toISOString();
+      const orParts: string[] = [];
+      if (teamIds.length > 0) {
+        orParts.push(`home_team_id.in.(${teamIds.join(",")})`);
+        orParts.push(`away_team_id.in.(${teamIds.join(",")})`);
+      }
+      if (leagueIds.length > 0) {
+        orParts.push(`league_id.in.(${leagueIds.join(",")})`);
+      }
+
+      const { data: fixtures } = await sb
+        .from("fixtures")
+        .select(
+          `id, kickoff_time, status,
+           home_team:teams!fixtures_home_team_id_fkey(canonical_name, logo),
+           away_team:teams!fixtures_away_team_id_fkey(canonical_name, logo),
+           league:leagues(name)`
+        )
+        .gte("kickoff_time", now)
+        .order("kickoff_time", { ascending: true })
+        .limit(200)
+        .or(orParts.join(","));
+
+      if (cancelled) return;
+
+      const upcoming = (fixtures || [])
+        .filter((f) => !["finished", "FT", "cancelled", "postponed"].includes(f.status))
+        .slice(0, 8)
+        .map((f: any) => ({
+          id: f.id,
+          kickoff_time: f.kickoff_time,
+          status: f.status,
+          home_team_name: f.home_team?.canonical_name || "TBD",
+          away_team_name: f.away_team?.canonical_name || "TBD",
+          home_team_logo: f.home_team?.logo || null,
+          away_team_logo: f.away_team?.logo || null,
+          league_name: f.league?.name || "",
+        }));
+
+      setFavouriteMatches(upcoming);
+    };
+
+    loadFavourites();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   const loadData = useCallback(async () => {
     try {
@@ -492,6 +606,56 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-[20px]">
           {/* Main column — picks */}
           <div className="lg:col-span-2">
+            {/* Your teams' matches — only when the user has favourites */}
+            {favouriteMatches.length > 0 && (
+              <div className="mb-[24px]">
+                <div className="flex items-center justify-between mb-[14px]">
+                  <h2 className="text-[15px] font-semibold text-[#0A0F1C] font-display flex items-center gap-[8px]">
+                    <i className="ri-heart-fill text-[14px] text-red-400" />
+                    Your Teams&apos; Matches
+                  </h2>
+                  <Link
+                    href="/settings"
+                    className="text-[12px] font-medium text-[#1B2A4A] hover:text-[#243B53] transition-colors"
+                  >
+                    Manage favourites →
+                  </Link>
+                </div>
+                <Card padding="none">
+                  <div className="divide-y divide-gray-50">
+                    {favouriteMatches.map((m) => (
+                      <Link
+                        key={m.id}
+                        href={`/matches/${m.id}`}
+                        className="flex items-center gap-[12px] px-[16px] py-[12px] hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="flex items-center gap-[8px] flex-1 min-w-0">
+                          <TeamLogo logo={m.home_team_logo} name={m.home_team_name} size={28} />
+                          <div className="min-w-0">
+                            <span className="block text-[13px] font-semibold text-[#0A0F1C] truncate">
+                              {m.home_team_name} <span className="text-gray-300 font-normal">vs</span> {m.away_team_name}
+                            </span>
+                            <span className="block text-[10px] text-gray-400 truncate mt-[1px]">
+                              {m.league_name}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-[8px] flex-none">
+                          <TeamLogo logo={m.away_team_logo} name={m.away_team_name} size={28} />
+                          <div className="text-right">
+                            <span className="block text-[10px] font-medium text-gray-400">{formatDate(m.kickoff_time)}</span>
+                            <span className="block text-[11px] font-mono-data font-bold text-[#1B2A4A]">
+                              {formatTime(m.kickoff_time)}
+                            </span>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </Card>
+              </div>
+            )}
+
             <div className="flex items-center justify-between mb-[14px]">
               <h2 className="text-[15px] font-semibold text-[#0A0F1C] font-display">
                 Top Picks Today
@@ -608,6 +772,23 @@ export default function DashboardPage() {
                 ))}
               </div>
             </Card>
+
+            {/* Personalization prompt when no favourites yet */}
+            {user && favouritesCount === 0 && (
+              <Card padding="md">
+                <CardHeader title="Personalize" icon="ri-heart-3-line" />
+                <p className="text-[12px] text-gray-500 leading-relaxed mb-[12px]">
+                  Follow your teams and leagues to see their upcoming matches
+                  and predictions right here.
+                </p>
+                <Link
+                  href="/onboarding"
+                  className="inline-flex items-center gap-[6px] text-[12px] font-semibold text-[#1B2A4A] hover:text-[#243B53] transition-colors"
+                >
+                  Pick your teams <i className="ri-arrow-right-line" />
+                </Link>
+              </Card>
+            )}
 
             {/* Rollover status */}
             <Card padding="md">

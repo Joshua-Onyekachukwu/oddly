@@ -160,6 +160,26 @@ export const userBetUpdateSchema = z.object({
   status: z.enum(["won", "lost", "void"]),
 });
 
+// ── Favourites Schemas ──────────────────────────────────────────────
+
+export const favouriteEntityTypeSchema = z.enum(["team", "league", "player"]);
+
+export const favouriteCreateSchema = z.object({
+  entity_type: favouriteEntityTypeSchema,
+  entity_id: z.string().trim().min(1).max(200),
+  entity_name: z.string().trim().max(200).optional(),
+});
+
+export const favouriteQuerySchema = z.object({
+  entity_type: favouriteEntityTypeSchema.optional(),
+  entity_id: z.string().trim().min(1).max(200).optional(),
+});
+
+export const favouriteDeleteSchema = favouriteQuerySchema.refine(
+  (data) => data.entity_type !== undefined && data.entity_id !== undefined,
+  { message: "Both entity_type and entity_id are required" }
+);
+
 // ── Admin Schemas ───────────────────────────────────────────────────
 
 export const adminUserQuerySchema = paginationSchema.merge(sortSchema).extend({

@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/providers/AuthProvider";
 import { useLiveFixture } from "@/hooks/useLiveScores";
+import { FavouriteButton } from "@/components/favourites/FavouriteButton";
 
 interface Prediction {
   id: string;
@@ -51,6 +52,7 @@ interface Fixture {
   away_team_name: string;
   home_team_id: string;
   away_team_id: string;
+  league_id?: string | null;
   home_team_logo?: string | null;
   away_team_logo?: string | null;
   league_logo?: string | null;
@@ -156,6 +158,14 @@ export function MatchDetail({
                 <span className="text-[11px] font-semibold text-[#1B2A4A] uppercase tracking-wider">
                   {fixture.leagues.name}
                 </span>
+                {fixture.league_id && (
+                  <FavouriteButton
+                    entityType="league"
+                    entityId={fixture.league_id}
+                    entityName={fixture.leagues.name}
+                    size="sm"
+                  />
+                )}
               </>
             )}
             {connected && isLive && (
@@ -199,6 +209,14 @@ export function MatchDetail({
               <span className="text-[16px] md:text-[18px] font-semibold text-[#0A0F1C]">
                 {fixture.home_team_name || "Home"}
               </span>
+              {fixture.home_team_id && (
+                <FavouriteButton
+                  entityType="team"
+                  entityId={fixture.home_team_id}
+                  entityName={fixture.home_team_name}
+                  size="sm"
+                />
+              )}
             </div>
 
             <div className="text-center px-[20px]">
@@ -214,6 +232,14 @@ export function MatchDetail({
             </div>
 
             <div className="flex items-center gap-[12px] flex-1 justify-end">
+              {fixture.away_team_id && (
+                <FavouriteButton
+                  entityType="team"
+                  entityId={fixture.away_team_id}
+                  entityName={fixture.away_team_name}
+                  size="sm"
+                />
+              )}
               <span className="text-[16px] md:text-[18px] font-semibold text-[#0A0F1C] text-right">
                 {fixture.away_team_name || "Away"}
               </span>

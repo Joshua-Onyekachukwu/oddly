@@ -17,6 +17,19 @@ const NOTIF_KEYS = {
 
 type NotifPrefs = Record<string, boolean>;
 
+interface FavouriteRow {
+  id: string;
+  entity_type: "team" | "league" | "player";
+  entity_id: string;
+  entity_name: string | null;
+}
+
+const FAV_TYPE_META: Record<FavouriteRow["entity_type"], { label: string; icon: string }> = {
+  team: { label: "Team", icon: "ri-shield-star-line" },
+  league: { label: "League", icon: "ri-trophy-line" },
+  player: { label: "Player", icon: "ri-user-star-line" },
+};
+
 function ToggleSwitch({
   checked,
   onChange,
@@ -68,6 +81,11 @@ export default function SettingsPage() {
   const [notifSaving, setNotifSaving] = useState(false);
   const [notifError, setNotifError] = useState<string | null>(null);
 
+  // Favourites
+  const [favourites, setFavourites] = useState<FavouriteRow[]>([]);
+  const [favsLoading, setFavsLoading] = useState(true);
+  const [favsError, setFavsError] = useState<string | null>(null);
+
   const flash = (text: string, type: "success" | "error" = "success") => {
     setMsg({ text, type });
     setTimeout(() => setMsg(null), 3000);
@@ -103,6 +121,45 @@ export default function SettingsPage() {
   useEffect(() => {
     fetchNotifPrefs();
   }, [fetchNotifPrefs]);
+
+  const fetchFavourites = useCallback(async () => {
+    if (!user) return;
+    setFavsLoading(true);
+    setFavsError(null);
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("user_favourites")
+      .select("id, entity_type, entity_id, entity_name")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      setFavsError("Could not load favourites.");
+      setFavourites([]);
+    } else {
+      setFavourites((data as FavouriteRow[]) || []);
+    }
+    setFavsLoading(false);
+  }, [user]);
+
+  useEffect(() => {
+    fetchFavourites();
+  }, [fetchFavourites]);
+
+  const removeFavourite = async (id: string) => {
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("user_favourites")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", user?.id || "");
+
+    if (error) {
+      flash("Failed to remove favourite. Please try again.", "error");
+      return;
+    }
+    setFavourites((prev) => prev.filter((f) => f.id !== id));
+  };
 
   const saveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -408,6 +465,87 @@ export default function SettingsPage() {
                 Save Preferences
               </Button>
             </div>
+          </>
+        )}
+      </Card>
+
+      {/* Favourites */}
+      <Card className="mb-[16px]">
+        <CardHeader title="Favourites" icon="ri-heart-3-line" />
+        {favsLoading ? (
+          <div className="space-y-[8px]">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="h-[38px] bg-gray-50 rounded-[8px] animate-pulse" />
+            ))}
+          </div>
+        ) : favourites.length === 0 ? (
+          <div className="text-center py-[16px]">
+            <p className="text-[13px] text-gray-400 mb-[10px]">
+              No favourites yet. Tap the heart on any match to follow a team
+              or league.
+            </p>
+            <Link
+              href="/onboarding"
+              className="text-[12px] font-semibold text-[#1B2A4A] hover:text-[#243B53] transition-colors"
+            >
+              Set up favourites →
+            </Link>
+          </div>
+        ) : (
+          <>
+            <div className="space-y-[6px] max-h-[280px] overflow-y-auto pr-[4px]">
+              {favourites.map((fav) => {
+                const meta = FAV_TYPE_META[fav.entity_type] || FAV_TYPE_META.team;
+                const label = fav.entity_name || fav.entity_id;
+                return (
+                  <div
+                    key={fav.id}
+                    className="flex items-center justify-between gap-[10px] p-[10px] bg-gray-50 rounded-[8px]"
+                  >
+                    <div className="flex items-center gap-[10px] min-w-0">
+                      <div className="w-[30px] h-[30px] rounded-[8px] bg-white flex items-center justify-center flex-none border border-gray-100">
+                        <i className={`${meta.icon} text-[14px] text-gray-500`} />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="block text-[13px] font-medium text-[#0A0F1C] truncate">
+                          {label}
+                        </span>
+                        <span className="block text-[10px] text-gray-400 uppercase tracking-wider">
+                          {meta.label}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeFavourite(fav.id)}
+                      aria-label={`Remove ${label} from favourites`}
+                      className="w-[28px] h-[28px] rounded-[8px] flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors flex-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1B2A4A]/30"
+                    >
+                      <i className="ri-close-line text-[14px]" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+            {favsError && (
+              <p className="text-[11px] text-red-500 mt-[10px] flex items-center gap-[4px]" role="alert">
+                <i className="ri-error-warning-line" />
+                {favsError}
+                <button
+                  onClick={fetchFavourites}
+                  className="underline hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1B2A4A]/30 rounded-[2px]"
+                >
+                  Retry
+                </button>
+              </p>
+            )}
+            <p className="text-[11px] text-gray-400 mt-[10px]">
+              Favourite teams and leagues from any match page, or{" "}
+              <Link href="/onboarding" className="text-[#1B2A4A] hover:underline">
+                re-run setup
+              </Link>
+              .
+            </p>
           </>
         )}
       </Card>

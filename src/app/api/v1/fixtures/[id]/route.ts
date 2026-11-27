@@ -55,10 +55,18 @@ export async function GET(
       .order("captured_at", { ascending: false })
       .limit(10);
 
+    // Surface the fixture-level data-quality assessment carried on prediction
+    // rows (all rows for a fixture share the same breakdown).
+    const dataQuality =
+      (predictions?.[0] as any)?.data_quality_breakdown ??
+      (predictions?.[0] as any)?.input_snapshot?.data_quality ??
+      null;
+
     const response = successResponse({
       fixture,
       predictions: predictions || [],
       odds: odds || [],
+      data_quality: dataQuality,
     });
 
     addRateLimitHeaders(response, rl.remaining, rl.resetAt);

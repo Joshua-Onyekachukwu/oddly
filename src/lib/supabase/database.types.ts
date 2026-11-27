@@ -2497,6 +2497,7 @@ export interface Database {
           created_at: string;
           updated_at: string;
           notification_preferences: Json;
+          onboarding_completed: boolean | null;
         };
         Insert: {
           id: string;
@@ -2509,6 +2510,7 @@ export interface Database {
           created_at?: string | null;
           updated_at?: string | null;
           notification_preferences?: Json | null;
+          onboarding_completed?: boolean | null;
         };
         Update: {
           id?: string;
@@ -2521,6 +2523,7 @@ export interface Database {
           created_at?: string | null;
           updated_at?: string | null;
           notification_preferences?: Json | null;
+          onboarding_completed?: boolean | null;
         };
         Relationships: [];
       };
@@ -3666,6 +3669,36 @@ export interface Database {
           settled_at?: string | null;
         };
         Relationships: [{foreignKeyName:"user_bets_recommendation_id_fkey",columns:["recommendation_id"],isOneToOne:false,referencedRelation:"recommendations",referencedColumns:["id"]},{foreignKeyName:"user_bets_fixture_id_fkey",columns:["fixture_id"],isOneToOne:false,referencedRelation:"fixtures",referencedColumns:["id"]}];
+      };
+      user_favourites: {
+        Row: {
+          id: string;
+          user_id: string;
+          entity_type: "team" | "league" | "player";
+          entity_id: string;
+          entity_key: string;
+          entity_name: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          entity_type: "team" | "league" | "player";
+          entity_id: string;
+          entity_key: string;
+          entity_name?: string | null;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          entity_type?: "team" | "league" | "player";
+          entity_id?: string;
+          entity_key?: string;
+          entity_name?: string | null;
+          created_at?: string | null;
+        };
+        Relationships: [{foreignKeyName:"user_favourites_user_id_fkey",columns:["user_id"],isOneToOne:false,referencedRelation:"profiles",referencedColumns:["id"]}];
       };
       validation_results: {
         Row: {

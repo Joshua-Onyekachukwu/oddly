@@ -13,6 +13,11 @@ import { createClient } from "@supabase/supabase-js";
 import { predictMatchEnsemble, resetBatchCaches } from "@/lib/models/ensemble";
 import { syncEnsembleRecommendations } from "@/lib/recommendations/ensemble";
 import { getInjuryFeaturesForPrediction } from "@/lib/injury/feature-engineering";
+import {
+  collectDataQuality,
+  applyDataQualityToTier,
+  probabilityTier,
+} from "@/lib/prediction/data-quality";
 import { withLock } from "@/lib/cron/lock";
 import { startRun, completeRun, type CronRunResult } from "@/lib/cron/logger";
 
@@ -42,6 +47,7 @@ async function runPredictionPipeline(): Promise<{
   ensembleMisses: number;
   recommendations: number;
   modelVersion: string;
+  dataQuality?: Record<string, number>;
 }> {
   resetBatchCaches();
   const startTime = Date.now();
@@ -51,7 +57,7 @@ async function runPredictionPipeline(): Promise<{
   const { data: fixtures, error: fixErr } = await supabaseAdmin
     .from("fixtures")
     .select(
-      `id, league_id, kickoff_time,
+      `id, league_id, kickoff_time, home_team_id, away_team_id,
        home:teams!fixtures_home_team_id_fkey(id, canonical_name),
        away:teams!fixtures_away_team_id_fkey(id, canonical_name)`
     )
@@ -141,6 +147,32 @@ async function runPredictionPipeline(): Promise<{
     console.log(`[PREDICT] Skipping ${skipCount} fixtures with existing pending predictions`);
   }
 
+  // Data-quality scoring: batched per-fixture assessment of history, injuries,
+  // odds, xG, lineups and freshness. Stored on every prediction row as metadata
+  // (never gates recording — the immutable audit trail is preserved).
+  const qualityInputs = fixtures
+    .filter((f: any) => !existingFixtureIds.has(f.id))
+    .map((f: any) => ({
+      id: f.id,
+      kickoff_time: f.kickoff_time,
+      league_id: f.league_id ?? null,
+      home_team_id: f.home_team_id ?? f.home?.id ?? null,
+      away_team_id: f.away_team_id ?? f.away?.id ?? null,
+      home_name: f.home?.canonical_name ?? null,
+      away_name: f.away?.canonical_name ?? null,
+    }));
+  let dataQualityByFixture = new Map<string, import("@/lib/prediction/data-quality").DataQualityResult>();
+  const dataQualityVerdicts: Record<string, number> = {};
+  try {
+    dataQualityByFixture = await collectDataQuality(qualityInputs, supabaseAdmin, now);
+    for (const dq of dataQualityByFixture.values()) {
+      dataQualityVerdicts[dq.verdict] = (dataQualityVerdicts[dq.verdict] ?? 0) + 1;
+    }
+    console.log(`[PREDICT] Data-quality verdicts: ${JSON.stringify(dataQualityVerdicts)}`);
+  } catch (dqErr: any) {
+    console.error("[PREDICT] Data-quality collection failed (non-fatal):", dqErr?.message);
+  }
+
   // Generate predictions using the ensemble
   const predictions: any[] = [];
   let ensembleHits = 0;
@@ -182,6 +214,7 @@ async function runPredictionPipeline(): Promise<{
           }
         : null;
       // Immutable input snapshot — what the model saw at prediction time
+      const dataQuality = dataQualityByFixture.get(fixture.id) ?? null;
       const inputSnapshot = {
         kickoff_time: fixture.kickoff_time,
         league_id: fixture.league_id,
@@ -190,10 +223,17 @@ async function runPredictionPipeline(): Promise<{
         home_form: (formMap[home] || []).slice(-5),
         away_form: (formMap[away] || []).slice(-5),
         injury: injurySnapshot,
+        data_quality: dataQuality,
         captured_at: now.toISOString(),
       };
       for (const [market, prob] of Object.entries(result.markets)) {
         const parts = market.split("_");
+        // Abstention: data quality caps confidence_tier but never suppresses
+        // the row — predictions are an immutable audit record.
+        const baseTier = probabilityTier(prob);
+        const confidenceTier = dataQuality
+          ? applyDataQualityToTier(baseTier, dataQuality)
+          : "LOW";
         predictions.push({
           fixture_id: fixture.id,
           market: parts[0],
@@ -204,6 +244,11 @@ async function runPredictionPipeline(): Promise<{
           feature_version: "ensemble-v1",
           injury_features_used: injuryFeatures,
           injury_snapshot_date: injuryFeatures ? now.toISOString() : null,
+          confidence_tier: confidenceTier,
+          // data_quality_score column is 0-100 int in this schema
+          // (seed.sql / nvidia engine convention); full breakdown in jsonb.
+          data_quality_score: dataQuality ? Math.round(dataQuality.score * 100) : null,
+          data_quality_breakdown: dataQuality,
         });
       }
     } catch (err: any) {
@@ -257,6 +302,7 @@ async function runPredictionPipeline(): Promise<{
     ensembleMisses,
     recommendations: recommendationsInserted,
     modelVersion: "meta-ensemble-v2.0",
+    dataQuality: dataQualityVerdicts,
   };
 }
 

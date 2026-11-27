@@ -332,6 +332,22 @@ async function syncInjuryData() {
   const premier = loadJSON("premier-injuries.json");
   const transfermarkt = loadJSON("transfermarkt-injuries.json");
 
+  // Computed player importance (replaces manual 1-10 guesses).
+  // Engine: src/lib/players/importance.ts via scripts/importance-engine.js
+  // (esbuild bundle). Scores: stats tier > history tier > neutral 0.5.
+  let importanceFor = () => null;
+  try {
+    const { loadImportanceEngine } = require("../scripts/importance-engine");
+    const engine = loadImportanceEngine();
+    const statRows = loadJSON("player-stats.json") || [];
+    const hist = loadJSON("injuries-suspensions.json");
+    const absenceRows = Array.isArray(hist) ? hist : hist?.injuries || hist?.data || [];
+    const index = engine.buildPlayerIndex(statRows, absenceRows);
+    importanceFor = (team, player) => engine.computeImportance(team, player, index).score10;
+  } catch (e) {
+    console.log(`  ⚠️  importance engine unavailable (${e.message}); falling back to file/manual values`);
+  }
+
   const records = [];
 
   if (premier?.injuries) {
@@ -342,7 +358,10 @@ async function syncInjuryData() {
         status: inj.status || "injured",
         injury_type: inj.injury_type || inj.type || null,
         expected_return: toISODate(inj.expected_return),
-        player_importance: num(inj.importance) ?? 5,
+        player_importance:
+          importanceFor(inj.team_name || inj.team, inj.player_name || inj.player) ??
+          num(inj.importance) ??
+          5,
         source: "premier-injuries",
       });
     }
@@ -356,7 +375,10 @@ async function syncInjuryData() {
         status: inj.status || "injured",
         injury_type: inj.injury_type || inj.type || null,
         expected_return: toISODate(inj.expected_return),
-        player_importance: num(inj.importance) ?? 5,
+        player_importance:
+          importanceFor(inj.team_name || inj.team, inj.player_name || inj.player) ??
+          num(inj.importance) ??
+          5,
         source: "transfermarkt",
       });
     }

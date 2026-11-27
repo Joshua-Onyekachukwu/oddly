@@ -12,6 +12,8 @@ interface UserProfile {
   subscription_tier: "free" | "premium" | "elite";
   subscription_expires_at: string | null;
   bankroll: number;
+  /** false = needs onboarding; true/null = completed (legacy users are null). */
+  onboarding_completed: boolean | null;
 }
 
 interface AuthContextType {
@@ -55,6 +57,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       subscription_tier: data.subscription_tier || "free",
       subscription_expires_at: data.subscription_expires_at || null,
       bankroll: Number(data.bankroll) || 0,
+      onboarding_completed:
+        data.onboarding_completed === null || data.onboarding_completed === undefined
+          ? null
+          : Boolean(data.onboarding_completed),
     };
   }, [supabase, user?.email]);
 
