@@ -183,6 +183,7 @@ export function MatchDetail({
   const homeInjuries = context?.injuries?.home ?? [];
   const awayInjuries = context?.injuries?.away ?? [];
   const oddsSummary = context?.odds_summary ?? [];
+  const predictedLineups = context?.lineups ?? { home: null, away: null };
 
   // Group odds by market
   const oddsByMarket = odds.reduce(
@@ -745,6 +746,73 @@ export function MatchDetail({
               </div>
             )}
           </div>
+
+          {/* ── Predicted lineups ────────────────────────────────────── */}
+          {(predictedLineups.home || predictedLineups.away) && (
+            <div className="bg-white rounded-[14px] p-[20px] border border-gray-100 shadow-[0_1px_6px_rgba(0,0,0,0.02)]">
+              <div className="flex items-center justify-between mb-[4px]">
+                <h3 className="text-[13px] font-semibold text-[#0A0F1C] uppercase tracking-wider">
+                  Predicted Lineups
+                </h3>
+                <span className="text-[10px] text-gray-400">
+                  Model estimate — official XIs ~1h before kickoff
+                </span>
+              </div>
+              <p className="text-[11px] text-gray-400 mb-[14px]">
+                Top players by importance score, minus reported absences. Not an official lineup.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-[16px]">
+                {([
+                  ["Home", predictedLineups.home, fixture.home_team_name],
+                  ["Away", predictedLineups.away, fixture.away_team_name],
+                ] as const).map(([side, lu, teamName]) => (
+                  <div key={side}>
+                    <span className="block text-[11px] font-semibold text-gray-500 mb-[8px]">
+                      {side} — {teamName}
+                      {lu ? <span className="text-gray-300 font-normal"> · {lu.squad_size} tracked</span> : null}
+                    </span>
+                    {!lu || lu.starters.length === 0 ? (
+                      <p className="text-[12px] text-gray-400 pl-[4px]">No squad data for this team.</p>
+                    ) : (
+                      <div className="space-y-[4px]">
+                        {lu.starters.map((p, i) => (
+                          <div
+                            key={`${p.player_name}-${i}`}
+                            className="flex items-center gap-[8px] px-[10px] py-[6px] bg-gray-50 rounded-[8px]"
+                          >
+                            <span className="text-[10px] font-mono-data text-gray-300 w-[16px] flex-none">
+                              {i + 1}
+                            </span>
+                            <span className="text-[12px] font-medium text-[#0A0F1C] truncate flex-1">
+                              {p.player_name}
+                            </span>
+                            {p.doubtful && (
+                              <span className="text-[9px] font-semibold text-amber-600 bg-amber-50 px-[6px] py-[1px] rounded-full flex-none">
+                                doubtful
+                              </span>
+                            )}
+                            <span className="text-[10px] font-mono-data text-gray-400 flex-none">
+                              {p.score_1_10 != null ? p.score_1_10.toFixed(1) : "—"}
+                            </span>
+                          </div>
+                        ))}
+                        {lu.unavailable.length > 0 && (
+                          <p className="text-[10px] text-gray-400 pt-[6px] pl-[4px]">
+                            Out:{" "}
+                            {lu.unavailable
+                              .slice(0, 4)
+                              .map((u) => u.player_name)
+                              .join(", ")}
+                            {lu.unavailable.length > 4 ? ` +${lu.unavailable.length - 4} more` : ""}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* ── Odds movement ─────────────────────────────────────────── */}
           {oddsSummary.length > 0 && (

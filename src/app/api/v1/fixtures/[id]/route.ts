@@ -81,6 +81,7 @@ export async function GET(
       injuries: context.injuries,
       prediction_context: context.prediction_context,
       odds_summary: context.odds_summary,
+      lineups: context.lineups,
     });
 
     addRateLimitHeaders(response, rl.remaining, rl.resetAt);

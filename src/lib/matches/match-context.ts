@@ -5,8 +5,9 @@
  *
  * Everything here is honest-empty-state safe: sections return null/[] when
  * the underlying tables have no rows for this fixture, and nothing is
- * fabricated. Lineups are intentionally NOT included — API-Football lineup
- * data is not available on the current plan.
+ * fabricated. `lineups` are PREDICTED (top-11 by player importance minus
+ * reported absences) — official lineups publish ~1h before kickoff and are
+ * never guessed at.
  */
 
 import { normalizeTeamName } from "@/lib/football/team-normalizer";
@@ -141,6 +142,31 @@ export interface OddsMarketSummary {
   bookmakers: number;
 }
 
+export interface PredictedLineupPlayer {
+  player_name: string;
+  /** 1-10 importance score when known. */
+  score_1_10: number | null;
+  confidence: string | null;
+  /** true when injury feed lists the player as doubtful/questionable/likely. */
+  doubtful: boolean;
+}
+
+export interface PredictedLineupAbsent {
+  player_name: string;
+  status: string | null;
+  importance_1_10: number | null;
+}
+
+export interface PredictedLineup {
+  /** Top `xiSize` available players by importance — NOT an official XI. */
+  starters: PredictedLineupPlayer[];
+  bench: PredictedLineupPlayer[];
+  /** Players excluded by injury/suspension status. */
+  unavailable: PredictedLineupAbsent[];
+  /** Total importance rows found for the team. */
+  squad_size: number;
+}
+
 export interface MatchContext {
   team_profiles: {
     home: (TeamProfileRow & { team_key: string; xg_matches: number }) | null;
@@ -177,6 +203,11 @@ export interface MatchContext {
     } | null;
   } | null;
   odds_summary: OddsMarketSummary[];
+  /** Predicted XIs derived from player_importance minus reported absences. */
+  lineups: {
+    home: PredictedLineup | null;
+    away: PredictedLineup | null;
+  };
 }
 
 // ── Pure helpers (unit-tested) ────────────────────────────────────────────
@@ -374,6 +405,101 @@ export function groupInjuriesByTeam(
   return { home, away };
 }
 
+const LINEUP_OUT_STATUSES = /injur|suspend|out/i;
+const LINEUP_DOUBT_STATUSES = /doubtful|questionable|maybe|touch.*go/i;
+
+const CONFIDENCE_RANK: Record<string, number> = {
+  high: 3,
+  medium: 2,
+  med: 2,
+  low: 1,
+};
+
+/**
+ * Build a PREDICTED lineup for one team: the top `xiSize` players by
+ * player_importance score who are not reported injured/suspended/doubtful.
+ *
+ * This is explicitly NOT an official lineup — it is the model's best guess
+ * of the most likely starting XI given squad importance and the current
+ * availability feed. Players flagged doubtful/questionable/likely in the
+ * injury feed remain eligible but are marked `doubtful: true`.
+ *
+ * Returns null when the team has no importance rows at all.
+ */
+export function buildPredictedLineup(
+  importanceRows: ImportanceRow[],
+  teamKey: string,
+  injuryEntries: InjuryEntry[],
+  xiSize = 11,
+  benchSize = 7
+): PredictedLineup | null {
+  const squad = importanceRows.filter(
+    (r) => normalizeTeamName(r.team_name || "") === teamKey && r.player_name
+  );
+  if (squad.length === 0) return null;
+
+  const injByKey = new Map<string, InjuryEntry>();
+  for (const e of injuryEntries) {
+    injByKey.set(personKey(e.player_name), e);
+  }
+
+  const scoreOf = (r: ImportanceRow): number => {
+    if (r.score_1_10 != null && Number.isFinite(Number(r.score_1_10)))
+      return Number(r.score_1_10);
+    if (r.score_0_1 != null && Number.isFinite(Number(r.score_0_1)))
+      return Number(r.score_0_1) * 10;
+    return -1;
+  };
+
+  const toPlayer = (r: ImportanceRow, doubtful: boolean): PredictedLineupPlayer => ({
+    player_name: r.player_name,
+    score_1_10: scoreOf(r) >= 0 ? scoreOf(r) : null,
+    confidence: r.confidence ?? null,
+    doubtful,
+  });
+
+  const eligible: ImportanceRow[] = [];
+  const unavailable: PredictedLineupAbsent[] = [];
+
+  for (const r of squad) {
+    const inj = injByKey.get(personKey(r.player_name)) || null;
+    const status = (inj?.status || "").toLowerCase();
+    const score = scoreOf(r);
+    if (status && LINEUP_OUT_STATUSES.test(status) && !LINEUP_DOUBT_STATUSES.test(status)) {
+      unavailable.push({
+        player_name: r.player_name,
+        status: inj?.status ?? null,
+        importance_1_10: score >= 0 ? score : null,
+      });
+      continue;
+    }
+    eligible.push(r);
+  }
+
+  eligible.sort((a, b) => {
+    const d = scoreOf(b) - scoreOf(a);
+    if (d !== 0) return d;
+    return (
+      (CONFIDENCE_RANK[(b.confidence || "").toLowerCase()] || 0) -
+      (CONFIDENCE_RANK[(a.confidence || "").toLowerCase()] || 0)
+    );
+  });
+
+  const isDoubtful = (r: ImportanceRow) => {
+    const inj = injByKey.get(personKey(r.player_name));
+    return !!inj && LINEUP_DOUBT_STATUSES.test((inj.status || "").toLowerCase());
+  };
+
+  return {
+    starters: eligible.slice(0, xiSize).map((r) => toPlayer(r, isDoubtful(r))),
+    bench: eligible.slice(xiSize, xiSize + benchSize).map((r) => toPlayer(r, isDoubtful(r))),
+    unavailable: unavailable.sort(
+      (a, b) => (b.importance_1_10 ?? -1) - (a.importance_1_10 ?? -1)
+    ),
+    squad_size: squad.length,
+  };
+}
+
 /**
  * Build the prediction-context payload from the newest prediction row for a
  * fixture. All prediction rows for a fixture share the same input_snapshot /
@@ -518,6 +644,7 @@ export async function fetchMatchContext(
     injuries: { home: [], away: [], truncated: false },
     prediction_context: null,
     odds_summary: [],
+    lineups: { home: null, away: null },
   };
 
   const homeId = fixture.home_team_id;
@@ -663,11 +790,18 @@ export async function fetchMatchContext(
   // ── Odds summary ──────────────────────────────────────────────────────
   const odds_summary = summarizeOdds((oddsRes.data || []) as OddsSnapshotRow[]);
 
+  // ── Predicted lineups (importance-ranked, availability-filtered) ──────
+  const lineups = {
+    home: buildPredictedLineup(importanceRows, homeKey, injuries.home),
+    away: buildPredictedLineup(importanceRows, awayKey, injuries.away),
+  };
+
   return {
     team_profiles,
     h2h,
     injuries,
     prediction_context,
     odds_summary,
+    lineups,
   };
 }

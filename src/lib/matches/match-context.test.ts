@@ -1,5 +1,6 @@
 import {
   attachXGToMeetings,
+  buildPredictedLineup,
   buildPredictionContext,
   countXGMatches,
   deriveH2HMeetings,
@@ -259,5 +260,69 @@ describe("summarizeOdds", () => {
 
   it("returns empty for no snapshots", () => {
     expect(summarizeOdds([])).toEqual([]);
+  });
+});
+
+// ─── buildPredictedLineup ────────────────────────────────────────────────
+
+describe("buildPredictedLineup", () => {
+  const NAMES = [
+    "Bukayo Saka", "Martin Odegaard", "Declan Rice", "William Saliba",
+    "Gabriel Magalhaes", "Ben White", "Takehiro Tomiyasu", "Aaron Ramsdale",
+    "Gabriel Martinelli", "Kai Havertz", "Leandro Trossard", "Jurrien Timber",
+    "Jurriën Timber", "Myles Lewis-Skelly", "Ethan Nwaneri",
+  ];
+  const squad = (n: number, team = "Arsenal"): ImportanceRow[] =>
+    Array.from({ length: n }, (_, i) => ({
+      team_name: team,
+      player_name: NAMES[i % NAMES.length],
+      score_1_10: Number((9 - i * 0.3).toFixed(1)),
+      confidence: "high",
+    }));
+
+  it("returns null when the team has no importance rows", () => {
+    expect(buildPredictedLineup([], "arsenal", [], "high" as never)).toBeNull();
+    expect(buildPredictedLineup(squad(3, "Chelsea"), "arsenal", [])).toBeNull();
+  });
+
+  it("ranks by score_1_10 desc and caps starters at 11", () => {
+    const lu = buildPredictedLineup(squad(15), "arsenal", [])!;
+    expect(lu.starters).toHaveLength(11);
+    expect(lu.bench).toHaveLength(4);
+    expect(lu.starters[0].player_name).toBe("Bukayo Saka");
+    expect(lu.squad_size).toBe(15);
+  });
+
+  it("excludes injured and suspended players into unavailable", () => {
+    const injuries = [
+      { player_name: "Bukayo Saka", status: "injured", importance_1_10: 9.5 },
+      { player_name: "Martin Odegaard", status: "suspended", importance_1_10: 9.2 },
+    ];
+    const lu = buildPredictedLineup(squad(15), "arsenal", injuries as any)!;
+    expect(lu.starters.map((p) => p.player_name)).not.toContain("Bukayo Saka");
+    expect(lu.starters.map((p) => p.player_name)).not.toContain("Martin Odegaard");
+    expect(lu.starters[0].player_name).toBe("Declan Rice");
+    expect(lu.unavailable.map((u) => u.player_name)).toEqual(["Bukayo Saka", "Martin Odegaard"]);
+  });
+
+  it("keeps doubtful players eligible but flags them", () => {
+    const injuries = [
+      { player_name: "Declan Rice", status: "doubtful", importance_1_10: 8.9 },
+    ];
+    const lu = buildPredictedLineup(squad(15), "arsenal", injuries as any)!;
+    const p = lu.starters.find((pl) => pl.player_name === "Declan Rice");
+    expect(p).toBeDefined();
+    expect(p!.doubtful).toBe(true);
+    expect(lu.unavailable).toHaveLength(0);
+  });
+
+  it("matches team names through normalization and person keys", () => {
+    const rows: ImportanceRow[] = [
+      { team_name: "Wolverhampton Wanderers", player_name: "R. Jimenez", score_1_10: 8 },
+      { team_name: "Wolves", player_name: "T. Gomes", score_1_10: 7 },
+      { team_name: "Arsenal", player_name: "B. Saka", score_1_10: 9 },
+    ];
+    const lu = buildPredictedLineup(rows, "wolves", [])!;
+    expect(lu.starters.map((p) => p.player_name)).toEqual(["R. Jimenez", "T. Gomes"]);
   });
 });
