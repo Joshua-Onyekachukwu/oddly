@@ -286,13 +286,15 @@ async function saveOddsSnapshots(
 
   if (snapshots.length === 0) return 0;
 
-  // Delete old snapshots for this fixture (keep last hour)
-  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+  // Retention: keep 30 days of snapshots per fixture so CLV, odds-movement
+  // and market-history features remain computable. (Previously pruned to ~1h,
+  // which destroyed all pre-match/closing history.)
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
   await supabaseAdmin
     .from("odds_snapshots")
     .delete()
     .eq("fixture_id", fixtureId)
-    .lt("snapshot_time", oneHourAgo);
+    .lt("snapshot_time", thirtyDaysAgo);
 
   const { error } = await supabaseAdmin.from("odds_snapshots").insert(snapshots);
 

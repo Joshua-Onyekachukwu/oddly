@@ -9,7 +9,7 @@ Every item must pass the validation protocol (§5) before becoming a prod featur
 |---|------|-----|--------|------|
 | P1.1 | **Backfill new Supabase with historical data** (30K matches, feature tables, or re-point env to old project) | New DB is empty — predictions currently have no team history | M | $0 |
 | P1.2 | **Fix `model_weight_config` lookup** (`default`→`production_v5`) + populate from `optimized-weights.json` via feature-store-sync | Learned weights never load — model runs on defaults | S | $0 |
-| P1.3 | **Fix `market-1x2.js` away-injury sign bug** | Away injuries currently help the away team | XS | $0 |
+| P1.3 | ~~Fix `market-1x2.js` away-injury sign bug~~ **CLOSED — verified non-bug 2026-10-02** (formula is `homeImpact − awayImpact`, correct) | — | — | $0 |
 | P1.4 | **Fix `odds_snapshots` retention** (stop ~1h pruning; store pre-match + closing) | CLV/movement/market-features impossible otherwise | S | $0 |
 | P1.5 | **Restore walk-forward eval** (empty `walk-forward-report.json`) | No honest accuracy number exists — everything else is unverifiable | M | $0 |
 | P1.6 | **Wire the dead injury pipeline** (`feature-engineering.ts` → predict cron → `injury_features_used`) + append-only `injury_snapshots` | Best available player-intelligence, currently unused | M | $0 |
@@ -51,8 +51,9 @@ Every item must pass the validation protocol (§5) before becoming a prod featur
 
 ## The five most important improvements (ranked)
 
-1. **Backfill data + fix weight config + injury sign bug** (P1.1–P1.3) — the
-   model is currently running on defaults with an inverted injury term.
+1. **Backfill data + fix weight config** (P1.1–P1.2, P1.4) — the model is
+   currently running on defaults. (P1.3 injury sign bug was verified a
+   non-bug on 2026-10-02.)
 2. **Restore honest evaluation** (P1.5) — no accuracy claim is possible until
    walk-forward works; this gates everything else.
 3. **Wire real injury/lineup intelligence** (P1.6 + P2.1/P2.2) — biggest

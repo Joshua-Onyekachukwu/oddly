@@ -95,7 +95,7 @@ confidence claim now lives in `docs/` as ten deliverables:
 - `ODDLY-PREDICTION-FACTOR-AUDIT.md` — implemented / half-wired / dead / missing factors
 - `ODDLY-PLAYER-INTELLIGENCE-PLAN.md` — unify the two injury systems, importance engine, lineups
 - `ODDLY-ADDITIONAL-DATA-SOURCES.md` — provider pricing + lean ~$50/mo stack
-- `ODDLY-PREDICTION-MODEL-AUDIT.md` — verified bugs (weight-config key, injury sign, version sprawl) + honest accuracy status
+- `ODDLY-PREDICTION-MODEL-AUDIT.md` — verified bugs (weight-config key, version sprawl; injury "sign bug" was verified a false positive) + honest accuracy status
 - `ODDLY-HIGH-CONFIDENCE-STRATEGY.md` — calibration-first, two-gate confidence, honest abstention
 - `ODDLY-MARKET-SPECIFIC-MODELS.md` — per-market model/metric/calibration specs
 - `ODDLY-PREDICTION-INTELLIGENCE-ARCHITECTURE.md` — target layered architecture

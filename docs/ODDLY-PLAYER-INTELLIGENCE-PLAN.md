@@ -11,9 +11,12 @@ ODDLY currently runs on manual 1–10 importance guesses with no history.
   delete+reinsert on each collection run. No history, no expected return, no
   positional/role context. Read by `worker/models/feature-store-loader.js` →
   market-1x2 injury impact term.
-- **Known bug:** `market-1x2.js` computes
+- ~~**Known bug:** `market-1x2.js` computes
   `z += homeInjuryImpact + awayInjuryImpact * -1` — the away-impact sign is
-  inverted, so away injuries currently *help* the away team in the model.
+  inverted~~ **Corrected 2026-10-02:** verified the formula is
+  `homeImpact − awayImpact` with both impacts stored negative — away injuries
+  correctly boost the home logit. No sign bug; the real issues are the
+  manual importance guesses and missing history below.
 
 **Dead path (better, unwired):**
 - `player_availability` (status: injured/suspended/doubtful/out, UNIQUE
@@ -78,7 +81,8 @@ Key principles:
 ## 3. Implementation phases
 
 **Phase P1 — unify & wire (no new data needed)**
-- Fix `market-1x2.js` away-injury sign bug.
+- Wire `feature-engineering.ts` into the predict path (the injury-impact
+  formula itself was verified correct — see MODEL-AUDIT bug #2).
 - Write a cron (`/api/v1/cron/injuries` or fold into existing collect job) that
   populates `player_availability` + `injury_snapshots` from API-Football.
 - Call `feature-engineering.ts` in the predict path; write
@@ -105,7 +109,7 @@ Key principles:
 
 - This is the highest expected-value work remaining: injuries/lineups are the
   most common real-world cause of upset predictions, and we currently model
-  them with guesses **and a sign bug**.
+  them with manual guesses and no history.
 - Blocker: API-Football plan tier — injuries endpoint needs at least Pro
   ($19/mo); lineups too. Current key tier unknown — verify before Phase P3.
 - Without Phase P4 validation we cannot claim the features help; the referee

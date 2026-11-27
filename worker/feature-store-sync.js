@@ -45,7 +45,7 @@ function loadJSON(filename) {
   }
 }
 
-async function upsertBatch(table, records, batchSize = 200) {
+async function upsertBatch(table, records, batchSize = 200, conflictTarget = null) {
   let inserted = 0;
   for (let i = 0; i < records.length; i += batchSize) {
     const batch = records.slice(i, i + batchSize);
@@ -53,15 +53,10 @@ async function upsertBatch(table, records, batchSize = 200) {
       inserted += batch.length;
       continue;
     }
-    const { error } = await sb.from(table).upsert(batch, { onConflict: "team_name,name,config_name,fixture_id" });
+    const opts = conflictTarget ? { onConflict: conflictTarget } : {};
+    const { error } = await sb.from(table).upsert(batch, opts);
     if (error) {
-      // Try without onConflict for tables that don't have unique constraint on that column
-      const { error: err2 } = await sb.from(table).upsert(batch);
-      if (err2) {
-        console.log(`  ⚠️  Batch error at ${i}: ${err2.message}`);
-      } else {
-        inserted += batch.length;
-      }
+      console.log(`  ⚠️  Batch error at ${i}: ${error.message}`);
     } else {
       inserted += batch.length;
     }
@@ -70,6 +65,27 @@ async function upsertBatch(table, records, batchSize = 200) {
 }
 
 // ─── Sync Team Feature Profiles ──────────────────────────────────────────
+// Coerce a value to a finite number or null (arrays/objects → null).
+function num(v) {
+  if (v === null || v === undefined) return null;
+  if (Array.isArray(v) || typeof v === "object") return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+// Normalize a date-ish string to ISO (handles "21/11/2026" DD/MM/YYYY).
+// Returns null for non-date strings like "No Return Date".
+function toISODate(v) {
+  if (!v || typeof v !== "string") return null;
+  const t = v.trim();
+  if (!t) return null;
+  const dmy = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (dmy) return `${dmy[3]}-${dmy[2].padStart(2, "0")}-${dmy[1].padStart(2, "0")}`;
+  if (/^\d{4}-\d{2}-\d{2}/.test(t)) return t.slice(0, 10);
+  const parsed = new Date(t);
+  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString().slice(0, 10);
+}
+
 async function syncTeamFeatures() {
   console.log("\n📊 Syncing team feature profiles...");
 
@@ -79,22 +95,28 @@ async function syncTeamFeatures() {
 
   const records = [];
   for (const [teamName, data] of Object.entries(ratings)) {
+    const matches = num(data.matches) || 1;
+    const formArr = Array.isArray(data.form) ? data.form : null;
+    const formPoints = formArr && formArr.length
+      ? formArr.reduce((s, v) => s + (num(v) ?? 0), 0) / formArr.length
+      : null;
     records.push({
       team_name: teamName,
-      attack_rating: data.attackRating || null,
-      defense_rating: data.defenseRating || null,
-      goals_for_per_game: data.goalsFor || null,
-      goals_against_per_game: data.goalsAgainst || null,
-      win_rate: data.winRate || null,
-      home_win_rate: data.homeWinRate || null,
-      away_win_rate: data.awayWinRate || null,
-      shots_per_game: data.shotsPerGame || null,
-      fouls_per_game: data.foulsPerGame || null,
-      yellow_per_game: data.yellowPerGame || null,
-      corners_per_game: data.cornersPerGame || null,
-      recent_form: data.recentForm || data.form || null,
-      form_points: data.form || null,
-      goal_diff_per_game: data.goalDiff || null,
+      attack_rating: num(data.attackRating),
+      defense_rating: num(data.defenseRating),
+      // goalsFor/goalsAgainst are season TOTALS — convert to per-game
+      goals_for_per_game: num(data.goalsFor) !== null ? num(data.goalsFor) / matches : null,
+      goals_against_per_game: num(data.goalsAgainst) !== null ? num(data.goalsAgainst) / matches : null,
+      win_rate: num(data.winRate),
+      home_win_rate: num(data.homeWinRate),
+      away_win_rate: num(data.awayWinRate),
+      shots_per_game: num(data.shotsPerGame),
+      fouls_per_game: num(data.foulsPerGame),
+      yellow_per_game: num(data.yellowPerGame),
+      corners_per_game: num(data.cornersPerGame),
+      recent_form: formArr ? formArr.join("") : (typeof data.recentForm === "string" ? data.recentForm : null),
+      form_points: formPoints,
+      goal_diff_per_game: num(data.goalDiff),
     });
   }
 
@@ -104,12 +126,12 @@ async function syncTeamFeatures() {
     for (const rec of records) {
       const pi = playerImpacts[rec.team_name];
       if (pi) {
-        rec.player_impact_score = pi.player_impact_score || null;
-        rec.squad_depth = pi.squad_depth || null;
-        rec.top_player_goals = pi.top_player_goals || null;
-        rec.pis_1x2_impact = pi.pis_1x2_impact || null;
-        rec.shot_accuracy = pi.shot_accuracy || null;
-        rec.defensive_solidity = pi.defensive_solidity || null;
+        rec.player_impact_score = num(pi.player_impact_score);
+        rec.squad_depth = num(pi.squad_depth);
+        rec.top_player_goals = num(pi.top_player_goals);
+        rec.pis_1x2_impact = num(pi.pis_1x2_impact);
+        rec.shot_accuracy = num(pi.shot_accuracy);
+        rec.defensive_solidity = num(pi.defensive_solidity);
       }
     }
   }
@@ -120,10 +142,10 @@ async function syncTeamFeatures() {
     for (const rec of records) {
       const inj = injuryImpact[rec.team_name];
       if (inj) {
-        rec.injuries_per_match = inj.injuries_per_match || null;
-        rec.injury_impact_per_match = inj.injury_impact_per_match || null;
-        rec.avg_injury_severity = inj.avg_severity || null;
-        rec.key_player_injuries = inj.key_player_injuries || null;
+        rec.injuries_per_match = num(inj.injuries_per_match);
+        rec.injury_impact_per_match = num(inj.injury_impact_per_match);
+        rec.avg_injury_severity = num(inj.avg_severity);
+        rec.key_player_injuries = num(inj.key_player_injuries);
       }
     }
   }
@@ -134,18 +156,18 @@ async function syncTeamFeatures() {
     for (const rec of records) {
       const xg = statsbombXg.features[rec.team_name];
       if (xg) {
-        rec.avg_xg = xg.avg_xg || null;
-        rec.avg_xga = xg.avg_xga || null;
-        rec.xg_last5 = xg.xg_last5 || null;
-        rec.home_xg = xg.home_xg || null;
-        rec.away_xg = xg.away_xg || null;
-        rec.home_xga = xg.home_xga || null;
-        rec.away_xga = xg.away_xga || null;
-        rec.avg_ppda = xg.avg_ppda || null;
-        rec.avg_deep = xg.avg_deep || null;
-        rec.avg_shots = xg.avg_shots || null;
-        rec.avg_big_chances = xg.avg_big_chances || null;
-        rec.npxg_ratio = xg.npxg_ratio || null;
+        rec.avg_xg = num(xg.avg_xg);
+        rec.avg_xga = num(xg.avg_xga);
+        rec.xg_last5 = num(xg.xg_last5);
+        rec.home_xg = num(xg.home_xg);
+        rec.away_xg = num(xg.away_xg);
+        rec.home_xga = num(xg.home_xga);
+        rec.away_xga = num(xg.away_xga);
+        rec.avg_ppda = num(xg.avg_ppda);
+        rec.avg_deep = num(xg.avg_deep);
+        rec.avg_shots = num(xg.avg_shots);
+        rec.avg_big_chances = num(xg.avg_big_chances);
+        rec.npxg_ratio = num(xg.npxg_ratio);
         rec.xg_source = "statsbomb";
       }
     }
@@ -160,13 +182,13 @@ async function syncTeamFeatures() {
       for (const [key, data] of Object.entries(understat.teams)) {
         const teamPart = key.split(/_EPL_|_La_liga_|_Bundesliga_|_Serie_A_|_Ligue_1_/)[0];
         if (teamPart.toLowerCase() === rec.team_name.toLowerCase()) {
-          rec.avg_xg = data.avg_xg || null;
-          rec.avg_xga = data.avg_xga || null;
-          rec.xg_last5 = data.xg_last5 || null;
-          rec.home_xg = data.home_xg || null;
-          rec.away_xg = data.away_xg || null;
-          rec.home_xga = data.home_xga || null;
-          rec.away_xga = data.away_xga || null;
+          rec.avg_xg = num(data.avg_xg);
+          rec.avg_xga = num(data.avg_xga);
+          rec.xg_last5 = num(data.xg_last5);
+          rec.home_xg = num(data.home_xg);
+          rec.away_xg = num(data.away_xg);
+          rec.home_xga = num(data.home_xga);
+          rec.away_xga = num(data.away_xga);
           rec.xg_source = "understat";
           break;
         }
@@ -174,7 +196,7 @@ async function syncTeamFeatures() {
     }
   }
 
-  const count = await upsertBatch("team_feature_profiles", records);
+  const count = await upsertBatch("team_feature_profiles", records, 200, "team_name");
   console.log(`  ✅ ${count} team feature profiles synced`);
   return count;
 }
@@ -202,7 +224,7 @@ async function syncRefereeProfiles() {
     leagues: r.leagues || [],
   }));
 
-  const count = await upsertBatch("referee_feature_profiles", records);
+  const count = await upsertBatch("referee_feature_profiles", records, 200, "name");
   console.log(`  ✅ ${count} referee profiles synced`);
   return count;
 }
@@ -235,7 +257,7 @@ async function syncLeagueModels() {
   }
 
   if (records.length === 0) return 0;
-  const count = await upsertBatch("league_model_params", records);
+  const count = await upsertBatch("league_model_params", records, 200, "league_name");
   console.log(`  ✅ ${count} league model params synced`);
   return count;
 }
@@ -319,8 +341,8 @@ async function syncInjuryData() {
         player_name: inj.player_name || inj.player,
         status: inj.status || "injured",
         injury_type: inj.injury_type || inj.type || null,
-        expected_return: inj.expected_return || null,
-        player_importance: inj.importance || 5,
+        expected_return: toISODate(inj.expected_return),
+        player_importance: num(inj.importance) ?? 5,
         source: "premier-injuries",
       });
     }
@@ -333,8 +355,8 @@ async function syncInjuryData() {
         player_name: inj.player_name || inj.player,
         status: inj.status || "injured",
         injury_type: inj.injury_type || inj.type || null,
-        expected_return: inj.expected_return || null,
-        player_importance: inj.importance || 5,
+        expected_return: toISODate(inj.expected_return),
+        player_importance: num(inj.importance) ?? 5,
         source: "transfermarkt",
       });
     }
@@ -347,7 +369,7 @@ async function syncInjuryData() {
     await sb.from("player_injury_data").delete().neq("id", "00000000-0000-0000-0000-000000000000");
   }
 
-  const count = await upsertBatch("player_injury_data", records);
+  const count = await upsertBatch("player_injury_data", records, 200, null);
   console.log(`  ✅ ${count} injury records synced`);
   return count;
 }

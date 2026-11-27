@@ -107,7 +107,7 @@ vector and model outputs, not LLM-generated narrative.
 
 ## 4. Build order (maps to IMPROVEMENT-ROADMAP)
 
-1. Data platform repairs (retention, backfill, weight-config fix, injury sign bug)
+1. Data platform repairs (retention, backfill, weight-config fix)
 2. Feature store unification + point-in-time correctness
 3. Calibration layer + restored walk-forward eval
 4. Evidence/scoring engine + abstention

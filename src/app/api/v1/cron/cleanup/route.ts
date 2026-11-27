@@ -64,29 +64,21 @@ async function runCleanup(): Promise<{
     results.push({ table: "notifications (read >7d)", deleted: 0, error: String(e) });
   }
 
-  // 3. Delete old odds snapshots (keep last 14 days per fixture)
+  // 3. Delete old odds snapshots — keep 90 days so closing-line value,
+  // odds movement and market-history features remain computable for training.
   try {
-    const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+    const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
     const { count } = await supabase
       .from("odds_snapshots")
       .delete({ count: "exact" })
-      .lt("snapshot_time", fourteenDaysAgo);
-    results.push({ table: "odds_snapshots (>14d)", deleted: count || 0 });
+      .lt("snapshot_time", ninetyDaysAgo);
+    results.push({ table: "odds_snapshots (>90d)", deleted: count || 0 });
   } catch (e) {
-    results.push({ table: "odds_snapshots (>14d)", deleted: 0, error: String(e) });
+    results.push({ table: "odds_snapshots (>90d)", deleted: 0, error: String(e) });
   }
 
-  // 4. Delete expired predictions (fixtures that already finished, older than 7 days)
-  try {
-    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-    const { count } = await supabase
-      .from("predictions")
-      .delete({ count: "exact" })
-      .lt("created_at", sevenDaysAgo);
-    results.push({ table: "predictions (>7d)", deleted: count || 0 });
-  } catch (e) {
-    results.push({ table: "predictions (>7d)", deleted: 0, error: String(e) });
-  }
+  // NOTE: predictions are NEVER auto-deleted — they are the immutable
+  // prediction→outcome training record the learning system depends on.
 
   // 5. Delete old recommendations (keep 30 days)
   try {

@@ -369,11 +369,28 @@ export async function predictMatchEnsemble(
 
   if (!weightConfigCache) {
     try {
-      const { data: wc } = await supabaseAdmin
+      // Learned weights are stored under "production_v5"; fall back to
+      // "default" then to the most recently trained config for resilience.
+      let { data: wc } = await supabaseAdmin
         .from("model_weight_config")
         .select("*")
-        .eq("config_name", "default")
-        .single();
+        .eq("config_name", "production_v5")
+        .maybeSingle();
+      if (!wc) {
+        ({ data: wc } = await supabaseAdmin
+          .from("model_weight_config")
+          .select("*")
+          .eq("config_name", "default")
+          .maybeSingle());
+      }
+      if (!wc) {
+        ({ data: wc } = await supabaseAdmin
+          .from("model_weight_config")
+          .select("*")
+          .order("trained_at", { ascending: false })
+          .limit(1)
+          .maybeSingle());
+      }
       weightConfigCache = wc || null;
     } catch {}
   }

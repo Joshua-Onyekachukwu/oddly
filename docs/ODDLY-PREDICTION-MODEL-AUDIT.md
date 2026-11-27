@@ -21,8 +21,8 @@ ensemble-model.js. The Python XGBoost/LightGBM artifacts in `models/` are
 ## 2. What the live model actually is
 
 `worker/models/meta-ensemble.js` — a JS ensemble of statistical/market models:
-- **market-1x2.js** — 1X2 model with injury-impact term (**sign bug**:
-  `z += homeInjuryImpact + awayInjuryImpact * -1`)
+- **market-1x2.js** — 1X2 model with injury-impact term (formula verified
+  correct 2026-10-02)
 - Poisson-style goals/OU model, BTTS model, double-chance, draw model
 - Inputs: Elo, form (last-N), H/A splits, `league_model_params`,
   `model_weight_config`, `player_injury_data`, feature-store profiles
@@ -33,7 +33,7 @@ ensemble-model.js. The Python XGBoost/LightGBM artifacts in `models/` are
 | # | Bug | Impact |
 |---|-----|--------|
 | 1 | `model_weight_config` queried `config_name='default'`; only `'production_v5'` seeded; **new DB has 0 rows** | Learned weights never load — ensemble runs on hardcoded defaults |
-| 2 | `market-1x2.js` away-injury sign inverted | Away injuries improve away team's predicted probability |
+| 2 | ~~`market-1x2.js` away-injury sign inverted~~ **VERIFIED NON-BUG (2026-10-02):** `z += homeImpact + awayImpact * -1` = `homeImpact − awayImpact`; both impacts are stored negative, so away injuries correctly *raise* home-win logit. No change needed. | — |
 | 3 | `model_performance` hardcodes `"v2.0-meta-ensemble"` | Metrics attributed to wrong version when other models write |
 | 4 | Pipeline route overwrites `model_version` to `"v5.1-phase2"` | Version sprawl; can't tell which model produced a prediction |
 | 5 | `h2h` feature hardcoded `0.5` | H2H contributes nothing |
