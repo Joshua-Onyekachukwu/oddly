@@ -1,5 +1,7 @@
 # ODDLY — Hybrid Architecture Documentation
 
+> ⚠️ **Superseded (2026-11-26):** This document describes the August-2026 architecture. Convex is now a slim realtime-only schema, the cron surface has 9 jobs, and the production engine is the meta-ensemble (`worker/models/meta-ensemble.js` via `src/lib/models/ensemble.ts`). See `MASTER-PLAN.md` and `SYSTEM-AUDIT.md` for the current verified state.
+
 ## Architecture Overview
 
 ```

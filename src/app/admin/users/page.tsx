@@ -25,73 +25,75 @@ interface UserStats {
   free: number;
 }
 
-const TIER_BADGE: Record<string, { variant: string; label: string }> = {
-  free: { variant: "default", label: "Free" },
-  premium: { variant: "info", label: "Premium" },
-  elite: { variant: "warning", label: "Elite" },
-};
-
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [stats, setStats] = useState<UserStats>({ total: 0, admins: 0, premium: 0, elite: 0, free: 0 });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<"all" | "user" | "admin">("all");
   const [tierFilter, setTierFilter] = useState<"all" | "free" | "premium" | "elite">("all");
-  const [updating, setUpdating] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
 
   const fetchUsers = useCallback(async () => {
-    const supabase = createClient();
-    let query = supabase
-      .from("profiles")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(100);
+    setLoading(true);
+    setError(null);
+    try {
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-    if (roleFilter !== "all") query = query.eq("role", roleFilter);
-    if (tierFilter !== "all") query = query.eq("subscription_tier", tierFilter);
+      if (!session?.access_token) {
+        setError("Not authenticated — please sign in again.");
+        setLoading(false);
+        return;
+      }
 
-    const { data, error } = await query;
-    if (!error && data) setUsers(data);
+      const headers = { Authorization: `Bearer ${session.access_token}` };
 
-    // Fetch stats
-    const [total, admins, premium, elite, freeU] = await Promise.all([
-      supabase.from("profiles").select("id", { count: "exact", head: true }),
-      supabase.from("profiles").select("id", { count: "exact", head: true }).eq("role", "admin"),
-      supabase.from("profiles").select("id", { count: "exact", head: true }).eq("subscription_tier", "premium"),
-      supabase.from("profiles").select("id", { count: "exact", head: true }).eq("subscription_tier", "elite"),
-      supabase.from("profiles").select("id", { count: "exact", head: true }).eq("subscription_tier", "free"),
-    ]);
+      const params = new URLSearchParams({ pageSize: "100" });
+      if (roleFilter !== "all") params.set("role", roleFilter);
+      if (tierFilter !== "all") params.set("subscription", tierFilter);
 
-    setStats({
-      total: total.count || 0,
-      admins: admins.count || 0,
-      premium: premium.count || 0,
-      elite: elite.count || 0,
-      free: freeU.count || 0,
-    });
+      const [usersRes, totalRes, adminsRes, premiumRes, eliteRes, freeRes] =
+        await Promise.all([
+          fetch(`/api/v1/admin/users?${params.toString()}`, { headers }),
+          fetch("/api/v1/admin/users?pageSize=1", { headers }),
+          fetch("/api/v1/admin/users?pageSize=1&role=admin", { headers }),
+          fetch("/api/v1/admin/users?pageSize=1&subscription=premium", { headers }),
+          fetch("/api/v1/admin/users?pageSize=1&subscription=elite", { headers }),
+          fetch("/api/v1/admin/users?pageSize=1&subscription=free", { headers }),
+        ]);
 
+      const usersJson = await usersRes.json().catch(() => ({}));
+      if (!usersRes.ok || usersJson.error) {
+        throw new Error(usersJson.error || `Failed to load users (${usersRes.status})`);
+      }
+
+      setUsers(usersJson.data || []);
+
+      const metaTotal = async (res: Response) => {
+        const json = await res.json().catch(() => ({}));
+        return json?.meta?.total ?? 0;
+      };
+
+      const [total, admins, premium, elite, freeU] = await Promise.all([
+        metaTotal(totalRes),
+        metaTotal(adminsRes),
+        metaTotal(premiumRes),
+        metaTotal(eliteRes),
+        metaTotal(freeRes),
+      ]);
+
+      setStats({ total, admins, premium, elite, free: freeU });
+    } catch (e: any) {
+      setError(e?.message || "Failed to load users");
+    }
     setLoading(false);
   }, [roleFilter, tierFilter]);
 
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
-
-  const updateRole = async (userId: string, newRole: string) => {
-    setUpdating(userId);
-    const supabase = createClient();
-    await supabase.from("profiles").update({ role: newRole as any }).eq("id", userId);
-    await fetchUsers();
-    setUpdating(null);
-  };
-
-  const updateTier = async (userId: string, newTier: string) => {
-    setUpdating(userId);
-    const supabase = createClient();
-    await supabase.from("profiles").update({ subscription_tier: newTier as any }).eq("id", userId);
-    await fetchUsers();
-    setUpdating(null);
-  };
 
   const filtered = users.filter((u) => {
     if (!search) return true;
@@ -131,6 +133,7 @@ export default function AdminUsersPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by name or ID..."
+            aria-label="Search users by name or ID"
             className="w-full h-[38px] rounded-[10px] border border-gray-200 bg-white pl-[36px] pr-[12px] text-[13px] focus:outline-none focus:ring-2 focus:ring-[#1B2A4A]/20 transition-all"
           />
         </div>
@@ -139,7 +142,7 @@ export default function AdminUsersPage() {
             <button
               key={r}
               onClick={() => setRoleFilter(r)}
-              className={`px-[12px] py-[6px] rounded-[8px] text-[12px] font-semibold transition-all ${
+              className={`px-[12px] py-[6px] rounded-[8px] text-[12px] font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1B2A4A]/30 ${
                 roleFilter === r
                   ? "bg-white text-[#0A0F1C] shadow-[0_1px_4px_rgba(0,0,0,0.06)]"
                   : "text-gray-400 hover:text-gray-600"
@@ -154,7 +157,7 @@ export default function AdminUsersPage() {
             <button
               key={t}
               onClick={() => setTierFilter(t)}
-              className={`px-[12px] py-[6px] rounded-[8px] text-[12px] font-semibold transition-all ${
+              className={`px-[12px] py-[6px] rounded-[8px] text-[12px] font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1B2A4A]/30 ${
                 tierFilter === t
                   ? "bg-white text-[#0A0F1C] shadow-[0_1px_4px_rgba(0,0,0,0.06)]"
                   : "text-gray-400 hover:text-gray-600"
@@ -165,6 +168,21 @@ export default function AdminUsersPage() {
           ))}
         </div>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-[14px] p-[16px] mb-[16px] flex items-center justify-between gap-[12px]">
+          <div className="flex items-center gap-[8px]">
+            <i className="ri-error-warning-line text-red-500" />
+            <span className="text-[13px] font-medium text-red-700">{error}</span>
+          </div>
+          <button
+            onClick={fetchUsers}
+            className="text-[12px] font-semibold text-red-600 hover:text-red-700 underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 rounded-[4px] px-[4px]"
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
       {/* Users table */}
       {loading ? (
@@ -197,8 +215,14 @@ export default function AdminUsersPage() {
                 {filtered.map((user) => (
                   <tr
                     key={user.id}
-                    className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors cursor-pointer"
+                    className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1B2A4A]/30"
                     onClick={() => setSelectedUser(user)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") setSelectedUser(user);
+                    }}
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`View details for ${user.display_name || user.id}`}
                   >
                     <td className="px-[16px] py-[12px]">
                       <div className="flex items-center gap-[10px]">
@@ -219,30 +243,28 @@ export default function AdminUsersPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-[16px] py-[12px]" onClick={(e) => e.stopPropagation()}>
-                      <select
-                        value={user.role}
-                        onChange={(e) => updateRole(user.id, e.target.value as "user" | "admin")}
-                        disabled={updating === user.id}
-                        className={`text-[11px] font-semibold px-[8px] py-[4px] rounded-full border bg-white focus:outline-none cursor-pointer ${
-                          user.role === "admin" ? "border-red-200 text-red-600" : "border-gray-200"
-                        }`}
-                      >
-                        <option value="user">User</option>
-                        <option value="admin">Admin</option>
-                      </select>
+                    <td className="px-[16px] py-[12px]">
+                      <Badge variant={user.role === "admin" ? "danger" : "default"} size="sm">
+                        {user.role === "admin" ? "Admin" : "User"}
+                      </Badge>
                     </td>
-                    <td className="px-[16px] py-[12px]" onClick={(e) => e.stopPropagation()}>
-                      <select
-                        value={user.subscription_tier}
-                        onChange={(e) => updateTier(user.id, e.target.value as "free" | "premium" | "elite")}
-                        disabled={updating === user.id}
-                        className="text-[11px] font-semibold px-[8px] py-[4px] rounded-full border border-gray-200 bg-white focus:outline-none cursor-pointer"
+                    <td className="px-[16px] py-[12px]">
+                      <Badge
+                        variant={
+                          user.subscription_tier === "elite"
+                            ? "warning"
+                            : user.subscription_tier === "premium"
+                              ? "info"
+                              : "default"
+                        }
+                        size="sm"
                       >
-                        <option value="free">Free</option>
-                        <option value="premium">Premium</option>
-                        <option value="elite">Elite</option>
-                      </select>
+                        {user.subscription_tier === "elite"
+                          ? "Elite"
+                          : user.subscription_tier === "premium"
+                            ? "Premium"
+                            : "Free"}
+                      </Badge>
                     </td>
                     <td className="px-[16px] py-[12px]">
                       <span className="text-[13px] font-mono-data text-[#0A0F1C]">
@@ -255,16 +277,13 @@ export default function AdminUsersPage() {
                       </span>
                     </td>
                     <td className="px-[16px] py-[12px] text-right" onClick={(e) => e.stopPropagation()}>
-                      {updating === user.id ? (
-                        <div className="w-[16px] h-[16px] border-2 border-gray-200 border-t-[#1B2A4A] rounded-full animate-spin inline-block" />
-                      ) : (
-                        <button
-                          onClick={() => setSelectedUser(user)}
-                          className="text-[11px] text-gray-400 hover:text-[#1B2A4A] transition-colors"
-                        >
-                          <i className="ri-eye-line" /> View
-                        </button>
-                      )}
+                      <button
+                        onClick={() => setSelectedUser(user)}
+                        aria-label={`View details for ${user.display_name || user.id}`}
+                        className="text-[11px] text-gray-400 hover:text-[#1B2A4A] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1B2A4A]/30 rounded-[4px] px-[4px]"
+                      >
+                        <i className="ri-eye-line" /> View
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -272,7 +291,7 @@ export default function AdminUsersPage() {
             </table>
           </div>
           <div className="px-[16px] py-[10px] border-t border-gray-100 text-[11px] text-gray-400">
-            Showing {filtered.length} of {users.length} users
+            Showing {filtered.length} of {users.length} loaded users ({stats.total} total)
           </div>
         </Card>
       )}
@@ -304,7 +323,8 @@ export default function AdminUsersPage() {
               </div>
               <button
                 onClick={() => setSelectedUser(null)}
-                className="w-[32px] h-[32px] rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+                aria-label="Close user details"
+                className="w-[32px] h-[32px] rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1B2A4A]/30"
               >
                 <i className="ri-close-line text-[16px] text-gray-500" />
               </button>
@@ -320,36 +340,34 @@ export default function AdminUsersPage() {
                 <div className="grid grid-cols-2 gap-[8px]">
                   <div className="bg-gray-50 rounded-[10px] p-[12px]">
                     <span className="text-[10px] text-gray-400 block mb-[4px]">Role</span>
-                    <select
-                      value={selectedUser.role}
-                      onChange={async (e) => {
-                        const val = e.target.value as "user" | "admin";
-                        setSelectedUser({ ...selectedUser, role: val });
-                        await updateRole(selectedUser.id, val);
-                      }}
-                      className="text-[13px] font-semibold bg-transparent border-none focus:outline-none cursor-pointer"
-                    >
-                      <option value="user">User</option>
-                      <option value="admin">Admin</option>
-                    </select>
+                    <Badge variant={selectedUser.role === "admin" ? "danger" : "default"} size="sm">
+                      {selectedUser.role === "admin" ? "Admin" : "User"}
+                    </Badge>
                   </div>
                   <div className="bg-gray-50 rounded-[10px] p-[12px]">
                     <span className="text-[10px] text-gray-400 block mb-[4px]">Plan</span>
-                    <select
-                      value={selectedUser.subscription_tier}
-                      onChange={async (e) => {
-                        const val = e.target.value as "free" | "premium" | "elite";
-                        setSelectedUser({ ...selectedUser, subscription_tier: val });
-                        await updateTier(selectedUser.id, val);
-                      }}
-                      className="text-[13px] font-semibold bg-transparent border-none focus:outline-none cursor-pointer"
+                    <Badge
+                      variant={
+                        selectedUser.subscription_tier === "elite"
+                          ? "warning"
+                          : selectedUser.subscription_tier === "premium"
+                            ? "info"
+                            : "default"
+                      }
+                      size="sm"
                     >
-                      <option value="free">Free</option>
-                      <option value="premium">Premium</option>
-                      <option value="elite">Elite</option>
-                    </select>
+                      {selectedUser.subscription_tier === "elite"
+                        ? "Elite"
+                        : selectedUser.subscription_tier === "premium"
+                          ? "Premium"
+                          : "Free"}
+                    </Badge>
                   </div>
                 </div>
+                <p className="text-[10px] text-gray-400 mt-[8px]">
+                  Role and plan changes require database/service-role access — they cannot be
+                  modified from this dashboard.
+                </p>
               </div>
 
               {/* Bankroll */}

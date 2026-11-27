@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/providers/AuthProvider";
-import { PageHeader, Button, Card, CardHeader } from "@/components/ui";
+import { PageHeader, Button, Card, EmptyState } from "@/components/ui";
 
 /**
  * Notification type definitions with metadata for the preferences UI.
@@ -19,7 +19,7 @@ const NOTIFICATION_TYPES = [
   },
   {
     key: "crown_jewel",
-    label: "Crown Jewel Selection",
+    label: "Daily Top Pick",
     description: "When the top pick of the day is selected",
     icon: "ri-vip-crown-line",
     color: "text-amber-600",
@@ -115,20 +115,23 @@ function Toggle({
   enabled,
   onChange,
   disabled,
+  label,
 }: {
   enabled: boolean;
   onChange: () => void;
   disabled?: boolean;
+  label: string;
 }) {
   return (
     <button
       type="button"
       onClick={onChange}
       disabled={disabled}
+      aria-label={label}
       className={`
         relative inline-flex h-[22px] w-[40px] flex-none cursor-pointer rounded-full
-        transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2
-        focus:ring-[#1B2A4A]/20 focus:ring-offset-2
+        transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2
+        focus-visible:ring-[#1B2A4A]/30 focus-visible:ring-offset-2
         ${enabled ? "bg-[#1B2A4A]" : "bg-gray-200"}
         ${disabled ? "opacity-50 cursor-not-allowed" : ""}
       `}
@@ -150,6 +153,7 @@ export default function NotificationPreferencesPage() {
   const { session } = useAuth();
   const [prefs, setPrefs] = useState<NotificationPrefs>({});
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -157,6 +161,8 @@ export default function NotificationPreferencesPage() {
   const fetchPreferences = useCallback(async () => {
     if (!session?.access_token) return;
 
+    setLoading(true);
+    setLoadError(false);
     try {
       const res = await fetch("/api/v1/notifications/preferences", {
         headers: { Authorization: `Bearer ${session.access_token}` },
@@ -165,10 +171,12 @@ export default function NotificationPreferencesPage() {
 
       if (data.success) {
         setPrefs(data.data);
+      } else {
+        setLoadError(true);
       }
     } catch (err) {
       console.error("Failed to fetch preferences:", err);
-      setError("Failed to load preferences");
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -178,16 +186,9 @@ export default function NotificationPreferencesPage() {
     fetchPreferences();
   }, [fetchPreferences]);
 
-  async function togglePreference(key: string) {
-    const newValue = !prefs[key];
-    const updatedPrefs = { ...prefs, [key]: newValue };
-
-    // Optimistic update
-    setPrefs(updatedPrefs);
-    setSaved(false);
-    setError(null);
-
-    if (!session?.access_token) return;
+  /** Persist a partial set of preference changes in a single PATCH request. */
+  async function persistPrefs(changes: NotificationPrefs): Promise<boolean> {
+    if (!session?.access_token) return false;
 
     setSaving(true);
     try {
@@ -197,62 +198,70 @@ export default function NotificationPreferencesPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ preferences: { [key]: newValue } }),
+        body: JSON.stringify({ preferences: changes }),
       });
 
       const data = await res.json();
       if (!data.success) {
-        // Revert on error
-        setPrefs((prev) => ({ ...prev, [key]: !newValue }));
         setError("Failed to save preference");
-      } else {
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2000);
+        return false;
       }
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+      return true;
     } catch {
-      setPrefs((prev) => ({ ...prev, [key]: !newValue }));
       setError("Failed to save preference");
+      return false;
     } finally {
       setSaving(false);
     }
   }
 
-  async function setAll(enabled: boolean) {
-    const allPrefs: NotificationPrefs = {};
-    NOTIFICATION_TYPES.forEach((t) => {
-      allPrefs[t.key] = enabled;
-    });
+  async function togglePreference(key: string) {
+    const newValue = !prefs[key];
 
-    setPrefs(allPrefs);
+    // Optimistic update
+    setPrefs((prev) => ({ ...prev, [key]: newValue }));
     setSaved(false);
     setError(null);
 
-    if (!session?.access_token) return;
+    const ok = await persistPrefs({ [key]: newValue });
+    if (!ok) {
+      // Revert on error
+      setPrefs((prev) => ({ ...prev, [key]: !newValue }));
+    }
+  }
 
-    setSaving(true);
-    try {
-      const res = await fetch("/api/v1/notifications/preferences", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ preferences: allPrefs }),
-      });
+  async function setCategory(types: readonly { key: string }[], enabled: boolean) {
+    const changes: NotificationPrefs = {};
+    types.forEach((t) => {
+      changes[t.key] = enabled;
+    });
 
-      const data = await res.json();
-      if (data.success) {
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2000);
-      } else {
-        setError("Failed to save preferences");
-        fetchPreferences(); // Revert
-      }
-    } catch {
-      setError("Failed to save preferences");
-      fetchPreferences();
-    } finally {
-      setSaving(false);
+    // Optimistic update
+    setPrefs((prev) => ({ ...prev, ...changes }));
+    setSaved(false);
+    setError(null);
+
+    const ok = await persistPrefs(changes);
+    if (!ok) {
+      fetchPreferences(); // Revert
+    }
+  }
+
+  async function setAll(enabled: boolean) {
+    const changes: NotificationPrefs = {};
+    NOTIFICATION_TYPES.forEach((t) => {
+      changes[t.key] = enabled;
+    });
+
+    setPrefs(changes);
+    setSaved(false);
+    setError(null);
+
+    const ok = await persistPrefs(changes);
+    if (!ok) {
+      fetchPreferences(); // Revert
     }
   }
 
@@ -292,6 +301,27 @@ export default function NotificationPreferencesPage() {
             ))}
           </div>
         </div>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="max-w-[640px] mx-auto">
+        <PageHeader
+          title="Notification Preferences"
+          description="Choose which notifications you receive."
+        />
+        <EmptyState
+          icon="ri-error-warning-line"
+          title="Could not load preferences"
+          description="Please check your connection and try again."
+          action={
+            <Button onClick={fetchPreferences} icon="ri-refresh-line" size="sm" variant="secondary">
+              Try again
+            </Button>
+          }
+        />
       </div>
     );
   }
@@ -352,26 +382,17 @@ export default function NotificationPreferencesPage() {
                 </h3>
                 <div className="flex items-center gap-[6px]">
                   <button
-                    onClick={() => {
-                      const update: NotificationPrefs = {};
-                      types.forEach((t) => (update[t.key] = true));
-                      // Batch update
-                      types.forEach((t) => togglePreference(t.key));
-                    }}
+                    onClick={() => setCategory(types, true)}
                     disabled={categoryAllOn || saving}
-                    className="text-[10px] text-gray-400 hover:text-[#1B2A4A] transition-colors disabled:opacity-30"
+                    className="text-[10px] text-gray-400 hover:text-[#1B2A4A] transition-colors disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1B2A4A]/30 rounded-[4px] px-[2px]"
                   >
                     All on
                   </button>
                   <span className="text-gray-200">·</span>
                   <button
-                    onClick={() => {
-                      types.forEach((t) => {
-                        if (prefs[t.key]) togglePreference(t.key);
-                      });
-                    }}
+                    onClick={() => setCategory(types, false)}
                     disabled={categoryAllOff || saving}
-                    className="text-[10px] text-gray-400 hover:text-red-500 transition-colors disabled:opacity-30"
+                    className="text-[10px] text-gray-400 hover:text-red-500 transition-colors disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1B2A4A]/30 rounded-[4px] px-[2px]"
                   >
                     All off
                   </button>
@@ -406,6 +427,7 @@ export default function NotificationPreferencesPage() {
                       enabled={prefs[type.key] ?? true}
                       onChange={() => togglePreference(type.key)}
                       disabled={saving}
+                      label={`${type.label} notifications`}
                     />
                   </div>
                 ))}

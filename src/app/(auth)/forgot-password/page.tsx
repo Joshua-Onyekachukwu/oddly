@@ -21,6 +21,12 @@ export default function ForgotPasswordPage() {
       return;
     }
 
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError("Enter a valid email address");
+      setLoading(false);
+      return;
+    }
+
     const supabase = createClient();
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/auth/callback?next=/settings`,
@@ -51,7 +57,7 @@ export default function ForgotPasswordPage() {
         </p>
         <Link
           href="/login"
-          className="inline-flex items-center gap-[8px] font-display font-semibold text-[14px] rounded-full bg-[#1B2A4A] text-white py-[12px] px-[24px] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[#243B53] active:scale-[0.97]"
+          className="inline-flex items-center gap-[8px] font-display font-semibold text-[14px] rounded-full bg-[#1B2A4A] text-white py-[12px] px-[24px] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[#243B53] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] focus-visible:ring-offset-2"
         >
           Back to sign in
         </Link>
@@ -63,7 +69,7 @@ export default function ForgotPasswordPage() {
     <div className="w-full max-w-[400px] px-[16px]">
       <div className="text-center mb-[32px]">
         <Link href="/" className="inline-flex items-center gap-[8px] mb-[24px]">
-          <span className="font-display font-bold text-[24px] tracking-[-0.02em] text-[#0A0F1C]">
+          <span className="font-display font-bold text-[24px] tracking-[-0.02em] text-[#0A0F1C] lg:hidden">
             ODDLY
           </span>
         </Link>
@@ -77,7 +83,10 @@ export default function ForgotPasswordPage() {
 
       <form onSubmit={handleSubmit} className="space-y-[16px]">
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-[12px] p-[12px] flex items-center gap-[8px]">
+          <div
+            role="alert"
+            className="bg-red-50 border border-red-200 rounded-[12px] p-[12px] flex items-center gap-[8px]"
+          >
             <i className="ri-error-warning-line text-[16px] text-red-500"></i>
             <span className="text-[13px] text-red-600">{error}</span>
           </div>
@@ -93,6 +102,7 @@ export default function ForgotPasswordPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
+            required
             className="w-full h-[44px] rounded-[12px] border border-gray-200 bg-white px-[14px] text-[14px] text-[#0A0F1C] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1B2A4A] focus:ring-offset-2 transition-all"
             autoComplete="email"
             disabled={loading}
@@ -102,7 +112,7 @@ export default function ForgotPasswordPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full h-[44px] rounded-[12px] bg-[#1B2A4A] text-white font-display font-semibold text-[14px] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[#243B53] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-[8px]"
+          className="w-full h-[44px] rounded-[12px] bg-[#1B2A4A] text-white font-display font-semibold text-[14px] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[#243B53] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-[8px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] focus-visible:ring-offset-2"
         >
           {loading ? (
             <>

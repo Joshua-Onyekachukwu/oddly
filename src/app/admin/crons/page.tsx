@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { ErrorBoundary } from "@/components/ui";
+import { createClient } from "@/lib/supabase/client";
 
 /* ─── Types ──────────────────────────────────────────────── */
 
@@ -136,9 +137,16 @@ export default function CronsPage() {
 
   async function fetchData() {
     try {
-      const res = await fetch("/api/v1/admin/crons");
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch("/api/v1/admin/crons", {
+        headers: session?.access_token
+          ? { Authorization: `Bearer ${session.access_token}` }
+          : {},
+      });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
+      if (json.error) throw new Error(json.error);
       setData(json);
       setError(null);
     } catch (err: any) {
@@ -178,16 +186,32 @@ export default function CronsPage() {
         </div>
         <button
           onClick={fetchData}
-          className="px-3 py-1.5 text-[12px] font-medium bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
+          aria-label="Refresh cron job status"
+          className="px-3 py-1.5 text-[12px] font-medium bg-white border border-gray-200 rounded-lg hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
         >
           <i className="ri-refresh-line mr-1" />
           Refresh
         </button>
       </div>
 
-      {error && (
+      {error && !data && (
+        <div className="p-[16px] bg-red-50 border border-red-200 rounded-[10px] text-center">
+          <p className="text-[13px] text-red-600 mb-[10px]">
+            <i className="ri-error-warning-line mr-[4px]" />
+            Unable to load cron data: {error}
+          </p>
+          <button
+            onClick={fetchData}
+            className="px-[14px] py-[7px] bg-red-600 text-white rounded-[8px] text-[12px] font-medium hover:bg-red-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {error && data && (
         <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-[13px] text-red-700">
-          Error loading cron data: {error}
+          Refresh failed: {error} — showing last loaded data
         </div>
       )}
 

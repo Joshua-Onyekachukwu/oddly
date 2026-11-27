@@ -1,0 +1,177 @@
+import type { Metadata } from "next";
+import LegalPage from "@/components/legal/LegalPage";
+
+export const metadata: Metadata = {
+  title: "Terms of Service",
+  description:
+    "Terms of Service for ODDLY — the AI-powered football prediction platform. Subscription billing, acceptable use, disclaimers, and governing law.",
+};
+
+const LAST_UPDATED = "15 January 2026";
+
+export default function TermsPage() {
+  return (
+    <LegalPage
+      title="Terms of Service"
+      subtitle="The agreement between you and ODDLY governing your use of our AI-powered football prediction platform."
+      lastUpdated={LAST_UPDATED}
+    >
+      <h2>1. About ODDLY</h2>
+      <p>
+        ODDLY (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;) operates an AI-powered football
+        prediction platform available at oddly.ng (the &quot;Service&quot;). The Service provides
+        ensemble-model match predictions across major and minor football leagues, value bet
+        detection, an accumulator builder, rollover challenge tracking, performance analytics, and
+        an AI analyst chat interface.
+      </p>
+      <p>
+        ODDLY is a sports analytics and prediction product. We are not a bookmaker, we do not accept
+        bets, and we do not process gambling transactions. Predictions and insights are provided for
+        informational and analytical purposes only. See our{" "}
+        <a href="/responsible-gambling">Responsible Gambling</a> page for important information about
+        the risks of sports betting.
+      </p>
+
+      <h2>2. Eligibility and Accounts</h2>
+      <ul>
+        <li>
+          You must be at least <strong>18 years old</strong> (or the age of majority in your
+          jurisdiction) to use the Service.
+        </li>
+        <li>
+          You must provide accurate registration information and keep your account credentials
+          secure. You are responsible for all activity under your account.
+        </li>
+        <li>
+          Sports betting is illegal or restricted in some jurisdictions. You are solely responsible
+          for ensuring that your use of the Service — including acting on any prediction — is lawful
+          where you live.
+        </li>
+        <li>
+          We reserve the right to suspend or terminate accounts that violate these Terms or applicable
+          law.
+        </li>
+      </ul>
+
+      <h2>3. Subscriptions and Billing</h2>
+      <ul>
+        <li>
+          The Service offers a Free tier and paid subscription tiers (Premium and Elite), priced in
+          Nigerian Naira (NGN) and billed monthly via Stripe.
+        </li>
+        <li>
+          Paid subscriptions renew automatically each billing period until cancelled. You may cancel
+          at any time from your account settings; cancellation takes effect at the end of the current
+          billing period, and you retain access until then.
+        </li>
+        <li>
+          Fees are non-refundable except where required by applicable law or expressly stated
+          otherwise. We may change pricing with reasonable advance notice.
+        </li>
+        <li>
+          If a payment fails, we may downgrade your account to the Free tier after a grace period.
+        </li>
+      </ul>
+
+      <h2>4. Acceptable Use</h2>
+      <p>You agree not to:</p>
+      <ul>
+        <li>Share, resell, or sublicense your account or subscription access.</li>
+        <li>Scrape, crawl, or bulk-extract predictions, odds data, or model outputs.</li>
+        <li>Reverse engineer, decompile, or attempt to extract the underlying models or source code.</li>
+        <li>Use the Service for any unlawful purpose or in violation of gambling laws.</li>
+        <li>Interfere with or disrupt the Service, its infrastructure, or other users&apos; access.</li>
+        <li>Misrepresent predictions as guaranteed outcomes or guaranteed profits.</li>
+      </ul>
+
+      <h2>5. Intellectual Property</h2>
+      <p>
+        The Service, including its software, prediction models, ensemble algorithms, user interface,
+        design, branding, and all content we provide, is owned by ODDLY and protected by intellectual
+        property laws. Your subscription grants you a limited, non-exclusive, non-transferable right
+        to access and use the Service for personal, non-commercial purposes. You may not copy,
+        modify, distribute, or create derivative works from any part of the Service.
+      </p>
+      <p>
+        Predictions, probability estimates, and analysis generated for you remain subject to these
+        Terms. You may use them for your own personal betting research; you may not republish or
+        commercially redistribute them.
+      </p>
+
+      <h2>6. Predictions and Disclaimers — Please Read Carefully</h2>
+      <div className="legal-callout">
+        <p>
+          <strong>No guarantee of accuracy or winnings.</strong> ODDLY&apos;s predictions are
+          probabilistic estimates generated by statistical and machine-learning models. They are not
+          certainties, tips with guaranteed outcomes, or financial advice. Past performance —
+          including model accuracy statistics and rollover challenge results — is not indicative of
+          future results. You can lose the money you wager. Never bet more than you can afford to
+          lose.
+        </p>
+      </div>
+      <ul>
+        <li>
+          Predictions are generated automatically and may be wrong, delayed, incomplete, or
+          unavailable. Odds and lines shown are sourced from third-party bookmakers and may change or
+          differ from the odds you can actually obtain.
+        </li>
+        <li>
+          Value bet indicators reflect model estimates of expected value at the time of generation;
+          they are not guarantees of profit.
+        </li>
+        <li>
+          The rollover challenge and performance tracking features are self-reported record-keeping
+          tools. We do not hold, stake, or settle any bets on your behalf.
+        </li>
+        <li>
+          The AI analyst provides generated analysis and should not be treated as professional
+          financial or betting advice.
+        </li>
+      </ul>
+
+      <h2>7. Limitation of Liability</h2>
+      <p>
+        To the maximum extent permitted by Nigerian law, ODDLY and its officers, employees, and
+        suppliers shall not be liable for any indirect, incidental, special, consequential, or
+        punitive damages — including lost profits, lost wagers, or lost betting opportunities —
+        arising from your use of or inability to use the Service, reliance on any prediction, or any
+        betting losses.
+      </p>
+      <p>
+        Our total aggregate liability for any claim relating to the Service shall not exceed the
+        amount you paid us for the Service in the twelve (12) months preceding the claim, or
+        NGN&nbsp;50,000, whichever is greater.
+      </p>
+
+      <h2>8. Termination</h2>
+      <p>
+        You may stop using the Service and delete your account at any time. We may suspend or
+        terminate access for breach of these Terms, suspected fraud, or unlawful use. Sections that
+        by their nature should survive termination (including disclaimers, limitation of liability,
+        and governing law) will survive.
+      </p>
+
+      <h2>9. Governing Law and Disputes</h2>
+      <p>
+        These Terms are governed by the laws of the <strong>Federal Republic of Nigeria</strong>.
+        Any dispute arising from these Terms or the Service shall be subject to the exclusive
+        jurisdiction of the courts of Nigeria, and the parties consent to the jurisdiction of the
+        courts of Lagos State, Nigeria.
+      </p>
+
+      <h2>10. Changes to These Terms</h2>
+      <p>
+        We may update these Terms from time to time. Material changes will be communicated via email
+        or an in-app notice. Continued use of the Service after changes take effect constitutes
+        acceptance of the updated Terms.
+      </p>
+
+      <h2>11. Contact</h2>
+      <p>
+        Questions about these Terms? Email us at{" "}
+        <a href="mailto:legal@oddly.ng">legal@oddly.ng</a> or{" "}
+        <a href="mailto:support@oddly.ng">support@oddly.ng</a>.
+      </p>
+    </LegalPage>
+  );
+}

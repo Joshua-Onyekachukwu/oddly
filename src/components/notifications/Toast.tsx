@@ -81,6 +81,8 @@ export function ToastContainer() {
               </p>
             </div>
             <button
+              type="button"
+              aria-label="Dismiss notification"
               onClick={() => setToasts((prev) => prev.filter((t) => t.id !== toast.id))}
               className="text-gray-300 hover:text-gray-500 transition-colors flex-none"
             >

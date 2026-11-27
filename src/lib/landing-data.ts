@@ -173,7 +173,7 @@ export async function getLandingPageData(): Promise<LandingPageData> {
         modelProbability: Number(topRec.model_probability),
         impliedProbability: impliedProb,
         edge: Number(topRec.edge),
-        modelAgreement: 3, // Ensemble: Poisson + Elo + Regression
+        modelAgreement: 5, // Meta-ensemble: 1X2 + Goals + BTTS + DC + Draw models
       };
     }
   }

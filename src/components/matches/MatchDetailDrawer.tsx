@@ -275,12 +275,27 @@ export function MatchDetailDrawer({ fixtureId, onClose }: MatchDetailProps) {
     "AwayGoals": "Away Team Goals",
   };
 
-  // Group odds by bookmaker
+  // Group 1X2 odds by bookmaker. Selections are stored inconsistently
+  // ("Home"/"home"/"1", "Draw"/"draw"/"X", "Away"/"away"/"2") and other
+  // markets (totals, BTTS) share the table — restrict to match-result markets
+  // and normalize selection names before grouping.
+  const isMatchResultMarket = (m?: string) => {
+    const v = (m || "").toLowerCase();
+    return v === "" || v === "match_result" || v === "1x2" || v === "h2h";
+  };
+  const normalizeSelection = (s: string): string => {
+    const v = s.toLowerCase();
+    if (v === "home" || v === "1") return "Home";
+    if (v === "draw" || v === "x") return "Draw";
+    if (v === "away" || v === "2") return "Away";
+    return s;
+  };
   const oddsByBookmaker: Record<string, Record<string, number>> = {};
   if (data?.odds) {
     for (const o of data.odds) {
+      if (!isMatchResultMarket(o.market)) continue;
       if (!oddsByBookmaker[o.bookmaker]) oddsByBookmaker[o.bookmaker] = {};
-      oddsByBookmaker[o.bookmaker][o.selection] = o.odds;
+      oddsByBookmaker[o.bookmaker][normalizeSelection(o.selection)] = o.odds;
     }
   }
 
@@ -302,7 +317,8 @@ export function MatchDetailDrawer({ fixtureId, onClose }: MatchDetailProps) {
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-[12px] right-[12px] w-[32px] h-[32px] rounded-full bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-gray-200 hover:text-gray-600 transition-all z-10"
+          aria-label="Close match details"
+          className="absolute top-[12px] right-[12px] w-[32px] h-[32px] rounded-full bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-gray-200 hover:text-gray-600 transition-all z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
         >
           <span className="text-[14px]">✕</span>
         </button>
@@ -315,7 +331,16 @@ export function MatchDetailDrawer({ fixtureId, onClose }: MatchDetailProps) {
           </div>
         ) : !data ? (
           <div className="p-[40px] text-center">
-            <p className="text-[14px] text-gray-400">Match not found</p>
+            <div className="inline-flex items-center justify-center w-[48px] h-[48px] rounded-[12px] bg-gray-50 mb-[12px]">
+              <i className="ri-error-warning-line text-[20px] text-gray-300"></i>
+            </div>
+            <p className="text-[14px] text-gray-400 mb-[16px]">Match details could not be loaded.</p>
+            <button
+              onClick={onClose}
+              className="px-[16px] py-[8px] rounded-[10px] bg-[#1B2A4A] text-white text-[12px] font-semibold hover:opacity-90 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
+            >
+              Close
+            </button>
           </div>
         ) : (
           <div className="overflow-y-auto max-h-[85vh] p-[20px] sm:p-[24px]">

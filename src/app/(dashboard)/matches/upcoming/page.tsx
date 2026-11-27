@@ -4,6 +4,8 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { MatchCard } from "@/components/matches/MatchCard";
 import { MatchDetailDrawer } from "@/components/matches/MatchDetailDrawer";
+import { ResponsiveGrid, FilterBar, SkeletonGrid } from "@/components/ui/DesignSystem";
+import { PageHeader } from "@/components/ui";
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
@@ -85,35 +87,6 @@ function getDateRange(filter: DateFilter): { from: string; to: string } | null {
   }
 }
 
-// ─── Skeleton Loader ─────────────────────────────────────────────────────
-
-function SkeletonCard() {
-  return (
-    <div className="bg-white rounded-[14px] border border-gray-100 overflow-hidden animate-pulse">
-      <div className="px-[14px] pt-[12px] pb-[8px] flex items-center justify-between">
-        <div className="h-[12px] w-[80px] bg-gray-100 rounded" />
-        <div className="h-[12px] w-[60px] bg-gray-100 rounded" />
-      </div>
-      <div className="px-[14px] py-[8px]">
-        <div className="flex items-center gap-[10px]">
-          <div className="flex items-center gap-[8px] flex-1">
-            <div className="w-[28px] h-[28px] bg-gray-100 rounded-full" />
-            <div className="h-[14px] w-[80px] bg-gray-100 rounded" />
-          </div>
-          <div className="h-[14px] w-[20px] bg-gray-100 rounded" />
-          <div className="flex items-center gap-[8px] flex-1 justify-end">
-            <div className="h-[14px] w-[80px] bg-gray-100 rounded" />
-            <div className="w-[28px] h-[28px] bg-gray-100 rounded-full" />
-          </div>
-        </div>
-      </div>
-      <div className="px-[14px] pb-[12px] pt-[8px] border-t border-gray-50">
-        <div className="h-[16px] w-[100px] bg-gray-100 rounded" />
-      </div>
-    </div>
-  );
-}
-
 // ─── Pagination ──────────────────────────────────────────────────────────
 
 function Pagination({
@@ -145,7 +118,8 @@ function Pagination({
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className="w-[32px] h-[32px] rounded-[8px] flex items-center justify-center text-[13px] font-medium text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+        aria-label="Previous page"
+        className="w-[32px] h-[32px] rounded-[8px] flex items-center justify-center text-[13px] font-medium text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
       >
         ←
       </button>
@@ -158,7 +132,9 @@ function Pagination({
           <button
             key={page}
             onClick={() => onPageChange(page)}
-            className={`w-[32px] h-[32px] rounded-[8px] flex items-center justify-center text-[12px] font-semibold transition-all ${
+            aria-label={`Page ${page}`}
+            aria-current={page === currentPage ? "page" : undefined}
+            className={`w-[32px] h-[32px] rounded-[8px] flex items-center justify-center text-[12px] font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] ${
               page === currentPage
                 ? "bg-[#1B2A4A] text-white shadow-sm"
                 : "text-gray-500 hover:bg-gray-100"
@@ -171,7 +147,8 @@ function Pagination({
       <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className="w-[32px] h-[32px] rounded-[8px] flex items-center justify-center text-[13px] font-medium text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+        aria-label="Next page"
+        className="w-[32px] h-[32px] rounded-[8px] flex items-center justify-center text-[13px] font-medium text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
       >
         →
       </button>
@@ -231,18 +208,30 @@ export default function UpcomingMatchesPage() {
           .in("fixture_id", fixtureIds);
 
         if (oddsData) {
-          // Get best odds per selection per fixture
+          // Get best odds per selection per fixture.
+          // Selections are stored inconsistently ("Home"/"home"/"1", etc.)
+          // and multiple markets share the table — only 1X2-style selections
+          // map onto the card's home/draw/away chips.
+          const normalizeSelection = (s: string): "home" | "draw" | "away" | null => {
+            const v = (s || "").toLowerCase();
+            if (v === "home" || v === "1") return "home";
+            if (v === "draw" || v === "x") return "draw";
+            if (v === "away" || v === "2") return "away";
+            return null;
+          };
           const grouped: Record<string, Record<string, number[]>> = {};
           for (const o of oddsData) {
+            const sel = normalizeSelection(o.selection);
+            if (!sel) continue;
             if (!grouped[o.fixture_id]) grouped[o.fixture_id] = {};
-            if (!grouped[o.fixture_id][o.selection]) grouped[o.fixture_id][o.selection] = [];
-            grouped[o.fixture_id][o.selection].push(o.odds);
+            if (!grouped[o.fixture_id][sel]) grouped[o.fixture_id][sel] = [];
+            grouped[o.fixture_id][sel].push(o.odds);
           }
           for (const [fid, selections] of Object.entries(grouped)) {
             oddsMap[fid] = {
-              home: selections["Home"]?.length ? Math.max(...selections["Home"]) : undefined,
-              draw: selections["Draw"]?.length ? Math.max(...selections["Draw"]) : undefined,
-              away: selections["Away"]?.length ? Math.max(...selections["Away"]) : undefined,
+              home: selections["home"]?.length ? Math.max(...selections["home"]) : undefined,
+              draw: selections["draw"]?.length ? Math.max(...selections["draw"]) : undefined,
+              away: selections["away"]?.length ? Math.max(...selections["away"]) : undefined,
             };
           }
         }
@@ -335,138 +324,64 @@ export default function UpcomingMatchesPage() {
 
   return (
     <div>
-      {/* Page Header */}
-      <div className="mb-[20px]">
-        <h1 className="font-display text-[24px] md:text-[28px] font-bold text-[#0A0F1C] mb-[4px]">
-          Upcoming Matches
-        </h1>
-        <p className="text-[14px] text-gray-500">
-          AI-powered predictions for upcoming fixtures across 26+ leagues.
-        </p>
-      </div>
+      <PageHeader
+        title="Upcoming Matches"
+        description="AI-powered predictions for upcoming fixtures across all covered leagues."
+      />
 
-      {/* Filters Row */}
-      <div className="flex flex-col gap-[10px] mb-[20px]">
-        {/* Date + Confidence + Sort */}
-        <div className="flex flex-wrap items-center gap-[6px]">
-          {/* Date Tabs */}
-          <div className="flex items-center gap-[4px] bg-gray-50 rounded-[10px] p-[3px]">
-            {DATE_FILTERS.map((opt) => (
-              <button
-                key={opt.key}
-                onClick={() => setDateFilter(opt.key)}
-                className={`px-[12px] py-[6px] rounded-[8px] text-[11px] font-semibold whitespace-nowrap transition-all ${
-                  dateFilter === opt.key
-                    ? "bg-white text-[#0A0F1C] shadow-sm"
-                    : "text-gray-400 hover:text-gray-600"
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Confidence */}
-          <div className="flex items-center gap-[4px] bg-gray-50 rounded-[10px] p-[3px]">
-            {CONFIDENCE_FILTERS.map((opt) => (
-              <button
-                key={opt.key}
-                onClick={() => setConfidenceFilter(opt.key)}
-                className={`px-[10px] py-[6px] rounded-[8px] text-[11px] font-semibold whitespace-nowrap transition-all ${
-                  confidenceFilter === opt.key
-                    ? "bg-white text-[#0A0F1C] shadow-sm"
-                    : "text-gray-400 hover:text-gray-600"
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Sort */}
+      <FilterBar
+        dateFilters={DATE_FILTERS}
+        activeDateFilter={dateFilter}
+        onDateFilterChange={(k) => setDateFilter(k as DateFilter)}
+        confidenceFilters={CONFIDENCE_FILTERS}
+        activeConfidenceFilter={confidenceFilter}
+        onConfidenceFilterChange={(k) => setConfidenceFilter(k as ConfidenceFilter)}
+        searchPlaceholder="Search teams or leagues..."
+        searchValue={searchQuery}
+        onSearchChange={setSearchQuery}
+        matchCount={filtered.length}
+        sortToggle={
           <button
             onClick={() => setSortBy(sortBy === "kickoff" ? "confidence" : "kickoff")}
-            className="px-[10px] py-[6px] rounded-[8px] text-[11px] font-semibold bg-gray-50 text-gray-400 hover:text-gray-600 transition-all"
+            aria-label={sortBy === "kickoff" ? "Sort by confidence" : "Sort by kickoff time"}
+            className="px-[10px] py-[6px] rounded-[8px] text-[11px] font-semibold bg-gray-50 text-gray-400 hover:text-gray-600 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
           >
-            {sortBy === "kickoff" ? "📅 By Time" : "🎯 By Confidence"}
+            <i className={sortBy === "kickoff" ? "ri-time-line" : "ri-focus-3-line"} /> {sortBy === "kickoff" ? "By Time" : "By Confidence"}
           </button>
-
-          {/* Clear All Filters */}
-          {(dateFilter !== "week" || confidenceFilter !== "all" || leagueFilter !== "all" || searchQuery) && (
-            <button
-              onClick={() => {
-                setDateFilter("week");
-                setConfidenceFilter("all");
-                setLeagueFilter("all");
-                setSearchQuery("");
-              }}
-              className="px-[10px] py-[6px] rounded-[8px] text-[11px] font-semibold bg-red-50 text-red-500 hover:bg-red-100 transition-all flex items-center gap-[4px]"
-            >
-              ✕ Clear filters
-            </button>
-          )}
-        </div>
-
-        {/* Search + League + Count */}
-        <div className="flex flex-wrap items-center gap-[8px]">
-          {/* Search */}
-          <div className="relative flex-1 min-w-[180px] max-w-[320px]">
-            <i className="ri-search-line absolute left-[10px] top-1/2 -translate-y-1/2 text-[13px] text-gray-300" />
-            <input
-              type="text"
-              placeholder="Search teams or leagues..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-[34px] rounded-[10px] border border-gray-100 bg-gray-50 pl-[30px] pr-[12px] text-[12px] text-[#0A0F1C] placeholder:text-gray-300 focus:outline-none focus:ring-1 focus:ring-[#1B2A4A]/20 focus:border-[#1B2A4A]/20 transition-all"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-[8px] top-1/2 -translate-y-1/2 text-[12px] text-gray-300 hover:text-gray-500"
-              >
-                ✕
-              </button>
-            )}
-          </div>
-
-          {/* League Filter */}
+        }
+        leagueFilter={
           <select
             value={leagueFilter}
             onChange={(e) => setLeagueFilter(e.target.value)}
+            aria-label="Filter by league"
             className="h-[34px] rounded-[10px] border border-gray-100 bg-gray-50 px-[10px] text-[12px] text-gray-500 focus:outline-none focus:ring-1 focus:ring-[#1B2A4A]/20 appearance-none cursor-pointer min-w-[120px]"
           >
             <option value="all">All Leagues ({fixtures.length})</option>
-            {leagues.map((lg) => {
-              const count = fixtures.filter((f) => f.league_name === lg).length;
-              return (
-                <option key={lg} value={lg}>
-                  {lg} ({count})
-                </option>
-              );
-            })}
+            {leagues.map((lg) => (
+              <option key={lg} value={lg}>
+                {lg} ({fixtures.filter((f) => f.league_name === lg).length})
+              </option>
+            ))}
           </select>
-
-          {/* Match Count */}
-          <div className="flex items-center gap-[6px] text-[11px] text-gray-400 ml-auto">
-            <span className="font-mono-data font-bold text-[#0A0F1C]">{filtered.length}</span>
-            <span>match{filtered.length !== 1 ? "es" : ""}</span>
-            {currentPage > 1 && (
-              <span className="text-gray-300">
-                · Page {currentPage} of {totalPages}
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
+        }
+      >
+        {(dateFilter !== "week" || confidenceFilter !== "all" || leagueFilter !== "all" || searchQuery) && (
+          <button
+            onClick={() => {
+              setDateFilter("week");
+              setConfidenceFilter("all");
+              setLeagueFilter("all");
+              setSearchQuery("");
+            }}
+            className="px-[10px] py-[6px] rounded-[8px] text-[11px] font-semibold bg-red-50 text-red-500 hover:bg-red-100 transition-all flex items-center gap-[4px] w-fit focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
+          >
+            <i className="ri-close-line" /> Clear filters
+          </button>
+        )}
+      </FilterBar>
 
       {/* Loading State */}
-      {loading && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-[12px]">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <SkeletonCard key={i} />
-          ))}
-        </div>
-      )}
+      {loading && <SkeletonGrid count={8} />}
 
       {/* Error State */}
       {!loading && error && (
@@ -515,11 +430,11 @@ export default function UpcomingMatchesPage() {
       {/* Match Grid */}
       {!loading && !error && filtered.length > 0 && (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-[12px]">
+          <ResponsiveGrid>
             {paginated.map((fixture) => (
               <MatchCard key={fixture.id} fixture={fixture} onClick={() => setSelectedFixture(fixture.id)} />
             ))}
-          </div>
+          </ResponsiveGrid>
 
           {/* Pagination */}
           <Pagination

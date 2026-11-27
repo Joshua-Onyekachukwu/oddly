@@ -12,17 +12,17 @@ const getFaqData = (leagueCount: string) => [
   {
     question: "How accurate are ODDLY's predictions?",
     answer:
-      "Our ensemble of 7 AI models achieves over 90% accuracy on high-confidence picks (ELITE tier). We publish full historical accuracy reports so you can verify our track record yourself.",
+      "ODDLY's ensemble model is evaluated with walk-forward validation on historical matches that were never used for training. Accuracy varies by market and league, and high-confidence selections historically perform better than low-confidence ones — but no prediction is guaranteed. We show settled results and performance metrics inside the app so you can judge the track record yourself.",
   },
   {
-    question: "What is the Crown Jewel pick?",
+    question: "What is the daily top pick?",
     answer:
-      "The Crown Jewel is our single best daily selection — a pick with 90%+ model confidence and 2.0+ odds. It's designed to be the highest-conviction bet of the day, backed by all 7 models agreeing.",
+      "Each day the system evaluates upcoming fixtures across all supported markets and surfaces its highest-confidence selection, alongside the model probability, market-implied probability, and expected edge. Picks are probabilistic estimates, not certainties.",
   },
   {
     question: "How does the Rollover Challenge work?",
     answer:
-      "The Rollover Challenge picks a Crown Jewel selection daily and chains wins together. Starting from ₦1,000, you reinvest your winnings each day. Our AI manages the chain to maximize long-term growth.",
+      "The Rollover Challenge lets you track a compounding-bets strategy: you start with a stake, add daily selections around even odds, and reinvest winnings. You mark results yourself and the dashboard tracks your bankroll, banked profits, and chain progress.",
   },
   {
     question: "Can I cancel my subscription anytime?",
@@ -37,7 +37,7 @@ const getFaqData = (leagueCount: string) => [
   {
     question: "What's the difference between Premium and Elite?",
     answer:
-      "Premium gives you access to predictions, value bet detection, and accumulator builder. Elite adds the Crown Jewel daily pick, Rollover Challenge, AI Analyst chat, API access, and dedicated support.",
+      "Premium gives you access to predictions, value bet detection, and the accumulator builder. Elite adds the daily top pick, Rollover Challenge, AI Analyst chat, and priority features as they ship.",
   },
 ];
 
@@ -53,8 +53,7 @@ const FAQ: React.FC<FAQProps> = ({ stats }) => {
     <div className="py-[80px] md:py-[100px] lg:py-[120px]" id="faq" ref={ref}>
       <div className="container sm:max-w-[540px] md:max-w-[720px] lg:max-w-[960px] xl:max-w-[1200px] mx-auto px-[16px]">
         <div
-          {...getScrollRevealClasses(isVisible, 0)}
-          className="text-center mb-[48px] md:mb-[60px] max-w-[540px] mx-auto"
+          {...getScrollRevealClasses(isVisible, 0, "text-center mb-[48px] md:mb-[60px] max-w-[540px] mx-auto")}
         >
           <span className="inline-flex items-center gap-[6px] text-[10px] font-semibold text-[#0A0F1C]/60 dark:text-white/50 bg-[#0A0F1C]/[0.03] dark:bg-white/[0.03] px-[14px] py-[6px] rounded-full mb-[20px] uppercase tracking-[0.15em] font-display">
             FAQ
@@ -69,7 +68,7 @@ const FAQ: React.FC<FAQProps> = ({ stats }) => {
         </div>
 
         <div className="max-w-[680px] mx-auto space-y-[8px]">
-          {getFaqData(stats?.totalLeagues ? `${stats.totalLeagues}+` : "360+").map((faq, index) => (
+          {getFaqData(stats?.totalLeagues ? `${stats.totalLeagues}+` : "many").map((faq, index) => (
             <div
               key={index}
               {...getScrollRevealClasses(isVisible, 80 + index * 60)}

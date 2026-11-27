@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 interface RefereeProfile {
   name: string;
@@ -27,20 +28,50 @@ export default function RefereesPage() {
   const [sortAsc, setSortAsc] = useState(false);
   const [minMatches, setMinMatches] = useState(10);
   const [selectedRef, setSelectedRef] = useState<RefereeProfile | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const supabase = createClient();
+      // referee_profiles is not in the generated Database types — cast through unknown
+      const { data, error: queryError } = await (supabase as any)
+        .from("referee_profiles")
+        .select(
+          "referee_name,total_matches,home_win_pct,draw_pct,away_win_pct,avg_total_goals,avg_yellow_per_match,avg_red_per_match,avg_fouls_per_match,btts_pct,over_2_5_pct,home_bias,leagues_officiated"
+        )
+        .order("total_matches", { ascending: false })
+        .limit(500);
+
+      if (queryError) throw queryError;
+
+      setReferees(
+        (data || []).map((r: any) => ({
+          name: r.referee_name,
+          matches: r.total_matches ?? 0,
+          homeWinPct: r.home_win_pct ?? 0,
+          drawPct: r.draw_pct ?? 0,
+          awayWinPct: r.away_win_pct ?? 0,
+          avgGoals: r.avg_total_goals ?? 0,
+          avgYellow: r.avg_yellow_per_match ?? 0,
+          avgRed: r.avg_red_per_match ?? 0,
+          avgFouls: r.avg_fouls_per_match ?? 0,
+          bttsPct: r.btts_pct ?? 0,
+          over25Pct: r.over_2_5_pct ?? 0,
+          homeBias: r.home_bias ?? 0,
+          leagues: r.leagues_officiated || [],
+        }))
+      );
+    } catch (e: any) {
+      setError(e?.message || "Failed to load referee profiles");
+    }
+    setLoading(false);
+  }, []);
 
   useEffect(() => {
-    async function load() {
-      try {
-        const res = await fetch("/data/referee-profiles.json");
-        if (res.ok) {
-          const data = await res.json();
-          setReferees(Array.isArray(data) ? data : []);
-        }
-      } catch {}
-      setLoading(false);
-    }
     load();
-  }, []);
+  }, [load]);
 
   const filtered = referees
     .filter((r) => r.matches >= minMatches)
@@ -74,9 +105,24 @@ export default function RefereesPage() {
           </div>
         </div>
         <p className="text-[13px] text-gray-500 ml-[48px]">
-          Historical referee tendencies across {referees.length} officials. Data from football-data.co.uk.
+          Historical referee tendencies across {referees.length} officials, stored in the referee_profiles table.
         </p>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-[14px] p-[16px] mb-[20px] flex items-center justify-between gap-[12px]">
+          <div className="flex items-center gap-[8px]">
+            <i className="ri-error-warning-line text-red-500" />
+            <span className="text-[13px] font-medium text-red-700">{error}</span>
+          </div>
+          <button
+            onClick={load}
+            className="text-[12px] font-semibold text-red-600 hover:text-red-700 underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 rounded-[4px] px-[4px]"
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-[10px] mb-[20px]">
@@ -84,7 +130,7 @@ export default function RefereesPage() {
           { label: "Referees", value: filtered.length, icon: "ri-user-line", color: "text-purple-600" },
           { label: "Avg Home Win %", value: `${(avgHomeWin * 100).toFixed(1)}%`, icon: "ri-home-line", color: "text-blue-600" },
           { label: "Min Matches", value: minMatches.toString(), icon: "ri-filter-line", color: "text-amber-600" },
-          { label: "Data Source", value: "football-data.co.uk", icon: "ri-database-line", color: "text-green-600" },
+          { label: "Data Source", value: "referee_profiles", icon: "ri-database-line", color: "text-green-600" },
         ].map((s) => (
           <div key={s.label} className="bg-white rounded-[14px] p-[16px] border border-gray-100">
             <div className="flex items-center gap-[8px] mb-[6px]">
@@ -98,16 +144,24 @@ export default function RefereesPage() {
 
       {/* Filter */}
       <div className="flex items-center gap-[12px] mb-[16px]">
-        <label className="text-[12px] text-gray-500">Min matches:</label>
+        <label htmlFor="min-matches" className="text-[12px] text-gray-500">Min matches:</label>
         <select
+          id="min-matches"
           value={minMatches}
           onChange={(e) => setMinMatches(Number(e.target.value))}
-          className="px-[10px] py-[6px] rounded-[8px] border border-gray-200 text-[12px] text-[#0A0F1C] focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+          className="px-[10px] py-[6px] rounded-[8px] border border-gray-200 text-[12px] text-[#0A0F1C] focus:outline-none focus:ring-2 focus:ring-[#1B2A4A]/30"
         >
           {[5, 10, 20, 50, 100].map((n) => (
             <option key={n} value={n}>{n}+</option>
           ))}
         </select>
+        <button
+          onClick={load}
+          aria-label="Refresh referee data"
+          className="ml-auto flex items-center gap-[6px] px-[10px] py-[6px] rounded-[8px] border border-gray-200 text-[12px] font-semibold text-[#1B2A4A] hover:bg-gray-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1B2A4A]/30"
+        >
+          <i className="ri-refresh-line" /> Refresh
+        </button>
       </div>
 
       {/* Table */}
@@ -116,6 +170,16 @@ export default function RefereesPage() {
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="h-[48px] bg-white rounded-[10px] animate-pulse" />
           ))}
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="bg-white rounded-[14px] border border-gray-100 p-[40px] text-center">
+          <i className="ri-user-line text-[32px] text-gray-200 block mb-[8px]" />
+          <p className="text-[13px] font-semibold text-gray-500">No referees match the current filters</p>
+          <p className="text-[11px] text-gray-400 mt-[4px]">
+            {referees.length === 0
+              ? "The referee_profiles table is empty — run the referee data pipeline to populate it."
+              : "Try lowering the minimum matches threshold."}
+          </p>
         </div>
       ) : (
         <div className="bg-white rounded-[14px] border border-gray-100 overflow-hidden">
@@ -135,7 +199,16 @@ export default function RefereesPage() {
                     <th
                       key={col.key}
                       onClick={() => toggleSort(col.key)}
-                      className="text-right px-[14px] py-[10px] text-[10px] font-semibold text-gray-400 uppercase cursor-pointer hover:text-gray-600"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          toggleSort(col.key);
+                        }
+                      }}
+                      tabIndex={0}
+                      role="button"
+                      aria-label={`Sort by ${col.label}`}
+                      className="text-right px-[14px] py-[10px] text-[10px] font-semibold text-gray-400 uppercase cursor-pointer hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1B2A4A]/30"
                     >
                       {col.label} {sortKey === col.key ? (sortAsc ? "↑" : "↓") : ""}
                     </th>
@@ -149,7 +222,17 @@ export default function RefereesPage() {
                   <tr
                     key={ref.name}
                     onClick={() => setSelectedRef(selectedRef?.name === ref.name ? null : ref)}
-                    className={`border-b border-gray-50 cursor-pointer transition-colors ${
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setSelectedRef(selectedRef?.name === ref.name ? null : ref);
+                      }
+                    }}
+                    tabIndex={0}
+                    role="button"
+                    aria-expanded={selectedRef?.name === ref.name}
+                    aria-label={`View details for referee ${ref.name}`}
+                    className={`border-b border-gray-50 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1B2A4A]/30 ${
                       selectedRef?.name === ref.name ? "bg-purple-50" : "hover:bg-gray-50"
                     }`}
                   >

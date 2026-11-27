@@ -11,6 +11,9 @@ interface AccumulatorLeg {
   fixture_id: string;
   market: string;
   selection: string;
+  match?: string | null;
+  league?: string | null;
+  kickoff_time?: string | null;
   odds: number;
   model_probability: number;
   edge: number;
@@ -18,14 +21,13 @@ interface AccumulatorLeg {
 
 interface SavedAccumulator {
   id: string;
-  name: string;
+  name: string | null;
   selections: AccumulatorLeg[];
-  combined_odds: number;
-  estimated_probability: number;
-  strategy: string;
-  stake: number;
+  combined_odds: number | null;
+  estimated_probability: number | null;
+  strategy: string | null;
+  stake: number | null;
   status: string;
-  potential_return: number | null;
   created_at: string;
 }
 
@@ -34,9 +36,15 @@ export default function MyAccumulatorsPage() {
   const [accumulators, setAccumulators] = useState<SavedAccumulator[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [fetchError, setFetchError] = useState("");
+  const [actionError, setActionError] = useState("");
 
   const fetchAccumulators = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+    setFetchError("");
     const supabase = createClient();
     const { data, error } = await supabase
       .from("accumulators")
@@ -44,8 +52,10 @@ export default function MyAccumulatorsPage() {
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
-    if (!error && data) {
-      setAccumulators(data as any);
+    if (error) {
+      setFetchError(error.message || "Failed to load accumulators.");
+    } else if (data) {
+      setAccumulators(data as unknown as SavedAccumulator[]);
     }
     setLoading(false);
   }, [user]);
@@ -56,11 +66,19 @@ export default function MyAccumulatorsPage() {
 
   const handleDelete = async (id: string) => {
     setDeleting(id);
+    setActionError("");
     const supabase = createClient();
-    await supabase.from("accumulators").delete().eq("id", id);
-    setAccumulators((prev) => prev.filter((a) => a.id !== id));
+    const { error } = await supabase.from("accumulators").delete().eq("id", id);
+    if (error) {
+      setActionError("Failed to delete accumulator. Please try again.");
+    } else {
+      setAccumulators((prev) => prev.filter((a) => a.id !== id));
+    }
     setDeleting(null);
   };
+
+  const legsOf = (acc: SavedAccumulator): AccumulatorLeg[] =>
+    Array.isArray(acc.selections) ? acc.selections : [];
 
   const activeAccumulators = accumulators.filter((a) => a.status === "pending");
   const settledAccumulators = accumulators.filter((a) => a.status !== "pending");
@@ -79,6 +97,34 @@ export default function MyAccumulatorsPage() {
         }
       />
 
+      {fetchError && (
+        <div
+          className="mb-[16px] p-[12px] bg-red-50 border border-red-100 rounded-[10px] text-[12px] text-red-600 flex items-center gap-[8px]"
+          role="alert"
+        >
+          <i className="ri-error-warning-line" />
+          <span className="flex-1">{fetchError}</span>
+          <button
+            onClick={() => {
+              setLoading(true);
+              fetchAccumulators();
+            }}
+            className="font-medium text-red-700 hover:text-red-800 underline underline-offset-2"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+      {actionError && (
+        <div
+          className="mb-[16px] p-[12px] bg-red-50 border border-red-100 rounded-[10px] text-[12px] text-red-600 flex items-center gap-[8px]"
+          role="alert"
+        >
+          <i className="ri-error-warning-line" />
+          {actionError}
+        </div>
+      )}
+
       {loading ? (
         <div className="space-y-[6px]">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -88,8 +134,12 @@ export default function MyAccumulatorsPage() {
       ) : accumulators.length === 0 ? (
         <EmptyState
           icon="ri-stack-line"
-          title="No accumulators yet"
-          description="Build your first accumulator by combining value bets for higher returns."
+          title={fetchError ? "Couldn't load accumulators" : "No accumulators yet"}
+          description={
+            fetchError
+              ? "Something went wrong fetching your accumulators. Try again in a moment."
+              : "Build your first accumulator by combining value bets for higher returns."
+          }
           action={
             <Link href="/accumulator">
               <Button size="sm">Build Accumulator</Button>
@@ -111,10 +161,10 @@ export default function MyAccumulatorsPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-[8px] mb-[2px]">
                           <span className="text-[13px] font-semibold text-[#0A0F1C] truncate">
-                            {acc.name}
+                            {acc.name ?? "Unnamed accumulator"}
                           </span>
                           <Badge variant="default" size="sm">
-                            {acc.selections.length} legs
+                            {legsOf(acc).length} legs
                           </Badge>
                           <Badge
                             variant={
@@ -126,34 +176,36 @@ export default function MyAccumulatorsPage() {
                             }
                             size="sm"
                           >
-                            {acc.strategy}
+                            {acc.strategy ?? "custom"}
                           </Badge>
                         </div>
                         <div className="flex items-center gap-[12px] text-[11px] text-gray-400">
                           <span className="font-mono-data">
-                            @{acc.combined_odds.toFixed(2)}
+                            @{(acc.combined_odds ?? 0).toFixed(2)}
                           </span>
                           <span>·</span>
                           <span className="font-mono-data">
-                            ${(acc.stake * acc.combined_odds).toFixed(2)} potential
+                            ${((acc.stake ?? 0) * (acc.combined_odds ?? 0)).toFixed(2)} potential
                           </span>
                           <span>·</span>
-                          <span>${acc.stake} stake</span>
+                          <span>${acc.stake ?? 0} stake</span>
+                          <span>·</span>
+                          <span>{new Date(acc.created_at).toLocaleDateString()}</span>
                         </div>
                       </div>
                       <button
                         onClick={() => handleDelete(acc.id)}
                         disabled={deleting === acc.id}
-                        className="text-gray-300 hover:text-red-500 transition-colors p-[8px] ml-[12px]"
-                        title="Delete accumulator"
+                        aria-label={`Delete ${acc.name ?? "unnamed accumulator"}`}
+                        className="text-gray-300 hover:text-red-500 transition-colors p-[8px] ml-[12px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/50 rounded disabled:opacity-40"
                       >
-                        <i className="ri-delete-bin-line text-[14px]" />
+                        <i className={`ri-delete-bin-line text-[14px] ${deleting === acc.id ? "animate-pulse" : ""}`} />
                       </button>
                     </div>
 
                     {/* Selections */}
                     <div className="mt-[10px] space-y-[3px]">
-                      {acc.selections.map((sel, idx) => (
+                      {legsOf(acc).map((sel, idx) => (
                         <div
                           key={idx}
                           className="flex items-center gap-[8px] text-[11px] bg-gray-50 rounded-[6px] px-[8px] py-[4px]"
@@ -162,13 +214,16 @@ export default function MyAccumulatorsPage() {
                             {idx + 1}.
                           </span>
                           <span className="font-medium text-[#0A0F1C] truncate flex-1">
-                            {sel.selection}
+                            {sel.match || sel.selection}
+                          </span>
+                          <span className="text-gray-400 text-[10px] truncate max-w-[120px] hidden sm:inline">
+                            {sel.market}
                           </span>
                           <span className="text-gray-400 font-mono-data">
-                            @{sel.odds.toFixed(2)}
+                            @{(sel.odds ?? 0).toFixed(2)}
                           </span>
                           <span className="text-green-600 font-mono-data font-medium">
-                            +{(sel.edge * 100).toFixed(1)}%
+                            +{((sel.edge ?? 0) * 100).toFixed(1)}%
                           </span>
                         </div>
                       ))}
@@ -192,7 +247,7 @@ export default function MyAccumulatorsPage() {
                       <div>
                         <div className="flex items-center gap-[8px] mb-[2px]">
                           <span className="text-[13px] font-semibold text-[#0A0F1C]">
-                            {acc.name}
+                            {acc.name ?? "Unnamed accumulator"}
                           </span>
                           <Badge
                             variant={
@@ -208,16 +263,17 @@ export default function MyAccumulatorsPage() {
                           </Badge>
                         </div>
                         <span className="text-[11px] text-gray-400">
-                          {acc.selections.length} legs · @{acc.combined_odds.toFixed(2)} ·{" "}
+                          {legsOf(acc).length} legs · @{(acc.combined_odds ?? 0).toFixed(2)} ·{" "}
                           {new Date(acc.created_at).toLocaleDateString()}
                         </span>
                       </div>
                       <button
                         onClick={() => handleDelete(acc.id)}
                         disabled={deleting === acc.id}
-                        className="text-gray-300 hover:text-red-500 transition-colors p-[8px]"
+                        aria-label={`Delete ${acc.name ?? "unnamed accumulator"}`}
+                        className="text-gray-300 hover:text-red-500 transition-colors p-[8px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/50 rounded disabled:opacity-40"
                       >
-                        <i className="ri-delete-bin-line text-[14px]" />
+                        <i className={`ri-delete-bin-line text-[14px] ${deleting === acc.id ? "animate-pulse" : ""}`} />
                       </button>
                     </div>
                   </Card>

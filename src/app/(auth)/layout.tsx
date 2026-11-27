@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export const metadata = {
   title: {
     template: "%s | ODDLY",
@@ -29,9 +31,9 @@ export default function AuthLayout({
         />
 
         <div className="relative z-[1]">
-          <a href="/" className="font-display font-bold text-[28px] tracking-[-0.02em] text-white">
+          <Link href="/" className="font-display font-bold text-[28px] tracking-[-0.02em] text-white">
             ODDLY
-          </a>
+          </Link>
         </div>
 
         <div className="relative z-[1]">
@@ -43,27 +45,22 @@ export default function AuthLayout({
             One pick.
           </h2>
           <p className="text-[15px] text-gray-400/80 max-w-[320px] !leading-[1.7]">
-            AI-powered football predictions with 7 models working together
+            AI-powered football predictions with an ensemble of specialized models
             to find value where the market gets it wrong.
           </p>
 
-          {/* Stats */}
-          <div className="flex items-center gap-[24px] mt-[32px]">
+          <ul className="mt-[32px] space-y-[10px]">
             {[
-              { value: "58.9%", label: "ELITE accuracy" },
-              { value: "7", label: "models" },
-              { value: "79+", label: "leagues" },
-            ].map((stat, i) => (
-              <div key={i}>
-                <span className="block text-[18px] font-bold text-white font-mono-data">
-                  {stat.value}
-                </span>
-                <span className="text-[11px] text-white/30 uppercase tracking-wider">
-                  {stat.label}
-                </span>
-              </div>
+              "Specialized prediction models",
+              "Market value detection",
+              "Multi-league coverage",
+            ].map((item) => (
+              <li key={item} className="flex items-center gap-[10px] text-[13px] text-white/60">
+                <span className="w-[6px] h-[6px] rounded-[2px] bg-[#BFFF00] shrink-0" />
+                {item}
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
 
         <div className="relative z-[1]">

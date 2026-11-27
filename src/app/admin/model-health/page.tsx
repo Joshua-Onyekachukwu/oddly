@@ -27,19 +27,23 @@ export default function ModelHealthPage() {
   const { session } = useAuth();
   const [models, setModels] = useState<ModelPerf[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [tracking, setTracking] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState<7 | 14 | 30>(7);
 
   const fetchModels = useCallback(async () => {
     const supabase = createClient();
-    const { data, error } = await supabase
+    const { data, error: fetchError } = await supabase
       .from("model_performance")
       .select("*")
       .order("created_at", { ascending: false })
       .limit(200);
 
-    if (!error && data) {
-      setModels(data);
+    if (fetchError) {
+      setError(fetchError.message);
+    } else {
+      setModels(data || []);
+      setError(null);
     }
     setLoading(false);
   }, []);
@@ -51,13 +55,23 @@ export default function ModelHealthPage() {
   async function trackAccuracy() {
     if (!session?.access_token) return;
     setTracking(true);
+    setError(null);
     try {
-      await fetch("/api/v1/admin/model-performance", {
+      const res = await fetch("/api/v1/admin/model-performance", {
         method: "POST",
-        headers: { Authorization: `Bearer ${session.access_token}` },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
       });
-      await fetchModels();
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setError(body.error || `Tracking failed (HTTP ${res.status})`);
+      } else {
+        await fetchModels();
+      }
     } catch (e) {
+      setError("Tracking request failed — check your connection.");
       console.error("Tracking failed:", e);
     } finally {
       setTracking(false);
@@ -122,6 +136,20 @@ export default function ModelHealthPage() {
           </Button>
         }
       />
+
+      {error && (
+        <div className="mb-[16px] flex items-center justify-between gap-[8px] bg-amber-50 border border-amber-200 rounded-[10px] p-[12px] text-[12px] text-amber-700">
+          <span className="flex items-center gap-[6px]">
+            <i className="ri-alert-line" /> {error}
+          </span>
+          <button
+            onClick={fetchModels}
+            className="text-[11px] font-semibold underline hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] rounded-[4px] px-[4px]"
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
       {loading ? (
         <div className="space-y-[12px]">

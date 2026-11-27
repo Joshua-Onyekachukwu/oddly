@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useScrollReveal, getScrollRevealClasses } from "@/hooks/useScrollReveal";
+import { formatLandingNumber } from "@/lib/landing-stats";
 import type { LandingStats } from "@/lib/landing-stats";
 
 interface DashboardShowcaseProps {
@@ -43,16 +44,16 @@ function DashboardPreview({ stats }: { stats?: LandingStats }) {
           {/* Stats row */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-[12px] mb-[20px]">
             {[
-              { label: "Today's Picks", value: "24", change: "+6", color: "text-[#BFFF00]" },
-              { label: "Win Rate", value: "91.2%", change: "+2.1%", color: "text-[#22c55e]" },
-              { label: "Avg Edge", value: "+14.8%", change: "+1.3%", color: "text-[#BFFF00]" },
-              { label: "Active Chains", value: "3", change: "Day 12", color: "text-white" },
+              { label: "Predictions", value: stats?.totalPredictions ? formatLandingNumber(stats.totalPredictions) : "—", change: "", color: "text-[#BFFF00]" },
+              { label: "Avg Accuracy", value: stats?.avgAccuracy ? `${stats.avgAccuracy}%` : "—", change: "", color: "text-[#22c55e]" },
+              { label: "Leagues", value: stats?.totalLeagues ? `${stats.totalLeagues}+` : "—", change: "", color: "text-[#BFFF00]" },
+              { label: "Active Models", value: stats?.activeModels ? `${stats.activeModels}` : "—", change: "", color: "text-white" },
             ].map((stat) => (
               <div key={stat.label} className="bg-white/[0.03] rounded-[10px] p-[12px] border border-white/5">
                 <span className="text-[9px] text-white/30 uppercase tracking-wider block mb-[4px]">{stat.label}</span>
                 <div className="flex items-end justify-between">
                   <span className={`text-[18px] md:text-[22px] font-bold font-mono-data ${stat.color}`}>{stat.value}</span>
-                  <span className="text-[9px] text-[#22c55e] font-mono-data">{stat.change}</span>
+                  {stat.change && <span className="text-[9px] text-[#22c55e] font-mono-data">{stat.change}</span>}
                 </div>
               </div>
             ))}
@@ -63,36 +64,34 @@ function DashboardPreview({ stats }: { stats?: LandingStats }) {
             {/* Left — Match list */}
             <div className="bg-white/[0.02] rounded-[12px] border border-white/5 overflow-hidden">
               <div className="flex items-center justify-between px-[14px] py-[10px] border-b border-white/5">
-                <span className="text-[10px] text-white/40 font-semibold uppercase tracking-wider">Crown Jewel Pick</span>
+                <span className="text-[10px] text-white/40 font-semibold uppercase tracking-wider">Top Pick</span>
                 <span className="text-[9px] text-[#D97706] bg-[#D97706]/10 px-[6px] py-[2px] rounded-full font-semibold">ELITE</span>
               </div>
 
-              {/* Crown Jewel card */}
+              {/* Top Pick card */}
               <div className="p-[14px] border-b border-white/5 bg-[#D97706]/5">
                 <div className="flex items-center justify-between mb-[8px]">
                   <div className="flex items-center gap-[8px]">
                     <div className="w-[6px] h-[6px] rounded-full bg-[#D97706] animate-pulse" />
-                    <span className="text-[10px] text-[#D97706] font-semibold uppercase tracking-wider">Crown Jewel</span>
+                    <span className="text-[10px] text-[#D97706] font-semibold uppercase tracking-wider">Top Pick</span>
                   </div>
-                  <span className="text-[10px] text-white/30 font-mono-data">93% confidence</span>
+                  <span className="text-[10px] text-white/30 font-mono-data">Top pick</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-[13px] font-semibold text-white">Arsenal</span>
+                    <span className="text-[13px] font-semibold text-white">Team A</span>
                     <span className="text-[11px] text-white/30 mx-[6px]">vs</span>
-                    <span className="text-[13px] font-semibold text-white">Chelsea</span>
+                    <span className="text-[13px] font-semibold text-white">Team B</span>
                   </div>
                   <div className="text-right">
-                    <span className="text-[14px] font-bold text-[#BFFF00] font-mono-data block">+18.2%</span>
-                    <span className="text-[9px] text-white/30">edge</span>
+                    <span className="text-[14px] font-bold text-[#BFFF00] font-mono-data block">Edge</span>
+                    <span className="text-[9px] text-white/30">detected</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-[12px] mt-[8px]">
-                  <span className="text-[10px] text-white/40">Home Win</span>
+                  <span className="text-[10px] text-white/40">Selection</span>
                   <span className="text-[10px] text-white/20">|</span>
-                  <span className="text-[10px] text-white/40 font-mono-data">odds 1.85</span>
-                  <span className="text-[10px] text-white/20">|</span>
-                  <span className="text-[10px] text-white/40">EPL</span>
+                  <span className="text-[10px] text-white/40">—</span>
                 </div>
               </div>
 
@@ -131,12 +130,12 @@ function DashboardPreview({ stats }: { stats?: LandingStats }) {
                 <div className="space-[8px]">
                   <div className="bg-white/[0.03] rounded-[8px] p-[10px]">
                     <p className="text-[11px] text-white/50 leading-[1.5]">
-                      &quot;Arsenal&apos;s home form (W8 D1 L1) combined with Chelsea&apos;s defensive vulnerability on the road makes Home Win the optimal selection.&quot;
+                      &quot;The ensemble flags this fixture as the highest-conviction selection of the day, combining model probabilities across every supported market.&quot;
                     </p>
                   </div>
                   <div className="flex items-center gap-[6px]">
-                    <span className="text-[9px] text-[#8B5CF6] bg-[#8B5CF6]/10 px-[6px] py-[2px] rounded-full">Llama 3.1 70B</span>
-                    <span className="text-[9px] text-white/20">2.1s</span>
+                    <span className="text-[9px] text-[#8B5CF6] bg-[#8B5CF6]/10 px-[6px] py-[2px] rounded-full">Ensemble</span>
+                    <span className="text-[9px] text-white/20">AI Analyst</span>
                   </div>
                 </div>
               </div>
@@ -144,24 +143,32 @@ function DashboardPreview({ stats }: { stats?: LandingStats }) {
               {/* Model performance */}
               <div className="bg-white/[0.02] rounded-[12px] border border-white/5 p-[14px]">
                 <span className="text-[10px] text-white/30 uppercase tracking-wider block mb-[10px]">Model Accuracy</span>
-                <div className="flex items-end gap-[3px] h-[48px]">
-                  {(stats?.weeklyAccuracy || [65, 72, 68, 81, 77, 85, 91, 88, 93, 90, 87, 91]).map((v: number, i: number) => (
-                    <div key={i} className="flex-1 flex flex-col items-center justify-end">
-                      <div
-                        className="w-full rounded-[2px] transition-all duration-500"
-                        style={{
-                          height: `${v}%`,
-                          backgroundColor: v >= 85 ? "#22c55e" : v >= 70 ? "#D97706" : "#EF4444",
-                          opacity: 0.6 + (i / 12) * 0.4,
-                        }}
-                      />
+                {stats?.weeklyAccuracy && stats.weeklyAccuracy.length > 0 ? (
+                  <>
+                    <div className="flex items-end gap-[3px] h-[48px]">
+                      {stats.weeklyAccuracy.map((v: number, i: number) => (
+                        <div key={i} className="flex-1 flex flex-col items-center justify-end">
+                          <div
+                            className="w-full rounded-[2px] transition-all duration-500"
+                            style={{
+                              height: `${Math.max(v, 4)}%`,
+                              backgroundColor: v >= 85 ? "#22c55e" : v >= 70 ? "#D97706" : "#EF4444",
+                              opacity: 0.6 + (i / Math.max(stats.weeklyAccuracy!.length - 1, 1)) * 0.4,
+                            }}
+                          />
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-                <div className="flex items-center justify-between mt-[8px]">
-                  <span className="text-[9px] text-white/20">12 week trend</span>
-                  <span className="text-[10px] text-[#22c55e] font-mono-data font-semibold">{stats?.avgAccuracy ? `${stats.avgAccuracy}%` : "—"}</span>
-                </div>
+                    <div className="flex items-center justify-between mt-[8px]">
+                      <span className="text-[9px] text-white/20">Weekly trend</span>
+                      <span className="text-[10px] text-[#22c55e] font-mono-data font-semibold">{stats?.avgAccuracy ? `${stats.avgAccuracy}%` : "—"}</span>
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-[11px] text-white/30 leading-[1.6] py-[12px]">
+                    Accuracy trend appears here as predictions settle.
+                  </p>
+                )}
               </div>
 
               {/* Quick stats */}
@@ -186,23 +193,23 @@ function DashboardPreview({ stats }: { stats?: LandingStats }) {
 const FEATURES = [
   {
     icon: "ri-brain-line",
-    title: "7 AI Models Working Together",
-    description: "Dixon-Coles, XGBoost, Elo, and 4 more — analyzed by NVIDIA AI to find the sharpest edges.",
+    title: "Ensemble Models Working Together",
+    description: "Multiple prediction models score every fixture — combined into a single probability estimate with full transparency.",
   },
   {
     icon: "ri-search-eye-line",
     title: "Automatic Value Detection",
-    description: "Scans 26+ markets per match to find bets where your model has a mathematical advantage.",
+    description: "Scans every supported market per match to find selections where the model probability exceeds the market price.",
   },
   {
     icon: "ri-fire-line",
-    title: "Crown Jewel Daily Pick",
-    description: "The single highest-conviction selection each day — where all 7 models agree at 90%+ confidence.",
+    title: "Daily Top Pick",
+    description: "The single highest-conviction selection each day, with model probability, implied probability, and expected edge shown.",
   },
   {
     icon: "ri-line-chart-line",
     title: "Live Odds Comparison",
-    description: "Real-time odds from Pinnacle, Betway, and multiple bookmakers — always find the best price.",
+    description: "Compare prices across multiple bookmakers in real time before you place a bet.",
   },
 ];
 
@@ -218,21 +225,19 @@ const DashboardShowcase: React.FC<DashboardShowcaseProps> = ({ stats }) => {
       <div className="container sm:max-w-[540px] md:max-w-[720px] lg:max-w-[960px] xl:max-w-[1200px] mx-auto px-[16px] relative z-10">
         {/* Header */}
         <div ref={ref} className="text-center mb-[48px] md:mb-[64px]">
-          <div {...getScrollRevealClasses(isVisible, 0)} className="inline-flex items-center gap-[8px] mb-[16px]">
+          <div {...getScrollRevealClasses(isVisible, 0, "inline-flex items-center gap-[8px] mb-[16px]")}>
             <span className="w-[6px] h-[6px] rounded-full bg-[#BFFF00] animate-pulse" />
             <span className="text-[11px] font-semibold tracking-[0.15em] uppercase font-display text-white/50">
               Dashboard
             </span>
           </div>
           <h2
-            {...getScrollRevealClasses(isVisible, 80)}
-            className="font-display !text-[28px] md:!text-[36px] lg:!text-[44px] !leading-[1.1] !tracking-[-0.03em] !mb-[12px] text-white"
+            {...getScrollRevealClasses(isVisible, 80, "font-display !text-[28px] md:!text-[36px] lg:!text-[44px] !leading-[1.1] !tracking-[-0.03em] !mb-[12px] text-white")}
           >
             Real-Time Prediction Intelligence
           </h2>
           <p
-            {...getScrollRevealClasses(isVisible, 160)}
-            className="text-[15px] text-white/40 max-w-[480px] mx-auto"
+            {...getScrollRevealClasses(isVisible, 160, "text-[15px] text-white/40 max-w-[480px] mx-auto")}
           >
             Every prediction, every edge, every model — all on a single,
             dynamic dashboard that updates in real time.
@@ -249,8 +254,7 @@ const DashboardShowcase: React.FC<DashboardShowcaseProps> = ({ stats }) => {
           {FEATURES.map((feature, i) => (
             <div
               key={feature.title}
-              {...getScrollRevealClasses(featuresVisible, i * 80)}
-              className="bg-white/[0.03] rounded-[12px] p-[20px] border border-white/5 hover:border-white/10 hover:bg-white/[0.05] transition-all duration-500 group"
+              {...getScrollRevealClasses(featuresVisible, i * 80, "bg-white/[0.03] rounded-[12px] p-[20px] border border-white/5 hover:border-white/10 hover:bg-white/[0.05] transition-all duration-500 group")}
             >
               <div className="w-[36px] h-[36px] bg-[#BFFF00]/10 rounded-[8px] flex items-center justify-center mb-[12px] group-hover:bg-[#BFFF00]/15 transition-colors">
                 <i className={`${feature.icon} text-[16px] text-[#BFFF00]`} />

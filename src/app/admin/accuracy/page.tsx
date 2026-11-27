@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useLiveStats, useSettlementFeed } from "@/hooks/useSupabaseRealtime";
+import { createClient } from "@/lib/supabase/client";
 
 // ─── UI Components ──────────────────────────────────────────
 
@@ -104,6 +105,7 @@ export default function AccuracyPage() {
   const [dailyStats, setDailyStats] = useState<DailyStat[]>([]);
   const [feed, setFeed] = useState<SettlementItem[]>([]);
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
+  const [analyticsError, setAnalyticsError] = useState<string | null>(null);
 
   // Draw analytics
   const [drawSummary, setDrawSummary] = useState<any>(null);
@@ -114,32 +116,49 @@ export default function AccuracyPage() {
 
   const fetchAnalytics = useCallback(async () => {
     setAnalyticsLoading(true);
+    setAnalyticsError(null);
     try {
+      // Analytics endpoints require an admin Bearer token
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: Record<string, string> = {};
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
+      }
+
       const [calRes, mktRes, dayRes, feedRes, drawSumRes, drawConfRes, drawBucRes, drawLeaRes, drawTreRes] = await Promise.all([
-        fetch("/api/v1/analytics?type=calibration&days=30"),
-        fetch("/api/v1/analytics?type=markets&days=30"),
-        fetch("/api/v1/analytics?type=daily&days=30"),
-        fetch("/api/v1/analytics?type=feed&limit=30"),
-        fetch("/api/v1/analytics/draw?type=summary"),
-        fetch("/api/v1/analytics/draw?type=confusion"),
-        fetch("/api/v1/analytics/draw?type=buckets"),
-        fetch("/api/v1/analytics/draw?type=leagues"),
-        fetch("/api/v1/analytics/draw?type=trend&days=90"),
+        fetch("/api/v1/analytics?type=calibration&days=30", { headers }),
+        fetch("/api/v1/analytics?type=markets&days=30", { headers }),
+        fetch("/api/v1/analytics?type=daily&days=30", { headers }),
+        fetch("/api/v1/analytics?type=feed&limit=30", { headers }),
+        fetch("/api/v1/analytics/draw?type=summary", { headers }),
+        fetch("/api/v1/analytics/draw?type=confusion", { headers }),
+        fetch("/api/v1/analytics/draw?type=buckets", { headers }),
+        fetch("/api/v1/analytics/draw?type=leagues", { headers }),
+        fetch("/api/v1/analytics/draw?type=trend&days=90", { headers }),
       ]);
+      const failed = [calRes, mktRes, dayRes, feedRes, drawSumRes, drawConfRes, drawBucRes, drawLeaRes, drawTreRes]
+        .some((r) => !r.ok);
+      if (failed) {
+        setAnalyticsError("Analytics endpoints returned an error — check admin session and try again.");
+      }
       const [cal, mkt, day, f, drawSum, drawConf, drawBuc, drawLea, drawTre] = await Promise.all([
         calRes.json(), mktRes.json(), dayRes.json(), feedRes.json(),
         drawSumRes.json(), drawConfRes.json(), drawBucRes.json(), drawLeaRes.json(), drawTreRes.json(),
       ]);
-      setCalibration(cal.data?.data || []);
-      setMarketAccuracy(mkt.data?.data || []);
-      setDailyStats(day.data?.data || []);
-      setFeed(f.data?.data || []);
-      setDrawSummary(drawSum.data?.data || null);
-      setDrawConfusion(drawConf.data?.data || null);
-      setDrawBuckets(drawBuc.data?.data || []);
-      setDrawLeagues(drawLea.data?.data || []);
-      setDrawTrend(drawTre.data?.data || []);
-    } catch {}
+      // Responses are { success, type, data } — data holds the payload
+      setCalibration(Array.isArray(cal.data) ? cal.data : []);
+      setMarketAccuracy(Array.isArray(mkt.data) ? mkt.data : []);
+      setDailyStats(Array.isArray(day.data) ? day.data : []);
+      setFeed(Array.isArray(f.data) ? f.data : []);
+      setDrawSummary(drawSum.data || null);
+      setDrawConfusion(drawConf.data || null);
+      setDrawBuckets(Array.isArray(drawBuc.data) ? drawBuc.data : []);
+      setDrawLeagues(Array.isArray(drawLea.data) ? drawLea.data : []);
+      setDrawTrend(Array.isArray(drawTre.data) ? drawTre.data : []);
+    } catch {
+      setAnalyticsError("Failed to load analytics data.");
+    }
     setAnalyticsLoading(false);
   }, []);
 
@@ -174,14 +193,36 @@ export default function AccuracyPage() {
             <Badge variant="success">LIVE</Badge>
           </div>
           <p className="text-[13px] text-gray-500">
-            Real-time stats from Convex + analytics from Supabase.
+            Real-time stats from Supabase + analytics from materialized views.
           </p>
         </div>
         <div className="flex items-center gap-[8px]">
           <div className="w-[8px] h-[8px] rounded-full bg-green-500 animate-pulse" />
-          <span className="text-[11px] text-gray-400">Hybrid real-time</span>
+          <span className="text-[11px] text-gray-400">Realtime · auto-refresh 60s</span>
+          <button
+            onClick={fetchAnalytics}
+            aria-label="Refresh analytics"
+            className="px-[10px] py-[5px] rounded-[8px] text-[11px] font-semibold bg-gray-100 text-gray-500 hover:bg-gray-200 transition-all flex items-center gap-[4px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
+          >
+            <i className="ri-refresh-line" /> Refresh
+          </button>
         </div>
       </div>
+
+      {/* Analytics error banner */}
+      {analyticsError && (
+        <div className="mb-[16px] flex items-center justify-between gap-[8px] bg-amber-50 border border-amber-200 rounded-[10px] p-[12px] text-[12px] text-amber-700">
+          <span className="flex items-center gap-[6px]">
+            <i className="ri-alert-line" /> {analyticsError}
+          </span>
+          <button
+            onClick={fetchAnalytics}
+            className="text-[11px] font-semibold text-amber-700 underline hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] rounded-[4px] px-[4px]"
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
       {/* Hero Accuracy */}
       {isLoading ? (
@@ -267,7 +308,11 @@ export default function AccuracyPage() {
           <CardHeader title="Daily Performance" />
           <div className="p-[16px]">
             {dailyStats.length === 0 ? (
-              <div className="text-center py-[32px] text-gray-400"><p className="text-[13px]">Loading...</p></div>
+              analyticsLoading ? (
+                <div className="space-y-[6px]">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-[40px]" />)}</div>
+              ) : (
+                <div className="text-center py-[32px] text-gray-400"><p className="text-[13px]">No daily performance data yet.</p></div>
+              )
             ) : (
               <div className="space-y-[4px] max-h-[300px] overflow-y-auto">
                 {dailyStats.slice(0, 10).map((day) => (
@@ -289,7 +334,11 @@ export default function AccuracyPage() {
           <CardHeader title="Accuracy by Market" />
           <div className="p-[16px]">
             {marketAccuracy.length === 0 ? (
-              <div className="text-center py-[32px] text-gray-400"><p className="text-[13px]">Loading...</p></div>
+              analyticsLoading ? (
+                <div className="space-y-[6px]">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-[44px]" />)}</div>
+              ) : (
+                <div className="text-center py-[32px] text-gray-400"><p className="text-[13px]">No market accuracy data yet.</p></div>
+              )
             ) : (
               <div className="space-y-[6px] max-h-[300px] overflow-y-auto">
                 {marketAccuracy.map((m) => (
@@ -532,7 +581,9 @@ export default function AccuracyPage() {
                         {pred.result === "correct" ? <Badge variant="success">Correct</Badge> : <Badge variant="danger">Wrong</Badge>}
                       </td>
                       <td className="text-right py-[8px] px-[10px] text-gray-400 font-mono text-[10px]">
-                        {pred.settled_at ? new Date(pred.settled_at).toLocaleString() : "—"}
+                        {pred.settled_at || pred.created_at
+                          ? new Date(pred.settled_at || pred.created_at).toLocaleString()
+                          : "—"}
                       </td>
                     </tr>
                   ))}

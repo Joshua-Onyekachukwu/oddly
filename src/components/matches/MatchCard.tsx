@@ -142,9 +142,18 @@ export function MatchCard({ fixture, onClick }: MatchCardProps) {
   const router = useRouter();
 
   const mainPrediction = fixture.predictions?.find((p) => p.market === "1X2");
-  const overUnder = fixture.predictions?.find((p) => p.market === "over_under" && p.selection === "over_2.5");
-  const btts = fixture.predictions?.find((p) => p.market === "btts" && p.selection === "yes");
-  const under35 = fixture.predictions?.find((p) => p.market === "over_under" && p.selection === "under_3.5");
+  // Predictions are stored with markets "OU"/"BTTS" and selections like "Over_2.5"/"Yes".
+  // Compare case-insensitively to tolerate legacy "over_under"/"btts" rows.
+  const norm = (s?: string) => (s || "").toLowerCase();
+  const overUnder = fixture.predictions?.find(
+    (p) => (norm(p.market) === "ou" || norm(p.market) === "over_under") && norm(p.selection) === "over_2.5"
+  );
+  const btts = fixture.predictions?.find(
+    (p) => norm(p.market) === "btts" && norm(p.selection) === "yes"
+  );
+  const under35 = fixture.predictions?.find(
+    (p) => (norm(p.market) === "ou" || norm(p.market) === "over_under") && norm(p.selection) === "under_3.5"
+  );
 
   // Pick the strongest prediction to display
   const allPreds = fixture.predictions || [];

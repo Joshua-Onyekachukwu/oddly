@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
+import Link from "next/link";
 import { useScrollReveal, getScrollRevealClasses } from "@/hooks/useScrollReveal";
 import type { LandingStats } from "@/lib/landing-stats";
 
@@ -8,7 +9,7 @@ interface PricingProps {
   stats?: LandingStats;
 }
 
-const getPlans = (leagueCount: string) => [
+const getPlans = (leagueCount: string | null) => [
   {
     name: "Free",
     price: "₦0",
@@ -30,7 +31,7 @@ const getPlans = (leagueCount: string) => [
     description: "Full access to all models, value bet detection, and accumulator builder.",
     features: [
       "Unlimited predictions",
-      `All ${leagueCount} leagues`,
+      leagueCount ? `All ${leagueCount} leagues` : "All covered leagues",
       "Value bet detection",
       "Accumulator builder",
       "Weekly performance reports",
@@ -43,10 +44,10 @@ const getPlans = (leagueCount: string) => [
     name: "Elite",
     price: "₦20,000",
     period: "/month",
-    description: "Everything plus Crown Jewel, Rollover Challenge, and AI Analyst.",
+    description: "Everything plus Top Pick, Rollover Challenge, and AI Analyst.",
     features: [
       "Everything in Premium",
-      "Crown Jewel daily pick",
+      "Daily top pick",
       "Rollover Challenge",
       "AI Analyst chat",
       "API access",
@@ -58,15 +59,13 @@ const getPlans = (leagueCount: string) => [
 ];
 
 const Pricing: React.FC<PricingProps> = ({ stats }) => {
-  const [annual, setAnnual] = useState(false);
   const { ref, isVisible } = useScrollReveal({ threshold: 0.1 });
 
   return (
     <div className="py-[80px] md:py-[100px] lg:py-[120px]" id="pricing" ref={ref}>
       <div className="container sm:max-w-[540px] md:max-w-[720px] lg:max-w-[960px] xl:max-w-[1200px] mx-auto px-[16px]">
         <div
-          {...getScrollRevealClasses(isVisible, 0)}
-          className="text-center mb-[48px] md:mb-[60px] max-w-[540px] mx-auto"
+          {...getScrollRevealClasses(isVisible, 0, "text-center mb-[48px] md:mb-[60px] max-w-[540px] mx-auto")}
         >
           <span className="inline-flex items-center gap-[6px] text-[10px] font-semibold text-[#0A0F1C]/60 dark:text-white/50 bg-[#0A0F1C]/[0.03] dark:bg-white/[0.03] px-[14px] py-[6px] rounded-full mb-[20px] uppercase tracking-[0.15em] font-display">
             Pricing
@@ -80,7 +79,7 @@ const Pricing: React.FC<PricingProps> = ({ stats }) => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-[20px] max-w-[1000px] mx-auto">
-          {getPlans(stats?.totalLeagues ? `${stats.totalLeagues}+` : "360+").map((plan, i) => (
+          {getPlans(stats?.totalLeagues ? `${stats.totalLeagues}+` : null).map((plan, i) => (
             <div
               key={plan.name}
               {...getScrollRevealClasses(isVisible, 100 + i * 80)}
@@ -163,7 +162,7 @@ const Pricing: React.FC<PricingProps> = ({ stats }) => {
                   </ul>
 
                   {/* Button-in-Button */}
-                  <a
+                  <Link
                     href="/signup"
                     className={`group flex items-center justify-center gap-[8px] w-full font-display font-semibold text-[14px] rounded-full py-[13px] px-[24px] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98] ${
                       plan.popular
@@ -181,7 +180,7 @@ const Pricing: React.FC<PricingProps> = ({ stats }) => {
                     >
                       <i className="ri-arrow-right-up-line text-[12px]"></i>
                     </span>
-                  </a>
+                  </Link>
                 </div>
               </div>
             </div>

@@ -1,16 +1,13 @@
-import Navbar from "@/components/landing/Navbar";
 import HeroBanner from "@/components/landing/HeroBanner";
 import Partners from "@/components/landing/Partners";
 import About from "@/components/landing/About";
 import Features from "@/components/landing/Features";
 import DashboardShowcase from "@/components/landing/DashboardShowcase";
-import Testimonials from "@/components/landing/Testimonials";
 import UseCases from "@/components/landing/UseCases";
 import Pricing from "@/components/landing/Pricing";
 import FAQ from "@/components/landing/FAQ";
 import FunFacts from "@/components/landing/FunFacts";
 import GetStarted from "@/components/landing/GetStarted";
-import Footer from "@/components/landing/Footer";
 import { getLandingPageData } from "@/lib/landing-data";
 
 export default async function Home() {
@@ -19,8 +16,6 @@ export default async function Home() {
 
   return (
     <>
-      <Navbar />
-
       <HeroBanner crownJewel={data.crownJewel} stats={data.stats} />
 
       <Partners />
@@ -31,8 +26,6 @@ export default async function Home() {
 
       <DashboardShowcase stats={data.stats} />
 
-      <Testimonials />
-
       <UseCases stats={data.stats} />
 
       <Pricing stats={data.stats} />
@@ -42,8 +35,6 @@ export default async function Home() {
       <FunFacts stats={data.stats} />
 
       <GetStarted />
-
-      <Footer stats={data.stats} />
     </>
   );
 }

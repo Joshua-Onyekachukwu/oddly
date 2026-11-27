@@ -184,7 +184,7 @@ export default function TodayMatchesPage() {
     <div>
       <PageHeader
         title="Today's Matches"
-        description="AI-powered predictions for today's fixtures across 26+ leagues."
+        description={`AI-powered predictions for today's fixtures${leagues.length > 0 ? ` across ${leagues.length} leagues` : ""}.`}
       />
 
       <FilterBar
@@ -200,7 +200,7 @@ export default function TodayMatchesPage() {
             onClick={() => setSortBy(sortBy === "kickoff" ? "confidence" : "kickoff")}
             className="px-[10px] py-[6px] rounded-[8px] text-[11px] font-semibold bg-gray-50 text-gray-400 hover:text-gray-600 transition-all"
           >
-            {sortBy === "kickoff" ? "📅 By Time" : "🎯 By Confidence"}
+            <i className={sortBy === "kickoff" ? "ri-time-line" : "ri-focus-3-line"} /> {sortBy === "kickoff" ? "By Time" : "By Confidence"}
           </button>
         }
         leagueFilter={

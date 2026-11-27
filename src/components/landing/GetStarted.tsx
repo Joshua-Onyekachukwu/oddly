@@ -11,8 +11,7 @@ const GetStarted: React.FC = () => {
     <div className="py-[80px] md:py-[100px] lg:py-[120px]" ref={ref}>
       <div className="container sm:max-w-[540px] md:max-w-[720px] lg:max-w-[960px] xl:max-w-[1200px] mx-auto px-[16px]">
         <div
-          {...getScrollRevealClasses(isVisible, 0)}
-          className="bg-[#0A0F1C] rounded-[1.5rem] p-[48px] md:p-[64px] lg:p-[80px] relative overflow-hidden text-center"
+          {...getScrollRevealClasses(isVisible, 0, "bg-[#0A0F1C] rounded-[1.5rem] p-[48px] md:p-[64px] lg:p-[80px] relative overflow-hidden text-center")}
         >
           {/* Ambient orbs */}
           <div className="absolute top-[-20%] right-[-10%] w-[400px] h-[400px] rounded-full bg-[#BFFF00]/[0.04] blur-[100px] pointer-events-none" />
@@ -60,7 +59,7 @@ const GetStarted: React.FC = () => {
             </div>
 
             <div className="flex flex-wrap items-center justify-center gap-[12px] md:gap-[20px] mt-[32px]">
-              {["No credit card required", "Cancel anytime", "90%+ ELITE accuracy"].map((t, i) => (
+              {["No credit card required", "Cancel anytime", "Transparent track record"].map((t, i) => (
                 <span key={i} className="flex items-center gap-[6px] text-[12px] text-white/30">
                   <i className="ri-check-line text-[#BFFF00] text-[12px]"></i>
                   {t}

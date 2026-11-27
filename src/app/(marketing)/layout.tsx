@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import Navbar from "@/components/landing/Navbar";
+import Footer from "@/components/landing/Footer";
 
 export const metadata: Metadata = {
   title: {
@@ -6,11 +8,11 @@ export const metadata: Metadata = {
     template: "%s | ODDLY",
   },
   description:
-    "AI-powered football prediction platform with 90%+ ELITE accuracy. Value bet detection, accumulator builder, and Crown Jewel daily picks across 26+ leagues.",
+    "AI-powered football prediction platform. Ensemble model predictions across 1X2, goals, BTTS and more, value bet detection, accumulator builder, and rollover tracking.",
   keywords: ["football predictions", "betting tips", "value bets", "accumulator", "AI predictions", "sports betting", "football AI"],
   openGraph: {
     title: "ODDLY — Oddly accurate.",
-    description: "AI-powered football prediction platform with 90%+ ELITE accuracy.",
+    description: "AI-powered football prediction platform — ensemble model picks across major leagues.",
     url: "https://oddly.ng",
     siteName: "ODDLY",
     locale: "en_US",
@@ -19,7 +21,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "ODDLY — Oddly accurate.",
-    description: "AI-powered football prediction platform with 90%+ ELITE accuracy.",
+    description: "AI-powered football prediction platform — ensemble model picks across major leagues.",
   },
   robots: {
     index: true,
@@ -34,7 +36,9 @@ export default function MarketingLayout({
 }) {
   return (
     <div>
+      <Navbar />
       <main className="min-h-screen">{children}</main>
+      <Footer />
     </div>
   );
 }

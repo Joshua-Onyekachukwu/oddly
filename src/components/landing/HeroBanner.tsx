@@ -81,7 +81,6 @@ const HeroBanner: React.FC<HeroBannerProps> = ({ crownJewel, stats: initialStats
   const modelProb = cj ? Math.round(cj.modelProbability * 100) : 0;
   const impliedProb = cj ? Math.round(cj.impliedProbability * 100) : 0;
   const edge = cj ? Math.round(cj.edge * 100) : 0;
-  const models = cj?.modelAgreement || stats.activeModels;
   const kickoff = cj?.kickoff ? formatKickoff(cj.kickoff) : "—";
   const hasCrownJewel = !!cj;
 
@@ -110,19 +109,17 @@ const HeroBanner: React.FC<HeroBannerProps> = ({ crownJewel, stats: initialStats
             <div className="xl:max-w-[580px] text-center md:text-left">
               {/* Eyebrow */}
               <div
-                {...getScrollRevealClasses(isVisible, 0)}
-                className="inline-flex items-center gap-[8px] mb-[24px] md:mb-[32px] justify-center md:justify-start"
+                {...getScrollRevealClasses(isVisible, 0, "inline-flex items-center gap-[8px] mb-[24px] md:mb-[32px] justify-center md:justify-start")}
               >
                 <span className="w-[6px] h-[6px] rounded-full bg-[#BFFF00] animate-pulse"></span>
                 <span className="text-[#BFFF00]/80 text-[11px] font-semibold tracking-[0.15em] uppercase font-display">
-                  {models} Models Agree {hasCrownJewel ? "— Live Now" : "— Analyzing"}
+                  AI Ensemble {hasCrownJewel ? "— Live Now" : "— Analyzing"}
                 </span>
               </div>
 
               {/* Headline */}
               <h1
-                {...getScrollRevealClasses(isVisible, 80)}
-                className="font-display !text-[36px] md:!text-[48px] lg:!text-[56px] xl:!text-[64px] !leading-[1.05] !tracking-[-0.04em] !mb-[20px] md:!mb-[24px] text-white"
+                {...getScrollRevealClasses(isVisible, 80, "font-display !text-[36px] md:!text-[48px] lg:!text-[56px] xl:!text-[64px] !leading-[1.05] !tracking-[-0.04em] !mb-[20px] md:!mb-[24px] text-white")}
               >
                 Every edge.
                 <br />
@@ -133,18 +130,17 @@ const HeroBanner: React.FC<HeroBannerProps> = ({ crownJewel, stats: initialStats
 
               {/* Subhead */}
               <p
-                {...getScrollRevealClasses(isVisible, 160)}
-                className="text-[15px] md:text-[17px] !leading-[1.75] !mb-0 text-gray-400/80 max-w-[460px] mx-auto md:mx-0"
+                {...getScrollRevealClasses(isVisible, 160, "text-[15px] md:text-[17px] !leading-[1.75] !mb-0 text-gray-400/80 max-w-[460px] mx-auto md:mx-0")}
               >
-                The Crown Jewel is our single highest-conviction selection each
-                day — where all {models} AI models agree, confidence exceeds 90%, and
-                the edge over the market is real.
+                Each day ODDLY&apos;s ensemble evaluates upcoming fixtures across
+                20+ markets and surfaces its highest-confidence selection — with
+                model probability, market-implied probability, and expected edge,
+                fully transparent.
               </p>
 
               {/* CTAs */}
               <div
-                {...getScrollRevealClasses(isVisible, 240)}
-                className="mt-[32px] md:mt-[40px] flex flex-wrap items-center gap-[12px] justify-center md:justify-start"
+                {...getScrollRevealClasses(isVisible, 240, "mt-[32px] md:mt-[40px] flex flex-wrap items-center gap-[12px] justify-center md:justify-start")}
               >
                 <Link
                   href="/signup"
@@ -168,8 +164,7 @@ const HeroBanner: React.FC<HeroBannerProps> = ({ crownJewel, stats: initialStats
 
               {/* Trust strip — live stats */}
               <div
-                {...getScrollRevealClasses(isVisible, 320)}
-                className="mt-[48px] md:mt-[64px] flex items-center gap-[20px] flex-wrap justify-center md:justify-start"
+                {...getScrollRevealClasses(isVisible, 320, "mt-[48px] md:mt-[64px] flex items-center gap-[20px] flex-wrap justify-center md:justify-start")}
               >
                 {[
                   { value: stats.avgAccuracy > 0 ? `${stats.avgAccuracy}%` : "—", label: "accuracy" },
@@ -191,12 +186,11 @@ const HeroBanner: React.FC<HeroBannerProps> = ({ crownJewel, stats: initialStats
               </div>
             </div>
 
-            {/* Right: Dashboard + Crown Jewel Card */}
+            {/* Right: Dashboard + Top Pick Card */}
             <div ref={cardRef} className="relative hidden lg:block">
               {/* Dashboard preview — Double-Bezel */}
               <div
-                {...getScrollRevealClasses(cardVisible, 100)}
-                className="relative"
+                {...getScrollRevealClasses(cardVisible, 100, "relative")}
               >
                 {/* Outer shell */}
                 <div className="p-[6px] rounded-[2rem] bg-white/[0.03] ring-1 ring-white/[0.06]">
@@ -214,22 +208,21 @@ const HeroBanner: React.FC<HeroBannerProps> = ({ crownJewel, stats: initialStats
                 </div>
               </div>
 
-              {/* Floating Crown Jewel Card — Double-Bezel */}
+              {/* Floating Top Pick Card — Double-Bezel */}
               <div
-                {...getScrollRevealClasses(cardVisible, 300)}
-                className="absolute bottom-[16px] left-[8px] right-[8px] md:left-[-24px] md:right-auto md:bottom-[32px] md:max-w-[320px] z-[3]"
+                {...getScrollRevealClasses(cardVisible, 300, "absolute bottom-[16px] left-[8px] right-[8px] md:left-[-24px] md:right-auto md:bottom-[32px] md:max-w-[320px] z-[3]")}
               >
                 {/* Outer shell */}
                 <div className="p-[5px] rounded-[1.25rem] bg-white/[0.06] ring-1 ring-white/[0.08] backdrop-blur-xl">
                   {/* Inner core */}
                   <div className="rounded-[calc(1.25rem-5px)] bg-white p-[18px] shadow-[inset_0_1px_1px_rgba(255,255,255,0.5),0_20px_60px_-15px_rgba(0,0,0,0.4)]">
-                    {/* Crown Jewel badge */}
+                    {/* Top Pick badge */}
                     <div className="flex items-center gap-[8px] mb-[14px]">
                       <div className="w-[22px] h-[22px] rounded-[6px] bg-[#0A0F1C] flex items-center justify-center">
                         <i className="ri-vip-crown-fill text-[10px] text-[#BFFF00]"></i>
                       </div>
                       <span className="font-display text-[10px] font-semibold text-[#0A0F1C] uppercase tracking-[0.12em]">
-                        Crown Jewel
+                        Top Pick
                       </span>
                       {hasCrownJewel && (
                         <span className="ml-auto flex items-center gap-[4px] text-[9px] font-semibold text-[#22c55e] bg-[#22c55e]/8 px-[8px] py-[3px] rounded-full">
@@ -282,7 +275,7 @@ const HeroBanner: React.FC<HeroBannerProps> = ({ crownJewel, stats: initialStats
                     <div className="mt-[10px] flex items-center gap-[6px]">
                       <span className="flex items-center gap-[3px] text-[9px] text-gray-400">
                         <i className="ri-check-line text-[#22c55e] text-[10px]"></i>
-                        {models}/7 models
+                        Ensemble consensus
                       </span>
                       <span className="text-gray-200">·</span>
                       <span className="flex items-center gap-[3px] text-[9px] text-gray-400">

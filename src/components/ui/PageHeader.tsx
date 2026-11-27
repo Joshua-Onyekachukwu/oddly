@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 
 interface PageHeaderProps {
   title: string;
@@ -23,12 +24,12 @@ export function PageHeader({
             <React.Fragment key={i}>
               {i > 0 && <span className="text-[12px] text-gray-300">/</span>}
               {crumb.href ? (
-                <a
+                <Link
                   href={crumb.href}
                   className="text-[12px] text-gray-400 hover:text-gray-600 transition-colors"
                 >
                   {crumb.label}
-                </a>
+                </Link>
               ) : (
                 <span className="text-[12px] text-gray-500 font-medium">
                   {crumb.label}

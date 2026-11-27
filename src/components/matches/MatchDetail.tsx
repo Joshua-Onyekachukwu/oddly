@@ -84,6 +84,23 @@ export function MatchDetail({
   const isLive = ["live", "1H", "2H", "HT"].includes(displayStatus);
   const isFinished = ["finished", "FT"].includes(displayStatus);
 
+  // Add a recommendation to the accumulator bet slip (persisted via localStorage,
+  // consumed by the /accumulator page).
+  const handleAddToSlip = (rec: Recommendation) => {
+    try {
+      const raw = localStorage.getItem("oddly_accumulator_legs");
+      const legs: Array<{ recommendation: Recommendation; stake: number }> = raw ? JSON.parse(raw) : [];
+      const exists = legs.some((l) => l.recommendation?.id === rec.id);
+      if (!exists && legs.length < 10) {
+        legs.push({ recommendation: rec, stake: 0 });
+        localStorage.setItem("oddly_accumulator_legs", JSON.stringify(legs));
+      }
+    } catch {
+      // localStorage unavailable — still navigate so the user lands on the slip
+    }
+    router.push("/accumulator");
+  };
+
   function formatKickoff(time: string) {
     const date = new Date(time);
     return date.toLocaleDateString("en-US", {
@@ -232,7 +249,8 @@ export function MatchDetail({
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`flex-1 py-[10px] px-[16px] rounded-[10px] text-[13px] font-semibold transition-all duration-300 ${
+            aria-pressed={activeTab === tab}
+            className={`flex-1 py-[10px] px-[16px] rounded-[10px] text-[13px] font-semibold transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] ${
               activeTab === tab
                 ? "bg-white text-[#0A0F1C] shadow-[0_1px_4px_rgba(0,0,0,0.06)]"
                 : "text-gray-400 hover:text-gray-600"
@@ -418,7 +436,7 @@ export function MatchDetail({
                 <div className="mb-[16px]">
                   <div className="flex items-center justify-between mb-[6px]">
                     <span className="text-[12px] text-gray-400">Edge</span>
-                    <span className="text-[16px] font-mono-data font-bold text-[#BFFF00]">
+                    <span className="text-[16px] font-mono-data font-bold text-[#0A0F1C]">
                       {(rec.edge * 100).toFixed(1)}%
                     </span>
                   </div>
@@ -470,13 +488,12 @@ export function MatchDetail({
                   </span>
                 </div>
 
-                {/* Add to bet button */}
+                {/* Add to bet slip button */}
                 {rec.is_recommended && (
                   <button
-                    onClick={() => {
-                      // TODO: Add to accumulator or place bet
-                    }}
-                    className="mt-[12px] w-full h-[36px] rounded-[10px] bg-[#1B2A4A] text-white text-[13px] font-semibold transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[#243B53] active:scale-[0.98] flex items-center justify-center gap-[6px]"
+                    onClick={() => handleAddToSlip(rec)}
+                    aria-label={`Add ${rec.selection} to bet slip`}
+                    className="mt-[12px] w-full h-[36px] rounded-[10px] bg-[#1B2A4A] text-white text-[13px] font-semibold transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[#243B53] active:scale-[0.98] flex items-center justify-center gap-[6px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
                   >
                     <i className="ri-add-line text-[14px]"></i>
                     Add to Bet Slip

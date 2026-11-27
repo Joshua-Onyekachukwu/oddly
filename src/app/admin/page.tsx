@@ -46,9 +46,11 @@ export default function AdminDashboardPage() {
   });
   const [activities, setActivities] = useState<RecentActivity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchStats = useCallback(async () => {
     const supabase = createClient();
+    setError(null);
 
     const [users, fixtures, predictions, bets, chains, activeBets] = await Promise.all([
       supabase.from("profiles").select("id", { count: "exact", head: true }),
@@ -68,13 +70,14 @@ export default function AdminDashboardPage() {
       pendingBets: activeBets.count || 0,
     });
 
-    const { data: recent } = await supabase
+    const { data: recent, error: recentError } = await supabase
       .from("admin_activity_log")
       .select("*, profiles(display_name)")
       .order("created_at", { ascending: false })
       .limit(10);
 
     if (recent) setActivities(recent as any);
+    if (recentError) setError("Activity log is restricted to service role — admin audit entries are not readable from the client.");
     setLoading(false);
   }, []);
 
@@ -157,13 +160,20 @@ export default function AdminDashboardPage() {
           action={
             <button
               onClick={fetchStats}
-              className="text-[11px] text-gray-400 hover:text-[#1B2A4A] transition-colors flex items-center gap-[4px]"
+              aria-label="Refresh dashboard stats"
+              className="text-[11px] text-gray-400 hover:text-[#1B2A4A] transition-colors flex items-center gap-[4px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] rounded-[4px] px-[4px]"
             >
               <i className="ri-refresh-line" />
               Refresh
             </button>
           }
         />
+        {error && (
+          <div className="mb-[8px] flex items-center gap-[6px] text-[11px] text-amber-600 bg-amber-50 border border-amber-100 rounded-[8px] px-[10px] py-[6px]">
+            <i className="ri-alert-line" />
+            {error}
+          </div>
+        )}
         {loading ? (
           <div className="space-y-[6px]">
             {Array.from({ length: 4 }).map((_, i) => (

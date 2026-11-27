@@ -335,3 +335,76 @@
 }
 
 
+
+/* ============================================
+   Legal / Policy pages
+   ============================================ */
+
+.legal-prose h2 {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-top: 40px;
+  margin-bottom: 12px;
+  letter-spacing: -0.01em;
+}
+.legal-prose h2:first-child {
+  margin-top: 0;
+}
+.legal-prose h3 {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  margin-top: 24px;
+  margin-bottom: 8px;
+}
+.legal-prose p {
+  font-size: 15px;
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+.legal-prose ul,
+.legal-prose ol {
+  font-size: 15px;
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 0;
+  margin-bottom: 16px;
+  padding-left: 24px;
+}
+.legal-prose ul {
+  list-style: disc;
+}
+.legal-prose ol {
+  list-style: decimal;
+}
+.legal-prose li {
+  margin-bottom: 6px;
+}
+.legal-prose li::marker {
+  color: #BFFF00;
+}
+.legal-prose a {
+  color: #BFFF00;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.legal-prose strong {
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 600;
+}
+.legal-prose .legal-callout {
+  background: rgba(191, 255, 0, 0.06);
+  border: 1px solid rgba(191, 255, 0, 0.18);
+  border-radius: 16px;
+  padding: 20px 24px;
+  margin: 24px 0;
+}
+.legal-prose .legal-callout p {
+  margin-bottom: 0;
+  color: rgba(255, 255, 255, 0.75);
+}

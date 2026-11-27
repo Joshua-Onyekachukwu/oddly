@@ -171,7 +171,8 @@ export default function AdminAIMonitorPage() {
           </span>
           <button
             onClick={fetchData}
-            className="px-[12px] py-[6px] bg-white border border-gray-200 rounded-[8px] text-[12px] font-medium text-gray-600 hover:bg-gray-50 transition-colors flex items-center gap-[4px]"
+            aria-label="Refresh AI monitor data"
+            className="px-[12px] py-[6px] bg-white border border-gray-200 rounded-[8px] text-[12px] font-medium text-gray-600 hover:bg-gray-50 transition-colors flex items-center gap-[4px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
           >
             <i className="ri-refresh-line" />
             Refresh
@@ -201,7 +202,7 @@ export default function AdminAIMonitorPage() {
           value={d.nvidia.activeKeys.toString()}
           icon="ri-key-2-line"
           color="green"
-          sub={`Max: 10`}
+          sub="Round-robin rotation"
         />
         <StatCard
           label="Chat Calls Today"

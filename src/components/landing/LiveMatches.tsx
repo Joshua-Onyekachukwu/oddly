@@ -58,21 +58,19 @@ const LiveMatches: React.FC<LiveMatchesProps> = ({ fixtures, valueBets }) => {
       <div className="container sm:max-w-[540px] md:max-w-[720px] lg:max-w-[960px] xl:max-w-[1200px] mx-auto px-[16px]">
         {/* Section header */}
         <div ref={sectionRef} className="text-center mb-[48px] md:mb-[64px]">
-          <div {...getScrollRevealClasses(isVisible, 0)} className="inline-flex items-center gap-[8px] mb-[16px]">
+          <div {...getScrollRevealClasses(isVisible, 0, "inline-flex items-center gap-[8px] mb-[16px]")}>
             <span className="w-[6px] h-[6px] rounded-full bg-[#BFFF00] animate-pulse"></span>
             <span className="text-[#1B2A4A] text-[11px] font-semibold tracking-[0.15em] uppercase font-display">
               Live Feed
             </span>
           </div>
           <h2
-            {...getScrollRevealClasses(isVisible, 80)}
-            className="font-display !text-[28px] md:!text-[36px] lg:!text-[44px] !leading-[1.1] !tracking-[-0.03em] !mb-[12px] text-[#0A0F1C]"
+            {...getScrollRevealClasses(isVisible, 80, "font-display !text-[28px] md:!text-[36px] lg:!text-[44px] !leading-[1.1] !tracking-[-0.03em] !mb-[12px] text-[#0A0F1C]")}
           >
             Today&apos;s Matches &amp; Value Bets
           </h2>
           <p
-            {...getScrollRevealClasses(isVisible, 160)}
-            className="text-[15px] text-gray-500 max-w-[480px] mx-auto"
+            {...getScrollRevealClasses(isVisible, 160, "text-[15px] text-gray-500 max-w-[480px] mx-auto")}
           >
             Real-time fixtures with AI predictions and detected value bets across all tracked leagues.
           </p>
@@ -96,8 +94,7 @@ const LiveMatches: React.FC<LiveMatchesProps> = ({ fixtures, valueBets }) => {
                   <Link
                     key={f.id}
                     href={`/matches/${f.id}`}
-                    {...getScrollRevealClasses(isVisible, i * 40)}
-                    className="group block bg-white rounded-[14px] p-[16px] border border-gray-100 hover:border-[#1B2A4A]/10 hover:shadow-[0_4px_20px_-8px_rgba(27,42,74,0.1)] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
+                    {...getScrollRevealClasses(isVisible, i * 40, "group block bg-white rounded-[14px] p-[16px] border border-gray-100 hover:border-[#1B2A4A]/10 hover:shadow-[0_4px_20px_-8px_rgba(27,42,74,0.1)] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]")}
                   >
                     <div className="flex items-center justify-between">
                       {/* Teams */}
@@ -164,8 +161,7 @@ const LiveMatches: React.FC<LiveMatchesProps> = ({ fixtures, valueBets }) => {
                 {valueBets.map((vb, i) => (
                   <div
                     key={vb.id}
-                    {...getScrollRevealClasses(betsVisible, i * 60)}
-                    className="bg-white rounded-[14px] p-[16px] border border-gray-100 hover:border-[#22c55e]/20 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
+                    {...getScrollRevealClasses(betsVisible, i * 60, "bg-white rounded-[14px] p-[16px] border border-gray-100 hover:border-[#22c55e]/20 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]")}
                   >
                     {/* Match */}
                     <div className="text-[11px] text-gray-400 mb-[8px] truncate">
@@ -214,7 +210,7 @@ const LiveMatches: React.FC<LiveMatchesProps> = ({ fixtures, valueBets }) => {
         </div>
 
         {/* CTA */}
-        <div {...getScrollRevealClasses(isVisible, 400)} className="text-center mt-[40px]">
+        <div {...getScrollRevealClasses(isVisible, 400, "text-center mt-[40px]")}>
           <Link
             href="/signup"
             className="group inline-flex items-center gap-[8px] font-display font-semibold text-[14px] rounded-full bg-[#1B2A4A] text-white py-[12px] px-[24px] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:shadow-[0_0_30px_rgba(27,42,74,0.2)] active:scale-[0.97]"

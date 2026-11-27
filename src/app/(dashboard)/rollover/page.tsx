@@ -41,12 +41,17 @@ interface RolloverPick {
   actual_return: number | null;
   user_marked: boolean;
   settled_at: string | null;
-  fixtures?: { home_team_name: string; away_team_name: string; kickoff_time: string } | null;
+  fixtures?: {
+    home_team?: { canonical_name?: string } | null;
+    away_team?: { canonical_name?: string } | null;
+    kickoff_time?: string;
+  } | null;
 }
 
 interface Recommendation {
   id: string;
   fixture_id: string;
+  prediction_id?: string | null;
   market: string;
   selection: string;
   bookmaker_odds: number;
@@ -59,6 +64,7 @@ export default function RolloverPage() {
   const { user } = useAuth();
   const [chains, setChains] = useState<RolloverChain[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [showAddPick, setShowAddPick] = useState(false);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
@@ -72,15 +78,26 @@ export default function RolloverPage() {
   const [creating, setCreating] = useState(false);
 
   const fetchChains = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
     const supabase = createClient();
-    const { data, error } = await supabase
+    // rollover_chains has no created_at column — order by started_at
+    const { data, error: fetchError } = await supabase
       .from("rollover_chains")
-      .select("*, rollover_picks(*)")
+      .select(
+        "*, rollover_picks(*, fixtures(home_team:teams!fixtures_home_team_id_fkey(canonical_name), away_team:teams!fixtures_away_team_id_fkey(canonical_name), kickoff_time))"
+      )
       .eq("user_id", user.id)
-      .order("created_at", { ascending: false });
+      .order("started_at", { ascending: false });
 
-    if (!error && data) {
+    if (fetchError) {
+      console.error("Failed to load rollover chains:", fetchError);
+      setError("Unable to load your rollover chains. Please try again.");
+    } else if (data) {
       setChains(data);
     }
     setLoading(false);
@@ -93,21 +110,41 @@ export default function RolloverPage() {
   const fetchRecommendations = useCallback(async () => {
     setLoadingRecs(true);
     const supabase = createClient();
-    const { data } = await supabase
+    const { data, error: recError } = await supabase
       .from("recommendations")
       .select("*")
       .eq("is_recommended", true)
+      .eq("is_avoid", false)
       .in("confidence_tier", ["high", "very_high"] as any)
       .order("edge", { ascending: false })
-      .limit(10);
+      .limit(25);
 
-    if (data) setRecommendations(data);
+    if (recError) {
+      console.error("Failed to load recommendations:", recError);
+    }
+
+    // Respect the active chain's constraints and skip fixtures already picked
+    const active = chains.find((c) => c.status === "active");
+    const pickedFixtureIds = new Set(
+      (active?.rollover_picks || []).map((p) => p.fixture_id).filter(Boolean)
+    );
+
+    const filtered = (data || []).filter((rec: any) => {
+      if (pickedFixtureIds.has(rec.fixture_id)) return false;
+      if (active?.odds_range_min != null && rec.bookmaker_odds < active.odds_range_min) return false;
+      if (active?.odds_range_max != null && rec.bookmaker_odds > active.odds_range_max) return false;
+      if (active?.min_probability != null && rec.model_probability < active.min_probability) return false;
+      return true;
+    });
+
+    setRecommendations(filtered.slice(0, 10));
     setLoadingRecs(false);
-  }, []);
+  }, [chains]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+    if (!startingStake || startingStake <= 0 || !targetDays || targetDays <= 0) return;
     setCreating(true);
 
     const supabase = createClient();
@@ -120,7 +157,8 @@ export default function RolloverPage() {
       odds_range_min: 2.0,
       odds_range_max: 2.5,
       min_probability: 0.9,
-      rollover_percentage: 100,
+      // rollover_percentage is decimal(3,2) — a fraction (1.00 = 100%)
+      rollover_percentage: 1.0,
       status: "active",
     });
 
@@ -128,13 +166,16 @@ export default function RolloverPage() {
       setShowCreate(false);
       setChainName("");
       fetchChains();
+    } else {
+      console.error("Failed to create chain:", error);
+      setError("Unable to create the chain. Please try again.");
     }
     setCreating(false);
   };
 
   const handleAddPick = async (rec: Recommendation) => {
     const activeChain = chains.find((c) => c.status === "active");
-    if (!activeChain) return;
+    if (!activeChain || !activeChain.current_balance || activeChain.current_balance <= 0) return;
 
     setAddingPick(rec.id);
     const supabase = createClient();
@@ -152,11 +193,12 @@ export default function RolloverPage() {
       chain_id: activeChain.id,
       day_number: nextDay,
       fixture_id: rec.fixture_id,
+      prediction_id: rec.prediction_id || null,
       market: rec.market,
       selection: rec.selection,
       odds: rec.bookmaker_odds,
       model_probability: rec.model_probability,
-      opportunity_score: rec.edge,
+      opportunity_score: rec.edge != null ? Math.round(rec.edge * 100) : null,
       stake: stake,
       potential_return: potentialReturn,
       result: "pending",
@@ -172,45 +214,53 @@ export default function RolloverPage() {
 
       fetchChains();
       setShowAddPick(false);
+    } else {
+      console.error("Failed to add pick:", error);
+      setError("Unable to add the pick. Please try again.");
     }
     setAddingPick(null);
   };
 
   const handleMarkResult = async (pickId: string, result: "won" | "lost") => {
     const supabase = createClient();
-    const activeChain = chains.find((c) => c.status === "active");
-    if (!activeChain) return;
 
-    // Get the pick
-    const pick = activeChain.rollover_picks?.find((p) => p.id === pickId);
-    if (!pick) return;
+    // Find the pick and the chain that owns it (not necessarily the active one)
+    const ownerChain = chains.find((c) => c.rollover_picks?.some((p) => p.id === pickId));
+    if (!ownerChain) return;
+    const pick = ownerChain.rollover_picks?.find((p) => p.id === pickId);
+    if (!pick || pick.result !== "pending") return;
 
     const actualReturn = result === "won" ? (pick.stake || 0) * (pick.odds || 1) : 0;
 
     // Update pick
-    await supabase
+    const { error: pickError } = await supabase
       .from("rollover_picks")
-      .update({ result, actual_return: actualReturn, settled_at: new Date().toISOString() })
+      .update({
+        result,
+        actual_return: actualReturn,
+        user_marked: true,
+        settled_at: new Date().toISOString(),
+      })
       .eq("id", pickId);
 
-    // Update chain balance
-    const newBalance = result === "won" ? actualReturn : 0;
-    const newBanked = activeChain.banked_amount + (result === "won" ? actualReturn * 0.5 : 0);
+    if (pickError) {
+      console.error("Failed to settle pick:", pickError);
+      setError("Unable to record the result. Please try again.");
+      return;
+    }
 
-    await supabase
-      .from("rollover_chains")
-      .update({
-        current_balance: newBalance,
-        banked_amount: newBanked,
-      })
-      .eq("id", activeChain.id);
-
-    // If lost, mark chain as broken
-    if (result === "lost") {
+    if (result === "won") {
+      // Rollover: the full return becomes the next stake
       await supabase
         .from("rollover_chains")
-        .update({ status: "broken", ended_at: new Date().toISOString() })
-        .eq("id", activeChain.id);
+        .update({ current_balance: actualReturn })
+        .eq("id", ownerChain.id);
+    } else {
+      // Lost pick breaks the chain
+      await supabase
+        .from("rollover_chains")
+        .update({ current_balance: 0, status: "broken", ended_at: new Date().toISOString() })
+        .eq("id", ownerChain.id);
     }
 
     fetchChains();
@@ -218,12 +268,12 @@ export default function RolloverPage() {
 
   const handleBank = async () => {
     const activeChain = chains.find((c) => c.status === "active");
-    if (!activeChain) return;
+    if (!activeChain || activeChain.current_balance <= 0) return;
 
     const supabase = createClient();
     const bankAmount = activeChain.current_balance * 0.5;
 
-    await supabase
+    const { error: bankError } = await supabase
       .from("rollover_chains")
       .update({
         banked_amount: activeChain.banked_amount + bankAmount,
@@ -231,6 +281,11 @@ export default function RolloverPage() {
       })
       .eq("id", activeChain.id);
 
+    if (bankError) {
+      console.error("Failed to bank funds:", bankError);
+      setError("Unable to bank funds. Please try again.");
+      return;
+    }
     fetchChains();
   };
 
@@ -256,6 +311,33 @@ export default function RolloverPage() {
           )
         }
       />
+
+      {/* Error banner */}
+      {error && (
+        <div className="mb-[16px] flex items-center justify-between gap-[12px] p-[12px] bg-red-50 border border-red-100 rounded-[10px]">
+          <div className="flex items-center gap-[8px]">
+            <i className="ri-error-warning-line text-[16px] text-red-400" />
+            <span className="text-[12px] text-red-600">{error}</span>
+          </div>
+          <div className="flex items-center gap-[8px] flex-none">
+            {chains.length === 0 && (
+              <button
+                onClick={fetchChains}
+                className="text-[11px] font-semibold text-red-600 bg-white border border-red-200 px-[10px] py-[4px] rounded-[6px] hover:bg-red-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
+              >
+                Retry
+              </button>
+            )}
+            <button
+              onClick={() => setError(null)}
+              aria-label="Dismiss error"
+              className="text-red-400 hover:text-red-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] rounded"
+            >
+              <i className="ri-close-line text-[14px]" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Active Chain */}
       {activeChain && (
@@ -332,11 +414,18 @@ export default function RolloverPage() {
                         </span>
                         <div>
                           <span className="text-[12px] font-medium text-[#0A0F1C]">
-                            {pick.selection}
+                            {pick.fixtures?.home_team?.canonical_name && pick.fixtures?.away_team?.canonical_name
+                              ? `${pick.fixtures.home_team.canonical_name} vs ${pick.fixtures.away_team.canonical_name}`
+                              : pick.selection}
                           </span>
                           <span className="text-[11px] text-gray-400 ml-[6px]">
                             @{pick.odds?.toFixed(2)}
                           </span>
+                          {pick.selection && pick.fixtures?.home_team?.canonical_name && (
+                            <span className="text-[10px] text-gray-300 ml-[6px]">
+                              {pick.selection}
+                            </span>
+                          )}
                           {pick.stake && (
                             <span className="text-[10px] text-gray-300 ml-[6px]">
                               ${pick.stake.toFixed(2)} stake
@@ -349,13 +438,15 @@ export default function RolloverPage() {
                           <>
                             <button
                               onClick={() => handleMarkResult(pick.id, "won")}
-                              className="text-[10px] font-medium text-green-600 bg-green-50 hover:bg-green-100 px-[8px] py-[3px] rounded-[4px] transition-colors"
+                              aria-label={`Mark day ${pick.day_number} pick as won`}
+                              className="text-[10px] font-medium text-green-600 bg-green-50 hover:bg-green-100 px-[8px] py-[3px] rounded-[4px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
                             >
                               Won
                             </button>
                             <button
                               onClick={() => handleMarkResult(pick.id, "lost")}
-                              className="text-[10px] font-medium text-red-500 bg-red-50 hover:bg-red-100 px-[8px] py-[3px] rounded-[4px] transition-colors"
+                              aria-label={`Mark day ${pick.day_number} pick as lost`}
+                              className="text-[10px] font-medium text-red-500 bg-red-50 hover:bg-red-100 px-[8px] py-[3px] rounded-[4px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
                             >
                               Lost
                             </button>
@@ -386,7 +477,8 @@ export default function RolloverPage() {
             </h3>
             <button
               onClick={() => setShowAddPick(false)}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              aria-label="Close add pick panel"
+              className="text-gray-400 hover:text-gray-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] rounded"
             >
               <i className="ri-close-line text-[18px]" />
             </button>
@@ -432,7 +524,8 @@ export default function RolloverPage() {
                   <button
                     onClick={() => handleAddPick(rec)}
                     disabled={addingPick === rec.id}
-                    className="ml-[12px] px-[10px] py-[5px] bg-[#1B2A4A] text-white text-[11px] font-medium rounded-[6px] hover:bg-[#243B53] transition-colors disabled:opacity-50"
+                    aria-label={`Add ${rec.selection} to chain`}
+                    className="ml-[12px] px-[10px] py-[5px] bg-[#1B2A4A] text-white text-[11px] font-medium rounded-[6px] hover:bg-[#243B53] transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
                   >
                     {addingPick === rec.id ? "Adding..." : "Add Pick"}
                   </button>
@@ -452,8 +545,9 @@ export default function RolloverPage() {
           <form onSubmit={handleCreate} className="space-y-[10px]">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-[10px]">
               <div>
-                <label className="block text-[11px] font-medium text-gray-500 mb-[4px]">Name</label>
+                <label htmlFor="chain-name" className="block text-[11px] font-medium text-gray-500 mb-[4px]">Name</label>
                 <input
+                  id="chain-name"
                   type="text"
                   value={chainName}
                   onChange={(e) => setChainName(e.target.value)}
@@ -462,9 +556,11 @@ export default function RolloverPage() {
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-medium text-gray-500 mb-[4px]">Starting Stake</label>
+                <label htmlFor="chain-stake" className="block text-[11px] font-medium text-gray-500 mb-[4px]">Starting Stake</label>
                 <input
+                  id="chain-stake"
                   type="number"
+                  min="1"
                   step="1"
                   value={startingStake}
                   onChange={(e) => setStartingStake(parseFloat(e.target.value))}
@@ -472,9 +568,11 @@ export default function RolloverPage() {
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-medium text-gray-500 mb-[4px]">Target Days</label>
+                <label htmlFor="chain-days" className="block text-[11px] font-medium text-gray-500 mb-[4px]">Target Days</label>
                 <input
+                  id="chain-days"
                   type="number"
+                  min="1"
                   step="1"
                   value={targetDays}
                   onChange={(e) => setTargetDays(parseInt(e.target.value))}
@@ -502,16 +600,24 @@ export default function RolloverPage() {
             {activeChain.rollover_picks
               .sort((a, b) => a.day_number - b.day_number)
               .map((pick) => {
-                const return_pct = pick.result === "won"
-                  ? ((activeChain.rollover_percentage || 100) / 100)
-                  : pick.result === "lost" ? 0 : 0.5;
+                // Bar height reflects the stake multiple: actual return multiple
+                // for settled picks, odds-implied for pending, minimal for losses.
+                const multiple =
+                  pick.result === "won" && pick.stake && pick.actual_return
+                    ? pick.actual_return / pick.stake
+                    : pick.result === "lost"
+                    ? 0
+                    : pick.result === "pending"
+                    ? (pick.odds || 2) / 2
+                    : 0.5;
+                const barPct = Math.min(Math.max(multiple / 2.5, 0.08), 1);
                 return (
                   <div key={pick.id} className="flex-1 flex flex-col items-center gap-[2px]">
                     <div
                       className={`w-full rounded-[2px] transition-all ${
                         pick.result === "won" ? "bg-green-500" : pick.result === "lost" ? "bg-red-400" : "bg-gray-200"
                       }`}
-                      style={{ height: `${Math.max(return_pct * 60, 3)}px` }}
+                      style={{ height: `${barPct * 60}px` }}
                     />
                     <span className="text-[7px] text-gray-300 font-mono-data">D{pick.day_number}</span>
                   </div>
@@ -577,7 +683,7 @@ export default function RolloverPage() {
       )}
 
       {/* Empty state */}
-      {!loading && chains.length === 0 && !showCreate && (
+      {!loading && !error && chains.length === 0 && !showCreate && (
         <EmptyState
           icon="ri-trophy-line"
           title="Start your first rollover chain"

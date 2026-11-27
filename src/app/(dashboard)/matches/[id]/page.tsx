@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
@@ -86,13 +87,13 @@ export default async function MatchDetailPage({ params }: Props) {
   return (
     <div>
       <div className="mb-[24px]">
-        <a
+        <Link
           href="/matches"
-          className="inline-flex items-center gap-[6px] text-[13px] text-gray-400 hover:text-[#1B2A4A] transition-colors mb-[8px]"
+          className="inline-flex items-center gap-[6px] text-[13px] text-gray-400 hover:text-[#1B2A4A] transition-colors mb-[8px] rounded-[6px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
         >
           <i className="ri-arrow-left-line text-[14px]"></i>
           Back to matches
-        </a>
+        </Link>
       </div>
 
       <Suspense fallback={<MatchDetailSkeleton />}>

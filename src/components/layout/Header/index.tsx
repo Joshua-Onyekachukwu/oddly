@@ -12,15 +12,20 @@ interface HeaderProps {
 
 // Page titles mapping
 const PAGE_TITLES: Record<string, string> = {
+  "/dashboard": "Dashboard",
   "/matches": "Today's Matches",
   "/matches/upcoming": "Upcoming Matches",
   "/matches/results": "Results",
   "/accumulator": "Accumulator",
+  "/accumulator/my-accumulators": "My Accumulators",
+  "/betting-agent": "Betting Agent",
   "/ai-chat": "AI Analyst",
   "/performance": "Performance",
+  "/predictions": "Predictions",
   "/rollover": "Rollover Challenge",
   "/tracking": "Bet Tracking",
   "/notifications": "Notifications",
+  "/notifications/preferences": "Notification Preferences",
   "/settings": "Settings",
 };
 
@@ -31,7 +36,22 @@ const Header: React.FC<HeaderProps> = ({ toggleActive }) => {
   const [showProfile, setShowProfile] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
 
-  const pageTitle = PAGE_TITLES[pathname] || "Dashboard";
+  // Longest-prefix match so nested routes get the right title
+  // (e.g. /matches/[id] → "Match Details", /notifications/preferences).
+  const pageTitle = React.useMemo(() => {
+    let best: string | null = null;
+    for (const key of Object.keys(PAGE_TITLES)) {
+      const matches =
+        pathname === key || pathname.startsWith(`${key}/`);
+      if (matches && (!best || key.length > best.length)) {
+        best = key;
+      }
+    }
+    if (best) return PAGE_TITLES[best];
+    // Dynamic detail pages not in the map
+    if (pathname.startsWith("/matches/")) return "Match Details";
+    return "Dashboard";
+  }, [pathname]);
 
   // Close profile menu on outside click
   useEffect(() => {
@@ -57,6 +77,7 @@ const Header: React.FC<HeaderProps> = ({ toggleActive }) => {
           <button
             type="button"
             onClick={toggleActive}
+            aria-label="Toggle menu"
             className="w-[36px] h-[36px] rounded-[8px] flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors xl:hidden"
           >
             <i className="ri-menu-line text-[20px]" />
@@ -77,6 +98,9 @@ const Header: React.FC<HeaderProps> = ({ toggleActive }) => {
           <div className="relative" ref={profileRef}>
             <button
               onClick={() => setShowProfile(!showProfile)}
+              aria-haspopup="true"
+              aria-expanded={showProfile}
+              aria-label="Account menu"
               className="flex items-center gap-[8px] px-[8px] py-[6px] rounded-[8px] hover:bg-gray-50 transition-colors"
             >
               <div className="w-[28px] h-[28px] rounded-full bg-[#1B2A4A] flex items-center justify-center">

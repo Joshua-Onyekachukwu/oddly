@@ -13,7 +13,7 @@ const publicMenuItems = [
 ];
 
 const authMenuItems = [
-  { label: "Dashboard", href: "/matches" },
+  { label: "Dashboard", href: "/dashboard" },
   { label: "Features", href: "/#features" },
   { label: "Pricing", href: "/#pricing" },
 ];
@@ -25,7 +25,6 @@ const Navbar: React.FC = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const navRef = useRef<HTMLElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
 
   const isLoggedIn = !!user;
@@ -50,6 +49,18 @@ const Navbar: React.FC = () => {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
+  // Close menus on Escape
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setMobileOpen(false);
+        setProfileOpen(false);
+      }
+    }
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, []);
+
   const handleSignOut = async () => {
     await signOut();
     setProfileOpen(false);
@@ -61,7 +72,6 @@ const Navbar: React.FC = () => {
       {/* Floating Glass Pill Navbar */}
       <div className="fixed top-0 left-0 right-0 z-[999] flex justify-center px-4 pt-4 md:pt-5">
         <nav
-          ref={navRef}
           className={`w-full max-w-[920px] flex items-center justify-between h-[56px] md:h-[60px] px-4 md:px-6 rounded-full transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] ${
             scrolled
               ? "bg-white/70 dark:bg-[#0a0e19]/70 backdrop-blur-2xl shadow-[0_0_0_1px_rgba(0,0,0,0.04),0_4px_24px_rgba(0,0,0,0.06)]"
@@ -69,7 +79,7 @@ const Navbar: React.FC = () => {
           }`}
         >
           {/* Logo */}
-          <Link href={isLoggedIn ? "/matches" : "/"} className="flex items-center gap-[8px] group">
+          <Link href={isLoggedIn ? "/dashboard" : "/"} className="flex items-center gap-[8px] group rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#BFFF00]/70">
             <span className="font-display font-bold text-[18px] md:text-[20px] tracking-[-0.02em] text-[#1B2A4A] dark:text-white transition-colors duration-300">
               ODDLY
             </span>
@@ -85,7 +95,7 @@ const Navbar: React.FC = () => {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`relative text-[13px] font-medium px-[14px] py-[8px] rounded-full transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+                className={`relative text-[13px] font-medium px-[14px] py-[8px] rounded-full transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#BFFF00]/70 ${
                   pathname === item.href
                     ? "text-[#1B2A4A] dark:text-white bg-[#1B2A4A]/5 dark:bg-white/5"
                     : "text-gray-500 dark:text-gray-400 hover:text-[#1B2A4A] dark:hover:text-white hover:bg-[#1B2A4A]/3 dark:hover:bg-white/3"
@@ -105,7 +115,10 @@ const Navbar: React.FC = () => {
               <div ref={profileRef} className="relative">
                 <button
                   onClick={() => setProfileOpen(!profileOpen)}
-                  className="flex items-center gap-[8px] px-[12px] py-[6px] rounded-full hover:bg-[#1B2A4A]/5 transition-colors"
+                  aria-haspopup="true"
+                  aria-expanded={profileOpen}
+                  aria-label="Account menu"
+                  className="flex items-center gap-[8px] px-[12px] py-[6px] rounded-full hover:bg-[#1B2A4A]/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#BFFF00]/70"
                 >
                   <div className="w-[28px] h-[28px] rounded-full bg-[#1B2A4A] flex items-center justify-center">
                     <span className="text-[11px] font-bold text-white">
@@ -126,7 +139,7 @@ const Navbar: React.FC = () => {
                       <p className="text-[10px] text-gray-400 capitalize">{profile?.subscription_tier || "free"} plan</p>
                     </div>
                     <Link
-                      href="/matches"
+                      href="/dashboard"
                       className="flex items-center gap-[8px] px-[12px] py-[8px] text-[13px] text-gray-600 hover:bg-gray-50 transition-colors"
                       onClick={() => setProfileOpen(false)}
                     >
@@ -168,13 +181,13 @@ const Navbar: React.FC = () => {
               <>
                 <Link
                   href="/login"
-                  className="text-[13px] font-medium text-gray-500 dark:text-gray-400 hover:text-[#1B2A4A] dark:hover:text-white px-[14px] py-[8px] rounded-full transition-all duration-300"
+                  className="text-[13px] font-medium text-gray-500 dark:text-gray-400 hover:text-[#1B2A4A] dark:hover:text-white px-[14px] py-[8px] rounded-full transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#BFFF00]/70"
                 >
                   Log in
                 </Link>
                 <Link
                   href="/signup"
-                  className="group inline-flex items-center gap-[6px] font-display font-semibold text-[13px] rounded-full bg-[#1B2A4A] text-white py-[9px] px-[18px] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:shadow-[0_0_24px_rgba(27,42,74,0.25)] active:scale-[0.97]"
+                  className="group inline-flex items-center gap-[6px] font-display font-semibold text-[13px] rounded-full bg-[#1B2A4A] text-white py-[9px] px-[18px] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:shadow-[0_0_24px_rgba(27,42,74,0.25)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#BFFF00]/70"
                 >
                   Get Started
                   <span className="w-[20px] h-[20px] rounded-full bg-white/10 flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-[2px] group-hover:-translate-y-[1px] group-hover:bg-white/15">
@@ -188,9 +201,11 @@ const Navbar: React.FC = () => {
           {/* Mobile hamburger */}
           <button
             type="button"
-            className="md:hidden relative w-[36px] h-[36px] flex items-center justify-center"
+            className="md:hidden relative w-[36px] h-[36px] flex items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#BFFF00]/70"
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label="Toggle menu"
+            aria-expanded={mobileOpen}
+            aria-controls="mobile-nav-menu"
           >
             <span
               className={`absolute w-[18px] h-[1.5px] bg-[#1B2A4A] dark:bg-white rounded-full transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
@@ -218,13 +233,16 @@ const Navbar: React.FC = () => {
           className="absolute inset-0 bg-[#1B2A4A]/90 backdrop-blur-3xl"
           onClick={() => setMobileOpen(false)}
         />
-        <div className="relative h-full flex flex-col items-center justify-center">
+        <div
+          id="mobile-nav-menu"
+          className="relative h-full flex flex-col items-center justify-center"
+        >
           <div className="flex flex-col items-center gap-[8px]">
             {menuItems.map((item, i) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`font-display text-[28px] font-bold transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+                className={`font-display text-[28px] font-bold transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#BFFF00]/70 ${
                   mobileOpen
                     ? "opacity-100 translate-y-0"
                     : "opacity-0 translate-y-12"
@@ -252,14 +270,23 @@ const Navbar: React.FC = () => {
                   <i className="ri-logout-box-r-line text-[16px]"></i>
                 </button>
               ) : (
-                <Link
-                  href="/signup"
-                  className="inline-flex items-center gap-[8px] font-display font-semibold text-[16px] rounded-full bg-[#BFFF00] text-[#1B2A4A] py-[14px] px-[32px]"
-                  onClick={() => setMobileOpen(false)}
-                >
-                  Get Started
-                  <i className="ri-arrow-right-up-line text-[16px]"></i>
-                </Link>
+                <div className="flex items-center gap-[16px]">
+                  <Link
+                    href="/login"
+                    className="font-display font-semibold text-[16px] text-white/80 hover:text-white transition-colors rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#BFFF00]/70"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    Log in
+                  </Link>
+                  <Link
+                    href="/signup"
+                    className="inline-flex items-center gap-[8px] font-display font-semibold text-[16px] rounded-full bg-[#BFFF00] text-[#1B2A4A] py-[14px] px-[32px]"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    Get Started
+                    <i className="ri-arrow-right-up-line text-[16px]"></i>
+                  </Link>
+                </div>
               )}
             </div>
           </div>

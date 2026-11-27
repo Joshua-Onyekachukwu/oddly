@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { StatCard, Card, CardHeader, Badge } from "@/components/ui";
+import { createClient } from "@/lib/supabase/client";
 
 interface DBHealth {
   supabase: {
@@ -13,6 +14,8 @@ interface DBHealth {
   };
   convex: {
     connected: boolean;
+    deprecated?: boolean;
+    note?: string;
     tables: Record<string, number>;
     totalRows: number;
     error?: string;
@@ -33,7 +36,14 @@ export default function DBHealthPage() {
 
   const fetchData = useCallback(async () => {
     try {
-      const res = await fetch("/api/v1/admin/db-health", { cache: "no-store" });
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch("/api/v1/admin/db-health", {
+        cache: "no-store",
+        headers: session?.access_token
+          ? { Authorization: `Bearer ${session.access_token}` }
+          : {},
+      });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       setData(json.data || json);
@@ -88,18 +98,22 @@ export default function DBHealthPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Database Health</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Supabase (hot) + Convex (cold/analytics) - Last updated: {new Date(data.timestamp).toLocaleTimeString()}
+          <h1 className="font-display text-[22px] md:text-[26px] font-bold text-[#0A0F1C]">Database Health</h1>
+          <p className="text-[13px] text-gray-500 mt-1">
+            Supabase table counts and settlement coverage — Last updated: {new Date(data.timestamp).toLocaleTimeString()}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <div className={`w-2 h-2 rounded-full ${sb.connected ? "bg-green-500" : "bg-red-500"}`} />
           <span className="text-xs text-gray-500">Supabase {sb.connected ? "OK" : "Down"}</span>
-          <div className="w-px h-4 bg-gray-200 mx-2" />
-          <div className={`w-2 h-2 rounded-full ${cv.connected ? "bg-green-500" : "bg-red-500"}`} />
-          <span className="text-xs text-gray-500">Convex {cv.connected ? "OK" : "Down"}</span>
         </div>
+        <button
+          onClick={fetchData}
+          aria-label="Refresh database health"
+          className="px-[10px] py-[5px] rounded-[8px] text-[11px] font-semibold bg-gray-100 text-gray-500 hover:bg-gray-200 transition-all flex items-center gap-[4px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
+        >
+          <i className="ri-refresh-line" /> Refresh
+        </button>
       </div>
 
       {/* Side by Side */}
@@ -123,33 +137,15 @@ export default function DBHealthPage() {
           </div>
         </Card>
 
-        {/* Convex */}
+        {/* Convex — deprecated */}
         <Card>
-          <CardHeader title="Convex (Cold Storage / Analytics)" />
+          <CardHeader title="Convex (Deprecated)" />
           <div className="p-4">
-            {cv.connected ? (
-              <>
-                <div className="grid grid-cols-2 gap-3">
-                  {Object.entries(cv.tables)
-                    .filter(([_, count]) => (count as number) > 0)
-                    .map(([table, count]) => (
-                      <div key={table} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
-                        <span className="text-xs text-gray-600 truncate">{table}</span>
-                        <span className="text-xs font-mono font-semibold text-gray-900">{(count as number).toLocaleString()}</span>
-                      </div>
-                    ))}
-                </div>
-                <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Total Rows</span>
-                  <span className="text-sm font-bold text-gray-900">{cv.totalRows.toLocaleString()}</span>
-                </div>
-              </>
-            ) : (
-              <div className="text-center py-8 text-gray-400">
-                <p className="text-sm">Convex not connected</p>
-                <p className="text-xs mt-1">{cv.error || "Check CONVEX_URL"}</p>
-              </div>
-            )}
+            <div className="text-center py-8 text-gray-400">
+              <i className="ri-archive-line text-[28px] block mb-[8px] opacity-50" />
+              <p className="text-sm">Convex has been fully migrated to Supabase</p>
+              <p className="text-xs mt-1">{cv.note || "All data now lives in Supabase"}</p>
+            </div>
           </div>
         </Card>
       </div>
@@ -190,25 +186,23 @@ export default function DBHealthPage() {
         <CardHeader title="System Architecture" />
         <div className="p-4">
           <pre className="text-xs text-gray-600 font-mono bg-gray-50 p-4 rounded-lg overflow-x-auto">
-{`                    Vercel (Application / API)
+{`                    Vercel (Application / API + Cron)
                       |
                 Application/API Layer
                       |
-          +-----------+-----------+
-          v                       v
-      Supabase               Convex
-   Operational Data       Historical/Cold Data
-   (500MB free)           (Unlimited)
-   * Auth                 * 599K+ predictions
-   * Active predictions   * xG features (631 teams)
-   * Odds snapshots       * Referee data (177 refs)
-   * User data            * Training sets
-          |                       |
-          |                       v
-          |               Processing Workers
-          |                       |
-          v                       v
-    User-Facing UI         Analytics Dashboard`}
+                      v
+                  Supabase
+            All Data (Operational + Historical)
+            * Auth & User Sessions
+            * Fixtures, Predictions, Odds
+            * xG Features, Referee Data
+            * Training Sets & Snapshots
+            * Realtime: live_pick, value_picks,
+              settlement_feed, live_stats
+                      |
+                      v
+              Cron Jobs (pipeline, settle,
+              predict, sync, daily, learn)`}
           </pre>
         </div>
       </Card>

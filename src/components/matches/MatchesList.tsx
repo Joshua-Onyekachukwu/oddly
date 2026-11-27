@@ -145,13 +145,26 @@ export function MatchesList({ fixtures }: { fixtures: Fixture[] }) {
           const displayHomeScore = liveData?.home_score ?? fixture.home_score;
           const displayAwayScore = liveData?.away_score ?? fixture.away_score;
 
-          const bestPrediction = fixture.predictions?.[0];
+          // Show the strongest prediction, not whichever row the DB returned first
+          const bestPrediction = (fixture.predictions || []).reduce(
+            (best, p) => (p.model_probability > (best?.model_probability || 0) ? p : best),
+            null as NonNullable<Fixture["predictions"]>[number] | null
+          );
 
           return (
             <div
               key={fixture.id}
               onClick={() => router.push(`/matches/${fixture.id}`)}
-              className={`bg-white rounded-[14px] p-[16px] md:p-[20px] border transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:border-gray-200 group cursor-pointer ${
+              role="button"
+              tabIndex={0}
+              aria-label={`${fixture.home_team_name || "Home"} vs ${fixture.away_team_name || "Away"}`}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  router.push(`/matches/${fixture.id}`);
+                }
+              }}
+              className={`bg-white rounded-[14px] p-[16px] md:p-[20px] border transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:border-gray-200 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] ${
                 fixtureIsLive ? "border-[#22c55e]/20 shadow-[0_0_0_1px_rgba(34,197,94,0.05)]" : "border-gray-100"
               }`}
             >

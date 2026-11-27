@@ -100,12 +100,15 @@ export function BettingTooltip({ term, children, className = "", showAbbrev = fa
 
   return (
     <span
-      className={`relative inline-block pointer-events-none ${className}`}
+      className={`relative inline-block ${className}`}
       onMouseEnter={() => setShow(true)}
       onMouseLeave={() => setShow(false)}
+      onFocus={() => setShow(true)}
+      onBlur={() => setShow(false)}
     >
       <span
-        aria-describedby={`tooltip-${term}`}
+        tabIndex={0}
+        aria-describedby={show ? `tooltip-${term}` : undefined}
         className="border-b border-dashed border-current opacity-80"
       >
         {children || displayLabel}

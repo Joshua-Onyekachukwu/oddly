@@ -1,12 +1,14 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 interface TableRLS {
   table_name: string;
   rls_enabled: boolean;
-  force_rls?: boolean;
-  policies?: string[];
+  anon_readable?: boolean;
+  row_count?: number;
+  should_have_rls?: boolean;
   status: string;
 }
 
@@ -20,10 +22,19 @@ export default function RLSPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/v1/admin/rls");
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      const res = await fetch("/api/v1/admin/rls", {
+        headers: session?.access_token
+          ? { Authorization: `Bearer ${session.access_token}` }
+          : {},
+      });
       const json = await res.json();
-      if (json.error) {
-        setError(json.error);
+      if (!res.ok || json.error) {
+        setError(json.error || `Request failed (${res.status})`);
       } else {
         setTables(json.data || []);
         setSummary(json.summary || null);
@@ -54,7 +65,8 @@ export default function RLSPage() {
         </div>
         <button
           onClick={fetchRLS}
-          className="text-[11px] text-gray-400 hover:text-[#1B2A4A] transition-colors flex items-center gap-[4px]"
+          aria-label="Refresh RLS audit"
+          className="text-[11px] text-gray-400 hover:text-[#1B2A4A] transition-colors flex items-center gap-[4px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1B2A4A]/30 rounded-[4px] px-[4px]"
         >
           <i className="ri-refresh-line" /> Refresh
         </button>
@@ -99,9 +111,17 @@ export default function RLSPage() {
 
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-[14px] p-[16px] mb-[16px]">
-          <div className="flex items-center gap-[8px]">
-            <i className="ri-error-warning-line text-red-500" />
-            <span className="text-[13px] font-medium text-red-700">{error}</span>
+          <div className="flex items-center justify-between gap-[12px]">
+            <div className="flex items-center gap-[8px]">
+              <i className="ri-error-warning-line text-red-500" />
+              <span className="text-[13px] font-medium text-red-700">{error}</span>
+            </div>
+            <button
+              onClick={fetchRLS}
+              className="text-[12px] font-semibold text-red-600 hover:text-red-700 underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 rounded-[4px] px-[4px]"
+            >
+              Retry
+            </button>
           </div>
         </div>
       )}
@@ -111,7 +131,7 @@ export default function RLSPage() {
         <div className="px-[20px] py-[16px] border-b border-gray-50">
           <h3 className="text-[14px] font-semibold text-[#0A0F1C]">Table Security Status</h3>
           <p className="text-[11px] text-gray-400 mt-[2px]">
-            Run <code className="bg-gray-100 px-[4px] py-[1px] rounded text-[10px]">FIX-NOW.sql</code> to enable RLS on all tables
+            Live probe of every known table — anon key access is tested directly against the database.
           </p>
         </div>
         <div className="p-[16px]">
@@ -132,9 +152,9 @@ export default function RLSPage() {
                   <tr className="border-b border-gray-100">
                     <th className="text-left py-[8px] px-[10px] font-medium text-gray-500">Table</th>
                     <th className="text-center py-[8px] px-[10px] font-medium text-gray-500">RLS</th>
-                    <th className="text-center py-[8px] px-[10px] font-medium text-gray-500">Force RLS</th>
+                    <th className="text-center py-[8px] px-[10px] font-medium text-gray-500">Anon Read</th>
+                    <th className="text-right py-[8px] px-[10px] font-medium text-gray-500">Rows</th>
                     <th className="text-center py-[8px] px-[10px] font-medium text-gray-500">Status</th>
-                    <th className="text-left py-[8px] px-[10px] font-medium text-gray-500">Policies</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -153,24 +173,25 @@ export default function RLSPage() {
                         )}
                       </td>
                       <td className="text-center py-[8px] px-[10px]">
-                        {t.force_rls ? (
-                          <span className="text-green-600 text-[10px] font-bold">YES</span>
+                        {t.anon_readable ? (
+                          <span className="text-red-600 text-[10px] font-bold">YES</span>
                         ) : (
-                          <span className="text-gray-400 text-[10px]">no</span>
+                          <span className="text-green-600 text-[10px] font-bold">NO</span>
                         )}
+                      </td>
+                      <td className="text-right py-[8px] px-[10px] font-mono text-gray-500">
+                        {typeof t.row_count === "number" ? t.row_count.toLocaleString() : "—"}
                       </td>
                       <td className="text-center py-[8px] px-[10px]">
                         <span className={`text-[10px] font-bold px-[8px] py-[3px] rounded-full ${
                           t.status === "SECURE" ? "bg-green-50 text-green-600" :
-                          t.status === "MISSING_RLS" ? "bg-red-50 text-red-600" :
+                          t.status === "PUBLICLY_READABLE" ? "bg-red-50 text-red-600" :
                           "bg-amber-50 text-amber-600"
                         }`}>
                           {t.status === "SECURE" ? "SECURE" :
+                           t.status === "PUBLICLY_READABLE" ? "PUBLIC" :
                            t.status === "MISSING_RLS" ? "MISSING RLS" : t.status}
                         </span>
-                      </td>
-                      <td className="py-[8px] px-[10px] text-gray-400">
-                        {t.policies && t.policies.length > 0 ? t.policies.join(", ") : "—"}
                       </td>
                     </tr>
                   ))}

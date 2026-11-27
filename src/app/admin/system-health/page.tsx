@@ -22,7 +22,7 @@ interface SystemStats {
 interface APIStatus {
   oddsApi: { status: string; used: number; remaining: number; resetDate: string };
   footballData: { status: string; plan: string; requestsToday: number };
-  statsBomb: { status: string; matchesCollected: number; teamsWithXG: number };
+  statsBomb: { status: string; matchesCollected: number | null; teamsWithXG: number | null };
 }
 
 interface PipelineHealth {
@@ -76,6 +76,7 @@ export default function SystemHealthPage() {
   });
   const [dataFreshness, setDataFreshness] = useState<DataFreshness[]>([]);
   const [marketAccuracy, setMarketAccuracy] = useState<MarketAccuracy[]>([]);
+  const [calibrationBuckets, setCalibrationBuckets] = useState<{ label: string; predicted: number; actual: number; total: number }[]>([]);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [autoRefresh, setAutoRefresh] = useState(true);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -102,7 +103,8 @@ export default function SystemHealthPage() {
       sb.from("leagues").select("id", { count: "exact", head: true }),
       sb.from("odds_snapshots").select("id", { count: "exact", head: true }),
       sb.from("profiles").select("id", { count: "exact", head: true }),
-      sb.from("profiles").select("id", { count: "exact", head: true }).gte("last_sign_in_at", new Date(now.getTime() - 7 * 86400000).toISOString()),
+      // profiles has no last_sign_in_at — proxy "active" with signups in last 7 days
+      sb.from("profiles").select("id", { count: "exact", head: true }).gte("created_at", new Date(now.getTime() - 7 * 86400000).toISOString()),
     ]);
 
     setSystemStats({
@@ -136,12 +138,20 @@ export default function SystemHealthPage() {
       }
     } catch { /* silent */ }
 
-    // StatsBomb data — checked via API or known from collection run
-    const statsBombStatus = { status: "active", matchesCollected: 102, teamsWithXG: 27 };
+    // StatsBomb/xG data — real row count from match_stats table
+    const { count: matchStatsCount } = await sb
+      .from("match_stats")
+      .select("id", { count: "exact", head: true });
+    const statsBombStatus = {
+      status: (matchStatsCount || 0) > 0 ? "active" : "unknown",
+      matchesCollected: matchStatsCount ?? null,
+      teamsWithXG: null, // not tracked in a queryable table
+    };
 
     setApiStatus({
       oddsApi: oddsApiStatus,
-      footballData: { status: "active", plan: "Free (10 req/min)", requestsToday: 0 },
+      // football-data.org usage is not exposed to admin endpoints
+      footballData: { status: "unknown", plan: "Free (10 req/min)", requestsToday: 0 },
       statsBomb: statsBombStatus,
     });
 
@@ -207,18 +217,53 @@ export default function SystemHealthPage() {
       .limit(10000) as { data: any[] };
 
     const marketMap: Record<string, { total: number; correct: number; eliteTotal: number; eliteCorrect: number }> = {};
+    // Calibration buckets by predicted probability
+    const calibRanges = [
+      { min: 0.5, max: 0.6, label: "50-60%" },
+      { min: 0.6, max: 0.7, label: "60-70%" },
+      { min: 0.7, max: 0.8, label: "70-80%" },
+      { min: 0.8, max: 0.9, label: "80-90%" },
+      { min: 0.9, max: 1.01, label: "90%+" },
+    ];
+    const calibMap: Record<string, { total: number; correct: number; probSum: number }> = {};
+    for (const r of calibRanges) calibMap[r.label] = { total: 0, correct: 0, probSum: 0 };
+
     for (const p of settledPreds || []) {
+      // Only count definitively settled predictions — "pending" results are not accuracy data
+      if (p.result !== "correct" && p.result !== "wrong") continue;
+      const isCorrect = p.result === "correct";
+
       const key = `${p.market}/${p.selection}`;
       if (!marketMap[key]) marketMap[key] = { total: 0, correct: 0, eliteTotal: 0, eliteCorrect: 0 };
       marketMap[key].total++;
-      // Count as correct if result is "correct" OR if model_probability >= 0.70 and result is pending (heuristic for old settled data)
-      const isCorrect = p.result === "correct" || (p.result === "pending" && p.model_probability >= 0.70);
       if (isCorrect) marketMap[key].correct++;
       if (p.model_probability >= 0.70) {
         marketMap[key].eliteTotal++;
         if (isCorrect) marketMap[key].eliteCorrect++;
       }
+
+      const prob = Number(p.model_probability) || 0;
+      const bucket = calibRanges.find((r) => prob >= r.min && prob < r.max);
+      if (bucket) {
+        calibMap[bucket.label].total++;
+        calibMap[bucket.label].probSum += prob;
+        if (isCorrect) calibMap[bucket.label].correct++;
+      }
     }
+
+    setCalibrationBuckets(
+      calibRanges
+        .map((r) => {
+          const b = calibMap[r.label];
+          return {
+            label: r.label,
+            predicted: b.total > 0 ? Math.round((b.probSum / b.total) * 100) : 0,
+            actual: b.total > 0 ? Math.round((b.correct / b.total) * 1000) / 10 : 0,
+            total: b.total,
+          };
+        })
+        .filter((b) => b.total > 0),
+    );
 
     const marketAccArr: MarketAccuracy[] = Object.entries(marketMap)
       .map(([market, stats]) => ({
@@ -249,10 +294,12 @@ export default function SystemHealthPage() {
   const overallAccuracy = systemStats.settledPredictions > 0
     ? ((systemStats.correctPredictions / systemStats.settledPredictions) * 100).toFixed(1)
     : "0";
-  // Also compute high-confidence accuracy for display
-  const highConfAccuracy = systemStats.settledPredictions > 0
-    ? "76.3" // Fallback from ELITE tier measurement
-    : "0";
+  // Real high-confidence (70%+ probability) accuracy aggregated from market breakdown
+  const eliteTotals = marketAccuracy.reduce((s, m) => s + m.eliteTotal, 0);
+  const eliteCorrect = marketAccuracy.reduce((s, m) => s + m.eliteCorrect, 0);
+  const highConfAccuracy = eliteTotals > 0
+    ? ((eliteCorrect / eliteTotals) * 100).toFixed(1)
+    : null;
 
   const healthScore = [
     pipelineHealth.syncHealthy,
@@ -383,7 +430,7 @@ export default function SystemHealthPage() {
             {loading ? "—" : systemStats.totalUsers}
           </span>
           <div className="text-[10px] text-green-600 mt-[2px]">
-            {systemStats.activeUsers} active (7d)
+            {systemStats.activeUsers} new (7d)
           </div>
         </div>
       </div>
@@ -441,11 +488,15 @@ export default function SystemHealthPage() {
               <div className="p-[14px] bg-gray-50 rounded-[12px]">
                 <div className="flex items-center justify-between mb-[10px]">
                   <div className="flex items-center gap-[8px]">
-                    <span className="w-[8px] h-[8px] rounded-full bg-green-500" />
+                    <span className={`w-[8px] h-[8px] rounded-full ${
+                      apiStatus.footballData.status === "active" ? "bg-green-500" : "bg-gray-300"
+                    }`} />
                     <span className="text-[13px] font-semibold text-[#0A0F1C]">football-data.org</span>
                   </div>
-                  <span className="text-[10px] font-semibold px-[6px] py-[2px] rounded-full bg-green-50 text-green-600">
-                    ACTIVE
+                  <span className={`text-[10px] font-semibold px-[6px] py-[2px] rounded-full ${
+                    apiStatus.footballData.status === "active" ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-400"
+                  }`}>
+                    {apiStatus.footballData.status === "active" ? "ACTIVE" : "UNKNOWN"}
                   </span>
                 </div>
                 <div className="space-y-[6px]">
@@ -459,7 +510,9 @@ export default function SystemHealthPage() {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] text-gray-400">Status</span>
-                    <span className="text-[11px] text-green-600 font-semibold">Connected</span>
+                    <span className="text-[11px] text-gray-500">
+                      {apiStatus.footballData.status === "active" ? "Connected" : "Not monitored"}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -487,13 +540,13 @@ export default function SystemHealthPage() {
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] text-gray-400">Matches</span>
                     <span className="text-[11px] font-mono font-semibold text-[#0A0F1C]">
-                      {apiStatus.statsBomb.matchesCollected}
+                      {apiStatus.statsBomb.matchesCollected !== null ? apiStatus.statsBomb.matchesCollected.toLocaleString() : "—"}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] text-gray-400">Teams with xG</span>
                     <span className="text-[11px] font-mono text-[#0A0F1C]">
-                      {apiStatus.statsBomb.teamsWithXG}
+                      {apiStatus.statsBomb.teamsWithXG !== null ? apiStatus.statsBomb.teamsWithXG.toLocaleString() : "—"}
                     </span>
                   </div>
                 </div>
@@ -577,11 +630,15 @@ export default function SystemHealthPage() {
                 <span className="text-[10px] text-green-600/60 block mt-[2px]">Overall</span>
               </div>
               <div className="p-[12px] bg-[#1B2A4A]/5 rounded-[10px] text-center">
-                <span className="text-[20px] font-bold text-[#1B2A4A] font-mono">76.3%</span>
-                <span className="text-[10px] text-[#1B2A4A]/60 block mt-[2px]">ELITE (70%+)</span>
+                <span className="text-[20px] font-bold text-[#1B2A4A] font-mono">
+                  {highConfAccuracy !== null ? `${highConfAccuracy}%` : "—"}
+                </span>
+                <span className="text-[10px] text-[#1B2A4A]/60 block mt-[2px]">ELITE (70%+ prob)</span>
               </div>
               <div className="p-[12px] bg-blue-50 rounded-[10px] text-center">
-                <span className="text-[20px] font-bold text-blue-600 font-mono">91.3%</span>
+                <span className="text-[20px] font-bold text-blue-600 font-mono">
+                  {calibrationBuckets.find((b) => b.label === "90%+")?.actual.toFixed(1) ?? "—"}%
+                </span>
                 <span className="text-[10px] text-blue-600/60 block mt-[2px]">90%+ Confidence</span>
               </div>
               <div className="p-[12px] bg-amber-50 rounded-[10px] text-center">
@@ -589,32 +646,39 @@ export default function SystemHealthPage() {
                 <span className="text-[10px] text-amber-600/60 block mt-[2px]">Settled</span>
               </div>
             </div>
-            {/* Confidence Calibration Mini-Chart */}
+            {/* Confidence Calibration Mini-Chart — computed from settled predictions */}
             <div className="mt-[14px] p-[12px] bg-gray-50 rounded-[10px]">
               <span className="text-[11px] font-semibold text-gray-500 mb-[8px] block">Confidence Calibration</span>
-              <div className="flex items-end gap-[4px] h-[40px]">
-                {[
-                  { label: "50%", predicted: 50, actual: 51.8 },
-                  { label: "60%", predicted: 60, actual: 57.1 },
-                  { label: "70%", predicted: 70, actual: 64.8 },
-                  { label: "80%", predicted: 80, actual: 74.1 },
-                  { label: "90%", predicted: 90, actual: 91.3 },
-                ].map((b) => (
-                  <div key={b.label} className="flex-1 flex flex-col items-center">
-                    <div className="w-full bg-gray-200 rounded-[3px] relative" style={{ height: "30px" }}>
-                      <div
-                        className="absolute bottom-0 w-full bg-[#1B2A4A] rounded-[3px] transition-all"
-                        style={{ height: `${b.actual * 0.3}px` }}
-                      />
-                    </div>
-                    <span className="text-[8px] text-gray-400 mt-[2px]">{b.label}</span>
+              {calibrationBuckets.length === 0 ? (
+                <p className="text-[11px] text-gray-400 py-[12px] text-center">No settled predictions in the 50%+ probability range yet.</p>
+              ) : (
+                <>
+                  <div className="flex items-end gap-[4px] h-[40px]">
+                    {calibrationBuckets.map((b) => (
+                      <div key={b.label} className="flex-1 flex flex-col items-center">
+                        <div className="w-full bg-gray-200 rounded-[3px] relative" style={{ height: "30px" }}>
+                          <div
+                            className="absolute bottom-0 w-full bg-[#1B2A4A] rounded-[3px] transition-all"
+                            style={{ height: `${Math.min(b.actual, 100) * 0.3}px` }}
+                          />
+                        </div>
+                        <span className="text-[8px] text-gray-400 mt-[2px]">{b.label}</span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-              <div className="flex justify-between mt-[4px]">
-                <span className="text-[9px] text-gray-300">Predicted</span>
-                <span className="text-[9px] text-gray-300">Actual</span>
-              </div>
+                  <div className="flex justify-between mt-[4px]">
+                    <span className="text-[9px] text-gray-300">Bar height = actual accuracy (n={calibrationBuckets.reduce((s, b) => s + b.total, 0)})</span>
+                    <span className="text-[9px] text-gray-300">Avg predicted shown per bucket</span>
+                  </div>
+                  <div className="flex flex-wrap gap-[6px] mt-[4px]">
+                    {calibrationBuckets.map((b) => (
+                      <span key={b.label} className="text-[9px] text-gray-400 font-mono">
+                        {b.label}: pred {b.predicted}% → actual {b.actual}% ({b.total})
+                      </span>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           </div>
 

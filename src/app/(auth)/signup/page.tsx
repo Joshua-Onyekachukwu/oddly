@@ -44,6 +44,12 @@ export default function SignupPage() {
       return;
     }
 
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError("Enter a valid email address");
+      setLoading(false);
+      return;
+    }
+
     if (password.length < 8) {
       setError("Password must be at least 8 characters");
       setLoading(false);
@@ -95,7 +101,7 @@ export default function SignupPage() {
         </p>
         <Link
           href="/login"
-          className="inline-flex items-center gap-[8px] font-display font-semibold text-[14px] rounded-full bg-[#1B2A4A] text-white py-[12px] px-[24px] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[#243B53] active:scale-[0.97]"
+          className="inline-flex items-center gap-[8px] font-display font-semibold text-[14px] rounded-full bg-[#1B2A4A] text-white py-[12px] px-[24px] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[#243B53] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] focus-visible:ring-offset-2"
         >
           Go to sign in
         </Link>
@@ -121,7 +127,10 @@ export default function SignupPage() {
 
       <form onSubmit={handleSubmit} className="space-y-[16px]">
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-[12px] p-[12px] flex items-center gap-[8px]">
+          <div
+            role="alert"
+            className="bg-red-50 border border-red-200 rounded-[12px] p-[12px] flex items-center gap-[8px]"
+          >
             <i className="ri-error-warning-line text-[16px] text-red-500"></i>
             <span className="text-[13px] text-red-600">{error}</span>
           </div>
@@ -137,6 +146,7 @@ export default function SignupPage() {
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
             placeholder="John Doe"
+            required
             className="w-full h-[44px] rounded-[12px] border border-gray-200 bg-white px-[14px] text-[14px] text-[#0A0F1C] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1B2A4A] focus:ring-offset-2 transition-all"
             autoComplete="name"
             disabled={loading}
@@ -153,6 +163,7 @@ export default function SignupPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
+            required
             className="w-full h-[44px] rounded-[12px] border border-gray-200 bg-white px-[14px] text-[14px] text-[#0A0F1C] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1B2A4A] focus:ring-offset-2 transition-all"
             autoComplete="email"
             disabled={loading}
@@ -173,6 +184,8 @@ export default function SignupPage() {
                 setPasswordStrength(checkPasswordStrength(e.target.value));
               }}
               placeholder="At least 8 characters"
+              required
+              minLength={8}
               className="w-full h-[44px] rounded-[12px] border border-gray-200 bg-white px-[14px] pr-[44px] text-[14px] text-[#0A0F1C] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1B2A4A] focus:ring-offset-2 transition-all"
               autoComplete="new-password"
               disabled={loading}
@@ -180,15 +193,23 @@ export default function SignupPage() {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-[12px] top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-              tabIndex={-1}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-pressed={showPassword}
+              className="absolute right-[12px] top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors rounded-[6px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
             >
               <i className={`${showPassword ? "ri-eye-off-line" : "ri-eye-line"} text-[18px]`}></i>
             </button>
           </div>
           {password.length > 0 && (
-            <div className="mt-[8px]">
-              <div className="flex gap-[4px] mb-[4px]">
+            <div className="mt-[8px]" aria-live="polite">
+              <div
+                className="flex gap-[4px] mb-[4px]"
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={5}
+                aria-valuenow={passwordStrength.score}
+                aria-label="Password strength"
+              >
                 {[1, 2, 3, 4, 5].map((i) => (
                   <div
                     key={i}
@@ -215,27 +236,38 @@ export default function SignupPage() {
 
         <div className="flex items-start gap-[8px]">
           <input
+            id="terms"
             type="checkbox"
             checked={acceptedTerms}
             onChange={(e) => setAcceptedTerms(e.target.checked)}
-            className="w-[16px] h-[16px] mt-[2px] rounded border-gray-300 text-[#1B2A4A] focus:ring-[#1B2A4A]"
+            aria-label="I agree to the Terms of Service and Privacy Policy"
+            className="w-[16px] h-[16px] mt-[2px] rounded border-gray-300 text-[#1B2A4A] focus:ring-[#1B2A4A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
+            disabled={loading}
           />
-          <span className="text-[12px] text-gray-500 leading-[1.5]">
+          <label htmlFor="terms" className="text-[12px] text-gray-500 leading-[1.5] cursor-pointer">
             I agree to the{" "}
-            <Link href="#" className="text-[#1B2A4A] hover:underline">
+            <Link
+              href="/terms"
+              onClick={(e) => e.stopPropagation()}
+              className="text-[#1B2A4A] hover:underline"
+            >
               Terms of Service
             </Link>{" "}
             and{" "}
-            <Link href="#" className="text-[#1B2A4A] hover:underline">
+            <Link
+              href="/privacy"
+              onClick={(e) => e.stopPropagation()}
+              className="text-[#1B2A4A] hover:underline"
+            >
               Privacy Policy
             </Link>
-          </span>
+          </label>
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full h-[44px] rounded-[12px] bg-[#1B2A4A] text-white font-display font-semibold text-[14px] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[#243B53] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-[8px]"
+          className="w-full h-[44px] rounded-[12px] bg-[#1B2A4A] text-white font-display font-semibold text-[14px] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[#243B53] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-[8px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] focus-visible:ring-offset-2"
         >
           {loading ? (
             <>

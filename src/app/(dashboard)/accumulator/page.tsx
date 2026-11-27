@@ -6,6 +6,15 @@ import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { PageHeader, Card, EmptyState, Button, Badge } from "@/components/ui";
 
+interface FixtureInfo {
+  id: string;
+  kickoff_time: string;
+  status: string;
+  home: { canonical_name: string } | null;
+  away: { canonical_name: string } | null;
+  league: { name: string } | null;
+}
+
 interface Recommendation {
   id: string;
   fixture_id: string;
@@ -16,6 +25,15 @@ interface Recommendation {
   edge: number;
   risk_tier: string;
   confidence_tier: string;
+  fixture: FixtureInfo | null;
+}
+
+function matchLabel(rec: Recommendation): string {
+  const f = rec.fixture;
+  if (f?.home?.canonical_name && f?.away?.canonical_name) {
+    return `${f.home.canonical_name} vs ${f.away.canonical_name}`;
+  }
+  return rec.selection;
 }
 
 interface AccumulatorLeg {
@@ -33,18 +51,33 @@ export default function AccumulatorPage() {
   const [strategy, setStrategy] = useState<"conservative" | "balanced" | "aggressive" | "longshot">("balanced");
   const [totalStake, setTotalStake] = useState<number>(10);
   const [savedMsg, setSavedMsg] = useState("");
+  const [fetchError, setFetchError] = useState("");
+  const [saveError, setSaveError] = useState("");
 
   const fetchRecommendations = useCallback(async () => {
+    setFetchError("");
     const supabase = createClient();
     const { data, error } = await supabase
       .from("recommendations")
-      .select("*")
+      .select(
+        `*,
+        fixture:fixtures!inner(
+          id, kickoff_time, status,
+          home:teams!fixtures_home_team_id_fkey(canonical_name),
+          away:teams!fixtures_away_team_id_fkey(canonical_name),
+          league:leagues!fixtures_league_id_fkey(name)
+        )`
+      )
       .eq("is_recommended", true)
+      .eq("fixture.status", "scheduled")
+      .gte("fixture.kickoff_time", new Date().toISOString())
       .order("edge", { ascending: false })
       .limit(20);
 
-    if (!error && data) {
-      setRecommendations(data);
+    if (error) {
+      setFetchError(error.message);
+    } else if (data) {
+      setRecommendations(data as unknown as Recommendation[]);
     }
     setLoading(false);
   }, []);
@@ -97,15 +130,21 @@ export default function AccumulatorPage() {
     setSaving(true);
 
     const supabase = createClient();
-    const selections = selectedLegs.map((leg) => ({
-      recommendation_id: leg.recommendation.id,
-      fixture_id: leg.recommendation.fixture_id,
-      market: leg.recommendation.market,
-      selection: leg.recommendation.selection,
-      odds: leg.recommendation.bookmaker_odds,
-      model_probability: leg.recommendation.model_probability,
-      edge: leg.recommendation.edge,
-    }));
+    const selections = selectedLegs.map((leg) => {
+      const f = leg.recommendation.fixture;
+      return {
+        recommendation_id: leg.recommendation.id,
+        fixture_id: leg.recommendation.fixture_id,
+        market: leg.recommendation.market,
+        selection: leg.recommendation.selection,
+        match: matchLabel(leg.recommendation),
+        league: f?.league?.name ?? null,
+        kickoff_time: f?.kickoff_time ?? null,
+        odds: leg.recommendation.bookmaker_odds,
+        model_probability: leg.recommendation.model_probability,
+        edge: leg.recommendation.edge,
+      };
+    });
 
     const { error } = await supabase.from("accumulators").insert({
       user_id: user.id,
@@ -118,8 +157,11 @@ export default function AccumulatorPage() {
       status: "pending",
     });
 
-    if (!error) {
+    if (error) {
+      setSaveError(error.message || "Failed to save accumulator. Please try again.");
+    } else {
       setSavedMsg("Accumulator saved!");
+      setSaveError("");
       setTimeout(() => {
         setSavedMsg("");
         setSelectedLegs([]);
@@ -144,6 +186,24 @@ export default function AccumulatorPage() {
           <h2 className="text-[13px] font-semibold text-gray-500 uppercase tracking-wider mb-[10px]">
             Available Value Bets
           </h2>
+          {fetchError && (
+            <div
+              className="mb-[10px] p-[10px] bg-red-50 border border-red-100 rounded-[10px] text-[12px] text-red-600 flex items-center gap-[8px]"
+              role="alert"
+            >
+              <i className="ri-error-warning-line" />
+              <span className="flex-1">{fetchError}</span>
+              <button
+                onClick={() => {
+                  setLoading(true);
+                  fetchRecommendations();
+                }}
+                className="font-medium text-red-700 hover:text-red-800 underline underline-offset-2"
+              >
+                Retry
+              </button>
+            </div>
+          )}
           {loading ? (
             <div className="space-y-[6px]">
               {Array.from({ length: 4 }).map((_, i) => (
@@ -156,19 +216,34 @@ export default function AccumulatorPage() {
           ) : recommendations.length === 0 ? (
             <EmptyState
               icon="ri-inbox-line"
-              title="No value bets available"
-              description="Check back when matches are closer to kickoff."
+              title={fetchError ? "Couldn't load picks" : "No value bets available"}
+              description={
+                fetchError
+                  ? "Something went wrong fetching recommendations. Try again in a moment."
+                  : "Check back when matches are closer to kickoff."
+              }
             />
           ) : (
             <div className="space-y-[4px]">
               {recommendations.map((rec) => {
                 const isSelected = selectedLegs.some((l) => l.recommendation.id === rec.id);
+                const f = rec.fixture;
                 return (
                   <div
                     key={rec.id}
+                    role="button"
+                    tabIndex={0}
+                    aria-pressed={isSelected}
                     onClick={() => toggleLeg(rec)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        toggleLeg(rec);
+                      }
+                    }}
                     className={`
                       bg-white rounded-[10px] p-[14px] border transition-all duration-200 cursor-pointer
+                      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1B2A4A]/30
                       ${isSelected
                         ? "border-[#1B2A4A] shadow-[0_0_0_1px_#1B2A4A]"
                         : "border-gray-100 hover:border-gray-200"
@@ -177,11 +252,30 @@ export default function AccumulatorPage() {
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-[8px] mb-[2px]">
-                          <span className="text-[13px] font-semibold text-[#0A0F1C] truncate">
-                            {rec.selection}
+                        <div className="text-[13px] font-semibold text-[#0A0F1C] truncate">
+                          {matchLabel(rec)}
+                        </div>
+                        <div className="flex items-center gap-[8px] mt-[2px]">
+                          <span className="text-[11px] text-gray-400 truncate">
+                            {f?.league?.name ?? rec.market}
                           </span>
-                          <span className="text-[10px] text-gray-400">{rec.market}</span>
+                          {f?.kickoff_time && (
+                            <>
+                              <span className="text-[10px] text-gray-300">·</span>
+                              <span className="text-[11px] text-gray-400 whitespace-nowrap">
+                                {new Date(f.kickoff_time).toLocaleString("en-GB", {
+                                  day: "numeric",
+                                  month: "short",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-[8px] mt-[4px]">
+                          <span className="text-[11px] text-gray-500">{rec.market}</span>
+                          <span className="text-[11px] font-medium text-[#0A0F1C]">{rec.selection}</span>
                         </div>
                         <span className="text-[12px] font-mono-data font-medium text-[#0A0F1C]">
                           @{rec.bookmaker_odds.toFixed(2)}
@@ -224,6 +318,8 @@ export default function AccumulatorPage() {
                 value={accName}
                 onChange={(e) => setAccName(e.target.value)}
                 placeholder="Name (optional)"
+                aria-label="Accumulator name"
+                maxLength={80}
                 className="w-full h-[34px] rounded-[8px] border border-gray-200 bg-gray-50 px-[10px] text-[12px] text-[#0A0F1C] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1B2A4A]/20 transition-all"
               />
             </div>
@@ -245,11 +341,14 @@ export default function AccumulatorPage() {
                         <div className="flex items-center gap-[6px]">
                           <span className="text-[10px] font-mono-data text-gray-400">{idx + 1}</span>
                           <span className="text-[12px] font-medium text-[#0A0F1C] truncate">
-                            {leg.recommendation.selection}
+                            {leg.recommendation.fixture
+                              ? matchLabel(leg.recommendation)
+                              : leg.recommendation.selection}
                           </span>
                         </div>
-                        <span className="text-[11px] text-gray-400 ml-[16px]">
-                          @{leg.recommendation.bookmaker_odds.toFixed(2)}
+                        <span className="text-[11px] text-gray-400 ml-[16px] truncate block">
+                          {leg.recommendation.market} • {leg.recommendation.selection} @
+                          {leg.recommendation.bookmaker_odds.toFixed(2)}
                         </span>
                       </div>
                       <button
@@ -257,7 +356,8 @@ export default function AccumulatorPage() {
                           e.stopPropagation();
                           removeLeg(leg.recommendation.id);
                         }}
-                        className="text-gray-300 hover:text-red-500 transition-colors p-[4px]"
+                        aria-label={`Remove leg ${idx + 1}`}
+                        className="text-gray-300 hover:text-red-500 transition-colors p-[4px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/50 rounded"
                       >
                         <i className="ri-close-line text-[14px]" />
                       </button>
@@ -291,8 +391,10 @@ export default function AccumulatorPage() {
                       <button
                         key={s}
                         onClick={() => setStrategy(s)}
+                        aria-pressed={strategy === s}
                         className={`
                           py-[6px] px-[8px] rounded-[6px] text-[11px] font-medium transition-all
+                          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1B2A4A]/30
                           ${strategy === s
                             ? "bg-[#1B2A4A] text-white"
                             : "bg-gray-50 text-gray-500 hover:bg-gray-100"
@@ -313,8 +415,10 @@ export default function AccumulatorPage() {
                       <button
                         key={s}
                         onClick={() => setTotalStake(s)}
+                        aria-pressed={totalStake === s}
                         className={`
                           flex-1 py-[6px] rounded-[6px] text-[12px] font-mono-data font-medium transition-all
+                          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1B2A4A]/30
                           ${totalStake === s
                             ? "bg-[#1B2A4A] text-white"
                             : "bg-gray-50 text-gray-500 hover:bg-gray-100"
@@ -334,6 +438,14 @@ export default function AccumulatorPage() {
                   </span>
                 </div>
 
+                {saveError && (
+                  <div
+                    className="text-center text-[12px] font-medium text-red-600 bg-red-50 rounded-[8px] py-[8px]"
+                    role="alert"
+                  >
+                    {saveError}
+                  </div>
+                )}
                 {savedMsg && (
                   <div className="text-center text-[13px] font-medium text-green-600 bg-green-50 rounded-[8px] py-[8px]">
                     {savedMsg}
@@ -342,7 +454,7 @@ export default function AccumulatorPage() {
 
                 <Button
                   onClick={handleSave}
-                  disabled={saving || selectedLegs.length < 2}
+                  disabled={saving || selectedLegs.length < 2 || !user}
                   loading={saving}
                   icon="ri-save-line"
                   className="w-full"

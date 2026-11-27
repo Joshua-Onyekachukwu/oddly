@@ -11,7 +11,7 @@ interface AboutProps {
 
 const getAboutCards = (leagueCount: string) => [
   { icon: "ri-line-chart-line", title: "Live Match Tracking", desc: `Follow predictions in real-time as matches unfold across ${leagueCount} leagues.`, color: "bg-[#BFFF00]/10", iconColor: "text-[#1B2A4A]" },
-  { icon: "ri-notification-3-line", title: "Instant Alerts", desc: "Get notified the moment a value bet is detected or Crown Jewel is ready.", color: "bg-[#D97706]/10", iconColor: "text-[#D97706]" },
+  { icon: "ri-notification-3-line", title: "Instant Alerts", desc: "Get notified the moment a value bet is detected or top pick is ready.", color: "bg-[#D97706]/10", iconColor: "text-[#D97706]" },
   { icon: "ri-bar-chart-grouped-line", title: "Deep Analytics", desc: "Model accuracy, edge, and confidence at a glance for every prediction.", color: "bg-[#22c55e]/10", iconColor: "text-[#22c55e]" },
   { icon: "ri-stack-line", title: "Smart Optimization", desc: "Accumulator builder maximizes your returns while managing risk.", color: "bg-[#2563EB]/10", iconColor: "text-[#2563EB]" },
 ];
@@ -24,7 +24,7 @@ const About: React.FC<AboutProps> = ({ stats }) => {
       <div className="container sm:max-w-[540px] md:max-w-[720px] lg:max-w-[960px] xl:max-w-[1200px] mx-auto px-[16px]">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-[48px] items-center">
           {/* Left — Real football analytics image */}
-          <div {...getScrollRevealClasses(isVisible, 0)} className="relative">
+          <div {...getScrollRevealClasses(isVisible, 0, "relative")}>
             <div className="relative rounded-[1.5rem] overflow-hidden aspect-[4/3]">
               <Image
                 src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&q=80"
@@ -45,10 +45,10 @@ const About: React.FC<AboutProps> = ({ stats }) => {
                   <span className="text-[11px] text-white/60 uppercase tracking-wider font-display">AI-Powered</span>
                 </div>
                 <h3 className="font-display text-[24px] md:text-[28px] font-bold text-white !leading-[1.1] !tracking-[-0.02em] !mb-[8px]">
-                  7 Models Working Together
+                  An Ensemble of Prediction Models
                 </h3>
                 <p className="text-[13px] text-white/60 leading-[1.5]">
-                  Dixon-Coles, XGBoost, Elo, and 4 more — all analyzed by NVIDIA AI to find the sharpest edge.
+                  Multiple statistical and machine-learning models evaluate every fixture — probabilities, edges, and consensus, fully transparent.
                 </p>
               </div>
             </div>
@@ -60,8 +60,10 @@ const About: React.FC<AboutProps> = ({ stats }) => {
                   <i className="ri-percent-line text-[#22c55e] text-[12px]"></i>
                 </div>
                 <div>
-                  <span className="text-[10px] text-gray-400 block">Avg Edge</span>
-                  <span className="text-[14px] font-bold text-[#0A0F1C] font-mono-data">+12.3%</span>
+                  <span className="text-[10px] text-gray-400 block">Avg Accuracy</span>
+                  <span className="text-[14px] font-bold text-[#0A0F1C] font-mono-data">
+                    {stats?.avgAccuracy ? `${stats.avgAccuracy}%` : "—"}
+                  </span>
                 </div>
               </div>
             </div>
@@ -74,7 +76,9 @@ const About: React.FC<AboutProps> = ({ stats }) => {
                 </div>
                 <div>
                   <span className="text-[10px] text-gray-400 block">Active Models</span>
-                  <span className="text-[14px] font-bold text-[#0A0F1C] font-mono-data">7</span>
+                  <span className="text-[14px] font-bold text-[#0A0F1C] font-mono-data">
+                    {stats?.activeModels ? stats.activeModels : "—"}
+                  </span>
                 </div>
               </div>
             </div>
@@ -87,7 +91,7 @@ const About: React.FC<AboutProps> = ({ stats }) => {
             </span>
 
             <h2 className="font-display !text-[28px] md:!text-[36px] lg:!text-[44px] !leading-[1.1] !tracking-[-0.03em] !mb-[16px] text-[#0A0F1C]">
-              Football Predictions Powered by 7 AI Models
+              Football Predictions Powered by an Ensemble Model
             </h2>
 
             <p className="text-[15px] text-gray-500 max-w-[480px] mb-[32px]">
@@ -99,8 +103,7 @@ const About: React.FC<AboutProps> = ({ stats }) => {
               {getAboutCards(stats?.totalLeagues ? `${stats.totalLeagues}+` : "—").map((card, index) => (
                 <div
                   key={index}
-                  {...getScrollRevealClasses(isVisible, 200 + index * 80)}
-                  className="flex items-center gap-[16px] p-[16px] bg-white rounded-[12px] border border-gray-100 hover:border-[#1B2A4A]/10 transition-all duration-500"
+                  {...getScrollRevealClasses(isVisible, 200 + index * 80, "flex items-center gap-[16px] p-[16px] bg-white rounded-[12px] border border-gray-100 hover:border-[#1B2A4A]/10 transition-all duration-500")}
                 >
                   <div className={`flex-none ${card.color} flex items-center justify-center w-[44px] h-[44px] rounded-[10px]`}>
                     <i className={`${card.icon} text-[18px] ${card.iconColor}`}></i>

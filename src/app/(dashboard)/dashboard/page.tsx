@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { PageHeader, Card, CardHeader, StatCard, Badge, EmptyState } from "@/components/ui";
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
@@ -12,6 +14,8 @@ interface Prediction {
   selection: string;
   model_probability: number;
   model_version: string;
+  result?: string | null;
+  settled_at?: string | null;
 }
 
 interface Fixture {
@@ -32,7 +36,16 @@ interface ElitePick {
   fixture: Fixture;
   predictions: Prediction[];
   bestPick: Prediction;
-  edge: number;
+}
+
+interface SettlementItem {
+  id: string;
+  market: string;
+  selection: string;
+  model_probability: number;
+  result: string;
+  settled_at: string;
+  matchLabel: string;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────
@@ -69,19 +82,29 @@ function formatDate(time: string) {
 function formatMarket(market: string): string {
   const map: Record<string, string> = {
     "1X2": "Match Result",
+    "1x2": "Match Result",
     over_under: "Total Goals",
+    ou: "Total Goals",
     btts: "BTTS",
     double_chance: "Double Chance",
+    dc: "Double Chance",
     dnb: "Draw No Bet",
     smart_selection: "Best Pick",
   };
-  return map[market] || market;
+  return map[market] || market.replace(/_/g, " ");
 }
 
 function formatSelection(sel: string): string {
   return sel
     .replace(/_/g, " ")
     .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function greeting() {
+  const h = new Date().getHours();
+  if (h < 12) return "Good morning";
+  if (h < 18) return "Good afternoon";
+  return "Good evening";
 }
 
 // ─── Components ──────────────────────────────────────────────────────────
@@ -144,10 +167,10 @@ function ElitePickCard({ pick }: { pick: ElitePick }) {
   const prob = Math.round(bestPick.model_probability * 100);
 
   return (
-    <div className="bg-white rounded-[14px] border border-gray-100 hover:border-gray-200 hover:shadow-[0_4px_20px_rgba(0,0,0,0.04)] transition-[border-color,box-shadow,transform] duration-200 ease-out cursor-pointer group overflow-hidden active:scale-[0.98]"
+    <div
+      className="bg-white rounded-[14px] border border-gray-100 hover:border-gray-200 hover:shadow-[0_4px_20px_rgba(0,0,0,0.04)] transition-[border-color,box-shadow] duration-200 ease-out cursor-pointer group overflow-hidden"
       onClick={() => setExpanded(!expanded)}
     >
-      {/* Header */}
       <div className="px-[16px] pt-[14px] pb-[10px] flex items-center justify-between">
         <div className="flex items-center gap-[6px] min-w-0">
           {fixture.league_logo ? (
@@ -155,11 +178,11 @@ function ElitePickCard({ pick }: { pick: ElitePick }) {
           ) : (
             <div className="w-[16px] h-[16px] bg-gray-200 rounded-[3px] flex-none" />
           )}
-          <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
+          <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider truncate">
             {fixture.leagues?.name || "Unknown"}
           </span>
         </div>
-        <div className="flex items-center gap-[8px]">
+        <div className="flex items-center gap-[8px] flex-none">
           <span className="text-[10px] font-medium text-gray-400">{formatDate(fixture.kickoff_time)}</span>
           <span className="text-[11px] font-mono-data font-bold text-[#1B2A4A] bg-gray-50 px-[6px] py-[2px] rounded">
             {formatTime(fixture.kickoff_time)}
@@ -167,7 +190,6 @@ function ElitePickCard({ pick }: { pick: ElitePick }) {
         </div>
       </div>
 
-      {/* Teams */}
       <div className="px-[16px] py-[8px]">
         <div className="flex items-center gap-[12px]">
           <div className="flex items-center gap-[10px] flex-1 min-w-0">
@@ -194,16 +216,13 @@ function ElitePickCard({ pick }: { pick: ElitePick }) {
         </div>
       </div>
 
-      {/* Best Pick */}
       <div className="px-[16px] pb-[12px] pt-[8px] border-t border-gray-50">
         <div className="flex items-center justify-between mb-[6px]">
           <div className="flex items-center gap-[8px]">
             <span className="text-[10px] font-semibold text-[#059669] bg-[#059669]/10 px-[8px] py-[2px] rounded-full">
               ELITE
             </span>
-            <span className="text-[12px] font-medium text-gray-600">
-              {formatMarket(bestPick.market)}
-            </span>
+            <span className="text-[12px] font-medium text-gray-600">{formatMarket(bestPick.market)}</span>
           </div>
           <div className="flex items-center gap-[4px]">
             <span className="text-[16px] font-bold text-[#1B2A4A]">{prob}%</span>
@@ -212,14 +231,11 @@ function ElitePickCard({ pick }: { pick: ElitePick }) {
         </div>
 
         <div className="flex items-center gap-[8px] mb-[6px]">
-          <span className="text-[13px] font-bold text-[#0A0F1C]">
-            {formatSelection(bestPick.selection)}
-          </span>
+          <span className="text-[13px] font-bold text-[#0A0F1C]">{formatSelection(bestPick.selection)}</span>
         </div>
 
         <ConfidenceBar probability={bestPick.model_probability} />
 
-        {/* Expand indicator */}
         <div className="flex items-center justify-center mt-[8px]">
           <span className="text-[10px] text-gray-300 font-medium">
             {expanded ? "▲ Less" : `▲ ${predictions.length} markets`}
@@ -227,7 +243,6 @@ function ElitePickCard({ pick }: { pick: ElitePick }) {
         </div>
       </div>
 
-      {/* Expanded: All Markets */}
       {expanded && (
         <div className="px-[16px] pb-[14px] border-t border-gray-50 pt-[10px]">
           <div className="grid grid-cols-2 gap-[8px]">
@@ -237,14 +252,10 @@ function ElitePickCard({ pick }: { pick: ElitePick }) {
                 <div
                   key={p.id}
                   className={`flex items-center justify-between px-[10px] py-[6px] rounded-[8px] text-[11px] ${
-                    p.id === bestPick.id
-                      ? "bg-[#059669]/10 border border-[#059669]/20"
-                      : "bg-gray-50"
+                    p.id === bestPick.id ? "bg-[#059669]/10 border border-[#059669]/20" : "bg-gray-50"
                   }`}
                 >
-                  <span className="font-medium text-gray-600 truncate">
-                    {formatSelection(p.selection)}
-                  </span>
+                  <span className="font-medium text-gray-600 truncate">{formatSelection(p.selection)}</span>
                   <span className="font-mono-data font-bold text-[#1B2A4A] ml-[4px]">
                     {Math.round(p.model_probability * 100)}%
                   </span>
@@ -257,24 +268,51 @@ function ElitePickCard({ pick }: { pick: ElitePick }) {
   );
 }
 
+const QUICK_LINKS = [
+  {
+    href: "/matches/upcoming",
+    icon: "ri-calendar-event-line",
+    title: "Upcoming Matches",
+    description: "All fixtures and predictions",
+  },
+  {
+    href: "/predictions",
+    icon: "ri-line-chart-line",
+    title: "Predictions",
+    description: "Every market, every match",
+  },
+  {
+    href: "/rollover",
+    icon: "ri-repeat-line",
+    title: "Rollover",
+    description: "Daily ~2.0 odds challenge",
+  },
+  {
+    href: "/performance",
+    icon: "ri-bar-chart-box-line",
+    title: "Performance",
+    description: "Accuracy and results",
+  },
+];
+
 // ─── Main Page ───────────────────────────────────────────────────────────
 
-export default function EliteDashboardPage() {
+export default function DashboardPage() {
   const [picks, setPicks] = useState<ElitePick[]>([]);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({ elite: 0, total: 0, leagues: 0 });
+  const [stats, setStats] = useState({ elite: 0, total: 0, leagues: 0, fixturesToday: 0 });
+  const [recentSettlements, setRecentSettlements] = useState<SettlementItem[]>([]);
+  const [weekAccuracy, setWeekAccuracy] = useState<{ pct: number; n: number } | null>(null);
 
   const loadData = useCallback(async () => {
     try {
       const sb = createClient();
 
-      // Get today's date range
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
 
-      // Load today's fixtures with predictions
       const { data: fixtures } = await sb
         .from("fixtures")
         .select(`
@@ -288,81 +326,113 @@ export default function EliteDashboardPage() {
         .order("kickoff_time", { ascending: true })
         .limit(100);
 
-      if (!fixtures || fixtures.length === 0) {
-        setPicks([]);
-        setLoading(false);
-        return;
+      const fixtureList = fixtures || [];
+
+      let elitePicks: ElitePick[] = [];
+      let totalPreds = 0;
+      if (fixtureList.length > 0) {
+        const fixtureIds = fixtureList.map((f) => f.id);
+        const { data: predictions } = await sb
+          .from("predictions")
+          .select("id, fixture_id, market, selection, model_probability, model_version")
+          .in("fixture_id", fixtureIds)
+          .gte("model_probability", 0.70)
+          .order("model_probability", { ascending: false });
+
+        const preds = predictions || [];
+        totalPreds = preds.length;
+
+        const predByFixture: Record<string, Prediction[]> = {};
+        for (const p of preds) {
+          if (!predByFixture[p.fixture_id]) predByFixture[p.fixture_id] = [];
+          predByFixture[p.fixture_id].push(p);
+        }
+
+        for (const fixture of fixtureList) {
+          const fPreds = predByFixture[fixture.id];
+          if (!fPreds || fPreds.length === 0) continue;
+          fPreds.sort((a, b) => b.model_probability - a.model_probability);
+          elitePicks.push({
+            fixture: {
+              id: fixture.id,
+              kickoff_time: fixture.kickoff_time,
+              status: fixture.status,
+              home_score: fixture.home_score,
+              away_score: fixture.away_score,
+              home_team_name: (fixture.home_team as any)?.canonical_name || "Home",
+              away_team_name: (fixture.away_team as any)?.canonical_name || "Away",
+              home_team_logo: (fixture.home_team as any)?.logo,
+              away_team_logo: (fixture.away_team as any)?.logo,
+              league_logo: (fixture.league as any)?.logo,
+              leagues: fixture.league as any,
+            },
+            predictions: fPreds,
+            bestPick: fPreds[0],
+          });
+        }
+        elitePicks.sort((a, b) => b.bestPick.model_probability - a.bestPick.model_probability);
       }
 
-      // Load ELITE predictions for these fixtures
-      const fixtureIds = fixtures.map((f) => f.id);
-      const { data: predictions } = await sb
-        .from("predictions")
-        .select("id, fixture_id, market, selection, model_probability, model_version")
-        .in("fixture_id", fixtureIds)
-        .gte("model_probability", 0.70)
-        .order("model_probability", { ascending: false });
-
-      if (!predictions || predictions.length === 0) {
-        setPicks([]);
-        setLoading(false);
-        return;
-      }
-
-      // Group predictions by fixture
-      const predByFixture: Record<string, Prediction[]> = {};
-      for (const p of predictions) {
-        if (!predByFixture[p.fixture_id]) predByFixture[p.fixture_id] = [];
-        predByFixture[p.fixture_id].push(p);
-      }
-
-      // Build ElitePick objects
-      const elitePicks: ElitePick[] = [];
-      for (const fixture of fixtures) {
-        const preds = predByFixture[fixture.id];
-        if (!preds || preds.length === 0) continue;
-
-        // Sort by probability and pick the best
-        preds.sort((a, b) => b.model_probability - a.model_probability);
-        const best = preds[0];
-
-        // Calculate edge (difference from random chance)
-        const edge = best.model_probability - 0.5;
-
-        elitePicks.push({
-          fixture: {
-            id: fixture.id,
-            kickoff_time: fixture.kickoff_time,
-            status: fixture.status,
-            home_score: fixture.home_score,
-            away_score: fixture.away_score,
-            home_team_name: (fixture.home_team as any)?.canonical_name || "Home",
-            away_team_name: (fixture.away_team as any)?.canonical_name || "Away",
-            home_team_logo: (fixture.home_team as any)?.logo,
-            away_team_logo: (fixture.away_team as any)?.logo,
-            league_logo: (fixture.league as any)?.logo,
-            leagues: fixture.league as any,
-          },
-          predictions: preds,
-          bestPick: best,
-          edge,
-        });
-      }
-
-      // Sort by best pick probability (highest first)
-      elitePicks.sort((a, b) => b.bestPick.model_probability - a.bestPick.model_probability);
-
-      // Count stats
       const uniqueLeagues = new Set(elitePicks.map((p) => p.fixture.leagues?.name));
-
       setPicks(elitePicks);
       setStats({
         elite: elitePicks.length,
-        total: predictions.length,
+        total: totalPreds,
         leagues: uniqueLeagues.size,
+        fixturesToday: fixtureList.length,
       });
+
+      // Recent settlements (last 7 days) — accuracy + feed
+      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const { data: settled } = await sb
+        .from("predictions")
+        .select("id, fixture_id, market, selection, model_probability, result, settled_at")
+        .in("result", ["correct", "wrong"])
+        .gte("settled_at", weekAgo)
+        .order("settled_at", { ascending: false })
+        .limit(3000);
+
+      if (settled && settled.length > 0) {
+        const correct = settled.filter((p) => p.result === "correct").length;
+        setWeekAccuracy({
+          pct: Math.round((correct / settled.length) * 1000) / 10,
+          n: settled.length,
+        });
+
+        // Resolve fixture labels for the most recent items
+        const recent = settled.slice(0, 12);
+        const fixIds = Array.from(new Set(recent.map((p) => p.fixture_id).filter(Boolean)));
+        const labelByFixture: Record<string, string> = {};
+        if (fixIds.length > 0) {
+          const { data: fixRows } = await sb
+            .from("fixtures")
+            .select(
+              "id, home:teams!fixtures_home_team_id_fkey(canonical_name), away:teams!fixtures_away_team_id_fkey(canonical_name)"
+            )
+            .in("id", fixIds);
+          for (const f of fixRows || []) {
+            const h = (f as any).home?.canonical_name || "?";
+            const a = (f as any).away?.canonical_name || "?";
+            labelByFixture[f.id] = `${h} vs ${a}`;
+          }
+        }
+        setRecentSettlements(
+          recent.map((p) => ({
+            id: p.id,
+            market: p.market,
+            selection: p.selection,
+            model_probability: p.model_probability,
+            result: p.result || "pending",
+            settled_at: p.settled_at || "",
+            matchLabel: labelByFixture[p.fixture_id] || "Match",
+          }))
+        );
+      } else {
+        setWeekAccuracy(null);
+        setRecentSettlements([]);
+      }
     } catch (err) {
-      console.error("Failed to load elite picks:", err);
+      console.error("Failed to load dashboard:", err);
     } finally {
       setLoading(false);
     }
@@ -370,7 +440,6 @@ export default function EliteDashboardPage() {
 
   useEffect(() => {
     loadData();
-    // Refresh every 5 minutes
     const interval = setInterval(loadData, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, [loadData]);
@@ -378,83 +447,203 @@ export default function EliteDashboardPage() {
   return (
     <div className="min-h-screen bg-[#F8F9FC]">
       <div className="max-w-[1200px] mx-auto px-[20px] py-[24px]">
-        {/* Header */}
-        <div className="mb-[24px]">
-          <div className="flex items-center gap-[10px] mb-[4px]">
-            <span className="text-[24px]">👑</span>
-            <h1 className="text-[22px] font-bold text-[#0A0F1C] font-display">
-              ELITE Dashboard
-            </h1>
-          </div>
-          <p className="text-[13px] text-gray-500 ml-[34px]">
-            Today&apos;s highest-confidence picks across 26+ markets. Only ELITE tier selections.
+        <PageHeader
+          title={`${greeting()}`}
+          description={new Date().toLocaleDateString("en-US", {
+            weekday: "long",
+            month: "long",
+            day: "numeric",
+          })}
+        />
+
+        {/* Stats row */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-[12px] mb-[24px]">
+          <StatCard
+            label="Fixtures Today"
+            value={loading ? "—" : String(stats.fixturesToday)}
+            icon="ri-calendar-event-line"
+            color="bg-gray-50 text-gray-600"
+          />
+          <StatCard
+            label="ELITE Picks"
+            value={loading ? "—" : String(stats.elite)}
+            icon="ri-trophy-line"
+            color="bg-amber-50 text-amber-600"
+          />
+          <StatCard
+            label="Predictions Today"
+            value={loading ? "—" : String(stats.total)}
+            icon="ri-line-chart-line"
+            color="bg-blue-50 text-blue-600"
+          />
+          <StatCard
+            label="7-Day Accuracy"
+            value={weekAccuracy ? `${weekAccuracy.pct}%` : "—"}
+            icon="ri-bar-chart-box-line"
+            color="bg-green-50 text-green-600"
+          />
+        </div>
+        {weekAccuracy && (
+          <p className="text-[11px] text-gray-400 -mt-[16px] mb-[24px]">
+            Based on {weekAccuracy.n.toLocaleString()} settled predictions (last 7 days)
           </p>
-        </div>
+        )}
 
-        {/* Stats Bar */}
-        <div className="flex items-center gap-[12px] mb-[24px] flex-wrap">
-          <div className="bg-[#059669]/10 px-[14px] py-[8px] rounded-[10px] flex items-center gap-[8px]">
-            <span className="text-[10px] font-semibold text-[#059669] uppercase tracking-wider">ELITE</span>
-            <span className="text-[18px] font-bold text-[#059669]">{stats.elite}</span>
-            <span className="text-[10px] text-[#059669]/60">picks</span>
-          </div>
-          <div className="bg-gray-100 px-[14px] py-[8px] rounded-[10px] flex items-center gap-[8px]">
-            <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Markets</span>
-            <span className="text-[18px] font-bold text-gray-700">{stats.total}</span>
-          </div>
-          <div className="bg-gray-100 px-[14px] py-[8px] rounded-[10px] flex items-center gap-[8px]">
-            <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Leagues</span>
-            <span className="text-[18px] font-bold text-gray-700">{stats.leagues}</span>
-          </div>
-        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-[20px]">
+          {/* Main column — picks */}
+          <div className="lg:col-span-2">
+            <div className="flex items-center justify-between mb-[14px]">
+              <h2 className="text-[15px] font-semibold text-[#0A0F1C] font-display">
+                Top Picks Today
+              </h2>
+              <Link
+                href="/matches/upcoming"
+                className="text-[12px] font-medium text-[#1B2A4A] hover:text-[#243B53] transition-colors"
+              >
+                View all matches →
+              </Link>
+            </div>
 
-        {/* Loading State */}
-        {loading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[16px]">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="bg-white rounded-[14px] border border-gray-100 p-[20px] animate-pulse">
-                <div className="h-[12px] bg-gray-100 rounded w-[60%] mb-[12px]" />
-                <div className="flex items-center gap-[12px] mb-[12px]">
-                  <div className="w-[36px] h-[36px] bg-gray-100 rounded-full" />
-                  <div className="h-[14px] bg-gray-100 rounded flex-1" />
-                  <div className="h-[14px] bg-gray-100 rounded flex-1" />
-                </div>
-                <div className="h-[16px] bg-gray-100 rounded w-[40%] mb-[8px]" />
-                <div className="h-[6px] bg-gray-100 rounded-full" />
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-[16px]">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="bg-white rounded-[14px] border border-gray-100 p-[20px] animate-pulse">
+                    <div className="h-[12px] bg-gray-100 rounded w-[60%] mb-[12px]" />
+                    <div className="flex items-center gap-[12px] mb-[12px]">
+                      <div className="w-[36px] h-[36px] bg-gray-100 rounded-full" />
+                      <div className="h-[14px] bg-gray-100 rounded flex-1" />
+                      <div className="h-[14px] bg-gray-100 rounded flex-1" />
+                    </div>
+                    <div className="h-[16px] bg-gray-100 rounded w-[40%] mb-[8px]" />
+                    <div className="h-[6px] bg-gray-100 rounded-full" />
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        )}
+            ) : picks.length === 0 ? (
+              <EmptyState
+                icon="ri-search-line"
+                title="No high-confidence picks today"
+                description="The model hasn't found any ≥70% probability selections for today's matches yet. Check back closer to kickoff."
+                action={
+                  <Link
+                    href="/matches/upcoming"
+                    className="inline-flex items-center px-[14px] py-[7px] bg-[#1B2A4A] text-white text-[12px] font-medium rounded-[8px] hover:bg-[#243B53] transition-colors"
+                  >
+                    Browse matches
+                  </Link>
+                }
+              />
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-[16px] stagger-children">
+                {picks.slice(0, 8).map((pick) => (
+                  <ElitePickCard key={pick.fixture.id} pick={pick} />
+                ))}
+              </div>
+            )}
 
-        {/* Empty State */}
-        {!loading && picks.length === 0 && (
-          <div className="bg-white rounded-[14px] border border-gray-100 p-[40px] text-center">
-            <span className="text-[40px]">🔍</span>
-            <h3 className="text-[16px] font-semibold text-[#0A0F1C] mt-[12px] mb-[4px]">
-              No ELITE picks for today
-            </h3>
-            <p className="text-[13px] text-gray-500">
-              The system hasn&apos;t found any high-confidence picks for today&apos;s matches yet.
-              Check back closer to kickoff times.
-            </p>
+            {/* Recent settlements */}
+            <div className="mt-[28px]">
+              <h2 className="text-[15px] font-semibold text-[#0A0F1C] font-display mb-[14px]">
+                Recent Results
+              </h2>
+              {recentSettlements.length === 0 ? (
+                <Card padding="md">
+                  <p className="text-[13px] text-gray-400">
+                    No settled predictions in the last 7 days.
+                  </p>
+                </Card>
+              ) : (
+                <Card padding="none">
+                  <div className="divide-y divide-gray-50">
+                    {recentSettlements.map((s) => (
+                      <div key={s.id} className="flex items-center justify-between px-[16px] py-[10px]">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-[8px]">
+                            <span className="text-[12px] font-medium text-[#0A0F1C] truncate">
+                              {formatSelection(s.selection)}
+                            </span>
+                            <span className="text-[10px] text-gray-400">{formatMarket(s.market)}</span>
+                          </div>
+                          <span className="block text-[11px] text-gray-400 truncate mt-[1px]">
+                            {s.matchLabel}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-[10px] flex-none ml-[12px]">
+                          <span className="text-[11px] font-mono-data text-gray-400">
+                            {Math.round(s.model_probability * 100)}%
+                          </span>
+                          <Badge variant={s.result === "correct" ? "success" : "danger"} size="sm">
+                            {s.result === "correct" ? "WON" : "LOST"}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              )}
+            </div>
           </div>
-        )}
 
-        {/* Picks Grid */}
-        {!loading && picks.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[16px]">
-            {picks.map((pick) => (
-              <ElitePickCard key={pick.fixture.id} pick={pick} />
-            ))}
-          </div>
-        )}
+          {/* Side column */}
+          <div className="space-y-[20px]">
+            {/* Quick links */}
+            <Card padding="md">
+              <CardHeader title="Explore" icon="ri-compass-3-line" />
+              <div className="space-y-[6px]">
+                {QUICK_LINKS.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="flex items-center gap-[12px] p-[10px] rounded-[10px] hover:bg-gray-50 transition-colors group"
+                  >
+                    <div className="w-[34px] h-[34px] rounded-[9px] bg-gray-50 flex items-center justify-center flex-none group-hover:bg-[#1B2A4A]/8 transition-colors">
+                      <i className={`${link.icon} text-[16px] text-gray-500 group-hover:text-[#1B2A4A] transition-colors`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="block text-[13px] font-medium text-[#0A0F1C]">{link.title}</span>
+                      <span className="block text-[11px] text-gray-400 truncate">{link.description}</span>
+                    </div>
+                    <i className="ri-arrow-right-s-line text-[16px] text-gray-300 group-hover:text-gray-500 transition-colors" />
+                  </Link>
+                ))}
+              </div>
+            </Card>
 
-        {/* Footer */}
-        {!loading && picks.length > 0 && (
-          <div className="text-center mt-[24px] text-[11px] text-gray-300">
-            {picks.length} ELITE picks • Updated live • 26+ markets analyzed per match
+            {/* Rollover status */}
+            <Card padding="md">
+              <CardHeader title="Daily Rollover" icon="ri-repeat-line" />
+              <p className="text-[12px] text-gray-500 leading-relaxed mb-[12px]">
+                The system hunts for selections near 2.00 combined odds where model
+                probabilities support positive expected value.
+              </p>
+              <Link
+                href="/rollover"
+                className="inline-flex items-center gap-[6px] text-[12px] font-semibold text-[#1B2A4A] hover:text-[#243B53] transition-colors"
+              >
+                Open rollover <i className="ri-arrow-right-line" />
+              </Link>
+            </Card>
+
+            {/* Model info */}
+            <Card padding="md">
+              <CardHeader title="Prediction Engine" icon="ri-cpu-line" />
+              <div className="space-y-[8px] text-[12px]">
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Model</span>
+                  <span className="font-medium text-[#0A0F1C]">Meta-Ensemble v2.0</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Markets</span>
+                  <span className="font-medium text-[#0A0F1C]">24 per match</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Leagues today</span>
+                  <span className="font-medium text-[#0A0F1C]">{stats.leagues || "—"}</span>
+                </div>
+              </div>
+            </Card>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface UseScrollRevealOptions {
   threshold?: number;
@@ -49,13 +50,19 @@ export function useScrollReveal<T extends HTMLElement = HTMLDivElement>(
  * CSS class generator for scroll reveal animations.
  * All animations use transform + opacity only (GPU-safe).
  */
-export function getScrollRevealClasses(isVisible: boolean, delay: number = 0) {
+export function getScrollRevealClasses(
+  isVisible: boolean,
+  delay: number = 0,
+  className?: string
+) {
   return {
-    className: `transition-all duration-[800ms] ease-[cubic-bezier(0.32,0.72,0,1)] ${
+    className: cn(
+      "transition-all duration-[800ms] ease-[cubic-bezier(0.32,0.72,0,1)]",
       isVisible
         ? "opacity-100 translate-y-0 blur-0"
-        : "opacity-0 translate-y-10 blur-[4px]"
-    }`,
+        : "opacity-0 translate-y-10 blur-[4px]",
+      className
+    ),
     style: { transitionDelay: `${delay}ms` },
   };
 }

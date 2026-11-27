@@ -17,9 +17,7 @@ interface Notification {
 }
 
 function timeAgo(dateStr: string): string {
-  const now = Date.now();
-  const then = new Date(dateStr).getTime();
-  const diff = now - then;
+  const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
   if (mins < 1) return "just now";
   if (mins < 60) return `${mins}m ago`;
@@ -38,6 +36,8 @@ function getNotificationIcon(type: string): { icon: string; color: string; bg: s
   switch (type) {
     case "new_picks":
       return { icon: "ri-percent-line", color: "text-green-600", bg: "bg-green-50" };
+    case "rollover_pick":
+      return { icon: "ri-magic-line", color: "text-purple-600", bg: "bg-purple-50" };
     case "result_settled":
       return { icon: "ri-check-double-line", color: "text-blue-600", bg: "bg-blue-50" };
     case "chain_milestone":
@@ -60,6 +60,7 @@ function getNotificationIcon(type: string): { icon: string; color: string; bg: s
 function getTypeLabel(type: string): string {
   switch (type) {
     case "new_picks": return "New Picks";
+    case "rollover_pick": return "Rollover Pick";
     case "result_settled": return "Result";
     case "chain_milestone": return "Milestone";
     case "chain_broken": return "Chain Broken";
@@ -67,13 +68,14 @@ function getTypeLabel(type: string): string {
     case "model_alert": return "Model Alert";
     case "announcement": return "Announcement";
     case "drawdown_warning": return "Warning";
-    default: return type;
+    default: return type.replace(/_/g, " ");
   }
 }
 
 function getBadgeVariant(type: string): "success" | "info" | "warning" | "danger" | "default" {
   switch (type) {
     case "new_picks": return "success";
+    case "rollover_pick": return "default";
     case "result_settled": return "info";
     case "chain_milestone": return "warning";
     case "chain_broken": return "danger";
@@ -89,6 +91,7 @@ const FILTER_OPTIONS = [
   { value: "all", label: "All" },
   { value: "unread", label: "Unread" },
   { value: "new_picks", label: "New Picks" },
+  { value: "rollover_pick", label: "Rollover" },
   { value: "result_settled", label: "Results" },
   { value: "chain_milestone", label: "Milestones" },
   { value: "accumulator_settled", label: "Accumulators" },
@@ -96,10 +99,11 @@ const FILTER_OPTIONS = [
 ];
 
 export default function NotificationsPage() {
-  const { session, user } = useAuth();
+  const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState("all");
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -110,45 +114,61 @@ export default function NotificationsPage() {
 
   const fetchNotifications = useCallback(
     async (pageNum: number, append: boolean = false) => {
-      if (!session?.access_token) return;
+      if (!user?.id) return;
 
       if (append) {
         setLoadingMore(true);
       } else {
         setLoading(true);
       }
+      setError(null);
 
-      try {
-        const params = new URLSearchParams({
-          limit: String(PAGE_SIZE),
-          offset: String(pageNum * PAGE_SIZE),
-        });
+      const supabase = createClient();
+      const from = pageNum * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
 
-        if (filter === "unread") {
-          params.set("unreadOnly", "true");
-        }
+      let query = supabase
+        .from("notifications")
+        .select("id, type, title, body, data, is_read, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .range(from, to);
 
-        const res = await fetch(`/api/v1/notifications?${params}`, {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        });
-        const data = await res.json();
-
-        if (data.success) {
-          const newNotifs = data.data.notifications || [];
-          setNotifications((prev) =>
-            append ? [...prev, ...newNotifs] : newNotifs
-          );
-          setUnreadCount(data.data.unreadCount || 0);
-          setHasMore(newNotifs.length === PAGE_SIZE);
-        }
-      } catch (error) {
-        console.error("Failed to fetch notifications:", error);
-      } finally {
-        setLoading(false);
-        setLoadingMore(false);
+      if (filter === "unread") {
+        query = query.eq("is_read", false);
+      } else if (filter !== "all") {
+        query = query.eq(
+          "type",
+          filter as "new_picks" | "rollover_pick" | "result_settled" | "chain_milestone" | "chain_broken" | "accumulator_settled" | "model_alert" | "announcement" | "drawdown_warning"
+        );
       }
+
+      const { data, error: queryError } = await query;
+
+      // Unread count (only refresh on first page)
+      if (!append || pageNum === 0) {
+        const { count } = await supabase
+          .from("notifications")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .eq("is_read", false);
+        setUnreadCount(count ?? 0);
+      }
+
+      if (queryError) {
+        console.error("Failed to fetch notifications:", queryError);
+        setError("Could not load notifications. Please try again.");
+        if (!append) setNotifications([]);
+      } else {
+        const items = (data as Notification[]) || [];
+        setNotifications((prev) => (append ? [...prev, ...items] : items));
+        setHasMore(items.length === PAGE_SIZE);
+      }
+
+      setLoading(false);
+      setLoadingMore(false);
     },
-    [session?.access_token, filter]
+    [user?.id, filter]
   );
 
   useEffect(() => {
@@ -158,7 +178,7 @@ export default function NotificationsPage() {
     fetchNotifications(0, false);
   }, [fetchNotifications]);
 
-  // Realtime subscription
+  // Realtime subscription — new/updated notifications appear live
   useEffect(() => {
     if (!user?.id) return;
 
@@ -176,7 +196,7 @@ export default function NotificationsPage() {
         (payload) => {
           const newNotif = payload.new as Notification;
           setNotifications((prev) => [newNotif, ...prev]);
-          setUnreadCount((prev) => prev + 1);
+          if (!newNotif.is_read) setUnreadCount((prev) => prev + 1);
         }
       )
       .on(
@@ -192,10 +212,14 @@ export default function NotificationsPage() {
           setNotifications((prev) =>
             prev.map((n) => (n.id === updated.id ? { ...n, ...updated } : n))
           );
-          setNotifications((prev) => {
-            setUnreadCount(prev.filter((n) => !n.is_read).length);
-            return prev;
-          });
+          // Refresh unread count (cheap head-count query)
+          const supabase = createClient();
+          supabase
+            .from("notifications")
+            .select("id", { count: "exact", head: true })
+            .eq("user_id", user.id)
+            .eq("is_read", false)
+            .then(({ count }) => setUnreadCount(count ?? 0));
         }
       )
       .subscribe();
@@ -206,47 +230,46 @@ export default function NotificationsPage() {
   }, [user?.id]);
 
   async function markAllRead() {
-    if (!session?.access_token) return;
+    if (!user?.id) return;
     setMarkingRead(true);
 
-    try {
-      await fetch("/api/v1/notifications", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ action: "mark_all_read" }),
-      });
+    const supabase = createClient();
+    const { error: updateError } = await supabase
+      .from("notifications")
+      .update({ is_read: true })
+      .eq("user_id", user.id)
+      .eq("is_read", false);
 
+    if (!updateError) {
       setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
       setUnreadCount(0);
-    } catch (error) {
-      console.error("Failed to mark all read:", error);
-    } finally {
-      setMarkingRead(false);
+    } else {
+      console.error("Failed to mark all read:", updateError);
     }
+    setMarkingRead(false);
   }
 
   async function markAsRead(id: string) {
-    if (!session?.access_token) return;
+    const notif = notifications.find((n) => n.id === id);
+    if (!notif || notif.is_read || !user?.id) return;
 
-    try {
-      await fetch("/api/v1/notifications", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ action: "mark_read", id }),
-      });
+    // Optimistic update
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, is_read: true } : n)));
+    setUnreadCount((prev) => Math.max(0, prev - 1));
 
+    const supabase = createClient();
+    const { error: updateError } = await supabase
+      .from("notifications")
+      .update({ is_read: true })
+      .eq("id", id)
+      .eq("user_id", user.id);
+
+    if (updateError) {
+      // Revert on failure
       setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
+        prev.map((n) => (n.id === id ? { ...n, is_read: false } : n))
       );
-      setUnreadCount((prev) => Math.max(0, prev - 1));
-    } catch {
-      // Silent fail
+      setUnreadCount((prev) => prev + 1);
     }
   }
 
@@ -310,7 +333,7 @@ export default function NotificationsPage() {
           <div className="flex items-center gap-[8px]">
             <Link
               href="/notifications/preferences"
-              className="inline-flex items-center gap-[6px] px-[10px] py-[5px] rounded-full text-[11px] font-semibold bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors"
+              className="inline-flex items-center gap-[6px] px-[10px] py-[5px] rounded-full text-[11px] font-semibold bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1B2A4A]/30"
             >
               <i className="ri-notification-settings-line text-[12px]" />
               Preferences
@@ -331,13 +354,16 @@ export default function NotificationsPage() {
       />
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-[4px] mb-[16px] overflow-x-auto pb-[4px]">
+      <div className="flex items-center gap-[4px] mb-[16px] overflow-x-auto pb-[4px]" role="tablist" aria-label="Filter notifications">
         {FILTER_OPTIONS.map((opt) => (
           <button
             key={opt.value}
+            role="tab"
+            aria-selected={filter === opt.value}
             onClick={() => setFilter(opt.value)}
             className={`
               px-[10px] py-[5px] rounded-full text-[11px] font-semibold whitespace-nowrap transition-all
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1B2A4A]/30
               ${filter === opt.value
                 ? "bg-[#1B2A4A] text-white"
                 : "bg-gray-100 text-gray-500 hover:bg-gray-200"
@@ -365,6 +391,17 @@ export default function NotificationsPage() {
             </div>
           ))}
         </div>
+      ) : error ? (
+        <EmptyState
+          icon="ri-error-warning-line"
+          title="Could not load notifications"
+          description={error}
+          action={
+            <Button onClick={() => fetchNotifications(0, false)} icon="ri-refresh-line" size="sm" variant="secondary">
+              Try again
+            </Button>
+          }
+        />
       ) : notifications.length === 0 ? (
         <EmptyState
           icon="ri-notification-off-line"
@@ -372,6 +409,8 @@ export default function NotificationsPage() {
           description={
             filter === "unread"
               ? "You're all caught up! No unread notifications."
+              : filter !== "all"
+              ? `No ${getTypeLabel(filter).toLowerCase()} notifications yet.`
               : "You'll be notified when value bets are found and matches update."
           }
         />
@@ -388,10 +427,19 @@ export default function NotificationsPage() {
                   return (
                     <div
                       key={n.id}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`${n.title} — mark as read`}
                       onClick={() => !n.is_read && markAsRead(n.id)}
+                      onKeyDown={(e) => {
+                        if ((e.key === "Enter" || e.key === " ") && !n.is_read) {
+                          e.preventDefault();
+                          markAsRead(n.id);
+                        }
+                      }}
                       className={`
-                        bg-white rounded-[10px] p-[12px] border transition-all cursor-pointer hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)]
-                        ${!n.is_read ? "border-gray-200" : "border-gray-100"}
+                        bg-white rounded-[10px] p-[12px] border transition-all
+                        ${!n.is_read ? "border-gray-200 cursor-pointer hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1B2A4A]/30" : "border-gray-100"}
                       `}
                     >
                       <div className="flex items-start gap-[10px]">
@@ -400,7 +448,7 @@ export default function NotificationsPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-[6px]">
-                            <div className="flex items-center gap-[6px]">
+                            <div className="flex items-center gap-[6px] flex-wrap">
                               <h4 className={`text-[12px] font-semibold leading-[1.4] ${!n.is_read ? "text-[#0A0F1C]" : "text-gray-600"}`}>
                                 {n.title}
                               </h4>
@@ -409,7 +457,7 @@ export default function NotificationsPage() {
                               </Badge>
                             </div>
                             {!n.is_read && (
-                              <span className="w-[6px] h-[6px] bg-green-500 rounded-full flex-none mt-[4px]" />
+                              <span className="w-[6px] h-[6px] bg-green-500 rounded-full flex-none mt-[4px]" aria-hidden="true" />
                             )}
                           </div>
                           <p className="text-[12px] text-gray-400 mt-[3px] leading-[1.5]">
@@ -421,7 +469,7 @@ export default function NotificationsPage() {
                             </span>
                             {n.data && typeof n.data === "object" && "match" in (n.data as Record<string, unknown>) && (
                               <span className="text-[10px] text-gray-300 flex items-center gap-[3px]">
-                                <i className="ri-football-line text-[10px]" />
+                                <i className="ri-football-line text-[10px]" aria-hidden="true" />
                                 {(n.data as Record<string, unknown>).match as string}
                               </span>
                             )}

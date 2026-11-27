@@ -7,6 +7,7 @@ import { useAuth } from "@/providers/AuthProvider";
 
 interface SidebarMenuProps {
   toggleActive: () => void;
+  active?: boolean;
 }
 
 interface NavItem {
@@ -50,7 +51,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "Challenges",
     items: [
-      { label: "Golden Picks", href: "/predictions", icon: "ri-vip-crown-line", badge: "New", badgeColor: "bg-amber-50 text-amber-600" },
+      { label: "Predictions", href: "/predictions", icon: "ri-line-chart-line" },
       { label: "Rollover", href: "/rollover", icon: "ri-fire-line", badge: "Elite", badgeColor: "bg-amber-50 text-amber-600" },
       { label: "Tracking", href: "/tracking", icon: "ri-bookmark-line" },
     ],
@@ -65,7 +66,7 @@ const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
-const SidebarMenu: React.FC<SidebarMenuProps> = ({ toggleActive }) => {
+const SidebarMenu: React.FC<SidebarMenuProps> = ({ toggleActive, active = false }) => {
   const pathname = usePathname();
   const { profile } = useAuth();
   const [expandedGroups, setExpandedGroups] = React.useState<Set<number>>(
@@ -84,21 +85,42 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ toggleActive }) => {
     });
   };
 
-  const isActive = (href: string) => {
-    if (href === "/matches") return pathname === "/matches";
-    return pathname.startsWith(href);
-  };
+  // Active state: exact match, or the longest nav href that is a path
+  // prefix of the current pathname (handles /matches/[id],
+  // /notifications/preferences, /accumulator/my-accumulators, etc.).
+  const activeHref = React.useMemo(() => {
+    let best: string | null = null;
+    for (const group of NAV_GROUPS) {
+      for (const item of group.items) {
+        const matches =
+          pathname === item.href || pathname.startsWith(`${item.href}/`);
+        if (matches && (!best || item.href.length > best.length)) {
+          best = item.href;
+        }
+      }
+    }
+    return best;
+  }, [pathname]);
+
+  const isActive = (href: string) => href === activeHref;
 
   return (
     <>
-      {/* Mobile overlay */}
-      <div
-        className="fixed inset-0 bg-black/40 z-[6] xl:hidden transition-opacity duration-300"
-        onClick={toggleActive}
-      />
+      {/* Mobile overlay — only blocks clicks while the sidebar is open */}
+      {active && (
+        <div
+          className="fixed inset-0 bg-black/40 z-[6] xl:hidden transition-opacity duration-300"
+          onClick={toggleActive}
+        />
+      )}
 
       {/* Sidebar */}
-      <aside className="fixed top-0 left-0 h-screen w-[260px] bg-white border-r border-gray-100 z-[7] flex flex-col transition-transform duration-300 xl:translate-x-0 -translate-x-full">
+      <aside
+        aria-label="Main navigation"
+        className={`fixed top-0 left-0 h-screen w-[260px] bg-white border-r border-gray-100 z-[7] flex flex-col transition-transform duration-300 xl:translate-x-0 ${
+          active ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
         {/* Logo */}
         <div className="h-[60px] flex items-center justify-between px-[20px] border-b border-gray-100 flex-none">
           <Link href="/" className="flex items-center gap-[2px]">
@@ -112,6 +134,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ toggleActive }) => {
           <button
             type="button"
             onClick={toggleActive}
+            aria-label="Close menu"
             className="w-[32px] h-[32px] rounded-[8px] flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors xl:hidden"
           >
             <i className="ri-close-line text-[18px]" />
@@ -125,6 +148,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ toggleActive }) => {
               {/* Group header */}
               <button
                 onClick={() => toggleGroup(groupIdx)}
+                aria-expanded={expandedGroups.has(groupIdx)}
                 className="w-full flex items-center justify-between px-[8px] py-[6px] text-[10px] font-semibold text-gray-400 uppercase tracking-wider hover:text-gray-500 transition-colors"
               >
                 {group.label}
@@ -202,6 +226,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ toggleActive }) => {
             {profile?.role === "admin" && (
               <Link
                 href="/admin"
+                aria-label="Admin Dashboard"
                 className="w-[28px] h-[28px] rounded-[6px] bg-[#1B2A4A] flex items-center justify-center hover:bg-[#243B53] transition-colors"
                 title="Admin Dashboard"
               >

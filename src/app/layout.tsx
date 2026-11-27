@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     template: "%s | ODDLY",
   },
   description:
-    "AI-Powered Football Predictions, Probability Analysis & Accumulator Intelligence. Find value bets with 90%+ confidence across 26+ leagues.",
+    "AI-Powered Football Predictions, Probability Analysis & Accumulator Intelligence. Ensemble model predictions, value bet detection and rollover tracking across major leagues.",
   keywords: [
     "football",
     "predictions",

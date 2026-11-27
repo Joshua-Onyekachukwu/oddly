@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import Link from "next/link";
 import { useAuth } from "@/providers/AuthProvider";
 import { createClient } from "@/lib/supabase/client";
 
@@ -209,6 +210,9 @@ export default function NotificationBell() {
         {/* Bell button */}
         <button
           onClick={() => setIsOpen(!isOpen)}
+          aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications"}
+          aria-haspopup="true"
+          aria-expanded={isOpen}
           className="relative w-[36px] h-[36px] rounded-full flex items-center justify-center text-gray-400 hover:text-[#0A0F1C] hover:bg-gray-100 transition-all duration-300"
         >
           <i className="ri-notification-3-line text-[18px]"></i>
@@ -297,9 +301,13 @@ export default function NotificationBell() {
             {/* Footer */}
             {notifications.length > 0 && (
               <div className="px-[16px] py-[10px] border-t border-gray-50 text-center">
-                <button className="text-[12px] font-medium text-[#1B2A4A] hover:underline">
+                <Link
+                  href="/notifications"
+                  onClick={() => setIsOpen(false)}
+                  className="text-[12px] font-medium text-[#1B2A4A] hover:underline"
+                >
                   View all notifications
-                </button>
+                </Link>
               </div>
             )}
           </div>
@@ -325,6 +333,7 @@ export default function NotificationBell() {
             </div>
             <button
               onClick={() => setNewNotification(null)}
+              aria-label="Dismiss notification"
               className="text-gray-300 hover:text-gray-500 transition-colors"
             >
               <i className="ri-close-line text-[16px]"></i>

@@ -26,10 +26,12 @@ const FALLBACK_LEAGUES = [
   { name: "Brasileirão", country: "Brazil", color: "#009C3B", letter: "BR" },
 ];
 
+type FallbackLeague = (typeof FALLBACK_LEAGUES)[number];
+type DisplayLeague = League | FallbackLeague;
+
 const Partners: React.FC = () => {
   const { ref, isVisible } = useScrollReveal({ threshold: 0.05 });
   const [leagues, setLeagues] = useState<League[]>([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchLeagues() {
@@ -47,7 +49,6 @@ const Partners: React.FC = () => {
       } catch {
         // Use fallback
       }
-      setLoading(false);
     }
     fetchLeagues();
   }, []);
@@ -57,20 +58,20 @@ const Partners: React.FC = () => {
   return (
     <div className="py-[60px] md:py-[80px] border-b border-gray-100" ref={ref}>
       <div className="container sm:max-w-[540px] md:max-w-[720px] lg:max-w-[960px] xl:max-w-[1200px] mx-auto px-[16px]">
-        <div {...getScrollRevealClasses(isVisible, 0)} className="text-center mb-[32px]">
+        <div {...getScrollRevealClasses(isVisible, 0, "text-center mb-[32px]")}>
           <span className="text-[13px] text-gray-400 font-medium">
-            Tracked across 26+ leagues worldwide
+            Tracked across major leagues worldwide
           </span>
         </div>
 
-        <div {...getScrollRevealClasses(isVisible, 80)} className="flex flex-wrap justify-center gap-[12px] md:gap-[16px]">
-          {displayLeagues.map((league) => {
-            const isReal = "id" in league && "logo" in league;
-            const logo = isReal ? (league as League).logo : null;
-            const name = isReal ? (league as League).name : (league as any).name;
-            const country = isReal ? (league as League).country : (league as any).country;
-            const color = isReal ? null : (league as any).color;
-            const letter = isReal ? null : (league as any).letter;
+        <div {...getScrollRevealClasses(isVisible, 80, "flex flex-wrap justify-center gap-[12px] md:gap-[16px]")}>
+          {displayLeagues.map((league: DisplayLeague) => {
+            const isReal = "id" in league;
+            const logo = isReal ? league.logo : null;
+            const name = league.name;
+            const country = league.country;
+            const color = isReal ? null : league.color;
+            const letter = isReal ? null : league.letter;
 
             return (
               <div
@@ -83,6 +84,8 @@ const Partners: React.FC = () => {
                     <img
                       src={logo}
                       alt={name}
+                      loading="lazy"
+                      decoding="async"
                       className="w-[22px] h-[22px] object-contain"
                       onError={(e) => {
                         (e.target as HTMLImageElement).style.display = "none";

@@ -1,16 +1,14 @@
-"use client";
-
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 const plans = [
   {
     tier: "free" as const,
     name: "Free",
-    price: 0,
+    price: "₦0",
     period: "forever",
     popular: false,
     cta: "Get Started Free",
-    ctaStyle: "btn-secondary",
+    ctaHref: "/signup",
     features: [
       "Daily predictions (5 matches)",
       "10-leg accumulator limit",
@@ -20,7 +18,7 @@ const plans = [
     ],
     limitations: [
       "No value bet detection",
-      "No Crown Jewel picks",
+      "No daily top picks",
       "No rollover challenge",
       "No performance analytics",
     ],
@@ -28,15 +26,15 @@ const plans = [
   {
     tier: "premium" as const,
     name: "Premium",
-    price: 7500,
+    price: "₦7,500",
     period: "per month",
     popular: true,
     cta: "Coming Soon",
-    ctaStyle: "btn-primary",
+    ctaHref: null,
     features: [
       "Everything in Free",
       "Unlimited predictions",
-      "All 26+ leagues",
+      "All covered leagues",
       "Value bet detection",
       "Accumulator builder (unlimited legs)",
       "AI analyst (50 queries/day)",
@@ -50,14 +48,14 @@ const plans = [
   {
     tier: "elite" as const,
     name: "Elite",
-    price: 20000,
+    price: "₦20,000",
     period: "per month",
     popular: false,
     cta: "Coming Soon",
-    ctaStyle: "elite-btn",
+    ctaHref: null,
     features: [
       "Everything in Premium",
-      "Crown Jewel daily pick",
+      "Daily top pick",
       "Unlimited AI queries",
       "API access",
       "Self-training model insights",
@@ -69,26 +67,69 @@ const plans = [
   },
 ];
 
+const comparison = [
+  { feature: "Daily Predictions", free: "5 matches", premium: "Unlimited", elite: "Unlimited" },
+  { feature: "Leagues Covered", free: "5 leagues", premium: "All covered leagues", elite: "All covered leagues" },
+  { feature: "Accumulator Builder", free: "10-leg max", premium: "Unlimited legs", elite: "Unlimited legs" },
+  { feature: "AI Analyst", free: "3 queries/day", premium: "50 queries/day", elite: "Unlimited" },
+  { feature: "Value Bet Detection", free: false, premium: true, elite: true },
+  { feature: "Daily Top Pick", free: false, premium: false, elite: true },
+  { feature: "Rollover Challenge", free: false, premium: true, elite: true },
+  { feature: "Performance Analytics", free: false, premium: true, elite: true },
+  { feature: "Weekly Reports", free: false, premium: true, elite: true },
+  { feature: "API Access", free: false, premium: false, elite: true },
+  { feature: "Custom Models", free: false, premium: false, elite: true },
+  { feature: "Priority Support", free: false, premium: true, elite: true },
+  { feature: "Early Access Features", free: false, premium: false, elite: true },
+];
+
+const faqs = [
+  {
+    q: "Is ODDLY really free right now?",
+    a: "Yes! We're in our testing phase and offering full access to all features at no cost. This gives us the data we need to fine-tune our prediction models.",
+  },
+  {
+    q: "Will I lose access when paid plans launch?",
+    a: "No. Early users who signed up during the free period will receive a special discount when paid plans launch.",
+  },
+  {
+    q: "How accurate are the predictions?",
+    a: "Our ensemble combines multiple statistical and machine-learning models with real-time odds analysis. We're continuously training on live data, and settled results are tracked inside the app.",
+  },
+  {
+    q: "What data sources do you use?",
+    a: "We pull live odds from multiple bookmakers, fixture data from football data providers, and run predictions through our ensemble pipeline.",
+  },
+  {
+    q: "Can I track my bets?",
+    a: "Yes. The tracking dashboard shows your ROI, win rate, streak, and performance breakdown by league and market type.",
+  },
+];
+
+function Cell({ value }: { value: string | boolean }) {
+  if (typeof value === "boolean") {
+    return value ? (
+      <i className="ri-check-line text-[16px] text-[#22c55e]"></i>
+    ) : (
+      <span className="text-gray-300">—</span>
+    );
+  }
+  return <span className="text-[12px] text-gray-500 font-mono-data">{value}</span>;
+}
+
 export default function PricingPage() {
-  const router = useRouter();
-
-  const handleGetStarted = () => {
-    router.push("/signup");
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#fafafa] to-white">
+    <div className="bg-[#F8FAFC] min-h-screen">
       {/* Hero */}
-      <section className="pt-28 pb-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto text-center">
-          <span className="inline-block px-4 py-1.5 rounded-full bg-oddly-orange/10 text-oddly-orange text-xs font-semibold tracking-wide uppercase mb-6">
+      <section className="pt-[120px] md:pt-[140px] pb-[48px] md:pb-[64px]">
+        <div className="container sm:max-w-[540px] md:max-w-[720px] lg:max-w-[960px] xl:max-w-[1200px] mx-auto px-[16px] text-center">
+          <div className="inline-flex items-center gap-[6px] text-[10px] font-semibold text-[#0A0F1C]/60 bg-[#0A0F1C]/[0.03] px-[14px] py-[6px] rounded-full mb-[20px] uppercase tracking-[0.15em] font-display">
             Pricing
-          </span>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-oddly-navy mb-6 leading-tight">
-            Start Free.{" "}
-            <span className="text-oddly-orange">Upgrade</span> When Ready.
+          </div>
+          <h1 className="font-display !text-[32px] md:!text-[44px] lg:!text-[52px] !leading-[1.1] !tracking-[-0.03em] !mb-[16px] text-[#0A0F1C]">
+            Start Free. <span className="text-[#1B2A4A]">Upgrade</span> When Ready.
           </h1>
-          <p className="text-lg md:text-xl text-neutral-600 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-[15px] md:text-[17px] text-gray-500 max-w-[560px] mx-auto !leading-[1.75]">
             All the power of AI-driven football predictions, starting at ₦0.
             No credit card required to sign up.
           </p>
@@ -96,247 +137,236 @@ export default function PricingPage() {
       </section>
 
       {/* Pricing Cards */}
-      <section className="pb-24 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8 items-start">
-          {plans.map((plan) => (
-            <div
-              key={plan.tier}
-              className={`relative rounded-2xl border-2 p-8 transition-all duration-300 ${
-                plan.popular
-                  ? "border-oddly-orange shadow-xl shadow-oddly-orange/10 scale-[1.02]"
-                  : "border-neutral-200 hover:border-neutral-300 hover:shadow-lg"
-              } ${plan.tier === "elite" ? "border-oddly-navy" : ""}`}
-            >
-              {plan.popular && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                  <span className="bg-oddly-orange text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg">
-                    MOST POPULAR
-                  </span>
-                </div>
-              )}
-
-              {plan.tier === "elite" && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                  <span className="bg-oddly-navy text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg">
-                    BEST VALUE
-                  </span>
-                </div>
-              )}
-
-              <div className="text-center mb-8">
-                <h3 className="text-xl font-bold text-oddly-navy">{plan.name}</h3>
-                <div className="mt-4">
-                  <span className="text-4xl font-bold text-oddly-navy">
-                    {plan.price === 0 ? "₦0" : `₦${plan.price.toLocaleString()}`}
-                  </span>
-                  <span className="text-neutral-500 ml-2">{plan.period}</span>
-                </div>
-              </div>
-
-              <ul className="space-y-3 mb-8">
-                {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-start gap-3 text-sm">
-                    <svg
-                      className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    <span className="text-neutral-700">{feature}</span>
-                  </li>
-                ))}
-                {plan.limitations.map((limitation) => (
-                  <li
-                    key={limitation}
-                    className="flex items-start gap-3 text-sm opacity-50"
-                  >
-                    <svg
-                      className="w-5 h-5 text-neutral-400 flex-shrink-0 mt-0.5"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    <span className="text-neutral-500">{limitation}</span>
-                  </li>
-                ))}
-              </ul>
-
-              {plan.tier === "free" ? (
-                <button
-                  onClick={handleGetStarted}
-                  className={`w-full py-3 rounded-xl font-semibold text-sm transition-all duration-200 ${plan.ctaStyle}`}
-                >
-                  {plan.cta}
-                </button>
-              ) : (
-                <button
-                  disabled
-                  className={`w-full py-3 rounded-xl font-semibold text-sm transition-all duration-200 opacity-60 cursor-not-allowed ${
-                    plan.tier === "elite"
-                      ? "bg-oddly-navy text-white"
-                      : plan.ctaStyle === "btn-primary"
-                      ? "bg-oddly-orange text-white"
-                      : ""
+      <section className="pb-[64px]">
+        <div className="container sm:max-w-[540px] md:max-w-[720px] lg:max-w-[960px] xl:max-w-[1200px] mx-auto px-[16px]">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-[20px] max-w-[1000px] mx-auto items-start">
+            {plans.map((plan) => (
+              <div
+                key={plan.tier}
+                className={`relative rounded-[1.75rem] p-[6px] transition-all duration-500 ${
+                  plan.popular
+                    ? "bg-gradient-to-b from-[#BFFF00]/20 to-[#BFFF00]/5 ring-2 ring-[#BFFF00]/30"
+                    : "bg-[#0A0F1C]/[0.02] ring-1 ring-[#0A0F1C]/[0.04]"
+                }`}
+              >
+                <div
+                  className={`relative rounded-[calc(1.75rem-6px)] p-[28px] ${
+                    plan.popular
+                      ? "bg-[#0A0F1C] text-white shadow-[0_20px_60px_-15px_rgba(27,42,74,0.4)]"
+                      : "bg-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.5)]"
                   }`}
                 >
-                  {plan.cta}
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
+                  {plan.popular && (
+                    <div className="absolute -top-[10px] left-1/2 -translate-x-1/2">
+                      <span className="bg-[#BFFF00] text-[#0A0F1C] text-[10px] font-bold px-[16px] py-[5px] rounded-full uppercase tracking-[0.1em] font-display">
+                        Most Popular
+                      </span>
+                    </div>
+                  )}
+                  {plan.tier === "elite" && (
+                    <div className="absolute -top-[10px] left-1/2 -translate-x-1/2">
+                      <span className="bg-[#1B2A4A] text-white text-[10px] font-bold px-[16px] py-[5px] rounded-full uppercase tracking-[0.1em] font-display">
+                        Best Value
+                      </span>
+                    </div>
+                  )}
 
-        {/* Coming Soon Banner */}
-        <div className="max-w-2xl mx-auto mt-16 text-center">
-          <div className="bg-oddly-navy/5 border border-oddly-navy/10 rounded-2xl p-8">
-            <h3 className="text-xl font-bold text-oddly-navy mb-3">
-              Premium Plans Coming Soon
-            </h3>
-            <p className="text-neutral-600 text-sm leading-relaxed mb-4">
-              We&apos;re currently in our testing phase, perfecting the prediction engine and building
-              enough data to prove our edge. Premium and Elite tiers will launch once we&apos;re ready
-              to scale.
-            </p>
-            <p className="text-neutral-500 text-xs">
-              In the meantime, enjoy full access to all features for free.
-            </p>
+                  <div className="mb-[20px]">
+                    <h2
+                      className={`font-display text-[18px] font-semibold !mb-[4px] ${
+                        plan.popular ? "text-white" : "text-[#0A0F1C]"
+                      }`}
+                    >
+                      {plan.name}
+                    </h2>
+                    <p
+                      className={`text-[13px] !mb-0 !leading-[1.6] ${
+                        plan.popular ? "text-white/50" : "text-gray-400"
+                      }`}
+                    >
+                      {plan.tier === "premium"
+                        ? "Full access to all models, value bet detection, and accumulator builder."
+                        : plan.tier === "elite"
+                        ? "Everything plus Top Pick, Rollover Challenge, and AI Analyst."
+                        : "Get started with basic predictions and track your progress."}
+                    </p>
+                  </div>
+
+                  <div className="mb-[24px]">
+                    <span
+                      className={`font-display text-[40px] font-bold tracking-[-0.04em] ${
+                        plan.popular ? "text-white" : "text-[#0A0F1C]"
+                      }`}
+                    >
+                      {plan.price}
+                    </span>
+                    <span className={`text-[14px] ${plan.popular ? "text-white/40" : "text-gray-400"}`}>
+                      /{plan.period}
+                    </span>
+                  </div>
+
+                  <ul className="space-y-[10px] mb-[24px]">
+                    {plan.features.map((feature) => (
+                      <li key={feature} className="flex items-start gap-[8px]">
+                        <i
+                          className={`ri-check-line text-[14px] mt-[3px] flex-none ${
+                            plan.popular ? "text-[#BFFF00]" : "text-[#22c55e]"
+                          }`}
+                        ></i>
+                        <span
+                          className={`text-[13px] !leading-[1.5] ${
+                            plan.popular ? "text-white/60" : "text-gray-500"
+                          }`}
+                        >
+                          {feature}
+                        </span>
+                      </li>
+                    ))}
+                    {plan.limitations.map((limitation) => (
+                      <li key={limitation} className="flex items-start gap-[8px] opacity-50">
+                        <i className="ri-close-line text-[14px] mt-[3px] flex-none text-gray-400"></i>
+                        <span className="text-[13px] !leading-[1.5] text-gray-400">
+                          {limitation}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {plan.ctaHref ? (
+                    <Link
+                      href={plan.ctaHref}
+                      className={`group flex items-center justify-center gap-[8px] w-full font-display font-semibold text-[14px] rounded-full py-[13px] px-[24px] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98] ${
+                        plan.popular
+                          ? "bg-[#BFFF00] text-[#0A0F1C] hover:shadow-[0_0_30px_rgba(191,255,0,0.25)]"
+                          : "bg-[#0A0F1C] text-white hover:opacity-90"
+                      }`}
+                    >
+                      {plan.cta}
+                      <span
+                        className={`w-[22px] h-[22px] rounded-full flex items-center justify-center transition-all duration-500 group-hover:translate-x-[2px] group-hover:-translate-y-[1px] ${
+                          plan.popular ? "bg-[#0A0F1C]/8" : "bg-white/10"
+                        }`}
+                      >
+                        <i className="ri-arrow-right-up-line text-[12px]"></i>
+                      </span>
+                    </Link>
+                  ) : (
+                    <button
+                      disabled
+                      className={`w-full font-display font-semibold text-[14px] rounded-full py-[13px] px-[24px] opacity-60 cursor-not-allowed ${
+                        plan.popular
+                          ? "bg-[#BFFF00] text-[#0A0F1C]"
+                          : plan.tier === "elite"
+                          ? "bg-[#1B2A4A] text-white"
+                          : "bg-[#0A0F1C]/10 text-[#0A0F1C]"
+                      }`}
+                    >
+                      {plan.cta}
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Coming Soon note */}
+          <div className="max-w-[640px] mx-auto mt-[48px]">
+            <div className="bg-white rounded-[1.25rem] border border-gray-100 p-[28px] md:p-[36px] text-center">
+              <h2 className="font-display text-[18px] md:text-[20px] font-semibold text-[#0A0F1C] !mb-[8px]">
+                Premium Plans Coming Soon
+              </h2>
+              <p className="text-[13px] md:text-[14px] text-gray-500 !leading-[1.7] !mb-[8px]">
+                We&apos;re currently in our testing phase, perfecting the prediction
+                engine and building enough data to prove our edge. Premium and Elite
+                tiers will launch once we&apos;re ready to scale.
+              </p>
+              <p className="text-[12px] text-gray-400">
+                In the meantime, enjoy full access to all features for free.
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Feature Comparison Table */}
-      <section className="pb-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl font-bold text-oddly-navy text-center mb-4">
+      {/* Comparison table */}
+      <section className="pb-[80px] md:pb-[100px]">
+        <div className="container sm:max-w-[540px] md:max-w-[720px] lg:max-w-[960px] xl:max-w-[1200px] mx-auto px-[16px]">
+          <h2 className="font-display text-[24px] md:text-[32px] font-bold text-[#0A0F1C] text-center !mb-[8px]">
             Compare Plans
           </h2>
-          <p className="text-neutral-500 text-center text-sm mb-12">
+          <p className="text-[14px] text-gray-400 text-center !mb-[32px]">
             See exactly what you get with each tier.
           </p>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b-2 border-neutral-200">
-                  <th className="text-left py-4 px-4 font-semibold text-neutral-600 w-[40%]">Feature</th>
-                  <th className="text-center py-4 px-4 font-semibold text-neutral-600">Free</th>
-                  <th className="text-center py-4 px-4 font-semibold text-oddly-orange">Premium</th>
-                  <th className="text-center py-4 px-4 font-semibold text-oddly-navy">Elite</th>
-                </tr>
-              </thead>
-              <tbody>
-                {([
-                  { feature: "Daily Predictions", free: "5 matches", premium: "Unlimited", elite: "Unlimited" },
-                  { feature: "Leagues Covered", free: "5 leagues", premium: "26+ leagues", elite: "26+ leagues" },
-                  { feature: "Accumulator Builder", free: "10-leg max", premium: "Unlimited legs", elite: "Unlimited legs" },
-                  { feature: "AI Analyst", free: "3 queries/day", premium: "50 queries/day", elite: "Unlimited" },
-                  { feature: "Value Bet Detection", free: false, premium: true, elite: true },
-                  { feature: "Crown Jewel Daily Pick", free: false, premium: false, elite: true },
-                  { feature: "Rollover Challenge", free: false, premium: true, elite: true },
-                  { feature: "Performance Analytics", free: false, premium: true, elite: true },
-                  { feature: "Weekly Reports", free: false, premium: true, elite: true },
-                  { feature: "API Access", free: false, premium: false, elite: true },
-                  { feature: "Custom Models", free: false, premium: false, elite: true },
-                  { feature: "Priority Support", free: false, premium: true, elite: true },
-                  { feature: "Early Access Features", free: false, premium: false, elite: true },
-                ]).map((row, i) => (
-                  <tr key={row.feature} className={`border-b border-neutral-100 ${i % 2 === 0 ? "bg-neutral-50/50" : ""}`}>
-                    <td className="py-3 px-4 font-medium text-neutral-700">{row.feature}</td>
-                    <td className="text-center py-3 px-4">
-                      {typeof row.free === "boolean" ? (
-                        row.free ? <span className="text-green-500 font-bold">✓</span> : <span className="text-neutral-300">—</span>
-                      ) : (
-                        <span className="text-neutral-600 text-xs">{row.free}</span>
-                      )}
+          <div className="bg-white rounded-[1.25rem] border border-gray-100 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[640px]">
+                <thead>
+                  <tr className="border-b border-gray-100 bg-[#F8FAFC]">
+                    <th className="text-left py-[14px] px-[16px] font-display text-[12px] font-semibold text-gray-500 uppercase tracking-wider w-[40%]">
+                      Feature
+                    </th>
+                    <th className="text-center py-[14px] px-[16px] font-display text-[12px] font-semibold text-gray-500 uppercase tracking-wider">
+                      Free
+                    </th>
+                    <th className="text-center py-[14px] px-[16px] font-display text-[12px] font-semibold text-[#1B2A4A] uppercase tracking-wider">
+                      Premium
+                    </th>
+                    <th className="text-center py-[14px] px-[16px] font-display text-[12px] font-semibold text-[#1B2A4A] uppercase tracking-wider">
+                      Elite
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {comparison.map((row, i) => (
+                    <tr key={row.feature} className={`border-b border-gray-50 ${i % 2 === 0 ? "bg-white" : "bg-[#FAFBFC]"}`}>
+                      <td className="py-[12px] px-[16px] font-medium text-[13px] text-[#0A0F1C]">
+                        {row.feature}
+                      </td>
+                      <td className="text-center py-[12px] px-[16px]"><Cell value={row.free} /></td>
+                      <td className="text-center py-[12px] px-[16px]"><Cell value={row.premium} /></td>
+                      <td className="text-center py-[12px] px-[16px]"><Cell value={row.elite} /></td>
+                    </tr>
+                  ))}
+                  <tr className="border-t border-gray-100 bg-[#F8FAFC]">
+                    <td className="py-[14px] px-[16px] font-display text-[13px] font-semibold text-[#0A0F1C]">
+                      Price
                     </td>
-                    <td className="text-center py-3 px-4">
-                      {typeof row.premium === "boolean" ? (
-                        row.premium ? <span className="text-green-500 font-bold">✓</span> : <span className="text-neutral-300">—</span>
-                      ) : (
-                        <span className="text-neutral-600 text-xs">{row.premium}</span>
-                      )}
+                    <td className="text-center py-[14px] px-[16px]">
+                      <span className="font-display text-[18px] font-bold text-[#0A0F1C]">₦0</span>
                     </td>
-                    <td className="text-center py-3 px-4">
-                      {typeof row.elite === "boolean" ? (
-                        row.elite ? <span className="text-green-500 font-bold">✓</span> : <span className="text-neutral-300">—</span>
-                      ) : (
-                        <span className="text-neutral-600 text-xs">{row.elite}</span>
-                      )}
+                    <td className="text-center py-[14px] px-[16px]">
+                      <span className="font-display text-[18px] font-bold text-[#1B2A4A]">₦7,500</span>
+                      <span className="text-gray-400 text-[11px]">/mo</span>
+                    </td>
+                    <td className="text-center py-[14px] px-[16px]">
+                      <span className="font-display text-[18px] font-bold text-[#1B2A4A]">₦20,000</span>
+                      <span className="text-gray-400 text-[11px]">/mo</span>
                     </td>
                   </tr>
-                ))}
-                {/* Price row */}
-                <tr className="border-t-2 border-neutral-200 bg-neutral-50">
-                  <td className="py-4 px-4 font-bold text-neutral-700">Price</td>
-                  <td className="text-center py-4 px-4"><span className="text-xl font-bold text-neutral-700">₦0</span></td>
-                  <td className="text-center py-4 px-4"><span className="text-xl font-bold text-oddly-orange">₦7,500</span><span className="text-neutral-400 text-xs">/mo</span></td>
-                  <td className="text-center py-4 px-4"><span className="text-xl font-bold text-oddly-navy">₦20,000</span><span className="text-neutral-400 text-xs">/mo</span></td>
-                </tr>
-              </tbody>
-            </table>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </section>
 
       {/* FAQ */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
-        <div className="max-w-3xl mx-auto">
-          <h2 className="text-3xl font-bold text-oddly-navy text-center mb-12">
+      <section className="pb-[80px] md:pb-[100px]">
+        <div className="container sm:max-w-[540px] md:max-w-[720px] lg:max-w-[960px] xl:max-w-[1200px] mx-auto px-[16px]">
+          <h2 className="font-display text-[24px] md:text-[32px] font-bold text-[#0A0F1C] text-center !mb-[32px]">
             Frequently Asked Questions
           </h2>
-          <div className="space-y-6">
-            {[
-              {
-                q: "Is ODDLY really free right now?",
-                a: "Yes! We're in our testing phase and offering full access to all features at no cost. This gives us the data we need to fine-tune our prediction models.",
-              },
-              {
-                q: "Will I lose access when paid plans launch?",
-                a: "No. Early users who signed up during the free period will receive a special discount when paid plans launch.",
-              },
-              {
-                q: "How accurate are the predictions?",
-                a: "Our AI models combine Dixon-Coles, XGBoost, and Elo ratings with real-time odds analysis. We're continuously training on live data to improve accuracy.",
-              },
-              {
-                q: "What data sources do you use?",
-                a: "We pull live odds from 21+ bookmakers (bet365, Pinnacle, Betfair, etc.), fixture data from API-Football, and run predictions through NVIDIA AI models.",
-              },
-              {
-                q: "Can I track my bets?",
-                a: "Yes. The tracking dashboard shows your ROI, win rate, streak, and performance breakdown by league and market type.",
-              },
-            ].map((faq) => (
+          <div className="max-w-[680px] mx-auto space-y-[8px]">
+            {faqs.map((faq) => (
               <details
                 key={faq.q}
-                className="group border border-neutral-200 rounded-xl overflow-hidden"
+                className="group bg-white rounded-[12px] border border-gray-100 overflow-hidden"
               >
-                <summary className="px-6 py-4 cursor-pointer font-semibold text-oddly-navy flex items-center justify-between hover:bg-neutral-50 transition-colors">
+                <summary className="px-[20px] py-[16px] cursor-pointer font-display text-[14px] font-semibold text-[#0A0F1C] flex items-center justify-between gap-[12px] hover:bg-[#F8FAFC] transition-colors list-none [&::-webkit-details-marker]:hidden">
                   {faq.q}
-                  <svg
-                    className="w-5 h-5 text-neutral-400 group-open:rotate-180 transition-transform"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
+                  <i className="ri-arrow-down-s-line text-[18px] text-gray-400 transition-transform duration-300 group-open:rotate-180 flex-none"></i>
                 </summary>
-                <div className="px-6 pb-4 text-neutral-600 text-sm leading-relaxed">
+                <div className="px-[20px] pb-[18px] text-[13px] text-gray-500 !leading-[1.7]">
                   {faq.a}
                 </div>
               </details>

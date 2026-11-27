@@ -4,11 +4,10 @@ import React from "react";
 import { PageHeader, Card, CardHeader, Badge } from "@/components/ui";
 
 const API_PROVIDERS = [
-  { name: "The Odds API", status: "configured", desc: "Live odds from 100+ bookmakers" },
-  { name: "API-Football", status: "configured", desc: "Fixture data and live scores" },
-  { name: "APISports", status: "configured", desc: "Football data and statistics" },
-  { name: "NVIDIA NIM", status: "configured", desc: "AI inference for prediction models (10 keys)" },
-  { name: "Odds API IO", status: "configured", desc: "Additional odds aggregation" },
+  { name: "The Odds API", env: "THE_ODDS_API_KEY", desc: "Live odds from 100+ bookmakers" },
+  { name: "API-Football", env: "API_FOOTBALL_KEY", desc: "Fixture data and live scores" },
+  { name: "Football-Data.org", env: "FOOTBALL_DATA_API_KEY", desc: "Standings and match statistics" },
+  { name: "NVIDIA NIM", env: "NVIDIA_KEY_*", desc: "AI inference for prediction models (key pool)" },
 ];
 
 const SYSTEM_INFO = [
@@ -16,7 +15,7 @@ const SYSTEM_INFO = [
   { label: "Database", value: "Supabase PostgreSQL" },
   { label: "Auth Provider", value: "Supabase Auth" },
   { label: "Framework", value: "Next.js 15.5 (App Router)" },
-  { label: "AI Engine", value: "NVIDIA NIM (7 models)" },
+  { label: "AI Engine", value: "Ensemble engine" },
   { label: "Schema Version", value: "3.0" },
 ];
 
@@ -25,12 +24,15 @@ export default function AdminSettingsPage() {
     <div>
       <PageHeader
         title="System Settings"
-        description="Manage API keys, environment variables, and system configuration."
+        description="API integrations and system configuration. Secrets are managed via environment variables."
       />
 
       {/* API Providers */}
       <Card className="mb-[16px]">
-        <CardHeader title="API Providers" />
+        <CardHeader
+          title="API Providers"
+          description="Each integration reads its credentials from the listed environment variable at runtime."
+        />
         <div className="space-y-[6px]">
           {API_PROVIDERS.map((provider) => (
             <div
@@ -41,10 +43,15 @@ export default function AdminSettingsPage() {
                 <span className="text-[13px] font-medium text-[#0A0F1C] block">{provider.name}</span>
                 <span className="text-[11px] text-gray-400">{provider.desc}</span>
               </div>
-              <Badge variant="success" size="sm">{provider.status}</Badge>
+              <code className="text-[10px] font-mono bg-white border border-gray-200 text-gray-500 px-[8px] py-[4px] rounded-[6px]">
+                {provider.env}
+              </code>
             </div>
           ))}
         </div>
+        <p className="text-[11px] text-gray-400 mt-[10px]">
+          Key values are never exposed to the browser. Rotate secrets in your deployment environment.
+        </p>
       </Card>
 
       {/* System Info */}
@@ -57,24 +64,6 @@ export default function AdminSettingsPage() {
               <span className="text-[12px] font-medium text-[#0A0F1C]">{item.value}</span>
             </div>
           ))}
-        </div>
-      </Card>
-
-      {/* Danger Zone */}
-      <Card className="border-red-100">
-        <div className="mb-[12px]">
-          <h3 className="text-[14px] font-semibold text-red-600">Danger Zone</h3>
-        </div>
-        <p className="text-[12px] text-gray-500 mb-[12px]">
-          Irreversible actions that affect the entire system.
-        </p>
-        <div className="flex gap-[8px]">
-          <button className="h-[32px] px-[12px] rounded-[8px] bg-red-50 text-red-600 text-[12px] font-semibold transition-all hover:bg-red-100">
-            Flush AI Cache
-          </button>
-          <button className="h-[32px] px-[12px] rounded-[8px] bg-red-50 text-red-600 text-[12px] font-semibold transition-all hover:bg-red-100">
-            Reset All Predictions
-          </button>
         </div>
       </Card>
     </div>

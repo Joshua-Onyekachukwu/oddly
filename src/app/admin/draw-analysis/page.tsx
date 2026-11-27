@@ -50,30 +50,36 @@ export default function DrawAnalysisPage() {
   const [buckets, setBuckets] = useState<any[]>([]);
   const [leagues, setLeagues] = useState<any[]>([]);
   const [trend, setTrend] = useState<any[]>([]);
-  const [calibration, setCalibration] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
-      const [sumRes, confRes, bucRes, leaRes, treRes, calRes] = await Promise.all([
+      const [sumRes, confRes, bucRes, leaRes, treRes] = await Promise.all([
         fetch("/api/v1/analytics/draw?type=summary"),
         fetch("/api/v1/analytics/draw?type=confusion"),
         fetch("/api/v1/analytics/draw?type=buckets"),
         fetch("/api/v1/analytics/draw?type=leagues"),
         fetch("/api/v1/analytics/draw?type=trend&days=90"),
-        fetch("/api/v1/analytics/draw?type=calibration"),
       ]);
-      const [sum, conf, buc, lea, tre, cal] = await Promise.all([
-        sumRes.json(), confRes.json(), bucRes.json(), leaRes.json(), treRes.json(), calRes.json(),
+      const failed = [sumRes, confRes, bucRes, leaRes, treRes].find((r) => !r.ok);
+      if (failed) {
+        const body = await failed.json().catch(() => ({}));
+        throw new Error(body.error || `Request failed (${failed.status})`);
+      }
+      const [sum, conf, buc, lea, tre] = await Promise.all([
+        sumRes.json(), confRes.json(), bucRes.json(), leaRes.json(), treRes.json(),
       ]);
       setSummary(sum.data || null);
       setConfusion(conf.data || null);
       setBuckets(buc.data || []);
       setLeagues(lea.data || []);
       setTrend(tre.data || []);
-      setCalibration(cal.data || []);
-    } catch {}
+    } catch (e: any) {
+      setError(e?.message || "Failed to load draw analytics");
+    }
     setLoading(false);
   }, []);
 
@@ -96,11 +102,27 @@ export default function DrawAnalysisPage() {
         </div>
         <button
           onClick={fetchData}
-          className="text-[11px] text-gray-400 hover:text-[#1B2A4A] transition-colors flex items-center gap-[4px]"
+          aria-label="Refresh draw analysis"
+          className="text-[11px] text-gray-400 hover:text-[#1B2A4A] transition-colors flex items-center gap-[4px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1B2A4A]/30 rounded-[4px] px-[4px]"
         >
           <i className="ri-refresh-line" /> Refresh
         </button>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-[14px] p-[16px] mb-[24px] flex items-center justify-between gap-[12px]">
+          <div className="flex items-center gap-[8px]">
+            <i className="ri-error-warning-line text-red-500" />
+            <span className="text-[13px] font-medium text-red-700">{error}</span>
+          </div>
+          <button
+            onClick={fetchData}
+            className="text-[12px] font-semibold text-red-600 hover:text-red-700 underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 rounded-[4px] px-[4px]"
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
       {/* Summary Cards */}
       {summary ? (

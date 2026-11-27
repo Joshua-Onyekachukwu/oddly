@@ -31,15 +31,19 @@ export default function AdminAnnouncementsPage() {
   const [formTitle, setFormTitle] = useState("");
   const [formBody, setFormBody] = useState("");
   const [formTarget, setFormTarget] = useState<"all" | "free" | "premium" | "elite">("all");
+  const [error, setError] = useState<string | null>(null);
 
   const fetchAnnouncements = useCallback(async () => {
+    setError(null);
     const supabase = createClient();
-    const { data, error } = await supabase
+    const { data, error: fetchError } = await supabase
       .from("announcements")
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (!error && data) {
+    if (fetchError) {
+      setError(fetchError.message);
+    } else if (data) {
       setAnnouncements(data);
     }
     setLoading(false);
@@ -61,10 +65,16 @@ export default function AdminAnnouncementsPage() {
       is_active: true,
     };
 
-    if (editingId) {
-      await supabase.from("announcements").update(payload).eq("id", editingId);
-    } else {
-      await supabase.from("announcements").insert(payload);
+    const { error: saveError } = editingId
+      ? await supabase.from("announcements").update(payload).eq("id", editingId)
+      : await supabase.from("announcements").insert(payload);
+
+    if (saveError) {
+      setError(saveError.message.includes("row-level security") || saveError.code === "42501"
+        ? "Announcement changes are blocked by database permissions (service-role only). Contact the backend team to enable admin writes."
+        : saveError.message);
+      setSaving(false);
+      return;
     }
 
     setShowForm(false);
@@ -78,13 +88,21 @@ export default function AdminAnnouncementsPage() {
 
   const toggleActive = async (id: string, current: boolean) => {
     const supabase = createClient();
-    await supabase.from("announcements").update({ is_active: !current }).eq("id", id);
+    const { error: toggleError } = await supabase.from("announcements").update({ is_active: !current }).eq("id", id);
+    if (toggleError) {
+      setError("Could not update announcement — database permissions may block admin writes.");
+      return;
+    }
     fetchAnnouncements();
   };
 
   const deleteAnnouncement = async (id: string) => {
     const supabase = createClient();
-    await supabase.from("announcements").delete().eq("id", id);
+    const { error: deleteError } = await supabase.from("announcements").delete().eq("id", id);
+    if (deleteError) {
+      setError("Could not delete announcement — database permissions may block admin writes.");
+      return;
+    }
     fetchAnnouncements();
   };
 
@@ -92,7 +110,7 @@ export default function AdminAnnouncementsPage() {
     <div>
       <PageHeader
         title="Announcements"
-        description="Create and manage platform-wide announcements."
+        description="Create and manage platform-wide announcements. Only active announcements are listed; writes require service-role access."
         action={
           <Button
             onClick={() => {
@@ -108,6 +126,13 @@ export default function AdminAnnouncementsPage() {
           </Button>
         }
       />
+
+      {error && (
+        <div className="mb-[16px] flex items-center gap-[8px] bg-amber-50 border border-amber-200 rounded-[10px] p-[12px] text-[12px] text-amber-700">
+          <i className="ri-alert-line flex-none" />
+          {error}
+        </div>
+      )}
 
       {/* Form */}
       {showForm && (
@@ -198,7 +223,8 @@ export default function AdminAnnouncementsPage() {
                 <div className="flex items-center gap-[6px] ml-[12px] flex-none">
                   <button
                     onClick={() => toggleActive(ann.id, ann.is_active)}
-                    className={`w-[36px] h-[20px] rounded-full transition-all ${
+                    aria-label={ann.is_active ? "Deactivate announcement" : "Activate announcement"}
+                    className={`w-[36px] h-[20px] rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] ${
                       ann.is_active ? "bg-green-500" : "bg-gray-200"
                     }`}
                   >
@@ -216,13 +242,15 @@ export default function AdminAnnouncementsPage() {
                       setFormTarget(ann.target as "all" | "free" | "premium" | "elite");
                       setShowForm(true);
                     }}
-                    className="w-[28px] h-[28px] rounded-[6px] flex items-center justify-center text-gray-400 hover:text-[#1B2A4A] hover:bg-gray-100 transition-colors"
+                    aria-label="Edit announcement"
+                    className="w-[28px] h-[28px] rounded-[6px] flex items-center justify-center text-gray-400 hover:text-[#1B2A4A] hover:bg-gray-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
                   >
                     <i className="ri-edit-line text-[14px]" />
                   </button>
                   <button
                     onClick={() => deleteAnnouncement(ann.id)}
-                    className="w-[28px] h-[28px] rounded-[6px] flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                    aria-label="Delete announcement"
+                    className="w-[28px] h-[28px] rounded-[6px] flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
                   >
                     <i className="ri-delete-bin-line text-[14px]" />
                   </button>

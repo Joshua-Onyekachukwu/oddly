@@ -74,17 +74,22 @@ async function runPredictionPipeline(): Promise<{
   const { data: histFixtures } = await supabaseAdmin
     .from("fixtures")
     .select(
-      `home_score, away_score,
+      `kickoff_time, home_score, away_score,
        home:teams!fixtures_home_team_id_fkey(canonical_name),
        away:teams!fixtures_away_team_id_fkey(canonical_name)`
     )
     .eq("status", "finished")
     .not("home_score", "is", null)
-    .order("kickoff_time", { ascending: true })
+    .order("kickoff_time", { ascending: false })
     .limit(2000);
 
-  if (histFixtures) {
-    for (const f of histFixtures) {
+  // Replay chronologically (oldest → newest) for correct Elo evolution
+  const chronological = [...(histFixtures || [])].sort(
+    (a, b) => (a.kickoff_time || "").localeCompare(b.kickoff_time || "")
+  );
+
+  if (chronological.length) {
+    for (const f of chronological) {
       const homeRaw = (f as any).home?.canonical_name;
       const awayRaw = (f as any).away?.canonical_name;
       if (!homeRaw || !awayRaw) continue;
@@ -107,7 +112,7 @@ async function runPredictionPipeline(): Promise<{
     }
   }
 
-  console.log(`[PREDICT] Loaded ${histFixtures?.length || 0} historical matches for Elo/form (${Object.keys(eloMap).length} teams)`);
+  console.log(`[PREDICT] Loaded ${chronological.length} historical matches for Elo/form (${Object.keys(eloMap).length} teams)`);
 
   // IDEMPOTENCY: Check which fixtures already have pending predictions
   const fixtureIds = fixtures.map((f) => f.id);
@@ -144,6 +149,16 @@ async function runPredictionPipeline(): Promise<{
       if (!result) { ensembleMisses++; continue; }
 
       ensembleHits++;
+      // Immutable input snapshot — what the model saw at prediction time
+      const inputSnapshot = {
+        kickoff_time: fixture.kickoff_time,
+        league_id: fixture.league_id,
+        home_elo: Math.round(eloMap[home] ?? 1500),
+        away_elo: Math.round(eloMap[away] ?? 1500),
+        home_form: (formMap[home] || []).slice(-5),
+        away_form: (formMap[away] || []).slice(-5),
+        captured_at: now.toISOString(),
+      };
       for (const [market, prob] of Object.entries(result.markets)) {
         const parts = market.split("_");
         predictions.push({
@@ -152,6 +167,8 @@ async function runPredictionPipeline(): Promise<{
           selection: parts.slice(1).join("_").toLowerCase(),
           model_probability: Math.round(prob * 10000) / 10000,
           model_version: result.modelVersion,
+          input_snapshot: inputSnapshot,
+          feature_version: "ensemble-v1",
         });
       }
     } catch (err: any) {

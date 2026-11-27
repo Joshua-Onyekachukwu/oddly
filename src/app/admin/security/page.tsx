@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { ErrorBoundary } from "@/components/ui";
+import { createClient } from "@/lib/supabase/client";
 
 /* ─── Types ──────────────────────────────────────────────── */
 
@@ -90,22 +91,36 @@ export default function SecurityPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchSecurity() {
-      try {
-        const res = await fetch("/api/v1/admin/security");
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = await res.json();
-        setData(json);
-      } catch (e: any) {
-        setError(e.message);
+  const fetchSecurity = useCallback(async () => {
+    try {
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      const res = await fetch("/api/v1/admin/security", {
+        headers: session?.access_token
+          ? { Authorization: `Bearer ${session.access_token}` }
+          : {},
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `HTTP ${res.status}`);
       }
-      setLoading(false);
+      const json = await res.json();
+      setData(json);
+      setError(null);
+    } catch (e: any) {
+      setError(e.message);
     }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
     fetchSecurity();
     const interval = setInterval(fetchSecurity, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchSecurity]);
 
   if (loading) {
     return (
@@ -118,12 +133,18 @@ export default function SecurityPage() {
     );
   }
 
-  if (error || !data) {
+  if (!data) {
     return (
       <div className="p-8 max-w-7xl mx-auto">
         <div className="bg-red-50 border border-red-200 rounded-xl p-6">
           <h2 className="text-red-800 font-semibold">Security Audit Failed</h2>
           <p className="text-red-600 text-sm mt-1">{error || "No data"}</p>
+          <button
+            onClick={fetchSecurity}
+            className="mt-[12px] text-[12px] font-semibold text-red-600 hover:text-red-700 underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 rounded-[4px] px-[4px]"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );
@@ -144,11 +165,20 @@ export default function SecurityPage() {
             Auth coverage, rate limiting, and RLS policy status
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className={`w-2.5 h-2.5 rounded-full ${summary.overallScore >= 90 ? "bg-green-500" : summary.overallScore >= 70 ? "bg-amber-500" : "bg-red-500"}`} />
-          <span className="text-[12px] text-gray-400">
-            Score: {summary.overallScore}/100
-          </span>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <div className={`w-2.5 h-2.5 rounded-full ${summary.overallScore >= 90 ? "bg-green-500" : summary.overallScore >= 70 ? "bg-amber-500" : "bg-red-500"}`} />
+            <span className="text-[12px] text-gray-400">
+              Score: {summary.overallScore}/100
+            </span>
+          </div>
+          <button
+            onClick={fetchSecurity}
+            aria-label="Re-run security audit"
+            className="w-[32px] h-[32px] rounded-[8px] flex items-center justify-center text-gray-400 hover:text-[#1B2A4A] hover:bg-gray-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1B2A4A]/30"
+          >
+            <i className="ri-refresh-line text-[15px]" />
+          </button>
         </div>
       </div>
 

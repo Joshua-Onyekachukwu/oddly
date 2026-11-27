@@ -75,10 +75,11 @@ const BOOKMAKERS = [
 ];
 
 export default function BettingAgentPage() {
-  const { user } = useAuth();
+  const { session } = useAuth();
 
   // State
   const [loading, setLoading] = React.useState(false);
+  const [hasFetched, setHasFetched] = React.useState(false);
   const [recommendations, setRecommendations] = React.useState<Recommendation[]>([]);
   const [selectedPicks, setSelectedPicks] = React.useState<BetslipSelection[]>([]);
   const [betslip, setBetslip] = React.useState<Betslip | null>(null);
@@ -90,25 +91,52 @@ export default function BettingAgentPage() {
   const [error, setError] = React.useState<string | null>(null);
   const [activeTab, setActiveTab] = React.useState<"find" | "betslip" | "history">("find");
 
+  // Auth headers — both agent endpoints require a Supabase access token
+  const authHeaders = React.useCallback(
+    () => ({
+      "Content-Type": "application/json",
+      ...(session?.access_token
+        ? { Authorization: `Bearer ${session.access_token}` }
+        : {}),
+    }),
+    [session?.access_token]
+  );
+
   // Fetch recommendations
-  const fetchRecommendations = async () => {
+  const fetchRecommendations = React.useCallback(async () => {
+    if (!session?.access_token) {
+      setError("Please sign in to use the betting agent.");
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
       const res = await fetch("/api/v1/betting-agent/recommendations", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders(),
         body: JSON.stringify({ days, minEdge: minEdge / 100, limit: 50, bookmaker }),
       });
       const data = await res.json();
-      if (!data.success) throw new Error(data.error || "Failed to fetch recommendations");
-      setRecommendations(data.data);
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || `Request failed (${res.status})`);
+      }
+      setRecommendations(Array.isArray(data.data) ? data.data : []);
+      setHasFetched(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch recommendations");
     } finally {
       setLoading(false);
     }
-  };
+  }, [authHeaders, days, minEdge, bookmaker, session?.access_token]);
+
+  // Auto-scan on first load
+  React.useEffect(() => {
+    if (session?.access_token && !hasFetched && !loading) {
+      fetchRecommendations();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.access_token]);
 
   // Toggle pick selection
   const togglePick = (rec: Recommendation) => {
@@ -129,7 +157,7 @@ export default function BettingAgentPage() {
         {
           fixtureId: rec.fixtureId,
           match: rec.match,
-          market: `${rec.market} - ${rec.selection}`,
+          market: rec.market,
           selection: rec.selection,
           odds: rec.bookmakerOdds,
           modelProbability: rec.modelProbability,
@@ -144,19 +172,22 @@ export default function BettingAgentPage() {
   // Build betslip
   const buildBetslip = async () => {
     if (selectedPicks.length === 0) return;
+    if (!session?.access_token) {
+      setError("Please sign in to build a betslip.");
+      return;
+    }
     setBetslipLoading(true);
     setError(null);
     try {
       const res = await fetch("/api/v1/betting-agent/betslip", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(user?.id ? { Authorization: `Bearer ${user.id}` } : {}),
-        },
+        headers: authHeaders(),
         body: JSON.stringify({ selections: selectedPicks, stake, bookmaker }),
       });
       const data = await res.json();
-      if (!data.success) throw new Error(data.error || "Failed to build betslip");
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || `Request failed (${res.status})`);
+      }
       setBetslip(data.data);
       setActiveTab("betslip");
     } catch (err) {
@@ -189,7 +220,7 @@ export default function BettingAgentPage() {
             </div>
 
             {/* Tab Navigation */}
-            <div className="flex gap-1 bg-white/5 rounded-lg p-1">
+            <div className="flex gap-1 bg-white/5 rounded-lg p-1" role="tablist" aria-label="Betting agent sections">
               {[
                 { id: "find" as const, label: "Find Value", icon: "ri-search-line" },
                 { id: "betslip" as const, label: "Betslip", icon: "ri-file-list-3-line", badge: selectedPicks.length },
@@ -197,8 +228,10 @@ export default function BettingAgentPage() {
               ].map((tab) => (
                 <button
                   key={tab.id}
+                  role="tab"
+                  aria-selected={activeTab === tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#BFFF00]/50 ${
                     activeTab === tab.id
                       ? "bg-[#BFFF00]/15 text-[#BFFF00]"
                       : "text-white/40 hover:text-white/60"
@@ -221,10 +254,22 @@ export default function BettingAgentPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
         {/* Error Banner */}
         {error && (
-          <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm flex items-center gap-2">
+          <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm flex items-center gap-2" role="alert">
             <i className="ri-error-warning-line" />
             {error}
-            <button onClick={() => setError(null)} className="ml-auto text-red-400/60 hover:text-red-400">
+            {activeTab === "find" && (
+              <button
+                onClick={fetchRecommendations}
+                className="ml-2 px-2 py-0.5 rounded bg-red-500/10 hover:bg-red-500/20 text-red-300 text-xs font-medium transition-colors"
+              >
+                Retry
+              </button>
+            )}
+            <button
+              onClick={() => setError(null)}
+              aria-label="Dismiss error"
+              className="ml-auto text-red-400/60 hover:text-red-400"
+            >
               <i className="ri-close-line" />
             </button>
           </div>
@@ -241,6 +286,7 @@ export default function BettingAgentPage() {
                   <select
                     value={days}
                     onChange={(e) => setDays(Number(e.target.value))}
+                    aria-label="Days ahead"
                     className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 focus:border-[#BFFF00]/50 outline-none"
                   >
                     {[1, 2, 3, 5, 7].map((d) => (
@@ -253,6 +299,7 @@ export default function BettingAgentPage() {
                   <select
                     value={minEdge}
                     onChange={(e) => setMinEdge(Number(e.target.value))}
+                    aria-label="Minimum edge"
                     className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 focus:border-[#BFFF00]/50 outline-none"
                   >
                     {[1, 2, 3, 5, 7, 10].map((e) => (
@@ -265,6 +312,7 @@ export default function BettingAgentPage() {
                   <select
                     value={bookmaker}
                     onChange={(e) => setBookmaker(e.target.value)}
+                    aria-label="Bookmaker"
                     className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 focus:border-[#BFFF00]/50 outline-none"
                   >
                     {BOOKMAKERS.map((b) => (
@@ -275,7 +323,7 @@ export default function BettingAgentPage() {
                 <button
                   onClick={fetchRecommendations}
                   disabled={loading}
-                  className="px-5 py-2 bg-[#BFFF00] text-black font-semibold rounded-lg text-sm hover:bg-[#BFFF00]/90 transition-all disabled:opacity-50"
+                  className="px-5 py-2 bg-[#BFFF00] text-black font-semibold rounded-lg text-sm hover:bg-[#BFFF00]/90 transition-all disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#BFFF00]/60"
                 >
                   {loading ? (
                     <span className="flex items-center gap-2">
@@ -292,6 +340,22 @@ export default function BettingAgentPage() {
               </div>
             </div>
 
+            {/* Loading skeleton */}
+            {loading && recommendations.length === 0 && (
+              <div className="space-y-2" aria-label="Loading recommendations">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="p-4 rounded-xl border border-white/5 bg-white/[0.02] animate-pulse"
+                  >
+                    <div className="h-3 w-32 bg-white/10 rounded mb-2" />
+                    <div className="h-4 w-48 bg-white/10 rounded mb-3" />
+                    <div className="h-3 w-64 bg-white/5 rounded" />
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* Results */}
             {recommendations.length > 0 && (
               <div>
@@ -303,7 +367,7 @@ export default function BettingAgentPage() {
                     <button
                       onClick={buildBetslip}
                       disabled={betslipLoading}
-                      className="px-4 py-2 bg-[#BFFF00] text-black font-semibold rounded-lg text-xs hover:bg-[#BFFF00]/90 transition-all"
+                      className="px-4 py-2 bg-[#BFFF00] text-black font-semibold rounded-lg text-xs hover:bg-[#BFFF00]/90 transition-all disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#BFFF00]/60"
                     >
                       {betslipLoading ? "Building..." : `Build Betslip (${selectedPicks.length} picks)`}
                     </button>
@@ -321,8 +385,17 @@ export default function BettingAgentPage() {
                     return (
                       <div
                         key={`${rec.fixtureId}-${rec.market}-${rec.selection}-${i}`}
+                        role="button"
+                        tabIndex={0}
+                        aria-pressed={isSelected}
                         onClick={() => togglePick(rec)}
-                        className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            togglePick(rec);
+                          }
+                        }}
+                        className={`p-4 rounded-xl border cursor-pointer transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#BFFF00]/50 ${
                           isSelected
                             ? "bg-[#BFFF00]/5 border-[#BFFF00]/30"
                             : "bg-white/[0.02] border-white/5 hover:border-white/10"
@@ -393,11 +466,22 @@ export default function BettingAgentPage() {
             {!loading && recommendations.length === 0 && (
               <div className="text-center py-20">
                 <div className="text-4xl mb-3">🔍</div>
-                <h3 className="text-lg font-semibold text-white/60 mb-1">Find Today&apos;s Value</h3>
+                <h3 className="text-lg font-semibold text-white/60 mb-1">
+                  {hasFetched ? "No value picks found" : "Find Today's Value"}
+                </h3>
                 <p className="text-sm text-white/30 max-w-md mx-auto">
-                  Click &quot;Find Value&quot; to scan upcoming matches and compare our model probabilities
-                  against bookmaker odds to find genuine betting edges.
+                  {hasFetched
+                    ? "No recommendations matched your filters. Try widening the date range or lowering the minimum edge."
+                    : 'Click "Find Value" to scan upcoming matches and compare our model probabilities against bookmaker odds to find genuine betting edges.'}
                 </p>
+                {hasFetched && (
+                  <button
+                    onClick={fetchRecommendations}
+                    className="mt-4 px-4 py-2 bg-[#BFFF00] text-black font-semibold rounded-lg text-xs hover:bg-[#BFFF00]/90 transition-all"
+                  >
+                    Scan Again
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -435,6 +519,7 @@ export default function BettingAgentPage() {
                             min={100}
                             max={100000}
                             step={100}
+                            aria-label="Stake in Naira"
                             className="w-32 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 focus:border-[#BFFF00]/50 outline-none"
                           />
                         </div>
@@ -443,6 +528,7 @@ export default function BettingAgentPage() {
                           <select
                             value={bookmaker}
                             onChange={(e) => setBookmaker(e.target.value)}
+                            aria-label="Bookmaker"
                             className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 focus:border-[#BFFF00]/50 outline-none"
                           >
                             {BOOKMAKERS.map((b) => (
@@ -453,7 +539,7 @@ export default function BettingAgentPage() {
                         <button
                           onClick={buildBetslip}
                           disabled={betslipLoading}
-                          className="px-5 py-2 bg-[#BFFF00] text-black font-semibold rounded-lg text-sm hover:bg-[#BFFF00]/90 transition-all disabled:opacity-50"
+                          className="px-5 py-2 bg-[#BFFF00] text-black font-semibold rounded-lg text-sm hover:bg-[#BFFF00]/90 transition-all disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#BFFF00]/60"
                         >
                           {betslipLoading ? "Building..." : "Build Betslip"}
                         </button>
@@ -470,7 +556,7 @@ export default function BettingAgentPage() {
                           <div className="flex-1 min-w-0">
                             <div className="text-sm font-medium text-white/80 truncate">{pick.match}</div>
                             <div className="text-xs text-white/40 mt-0.5">
-                              {pick.market} • {pick.tier}
+                              {pick.market} • {pick.selection} • {pick.tier}
                             </div>
                           </div>
                           <div className="flex items-center gap-3">
@@ -487,7 +573,8 @@ export default function BettingAgentPage() {
                                   )
                                 )
                               }
-                              className="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                              aria-label={`Remove ${pick.match} pick`}
+                              className="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/60"
                             >
                               <i className="ri-close-line text-xs" />
                             </button>
@@ -531,7 +618,7 @@ export default function BettingAgentPage() {
                   <h2 className="text-lg font-bold text-white/90">Your Betslip</h2>
                   <button
                     onClick={() => setBetslip(null)}
-                    className="text-xs text-white/40 hover:text-white/60 transition-colors"
+                    className="text-xs text-white/40 hover:text-white/60 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#BFFF00]/50 rounded px-1"
                   >
                     Edit selections
                   </button>
@@ -568,7 +655,7 @@ export default function BettingAgentPage() {
                       <div className="flex items-center justify-between">
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-medium text-white/80 truncate">{sel.match}</div>
-                          <div className="text-xs text-white/40 mt-0.5">{sel.market}</div>
+                          <div className="text-xs text-white/40 mt-0.5">{sel.market} • {sel.selection}</div>
                         </div>
                         <div className="text-right">
                           <div className="text-sm font-bold text-[#BFFF00]">{sel.odds.toFixed(2)}</div>

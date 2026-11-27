@@ -72,10 +72,23 @@ async function runSettlement(): Promise<SettleResult> {
     predByFixture[p.fixture_id].push(p);
   }
 
-  // Pre-build Elo and form maps (normalized to match ensemble expectations)
+  // Pre-build Elo and form maps from the same 2000-match window the predict
+  // cron uses, so settlement-time ratings match prediction-time ratings.
+  const { data: eloHistory } = await supabaseAdmin
+    .from("fixtures")
+    .select(
+      `kickoff_time, home_score, away_score,
+       home_team:teams!fixtures_home_team_id_fkey(canonical_name),
+       away_team:teams!fixtures_away_team_id_fkey(canonical_name)`
+    )
+    .eq("status", "finished")
+    .not("home_score", "is", null)
+    .order("kickoff_time", { ascending: false })
+    .limit(2000);
+
   const eloMap: Record<string, number> = {};
   const formMap: Record<string, Array<{ gf: number; ga: number; isHome: boolean }>> = {};
-  const sortedFixtures = [...fixtures].sort(
+  const sortedFixtures = [...(eloHistory || [])].sort(
     (a, b) => (a.kickoff_time || "").localeCompare(b.kickoff_time || "")
   );
   for (const f of sortedFixtures) {

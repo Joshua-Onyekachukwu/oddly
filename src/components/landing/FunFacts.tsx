@@ -73,8 +73,8 @@ const FunFacts: React.FC<FunFactsProps> = ({ stats: initialStats }) => {
     },
     {
       id: 4,
-      value: `${stats.activeModels}`,
-      highlight: " Models",
+      value: stats.activeModels > 0 ? `${stats.activeModels}` : "—",
+      highlight: stats.activeModels > 0 ? " Models" : "",
       label: "Working Together",
       icon: "ri-brain-line",
     },
@@ -87,8 +87,7 @@ const FunFacts: React.FC<FunFactsProps> = ({ stats: initialStats }) => {
           {factsData.map((fact, i) => (
             <div
               key={fact.id}
-              {...getScrollRevealClasses(isVisible, i * 80)}
-              className="text-center group"
+              {...getScrollRevealClasses(isVisible, i * 80, "text-center group")}
             >
               {/* Double-Bezel icon */}
               <div className="inline-flex mb-[20px]">

@@ -96,6 +96,8 @@ export function FilterBar({
               {dateFilters.map((opt) => (
                 <button
                   key={opt.key}
+                  type="button"
+                  aria-pressed={activeDateFilter === opt.key}
                   onClick={() => onDateFilterChange?.(opt.key)}
                   className={`px-[12px] py-[6px] rounded-[8px] text-[11px] font-semibold whitespace-nowrap transition-all ${
                     activeDateFilter === opt.key
@@ -114,6 +116,8 @@ export function FilterBar({
               {confidenceFilters.map((opt) => (
                 <button
                   key={opt.key}
+                  type="button"
+                  aria-pressed={activeConfidenceFilter === opt.key}
                   onClick={() => onConfidenceFilterChange?.(opt.key)}
                   className={`px-[10px] py-[6px] rounded-[8px] text-[11px] font-semibold whitespace-nowrap transition-all ${
                     activeConfidenceFilter === opt.key
@@ -140,12 +144,15 @@ export function FilterBar({
               <input
                 type="text"
                 placeholder={searchPlaceholder}
+                aria-label={searchPlaceholder}
                 value={searchValue || ""}
                 onChange={(e) => onSearchChange?.(e.target.value)}
                 className="w-full h-[34px] rounded-[10px] border border-gray-100 bg-gray-50 pl-[30px] pr-[12px] text-[12px] text-[#0A0F1C] placeholder:text-gray-300 focus:outline-none focus:ring-1 focus:ring-[#1B2A4A]/20 focus:border-[#1B2A4A]/20 transition-all"
               />
               {searchValue && (
                 <button
+                  type="button"
+                  aria-label="Clear search"
                   onClick={() => onSearchChange?.("")}
                   className="absolute right-[8px] top-1/2 -translate-y-1/2 text-[12px] text-gray-300 hover:text-gray-500"
                 >

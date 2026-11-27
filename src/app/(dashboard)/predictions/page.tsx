@@ -18,6 +18,7 @@ interface GoldenPick {
   market: string;
   selection: string;
   model_probability: number;
+  implied_probability: number | null;
   confidence_tier: string;
   odds_home: number | null;
   odds_draw: number | null;
@@ -27,7 +28,7 @@ interface GoldenPick {
 
 function getTierStyle(tier: string) {
   switch (tier) {
-    case "ELITE": return { bg: "bg-[#F59E0B]/10", text: "text-[#D97706]", border: "border-[#F59E0B]/20", ring: "ring-[#F59E0B]/20" };
+    case "ELITE": return { bg: "bg-[#6366F1]/10", text: "text-[#4F46E5]", border: "border-[#6366F1]/20", ring: "ring-[#6366F1]/20" };
     case "HIGH": return { bg: "bg-[#10B981]/10", text: "text-[#059669]", border: "border-[#10B981]/20", ring: "ring-[#10B981]/20" };
     default: return { bg: "bg-gray-50", text: "text-gray-500", border: "border-gray-100", ring: "ring-gray-100" };
   }
@@ -140,6 +141,7 @@ export default function PredictionsPage() {
           market: pred.market,
           selection: pred.selection,
           model_probability: pred.model_probability,
+          implied_probability: impliedProb,
           confidence_tier: tier,
           odds_home: hOdds,
           odds_draw: dOdds,
@@ -175,26 +177,26 @@ export default function PredictionsPage() {
       {/* Header */}
       <div className="mb-[24px]">
         <div className="flex items-center gap-[12px] mb-[6px]">
-          <div className="w-[36px] h-[36px] rounded-[10px] bg-gradient-to-br from-[#F59E0B] to-[#D97706] flex items-center justify-center shadow-[0_2px_12px_rgba(245,158,11,0.3)]">
-            <span className="text-[18px]">👑</span>
+          <div className="w-[36px] h-[36px] rounded-[10px] bg-gradient-to-br from-[#6366F1] to-[#4F46E5] flex items-center justify-center shadow-[0_2px_12px_rgba(99,102,241,0.3)]">
+            <i className="ri-line-chart-line text-white text-[18px]"></i>
           </div>
           <div>
             <h1 className="font-display text-[22px] md:text-[26px] font-bold text-[#0A0F1C]">
-              Golden Picks
+              Predictions
             </h1>
           </div>
         </div>
         <p className="text-[13px] text-gray-500 ml-[48px] max-w-[500px]">
-          The system searches <BettingTooltip term="1X2">26 betting markets</BettingTooltip> per match and selects the most predictable outcome. Each pick shows confidence and edge — hover any underlined term for details.
+          Model probabilities across every supported market — 1X2, goals, BTTS, double chance and draws. Hover any underlined term for details.
         </p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-[10px] mb-[20px]">
         {[
-          { label: "ELITE", value: stats.elite, color: "from-[#F59E0B] to-[#D97706]", icon: "ri-vip-crown-fill", desc: "70%+ confidence" },
-          { label: "HIGH", value: stats.high, color: "from-[#10B981] to-[#059669]", icon: "ri-check-double-line", desc: "60%+ confidence" },
-          { label: "TOTAL", value: stats.total, color: "from-[#6366F1] to-[#4F46E5]", icon: "ri-bar-chart-grouped-line", desc: "all predictions" },
+          { label: "70%+", value: stats.elite, color: "from-[#6366F1] to-[#4F46E5]", icon: "ri-arrow-up-circle-line", desc: "high-probability" },
+          { label: "60–69%", value: stats.high, color: "from-[#10B981] to-[#059669]", icon: "ri-check-double-line", desc: "mid-probability" },
+          { label: "TOTAL", value: stats.total, color: "from-[#0EA5E9] to-[#0284C7]", icon: "ri-bar-chart-grouped-line", desc: "all predictions" },
         ].map((stat) => (
           <div key={stat.label} className="relative overflow-hidden rounded-[14px] bg-white border border-gray-100 p-[16px] group hover:border-gray-200 transition-[border-color,box-shadow] duration-200 ease-out">
             <div className={`absolute top-0 right-0 w-[80px] h-[80px] bg-gradient-to-br ${stat.color} opacity-[0.06] rounded-bl-[40px] group-hover:opacity-[0.1] transition-opacity`} />
@@ -223,13 +225,13 @@ export default function PredictionsPage() {
             aria-pressed={tierFilter === t}
             className={`px-[18px] py-[8px] rounded-[9px] text-[12px] font-semibold transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] ${
               tierFilter === t
-                ? t === "ELITE" ? "bg-[#F59E0B] text-white shadow-[0_2px_12px_rgba(245,158,11,0.3)]"
+                ? t === "ELITE" ? "bg-[#6366F1] text-white shadow-[0_2px_12px_rgba(99,102,241,0.3)]"
                 : t === "HIGH" ? "bg-[#10B981] text-white shadow-[0_2px_12px_rgba(16,185,129,0.3)]"
                 : "bg-white text-[#0A0F1C] shadow-[0_1px_4px_rgba(0,0,0,0.06)]"
                 : "text-gray-400 hover:text-gray-600 hover:bg-white/50"
             }`}
           >
-            {t === "ELITE" ? <i className="ri-vip-crown-fill text-[10px]" /> : t === "HIGH" ? <i className="ri-check-double-line text-[10px]" /> : null}{" "}{t}
+            {t === "ELITE" ? "70%+" : t === "HIGH" ? "60–69%" : null}{t === "ALL" ? "All" : ""}
           </button>
         ))}
       </div>
@@ -280,8 +282,8 @@ export default function PredictionsPage() {
         </div>
       ) : Object.keys(grouped).length === 0 ? (
         <EmptyState
-          icon="ri-vip-crown-line"
-          title={`No ${tierFilter} picks this week`}
+          icon="ri-line-chart-line"
+          title={tierFilter === "ALL" ? "No predictions in this period" : `No ${tierFilter === "ELITE" ? "70%+" : "60–69%"} picks in this period`}
           description="Check back after the next data sync, or try a different filter."
         />
       ) : (
@@ -300,7 +302,7 @@ export default function PredictionsPage() {
                 role="article"
                 aria-label={`${pick.home_team} vs ${pick.away_team} — ${getMarketLabel(bestPick.market)} ${getSelectionLabel(bestPick.selection)} ${Math.round(bestPick.model_probability * 100)}% confidence`}
                 className={`rounded-[16px] bg-white border overflow-hidden transition-[border-color,box-shadow] duration-200 ease-out hover:shadow-[0_4px_20px_rgba(0,0,0,0.04)] ${
-                  bestPick.confidence_tier === "ELITE" ? "border-[#F59E0B]/20" : "border-gray-100 hover:border-gray-200"
+                  bestPick.confidence_tier === "ELITE" ? "border-[#6366F1]/20" : "border-gray-100 hover:border-gray-200"
                 }`}
                 style={{ animationDelay: `${idx * 40}ms` }}
               >
@@ -348,7 +350,7 @@ export default function PredictionsPage() {
                   <div className="flex-none text-right">
                     <div className="inline-flex items-center gap-[6px] px-[10px] py-[6px] rounded-[8px] bg-[#0A0F1C]/[0.03]">
                       <span className={`text-[10px] font-bold px-[5px] py-[2px] rounded-[4px] ${tierStyle.bg} ${tierStyle.text}`}>
-                        {bestPick.confidence_tier}
+                        {bestPick.confidence_tier === "ELITE" ? "70%+" : bestPick.confidence_tier === "HIGH" ? "60%+" : "—"}
                       </span>
                       <span className="text-[18px] font-bold text-[#0A0F1C] font-mono tabular-nums">
                         {Math.round(bestPick.model_probability * 100)}%
@@ -386,7 +388,7 @@ export default function PredictionsPage() {
                             >
                               <div className="flex items-center gap-[8px] min-w-0">
                                 <span className={`text-[9px] font-bold px-[5px] py-[2px] rounded-[4px] ${ts.bg} ${ts.text}`}>
-                                  {fp.confidence_tier}
+                                  {fp.confidence_tier === "ELITE" ? "70%+" : fp.confidence_tier === "HIGH" ? "60%+" : "—"}
                                 </span>
                                 <div className="min-w-0">
                                   <span className="text-[11px] font-medium text-gray-500 block">
@@ -399,7 +401,12 @@ export default function PredictionsPage() {
                               </div>
                               <div className="flex items-center gap-[8px] flex-none">
                                 {fp.edge > 0 && (
-                                  <span className="text-[10px] font-semibold text-[#10B981]" title={`Edge over bookmaker: model says ${Math.round(fp.model_probability * 100)}% but odds imply ${Math.round((1 / (fp.model_probability - fp.edge + 0.001)) * 100)}%`}>
+                                  <span
+                                    className="text-[10px] font-semibold text-[#10B981]"
+                                    title={fp.implied_probability != null
+                                      ? `Model: ${Math.round(fp.model_probability * 100)}% · Market-implied: ${Math.round(fp.implied_probability * 100)}%`
+                                      : undefined}
+                                  >
                                     +{(fp.edge * 100).toFixed(0)}%
                                   </span>
                                 )}

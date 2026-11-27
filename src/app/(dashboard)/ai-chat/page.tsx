@@ -12,7 +12,7 @@ interface Message {
 }
 
 const SUGGESTED_QUESTIONS = [
-  "Who is the Crown Jewel pick today?",
+  "What is today's top prediction?",
   "What are the best value bets for Premier League this weekend?",
   "Analyze the Over 2.5 market for Arsenal vs Chelsea",
   "What does the model think about the Barcelona vs Real Madrid match?",
@@ -90,16 +90,18 @@ export default function AiChatPage() {
         for (const line of lines) {
           if (line.startsWith("data: ")) {
             const data = line.slice(6);
+            let parsed: { chunk?: string; done?: boolean; error?: string } | null = null;
             try {
-              const parsed = JSON.parse(data);
-              if (parsed.error) throw new Error(parsed.error);
-              if (parsed.done) break;
-              if (parsed.chunk) {
-                fullContent += parsed.chunk;
-                setStreamingContent(fullContent);
-              }
+              parsed = JSON.parse(data);
             } catch {
-              // Skip invalid JSON lines
+              continue; // Skip invalid JSON lines
+            }
+            if (!parsed) continue;
+            if (parsed.error) throw new Error(parsed.error);
+            if (parsed.done) break;
+            if (parsed.chunk) {
+              fullContent += parsed.chunk;
+              setStreamingContent(fullContent);
             }
           }
         }
@@ -157,7 +159,11 @@ export default function AiChatPage() {
       />
 
       {/* Messages area */}
-      <div className="flex-1 overflow-y-auto space-y-[12px] mb-[12px] pr-[4px]">
+      <div
+        className="flex-1 overflow-y-auto space-y-[12px] mb-[12px] pr-[4px]"
+        aria-live="polite"
+        aria-label="Chat messages"
+      >
         {messages.length === 0 && !streamingContent && (
           <div className="text-center py-[32px]">
             <div className="inline-flex items-center justify-center w-[48px] h-[48px] rounded-[12px] bg-gray-50 mb-[12px]">
@@ -175,7 +181,7 @@ export default function AiChatPage() {
                 <button
                   key={i}
                   onClick={() => sendMessage(q)}
-                  className="text-left p-[10px] bg-white rounded-[10px] border border-gray-100 text-[12px] text-gray-600 hover:border-gray-200 hover:bg-gray-50 transition-all duration-200"
+                  className="text-left p-[10px] bg-white rounded-[10px] border border-gray-100 text-[12px] text-gray-600 hover:border-gray-200 hover:bg-gray-50 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1B2A4A]/30"
                 >
                   {q}
                 </button>
@@ -266,18 +272,20 @@ export default function AiChatPage() {
             onKeyDown={handleKeyDown}
             placeholder="Ask about today's picks, match analysis, or strategy..."
             rows={1}
+            aria-label="Message the AI analyst"
             className="flex-1 resize-none text-[13px] text-[#0A0F1C] placeholder:text-gray-400 focus:outline-none min-h-[34px] max-h-[100px] py-[4px] px-[6px]"
           />
           <button
             onClick={() => sendMessage()}
             disabled={!input.trim() || loading}
-            className="w-[34px] h-[34px] rounded-[8px] bg-[#1B2A4A] text-white flex items-center justify-center transition-all duration-200 hover:bg-[#243B53] active:scale-[0.95] disabled:opacity-30 disabled:cursor-not-allowed flex-none"
+            aria-label="Send message"
+            className="w-[34px] h-[34px] rounded-[8px] bg-[#1B2A4A] text-white flex items-center justify-center transition-all duration-200 hover:bg-[#243B53] active:scale-[0.95] disabled:opacity-30 disabled:cursor-not-allowed flex-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1B2A4A]/40"
           >
             <i className="ri-send-plane-fill text-[13px]" />
           </button>
         </div>
         <p className="text-[10px] text-gray-300 mt-[4px]">
-          Unlimited questions
+          AI-generated insights — always verify before betting.
         </p>
       </div>
     </div>

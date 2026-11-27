@@ -18,7 +18,7 @@ const LayoutProvider: React.FC<LayoutProviderProps> = ({ children }) => {
   return (
     <div className="min-h-screen bg-[#FAFBFC]">
       {/* Sidebar */}
-      <SidebarMenu toggleActive={toggleSidebar} />
+      <SidebarMenu toggleActive={toggleSidebar} active={sidebarOpen} />
 
       {/* Header */}
       <Header toggleActive={toggleSidebar} />

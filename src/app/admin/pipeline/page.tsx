@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { useAuth } from "@/providers/AuthProvider";
 import { createClient } from "@/lib/supabase/client";
 import { ErrorBoundary } from "@/components/ui";
 
@@ -16,15 +15,20 @@ interface SyncStatus {
   unreadNotifications: number;
 }
 
-interface CronHealth {
-  sync: { lastRun: string | null; status: string; schedule: string };
-  predict: { lastRun: string | null; status: string; schedule: string };
-  cleanup: { lastRun: string | null; status: string; schedule: string };
+interface AiUsage {
+  activeKeys: number;
+  todayChatCalls: number;
+  todayPredictCalls: number;
 }
 
-interface ApiUsage {
-  oddsApi: { used: number; remaining: number; resetDate: string } | null;
-  apiFootball: { requestsToday: number } | null;
+interface CronJobInfo {
+  name: string;
+  description: string;
+  scheduleHuman: string;
+  lastRun: string | null;
+  lastStatus: string;
+  isOverdue: boolean;
+  consecutiveFailures: number;
 }
 
 interface SyncResult {
@@ -62,7 +66,6 @@ interface SyncLog {
 }
 
 export default function AdminPipelinePage() {
-  const { session } = useAuth();
   const [syncStatus, setSyncStatus] = useState<SyncStatus>({
     lastSync: null,
     fixturesToday: 0,
@@ -73,15 +76,9 @@ export default function AdminPipelinePage() {
     totalNotifications: 0,
     unreadNotifications: 0,
   });
-  const [cronHealth, setCronHealth] = useState<CronHealth>({
-    sync: { lastRun: null, status: "unknown", schedule: "Daily 06:00 UTC" },
-    predict: { lastRun: null, status: "unknown", schedule: "Included in daily" },
-    cleanup: { lastRun: null, status: "unknown", schedule: "Included in daily" },
-  });
-  const [apiUsage, setApiUsage] = useState<ApiUsage>({
-    oddsApi: null,
-    apiFootball: null,
-  });
+  const [cronJobs, setCronJobs] = useState<CronJobInfo[]>([]);
+  const [aiUsage, setAiUsage] = useState<AiUsage | null>(null);
+  const [runningPipeline, setRunningPipeline] = useState(false);
   const [syncing, setSyncing] = useState<string | null>(null);
   const [lastResult, setLastResult] = useState<SyncResult | null>(null);
   const [cleanupResult, setCleanupResult] = useState<CleanupResult | null>(null);
@@ -137,60 +134,62 @@ export default function AdminPipelinePage() {
     setLoading(false);
   }, []);
 
-  // Fetch API usage from cron endpoint
-  const fetchApiUsage = useCallback(async () => {
+  // Helper: admin Bearer token for protected endpoints
+  const getAuthHeaders = useCallback(async (): Promise<Record<string, string>> => {
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token
+      ? { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` }
+      : { "Content-Type": "application/json" };
+  }, []);
+
+  // Fetch NVIDIA AI usage stats (real data from ai_cache)
+  const fetchAiUsage = useCallback(async () => {
     try {
-      const res = await fetch("/api/v1/cron/sync");
+      const headers = await getAuthHeaders();
+      const res = await fetch("/api/v1/ai-monitor", { headers });
+      if (!res.ok) return;
       const data = await res.json();
-      if (data.usage) {
-        setApiUsage(data.usage);
+      if (data.nvidia && data.cache) {
+        setAiUsage({
+          activeKeys: data.nvidia.activeKeys ?? 0,
+          todayChatCalls: data.cache.todayChatCalls ?? 0,
+          todayPredictCalls: data.cache.todayPredictCalls ?? 0,
+        });
+      }
+    } catch {
+      // Silent fail — section shows "unavailable"
+    }
+  }, [getAuthHeaders]);
+
+  // Fetch real cron job status from the admin crons endpoint
+  const fetchCronHealth = useCallback(async () => {
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch("/api/v1/admin/crons", { headers });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (Array.isArray(data.jobs)) {
+        setCronJobs(data.jobs.map((j: any) => ({
+          name: j.name,
+          description: j.description,
+          scheduleHuman: j.scheduleHuman,
+          lastRun: j.lastRun,
+          lastStatus: j.lastStatus,
+          isOverdue: j.isOverdue,
+          consecutiveFailures: j.consecutiveFailures,
+        })));
       }
     } catch {
       // Silent fail
     }
-  }, []);
-
-  // Fetch cron health by probing endpoints
-  const fetchCronHealth = useCallback(async () => {
-    try {
-      // Check sync endpoint status
-      const syncRes = await fetch("/api/v1/cron/sync");
-      const syncData = await syncRes.json();
-
-      // Check cleanup endpoint status
-      const cleanupRes = await fetch("/api/v1/cron/cleanup");
-      const cleanupData = await cleanupRes.json();
-
-      setCronHealth({
-        sync: {
-          lastRun: syncData.usage?.lastSync || null,
-          status: syncRes.ok ? "healthy" : "error",
-          schedule: syncData.schedule || "Daily 06:00 UTC",
-        },
-        predict: {
-          lastRun: null,
-          status: "healthy",
-          schedule: "Included in daily",
-        },
-        cleanup: {
-          lastRun: null,
-          status: cleanupRes.ok ? "healthy" : "error",
-          schedule: cleanupData.schedule || "Included in daily",
-        },
-      });
-    } catch {
-      setCronHealth((prev) => ({
-        ...prev,
-        sync: { ...prev.sync, status: "error" },
-      }));
-    }
-  }, []);
+  }, [getAuthHeaders]);
 
   useEffect(() => {
     fetchStatus();
-    fetchApiUsage();
+    fetchAiUsage();
     fetchCronHealth();
-  }, [fetchStatus, fetchApiUsage, fetchCronHealth]);
+  }, [fetchStatus, fetchAiUsage, fetchCronHealth]);
 
   // Add log entry
   const addLog = (type: string, status: string, duration: string, details: string) => {
@@ -215,60 +214,55 @@ export default function AdminPipelinePage() {
     setStages((prev) =>
       prev.map((s) => ({
         ...s,
-        status: s.name === "Prediction Engine" || s.name === "Crown Jewel Selection" || s.name === "Value Detection"
-          ? "running" as const
-          : s.status,
+        status: s.name === "Prediction Engine" ? "running" as const : s.status,
       }))
     );
 
     try {
+      const headers = await getAuthHeaders();
       const res = await fetch("/api/v1/cron/predict", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
       });
       const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
       const duration = data.duration || `${Date.now() - new Date(now).getTime()}ms`;
+      const predicted = data.results?.predictions ?? 0;
 
       setStages((prev) =>
         prev.map((s) => {
           if (s.name === "Prediction Engine") {
             return {
               ...s,
-              status: data.results?.predictions?.failed > 0 ? "warning" : "success",
+              status: predicted > 0 || data.skipped ? "success" : "warning",
               lastRun: now,
               duration,
-            };
-          }
-          if (s.name === "Crown Jewel Selection") {
-            return {
-              ...s,
-              status: data.results?.crownJewel?.success ? "success" : "idle",
-              lastRun: now,
-              duration: null,
-            };
-          }
-          if (s.name === "Value Detection") {
-            return {
-              ...s,
-              status: data.results?.predictions?.success > 0 ? "success" : "idle",
-              lastRun: now,
-              duration: null,
             };
           }
           return s;
         })
       );
 
-      addLog("Predictions", "success", duration, `Generated predictions for today's fixtures`);
+      addLog(
+        "Predictions",
+        "success",
+        duration,
+        data.skipped
+          ? `Skipped — another run holds the lock (${data.reason || "in progress"})`
+          : `Generated ${predicted} predictions for today's fixtures`,
+      );
       await fetchStatus();
-    } catch {
+      await fetchCronHealth();
+    } catch (e) {
       setStages((prev) =>
         prev.map((s) => ({
           ...s,
           status: s.status === "running" ? "error" : s.status,
         }))
       );
-      addLog("Predictions", "error", "0ms", "Failed to run predictions");
+      addLog("Predictions", "error", "0ms", e instanceof Error ? e.message : "Failed to run predictions");
     }
 
     setSyncing(null);
@@ -287,11 +281,15 @@ export default function AdminPipelinePage() {
     );
 
     try {
+      const headers = await getAuthHeaders();
       const res = await fetch("/api/v1/cron/cleanup", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
       });
       const data: CleanupResult = await res.json();
+      if (!res.ok || (data as any).error) {
+        throw new Error((data as any).error || `HTTP ${res.status}`);
+      }
 
       setCleanupResult(data);
 
@@ -311,14 +309,15 @@ export default function AdminPipelinePage() {
 
       addLog("Cleanup", "success", data.duration, `Purged ${data.totalDeleted} rows across ${data.results.length} tables`);
       await fetchStatus();
-    } catch {
+      await fetchCronHealth();
+    } catch (e) {
       setStages((prev) =>
         prev.map((s) => ({
           ...s,
           status: s.name === "Data Cleanup" ? "error" : s.status,
         }))
       );
-      addLog("Cleanup", "error", "0ms", "Failed to run cleanup");
+      addLog("Cleanup", "error", "0ms", e instanceof Error ? e.message : "Failed to run cleanup");
     }
 
     setSyncing(null);
@@ -339,12 +338,27 @@ export default function AdminPipelinePage() {
     );
 
     try {
+      const headers = await getAuthHeaders();
       const res = await fetch("/api/v1/cron/sync", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ type }),
       });
       const data: SyncResult = await res.json();
+      if (!res.ok || (data as any).error) {
+        throw new Error((data as any).error || `HTTP ${res.status}`);
+      }
+      if ((data as any).skipped) {
+        addLog(type, "warning", "0ms", `Skipped — ${(data as any).reason || "another run in progress"}`);
+        setStages((prev) =>
+          prev.map((s) => ({
+            ...s,
+            status: s.status === "running" ? "idle" : s.status,
+          }))
+        );
+        setSyncing(null);
+        return;
+      }
 
       setLastResult(data);
 
@@ -394,17 +408,75 @@ export default function AdminPipelinePage() {
 
       addLog(type, "success", data.duration, `Synced ${type} successfully`);
       await fetchStatus();
-    } catch {
+      await fetchCronHealth();
+    } catch (e) {
       setStages((prev) =>
         prev.map((s) => ({
           ...s,
           status: s.status === "running" ? "error" : s.status,
         }))
       );
-      addLog(type, "error", "0ms", `Failed to sync ${type}`);
+      addLog(type, "error", "0ms", e instanceof Error ? e.message : `Failed to sync ${type}`);
     }
 
     setSyncing(null);
+  };
+
+  // Full pipeline: sync → predict → settle → learn (server-orchestrated)
+  const runFullPipeline = async () => {
+    setRunningPipeline(true);
+    const now = new Date().toISOString();
+    setStages((prev) =>
+      prev.map((s) => ({
+        ...s,
+        status: ["Fixture Sync", "Odds Fetch", "Prediction Engine", "Value Detection", "Crown Jewel Selection", "Notification Dispatch"].includes(s.name)
+          ? "running" as const
+          : s.status,
+      }))
+    );
+
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch("/api/v1/admin/run-pipeline", {
+        method: "POST",
+        headers,
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
+
+      const steps = ["sync", "predict", "settle", "learn"] as const;
+      const stepLabels: Record<string, string> = {
+        sync: "Fixture Sync",
+        predict: "Prediction Engine",
+        settle: "Data Cleanup",
+        learn: "Crown Jewel Selection",
+      };
+      setStages((prev) =>
+        prev.map((s) => {
+          const step = steps.find((k) => stepLabels[k] === s.name);
+          if (step) {
+            const stepResult = data.results?.[step];
+            const failed = stepResult?.error || (stepResult && stepResult.success === false);
+            return { ...s, status: failed ? "error" as const : "success" as const, lastRun: now, duration: data.duration || null };
+          }
+          if (s.status === "running") return { ...s, status: "idle" as const };
+          return s;
+        })
+      );
+
+      addLog("Full Pipeline", "success", data.duration || "—", "Ran sync → predict → settle → learn");
+      await fetchStatus();
+      await fetchCronHealth();
+    } catch (e) {
+      setStages((prev) =>
+        prev.map((s) => ({ ...s, status: s.status === "running" ? "error" as const : s.status }))
+      );
+      addLog("Full Pipeline", "error", "0ms", e instanceof Error ? e.message : "Pipeline failed");
+    } finally {
+      setRunningPipeline(false);
+    }
   };
 
   const statusColor = (status: PipelineStage["status"]) => {
@@ -414,14 +486,6 @@ export default function AdminPipelinePage() {
       case "running": return "bg-[#2563EB]/10 text-[#2563EB] border-[#2563EB]/20";
       case "warning": return "bg-[#D97706]/10 text-[#D97706] border-[#D97706]/20";
       default: return "bg-gray-50 text-gray-400 border-gray-100";
-    }
-  };
-
-  const cronStatusColor = (status: string) => {
-    switch (status) {
-      case "healthy": return "bg-[#22c55e]/10 text-[#22c55e]";
-      case "error": return "bg-[#EF4444]/10 text-[#EF4444]";
-      default: return "bg-gray-100 text-gray-400";
     }
   };
 
@@ -438,11 +502,23 @@ export default function AdminPipelinePage() {
             Monitor data flow, API usage, and trigger manual syncs.
           </p>
         </div>
-        <div className="flex gap-[8px]">
+        <div className="flex gap-[8px] flex-wrap">
+          <button
+            onClick={runFullPipeline}
+            disabled={syncing !== null || runningPipeline}
+            className="h-[36px] px-[16px] rounded-[10px] bg-[#BFFF00] text-[#1B2A4A] text-[13px] font-semibold transition-all hover:bg-[#cfff33] active:scale-[0.98] disabled:opacity-50 flex items-center gap-[6px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
+          >
+            {runningPipeline ? (
+              <div className="w-[14px] h-[14px] border-2 border-[#1B2A4A]/30 border-t-[#1B2A4A] rounded-full animate-spin"></div>
+            ) : (
+              <i className="ri-play-circle-line text-[14px]"></i>
+            )}
+            {runningPipeline ? "Running..." : "Run Full Pipeline"}
+          </button>
           <button
             onClick={() => triggerSync("fixtures")}
             disabled={syncing !== null}
-            className="h-[36px] px-[14px] rounded-[10px] bg-white border border-gray-200 text-[13px] font-semibold text-[#0A0F1C] transition-all hover:bg-gray-50 active:scale-[0.98] disabled:opacity-50 flex items-center gap-[6px]"
+            className="h-[36px] px-[14px] rounded-[10px] bg-white border border-gray-200 text-[13px] font-semibold text-[#0A0F1C] transition-all hover:bg-gray-50 active:scale-[0.98] disabled:opacity-50 flex items-center gap-[6px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
           >
             <i className="ri-calendar-check-line text-[14px]"></i>
             Sync Fixtures
@@ -450,7 +526,7 @@ export default function AdminPipelinePage() {
           <button
             onClick={() => triggerSync("odds")}
             disabled={syncing !== null}
-            className="h-[36px] px-[14px] rounded-[10px] bg-white border border-gray-200 text-[13px] font-semibold text-[#0A0F1C] transition-all hover:bg-gray-50 active:scale-[0.98] disabled:opacity-50 flex items-center gap-[6px]"
+            className="h-[36px] px-[14px] rounded-[10px] bg-white border border-gray-200 text-[13px] font-semibold text-[#0A0F1C] transition-all hover:bg-gray-50 active:scale-[0.98] disabled:opacity-50 flex items-center gap-[6px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
           >
             <i className="ri-bar-chart-box-line text-[14px]"></i>
             Sync Odds
@@ -458,7 +534,7 @@ export default function AdminPipelinePage() {
           <button
             onClick={triggerPredictions}
             disabled={syncing !== null}
-            className="h-[36px] px-[14px] rounded-[10px] bg-[#8B5CF6] text-white text-[13px] font-semibold transition-all hover:bg-[#7C3AED] active:scale-[0.98] disabled:opacity-50 flex items-center gap-[6px]"
+            className="h-[36px] px-[14px] rounded-[10px] bg-[#8B5CF6] text-white text-[13px] font-semibold transition-all hover:bg-[#7C3AED] active:scale-[0.98] disabled:opacity-50 flex items-center gap-[6px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
           >
             {syncing === "predict" ? (
               <div className="w-[14px] h-[14px] border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -470,7 +546,7 @@ export default function AdminPipelinePage() {
           <button
             onClick={triggerCleanup}
             disabled={syncing !== null}
-            className="h-[36px] px-[14px] rounded-[10px] bg-white border border-gray-200 text-[13px] font-semibold text-[#0A0F1C] transition-all hover:bg-gray-50 active:scale-[0.98] disabled:opacity-50 flex items-center gap-[6px]"
+            className="h-[36px] px-[14px] rounded-[10px] bg-white border border-gray-200 text-[13px] font-semibold text-[#0A0F1C] transition-all hover:bg-gray-50 active:scale-[0.98] disabled:opacity-50 flex items-center gap-[6px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
           >
             {syncing === "cleanup" ? (
               <div className="w-[14px] h-[14px] border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
@@ -482,7 +558,7 @@ export default function AdminPipelinePage() {
           <button
             onClick={() => triggerSync("all")}
             disabled={syncing !== null}
-            className="h-[36px] px-[16px] rounded-[10px] bg-[#1B2A4A] text-white text-[13px] font-semibold transition-all hover:bg-[#243B53] active:scale-[0.98] disabled:opacity-50 flex items-center gap-[6px]"
+            className="h-[36px] px-[16px] rounded-[10px] bg-[#1B2A4A] text-white text-[13px] font-semibold transition-all hover:bg-[#243B53] active:scale-[0.98] disabled:opacity-50 flex items-center gap-[6px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
           >
             {syncing === "all" ? (
               <div className="w-[14px] h-[14px] border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -531,30 +607,42 @@ export default function AdminPipelinePage() {
             Refresh
           </button>
         </div>
-        <div className="grid grid-cols-3 gap-[12px]">
-          {[
-            { key: "sync" as const, name: "Sync + Predict + Cleanup", icon: "ri-refresh-line", cron: cronHealth.sync },
-            { key: "predict" as const, name: "Individual Sync", icon: "ri-calendar-check-line", cron: cronHealth.predict },
-            { key: "cleanup" as const, name: "Individual Predict", icon: "ri-brain-line", cron: cronHealth.cleanup },
-          ].map((item) => (
-            <div key={item.key} className="p-[12px] bg-gray-50 rounded-[10px]">
-              <div className="flex items-center justify-between mb-[6px]">
-                <div className="flex items-center gap-[6px]">
-                  <i className={`${item.icon} text-[14px] text-gray-400`}></i>
-                  <span className="text-[12px] font-semibold text-[#0A0F1C]">{item.name}</span>
-                </div>
-                <span className={`text-[10px] font-semibold px-[6px] py-[2px] rounded-full ${cronStatusColor(item.cron.status)}`}>
-                  {item.cron.status.toUpperCase()}
-                </span>
-              </div>
-              <span className="text-[11px] font-mono-data text-gray-400 block">{item.cron.schedule}</span>
-              {item.cron.lastRun && (
-                <span className="text-[10px] text-gray-300 block mt-[4px]">
-                  Last: {new Date(item.cron.lastRun).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
-                </span>
-              )}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-[12px]">
+          {cronJobs.length === 0 ? (
+            <div className="col-span-full p-[16px] bg-gray-50 rounded-[10px] text-center text-[12px] text-gray-400">
+              Cron status unavailable — check the <a href="/admin/crons" className="text-[#1B2A4A] font-semibold underline">Cron Jobs</a> page.
             </div>
-          ))}
+          ) : (
+            cronJobs.map((job) => (
+              <div key={job.name} className="p-[12px] bg-gray-50 rounded-[10px]">
+                <div className="flex items-center justify-between mb-[6px]">
+                  <div className="flex items-center gap-[6px] min-w-0">
+                    <i className="ri-timer-line text-[14px] text-gray-400 flex-none"></i>
+                    <span className="text-[12px] font-semibold text-[#0A0F1C] truncate">{job.name}</span>
+                  </div>
+                  <span className={`text-[10px] font-semibold px-[6px] py-[2px] rounded-full flex-none ml-[6px] ${
+                    job.lastStatus === "SUCCESS" ? "bg-[#22c55e]/10 text-[#22c55e]" :
+                    job.lastStatus === "FAILED" ? "bg-[#EF4444]/10 text-[#EF4444]" :
+                    job.lastStatus === "RUNNING" ? "bg-[#2563EB]/10 text-[#2563EB]" :
+                    "bg-gray-100 text-gray-400"
+                  }`}>
+                    {job.isOverdue ? "OVERDUE" : (job.lastStatus || "NEVER").replace("_", " ")}
+                  </span>
+                </div>
+                <span className="text-[11px] font-mono-data text-gray-400 block">{job.scheduleHuman}</span>
+                {job.lastRun && (
+                  <span className="text-[10px] text-gray-300 block mt-[4px]">
+                    Last: {new Date(job.lastRun).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                )}
+                {job.consecutiveFailures >= 3 && (
+                  <span className="text-[10px] text-[#EF4444] font-semibold block mt-[2px]">
+                    {job.consecutiveFailures} consecutive failures
+                  </span>
+                )}
+              </div>
+            ))
+          )}
         </div>
       </div>
 
@@ -676,57 +764,42 @@ export default function AdminPipelinePage() {
               API Usage
             </h3>
             <div className="space-y-[12px]">
-              {/* The Odds API */}
+              {/* NVIDIA AI — real usage from ai_cache */}
               <div className="p-[12px] bg-gray-50 rounded-[10px]">
                 <div className="flex items-center justify-between mb-[6px]">
-                  <span className="text-[12px] font-semibold text-[#0A0F1C]">The Odds API</span>
-                  <span className="text-[10px] text-gray-400">Live odds</span>
+                  <span className="text-[12px] font-semibold text-[#0A0F1C]">NVIDIA AI</span>
+                  <span className="text-[10px] text-gray-400">{aiUsage ? `${aiUsage.activeKeys} keys` : "—"}</span>
                 </div>
-                {apiUsage.oddsApi ? (
+                {aiUsage ? (
                   <>
-                    <div className="flex items-center justify-between mb-[4px]">
-                      <span className="text-[11px] text-gray-400">Used this month</span>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] text-gray-400">Chat calls today</span>
                       <span className="text-[12px] font-mono-data font-semibold text-[#0A0F1C]">
-                        {apiUsage.oddsApi.used.toLocaleString()}
+                        {aiUsage.todayChatCalls.toLocaleString()}
                       </span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-[4px]">
-                      <div
-                        className="bg-[#1B2A4A] h-[4px] rounded-full transition-all"
-                        style={{ width: `${Math.min((apiUsage.oddsApi.used / 800) * 100, 100)}%` }}
-                      ></div>
-                    </div>
                     <div className="flex items-center justify-between mt-[4px]">
-                      <span className="text-[10px] text-gray-300">Resets: {apiUsage.oddsApi.resetDate}</span>
-                      <span className="text-[10px] text-gray-300">{apiUsage.oddsApi.remaining} remaining</span>
+                      <span className="text-[11px] text-gray-400">Predict calls today</span>
+                      <span className="text-[12px] font-mono-data font-semibold text-[#0A0F1C]">
+                        {aiUsage.todayPredictCalls.toLocaleString()}
+                      </span>
                     </div>
+                    <span className="text-[10px] text-gray-300 block mt-[4px]">Key rotation active</span>
                   </>
                 ) : (
-                  <p className="text-[11px] text-gray-400">Not configured</p>
+                  <p className="text-[11px] text-gray-400">Usage data unavailable</p>
                 )}
               </div>
 
-              {/* API-Football */}
+              {/* External API quota — not exposed to admin endpoints */}
               <div className="p-[12px] bg-gray-50 rounded-[10px]">
                 <div className="flex items-center justify-between mb-[6px]">
-                  <span className="text-[12px] font-semibold text-[#0A0F1C]">API-Football</span>
-                  <span className="text-[10px] text-gray-400">Fixtures</span>
+                  <span className="text-[12px] font-semibold text-[#0A0F1C]">The Odds API</span>
+                  <span className="text-[10px] text-gray-400">Quota</span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] text-gray-400">Requests today</span>
-                  <span className="text-[12px] font-mono-data font-semibold text-[#0A0F1C]">
-                    {apiUsage.apiFootball?.requestsToday || 0}
-                  </span>
-                </div>
-              </div>
-
-              {/* NVIDIA AI */}
-              <div className="p-[12px] bg-gray-50 rounded-[10px]">
-                <div className="flex items-center justify-between">
-                  <span className="text-[12px] font-semibold text-[#0A0F1C]">NVIDIA AI</span>
-                  <span className="text-[10px] text-gray-400">10 keys</span>
-                </div>
-                <span className="text-[11px] text-gray-400 block mt-[4px]">Key rotation active</span>
+                <p className="text-[11px] text-gray-400">
+                  Monthly quota is only visible via the cron-secret endpoint — not tracked here.
+                </p>
               </div>
 
               {/* Notifications */}
@@ -751,27 +824,19 @@ export default function AdminPipelinePage() {
               Cron Schedule
             </h3>
             <div className="space-y-[10px]">
-              <div className="flex items-center justify-between p-[10px] bg-gray-50 rounded-[10px]">
-                <div className="flex items-center gap-[8px]">
-                  <i className="ri-refresh-line text-[14px] text-gray-400"></i>
-                  <span className="text-[12px] font-medium text-[#0A0F1C]">Odds Sync</span>
-                </div>
-                <span className="text-[11px] font-mono-data text-gray-500">Daily 06:00 UTC</span>
-              </div>
-              <div className="flex items-center justify-between p-[10px] bg-gray-50 rounded-[10px]">
-                <div className="flex items-center gap-[8px]">
-                  <i className="ri-brain-line text-[14px] text-purple-400"></i>
-                  <span className="text-[12px] font-medium text-[#0A0F1C]">Predictions</span>
-                </div>
-                <span className="text-[11px] font-mono-data text-gray-500">Included in daily</span>
-              </div>
-              <div className="flex items-center justify-between p-[10px] bg-gray-50 rounded-[10px]">
-                <div className="flex items-center gap-[8px]">
-                  <i className="ri-delete-bin-line text-[14px] text-gray-400"></i>
-                  <span className="text-[12px] font-medium text-[#0A0F1C]">Data Cleanup</span>
-                </div>
-                <span className="text-[11px] font-mono-data text-gray-500">Included in daily</span>
-              </div>
+              {cronJobs.length === 0 ? (
+                <p className="text-[11px] text-gray-400">Cron schedule unavailable — see <a href="/admin/crons" className="text-[#1B2A4A] font-semibold underline">Cron Jobs</a>.</p>
+              ) : (
+                cronJobs.map((job) => (
+                  <div key={job.name} className="flex items-center justify-between p-[10px] bg-gray-50 rounded-[10px]">
+                    <div className="flex items-center gap-[8px] min-w-0">
+                      <i className="ri-time-line text-[14px] text-gray-400 flex-none"></i>
+                      <span className="text-[12px] font-medium text-[#0A0F1C] truncate">{job.name}</span>
+                    </div>
+                    <span className="text-[11px] font-mono-data text-gray-500 flex-none ml-[8px]">{job.scheduleHuman}</span>
+                  </div>
+                ))
+              )}
               <div className="flex items-center justify-between p-[10px] bg-gray-50 rounded-[10px]">
                 <div className="flex items-center gap-[8px]">
                   <i className="ri-earth-line text-[14px] text-gray-400"></i>
@@ -798,7 +863,7 @@ export default function AdminPipelinePage() {
                 { name: "API-Football", purpose: "Fixtures & live scores", status: "active" },
                 { name: "The Odds API", purpose: "Bookmaker odds", status: "active" },
                 { name: "Odds API IO", purpose: "Additional odds feed", status: "active" },
-                { name: "NVIDIA NIM", purpose: "AI predictions (7 models)", status: "active" },
+                { name: "NVIDIA NIM", purpose: "AI predictions", status: "active" },
               ].map((source) => (
                 <div key={source.name} className="flex items-center justify-between p-[8px] rounded-[8px] hover:bg-gray-50 transition-colors">
                   <div className="flex items-center gap-[8px]">

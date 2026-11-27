@@ -22,7 +22,10 @@ const Footer: React.FC<FooterProps> = ({ stats }) => {
               </span>
             </Link>
             <p className="text-[14px] text-white/30 !leading-[1.75] !mb-0 max-w-[280px]">
-              {"AI-powered football prediction platform that helps you find value bets with 90%+ confidence across "}{stats?.totalLeagues ? `${stats.totalLeagues}+` : "360+"}{" leagues."}
+              {"AI-powered football prediction platform that helps you find value bets across "}
+              {stats?.totalLeagues
+                ? `${stats.totalLeagues}+ leagues.`
+                : "major football leagues worldwide."}
             </p>
           </div>
 
@@ -35,8 +38,7 @@ const Footer: React.FC<FooterProps> = ({ stats }) => {
               {[
                 { label: "Features", href: "/#features" },
                 { label: "Pricing", href: "/#pricing" },
-                { label: "Dashboard", href: "/matches" },
-                { label: "API Docs", href: "#" },
+                { label: "Dashboard", href: "/dashboard" },
               ].map((item) => (
                 <li key={item.label}>
                   <Link
@@ -59,8 +61,6 @@ const Footer: React.FC<FooterProps> = ({ stats }) => {
               {[
                 { label: "FAQ", href: "/#faq" },
                 { label: "Getting Started", href: "/signup" },
-                { label: "Blog", href: "#" },
-                { label: "Community", href: "#" },
               ].map((item) => (
                 <li key={item.label}>
                   <Link
@@ -81,9 +81,10 @@ const Footer: React.FC<FooterProps> = ({ stats }) => {
             </h4>
             <ul className="space-y-[12px]">
               {[
-                { label: "Terms of Service", href: "#" },
-                { label: "Privacy Policy", href: "#" },
-                { label: "Cookie Policy", href: "#" },
+                { label: "Terms of Service", href: "/terms" },
+                { label: "Privacy Policy", href: "/privacy" },
+                { label: "Responsible Gambling", href: "/responsible-gambling" },
+                { label: "Cookie Policy", href: "/cookies" },
               ].map((item) => (
                 <li key={item.label}>
                   <Link
@@ -106,23 +107,6 @@ const Footer: React.FC<FooterProps> = ({ stats }) => {
           <p className="text-[12px] text-white/20 !mb-0 font-mono-data">
             &copy; {new Date().getFullYear()} ODDLY
           </p>
-          <div className="flex items-center gap-[8px]">
-            {[
-              { icon: "ri-twitter-x-line", href: "#" },
-              { icon: "ri-instagram-line", href: "#" },
-              { icon: "ri-telegram-line", href: "#" },
-              { icon: "ri-discord-line", href: "#" },
-            ].map((social) => (
-              <a
-                key={social.icon}
-                href={social.href}
-                className="w-[32px] h-[32px] rounded-full bg-white/[0.03] hover:bg-white/[0.08] flex items-center justify-center text-white/25 hover:text-white transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
-                aria-label={social.icon}
-              >
-                <i className={`${social.icon} text-[14px]`}></i>
-              </a>
-            ))}
-          </div>
         </div>
       </div>
     </footer>

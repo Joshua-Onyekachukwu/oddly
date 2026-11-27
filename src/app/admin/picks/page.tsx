@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { PageHeader, Badge } from "@/components/ui";
+import { createClient } from "@/lib/supabase/client";
 
 /* ─── Types ──────────────────────────────────────────────── */
 
@@ -282,7 +283,16 @@ export default function AdminPicksPage() {
 
   const fetchData = useCallback(async () => {
     try {
-      const res = await fetch("/api/v1/admin/picks");
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      const res = await fetch("/api/v1/admin/picks", {
+        headers: session?.access_token
+          ? { Authorization: `Bearer ${session.access_token}` }
+          : {},
+      });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error || `HTTP ${res.status}`);
@@ -330,7 +340,7 @@ export default function AdminPicksPage() {
           <p className="text-[12px] text-gray-400">{error}</p>
           <button
             onClick={fetchData}
-            className="mt-[16px] text-[12px] text-[#1B2A4A] underline hover:no-underline"
+            className="mt-[16px] text-[12px] text-[#1B2A4A] underline hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1B2A4A]/30 rounded-[4px] px-[4px]"
           >
             Try again
           </button>
@@ -370,7 +380,8 @@ export default function AdminPicksPage() {
           </div>
           <button
             onClick={fetchData}
-            className="w-[36px] h-[36px] rounded-[10px] flex items-center justify-center text-gray-400 hover:text-[#1B2A4A] hover:bg-gray-50 transition-colors border border-gray-100"
+            aria-label="Refresh picks"
+            className="w-[36px] h-[36px] rounded-[10px] flex items-center justify-center text-gray-400 hover:text-[#1B2A4A] hover:bg-gray-50 transition-colors border border-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1B2A4A]/30"
           >
             <i className="ri-refresh-line text-[16px]" />
           </button>
@@ -841,7 +852,9 @@ export default function AdminPicksPage() {
                       onClick={() =>
                         setExpandedFixture(isExpanded ? null : f.fixture_id)
                       }
-                      className="w-full text-left flex items-center gap-[12px] p-[12px] rounded-[10px] hover:bg-gray-50/80 transition-colors group"
+                      aria-expanded={isExpanded}
+                      aria-label={`${isExpanded ? "Collapse" : "Expand"} details for ${f.home.name} vs ${f.away.name}`}
+                      className="w-full text-left flex items-center gap-[12px] p-[12px] rounded-[10px] hover:bg-gray-50/80 transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1B2A4A]/30"
                     >
                       {/* Rank */}
                       <span

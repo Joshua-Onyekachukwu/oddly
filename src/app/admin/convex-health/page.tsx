@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useLiveStats, useSettlementFeed, useValuePicksLive, useMarketAccuracy, usePredictionStats } from "@/hooks/useSupabaseRealtime";
+import { createClient } from "@/lib/supabase/client";
 
 // ─── Inline UI Components ──────────────────────────────────────
 
@@ -128,6 +129,7 @@ export default function ConvexHealthPage() {
   const [lastRefresh, setLastRefresh] = useState(new Date());
   const [supabaseCounts, setSupabaseCounts] = useState<Record<string, number>>({});
   const [loadingSupabase, setLoadingSupabase] = useState(true);
+  const [supabaseError, setSupabaseError] = useState<string | null>(null);
 
   // Real-time Supabase queries (replaces Convex)
   const liveStatsData = useLiveStats();
@@ -137,7 +139,7 @@ export default function ConvexHealthPage() {
   const predictionStats = usePredictionStats();
 
   // Map to legacy variable names for downstream code
-  const liveStats = liveStatsData ? { totalPredictions: liveStatsData.total_predictions, correct: liveStatsData.correct_predictions, wrong: 0, accuracy: liveStatsData.accuracy } : undefined;
+  const liveStats = liveStatsData ? { totalPredictions: liveStatsData.total_predictions, correct: liveStatsData.correct_predictions, wrong: Math.max(0, liveStatsData.total_predictions - liveStatsData.correct_predictions), accuracy: liveStatsData.accuracy } : undefined;
   const latestPredictions = settlementUpdates;
   // Removed: all data now in Supabase
 
@@ -151,12 +153,25 @@ export default function ConvexHealthPage() {
   useEffect(() => {
     async function fetchSupabase() {
       try {
-        const res = await fetch("/api/v1/admin/db-health");
-        const data = await res.json();
-        if (data.data?.supabase?.tables) {
-          setSupabaseCounts(data.data.supabase.tables);
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        const res = await fetch("/api/v1/admin/db-health", {
+          headers: session?.access_token
+            ? { Authorization: `Bearer ${session.access_token}` }
+            : {},
+        });
+        if (!res.ok) {
+          setSupabaseError(`db-health returned HTTP ${res.status}`);
+        } else {
+          const data = await res.json();
+          if (data.data?.supabase?.tables) {
+            setSupabaseCounts(data.data.supabase.tables);
+            setSupabaseError(null);
+          }
         }
-      } catch {}
+      } catch {
+        setSupabaseError("Failed to reach db-health endpoint");
+      }
       setLoadingSupabase(false);
     }
     fetchSupabase();
@@ -182,12 +197,12 @@ export default function ConvexHealthPage() {
         <div>
           <div className="flex items-center gap-[8px] mb-[4px]">
             <h1 className="font-display text-[22px] md:text-[26px] font-bold text-[#0A0F1C]">
-              Convex Health
+              Realtime Health
             </h1>
             <Badge variant="success">LIVE</Badge>
           </div>
           <p className="text-[13px] text-gray-500">
-            Convex (real-time only) — 7 lightweight tables. Heavy data (599K predictions, 15K odds) lives in Supabase.
+            Supabase realtime tables (live_pick, value_picks, settlement_feed, live_stats) — heavy data lives in Supabase too.
           </p>
         </div>
         <div className="flex items-center gap-[8px]">
@@ -205,11 +220,17 @@ export default function ConvexHealthPage() {
           <span className="text-[12px] font-medium text-gray-600">Supabase (Hot)</span>
         </div>
         <div className="w-px h-[16px] bg-gray-200" />
-        <div className="w-px h-[16px] bg-gray-200" />
         <span className="text-[11px] text-gray-400">
           Supabase-only Architecture — Convex fully removed
         </span>
       </div>
+
+      {supabaseError && (
+        <div className="flex items-center gap-[8px] p-[12px] bg-amber-50 border border-amber-200 rounded-[10px] text-[12px] text-amber-700">
+          <i className="ri-alert-line flex-none" />
+          {supabaseError} — table counts may be incomplete.
+        </div>
+      )}
 
       {/* Summary Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-[12px]">
@@ -316,21 +337,17 @@ export default function ConvexHealthPage() {
                           0,
                         ).toLocaleString()}
                   </td>
-                  <td className="text-right py-[10px] px-[10px] font-mono">
-                    {totalSupabase.toLocaleString()}
-                  </td>
-                  <td />
                   <td className="text-center py-[10px] px-[10px]">
                     {(() => {
-                      const supTotal = MIGRATION_TABLES.reduce(
-                        (sum, t) =>
-                          sum + (t.supabaseTable ? getSupabaseCount(t.supabaseTable) : 0),
-                        0,
-                      );
-                      const overall = 100; // All data in Supabase now
+                      const populated = MIGRATION_TABLES.filter(
+                        (t) => t.supabaseTable && getSupabaseCount(t.supabaseTable) > 0,
+                      ).length;
+                      const pct = MIGRATION_TABLES.length > 0
+                        ? Math.round((populated / MIGRATION_TABLES.length) * 100)
+                        : 0;
                       return (
-                        <Badge variant={overall >= 90 ? "success" : overall >= 50 ? "warning" : "danger"}>
-                          {overall}% Overall
+                        <Badge variant={pct === 100 ? "success" : pct >= 50 ? "warning" : "danger"}>
+                          {pct}% Populated
                         </Badge>
                       );
                     })()}
@@ -573,9 +590,9 @@ export default function ConvexHealthPage() {
 {`┌─────────────────────────────────┐
 │       SUPABASE (All Data)       │
 ├─────────────────────────────────┤
-│ ✓ ${String(getSupabaseCount("fixtures") || "~14K").padStart(6)} Fixtures              │
-│ ✓ ~599K Predictions (Historical)│
-│ ✓ ~15K Odds Snapshots           │
+│ ✓ ${String(getSupabaseCount("fixtures") || 0).padStart(6)} Fixtures              │
+│ ✓ ${String(getSupabaseCount("predictions") || 0).padStart(6)} Predictions          │
+│ ✓ ${String(getSupabaseCount("odds_snapshots") || 0).padStart(6)} Odds Snapshots       │
 │ ✓ Auth & User Sessions          │
 │ ✓ User Accumulators             │
 │ ✓ xG, Referee, Injury Data      │
@@ -583,14 +600,14 @@ export default function ConvexHealthPage() {
 │ ✓ Team/Player Features          │
 │ ✓ Live Pick (real-time)         │
 │ ✓ Value Picks (real-time)       │
-│ ✓ Settlement Feed (last 500)    │
+│ ✓ Settlement Feed               │
 │ ✓ Live Stats Counters           │
 └──────────────┬──────────────────┘
                │
                │
          ┌─────▼─────┐
          │   VERCEL   │
-         │  6 Cron Jobs│
+         │  Cron Jobs  │
          └────────────┘
 
   Real-time: Supabase Realtime → live_pick, value_picks, settlement_feed

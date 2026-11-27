@@ -64,19 +64,34 @@ function ResultCard({ fixture, onClick }: { fixture: Fixture; onClick: () => voi
   const ag = fixture.away_score ?? 0;
   const total = hg + ag;
 
-  const mainPred = fixture.predictions?.find((p) => p.market === "1X2");
-  let predictedHome = false;
+  // 1X2 selections are stored as "Home" / "Draw" / "Away" (occasionally team
+  // names or "1"/"X"/"2" in legacy rows) — normalize before comparing.
+  const mainPred = fixture.predictions?.find((p) => (p.market || "").toLowerCase() === "1x2");
+  const actualResult = hg > ag ? "Home" : hg < ag ? "Away" : "Draw";
+  let wasCorrect: boolean | null = null;
   if (mainPred) {
-    predictedHome = mainPred.selection === fixture.home_team_name;
+    const sel = (mainPred.selection || "").toLowerCase();
+    const homeName = (fixture.home_team_name || "").toLowerCase();
+    const awayName = (fixture.away_team_name || "").toLowerCase();
+    const predicted =
+      sel === "home" || sel === "1" || (homeName && sel === homeName)
+        ? "Home"
+        : sel === "away" || sel === "2" || (awayName && sel === awayName)
+        ? "Away"
+        : sel === "draw" || sel === "x"
+        ? "Draw"
+        : null;
+    wasCorrect = predicted ? predicted === actualResult : null;
   }
-  const actualHomeWin = hg > ag;
-  const actualDraw = hg === ag;
-  const wasCorrect = predictedHome ? actualHomeWin : !actualHomeWin && !actualDraw;
 
   return (
     <div
       onClick={onClick}
-      className="bg-white rounded-[14px] border border-gray-100 hover:border-gray-200 hover:shadow-[0_4px_20px_rgba(0,0,0,0.04)] transition-all duration-300 cursor-pointer group overflow-hidden"
+      role="button"
+      tabIndex={0}
+      aria-label={`${fixture.home_team_name || "Home"} ${hg} - ${ag} ${fixture.away_team_name || "Away"}`}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
+      className="bg-white rounded-[14px] border border-gray-100 hover:border-gray-200 hover:shadow-[0_4px_20px_rgba(0,0,0,0.04)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] transition-all duration-300 cursor-pointer group overflow-hidden"
     >
       {/* Header */}
       <div className="px-[14px] pt-[12px] pb-[8px] flex items-center justify-between">
@@ -98,7 +113,7 @@ function ResultCard({ fixture, onClick }: { fixture: Fixture; onClick: () => voi
         <div className="flex items-center gap-[10px]">
           <div className="flex items-center gap-[8px] flex-1 min-w-0">
             <TeamLogo logo={fixture.home_team_logo} name={fixture.home_team_name || "H"} size={28} />
-            <span className={`text-[13px] font-semibold truncate ${actualHomeWin ? "text-[#0A0F1C]" : "text-gray-500"}`}>
+            <span className={`text-[13px] font-semibold truncate ${actualResult === "Home" ? "text-[#0A0F1C]" : "text-gray-500"}`}>
               {fixture.home_team_name || "Home"}
             </span>
           </div>
@@ -108,7 +123,7 @@ function ResultCard({ fixture, onClick }: { fixture: Fixture; onClick: () => voi
             </span>
           </div>
           <div className="flex items-center gap-[8px] flex-1 min-w-0 justify-end">
-            <span className={`text-[13px] font-semibold truncate text-right ${actualHomeWin ? "text-gray-500" : "text-[#0A0F1C]"}`}>
+            <span className={`text-[13px] font-semibold truncate text-right ${actualResult === "Away" ? "text-[#0A0F1C]" : "text-gray-500"}`}>
               {fixture.away_team_name || "Away"}
             </span>
             <TeamLogo logo={fixture.away_team_logo} name={fixture.away_team_name || "A"} size={28} />
@@ -130,13 +145,18 @@ function ResultCard({ fixture, onClick }: { fixture: Fixture; onClick: () => voi
             <span className="text-[9px] font-medium text-gray-400">
               {total} goals
             </span>
-            <span className={`text-[10px] font-semibold px-[5px] py-[1px] rounded ${
-              wasCorrect
-                ? "bg-green-50 text-green-600"
-                : "bg-red-50 text-red-500"
-            }`}>
-              {wasCorrect ? "✓" : "✗"}
-            </span>
+            {wasCorrect !== null && (
+              <span
+                className={`text-[10px] font-semibold px-[5px] py-[1px] rounded ${
+                  wasCorrect
+                    ? "bg-green-50 text-green-600"
+                    : "bg-red-50 text-red-500"
+                }`}
+                aria-label={wasCorrect ? "Prediction correct" : "Prediction incorrect"}
+              >
+                {wasCorrect ? "✓" : "✗"}
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -253,8 +273,19 @@ export default function ResultsPage() {
 
       {!loading && error && (
         <div className="text-center py-[60px]">
+          <div className="inline-flex items-center justify-center w-[56px] h-[56px] rounded-[14px] bg-red-50 mb-[16px]">
+            <i className="ri-error-warning-line text-[24px] text-red-300" />
+          </div>
+          <h3 className="font-display text-[16px] font-semibold text-[#0A0F1C] mb-[4px]">
+            Unable to load results
+          </h3>
           <p className="text-[13px] text-gray-400 mb-[16px]">{error}</p>
-          <button onClick={fetchFixtures} className="px-[16px] py-[8px] rounded-[10px] bg-[#1B2A4A] text-white text-[12px] font-semibold hover:opacity-90 transition-all">Retry</button>
+          <button
+            onClick={fetchFixtures}
+            className="px-[16px] py-[8px] rounded-[10px] bg-[#1B2A4A] text-white text-[12px] font-semibold hover:opacity-90 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
+          >
+            Retry
+          </button>
         </div>
       )}
 
@@ -264,7 +295,13 @@ export default function ResultsPage() {
             <i className="ri-calendar-check-line text-[24px] text-gray-200" />
           </div>
           <h3 className="font-display text-[16px] font-semibold text-[#0A0F1C] mb-[4px]">No results found</h3>
-          <p className="text-[13px] text-gray-400">Try a different date range.</p>
+          <p className="text-[13px] text-gray-400">
+            {searchQuery
+              ? `No results for "${searchQuery}". Try a different search.`
+              : leagueFilter !== "all"
+              ? `No finished matches in ${leagueFilter} for this period.`
+              : "Try a different date range."}
+          </p>
         </div>
       )}
 
@@ -278,13 +315,13 @@ export default function ResultsPage() {
 
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-[4px] mt-[24px]">
-              <button onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1} className="w-[32px] h-[32px] rounded-[8px] flex items-center justify-center text-[13px] font-medium text-gray-500 hover:bg-gray-100 disabled:opacity-30 transition-all">←</button>
+              <button onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1} aria-label="Previous page" className="w-[32px] h-[32px] rounded-[8px] flex items-center justify-center text-[13px] font-medium text-gray-500 hover:bg-gray-100 disabled:opacity-30 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]">←</button>
               {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => i + 1).map((page) => (
-                <button key={page} onClick={() => setCurrentPage(page)} className={`w-[32px] h-[32px] rounded-[8px] flex items-center justify-center text-[12px] font-semibold transition-all ${page === currentPage ? "bg-[#1B2A4A] text-white shadow-sm" : "text-gray-500 hover:bg-gray-100"}`}>
+                <button key={page} onClick={() => setCurrentPage(page)} aria-label={`Page ${page}`} aria-current={page === currentPage ? "page" : undefined} className={`w-[32px] h-[32px] rounded-[8px] flex items-center justify-center text-[12px] font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] ${page === currentPage ? "bg-[#1B2A4A] text-white shadow-sm" : "text-gray-500 hover:bg-gray-100"}`}>
                   {page}
                 </button>
               ))}
-              <button onClick={() => setCurrentPage(currentPage + 1)} disabled={currentPage === totalPages} className="w-[32px] h-[32px] rounded-[8px] flex items-center justify-center text-[13px] font-medium text-gray-500 hover:bg-gray-100 disabled:opacity-30 transition-all">→</button>
+              <button onClick={() => setCurrentPage(currentPage + 1)} disabled={currentPage === totalPages} aria-label="Next page" className="w-[32px] h-[32px] rounded-[8px] flex items-center justify-center text-[13px] font-medium text-gray-500 hover:bg-gray-100 disabled:opacity-30 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]">→</button>
             </div>
           )}
 
