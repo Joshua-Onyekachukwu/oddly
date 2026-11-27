@@ -126,3 +126,26 @@ conditioned, not guaranteed).
   independent of rollover, every prediction feeds learning, 3-month
   foundation→intelligence→evidence programme, reinvestment discipline,
   ₦20M/month aspiration (never in logic), permanent 6-component separation.
+
+## Complete product audit (added 2026-11-27, awaiting user approval)
+
+Evidence base: `PRODUCT-AUDIT-FINDINGS.md` (three parallel codebase audits).
+Brief: `ODDLY-PRODUCT-AUDIT-BRIEF.md` (authoritative 27-section requirements).
+
+Deliverables:
+- `ODDLY-PAGES-AND-FEATURES-AUDIT.md` — all 46 routes + ~50 APIs classified
+  with evidence; 11 cross-cutting blockers (B1–B11)
+- `ODDLY-USER-JOURNEYS.md` — visitor/fan/bettor/admin journeys + proposed
+  3-step onboarding
+- `ODDLY-PRODUCT-ACCEPTANCE-CRITERIA.md` — ~60 testable criteria, P0–P2
+- `ODDLY-COMPLETE-PRODUCT-ROADMAP.md` — 44 features (F-01–F-44), 7 phases
+  with exit conditions; Phase-1 = tests → types/migrations → snapshots →
+  metrics → settlement audit trail → cron consolidation
+- `ODDLY-ADMIN-PLATFORM-PLAN.md` — full admin control-centre plan
+- `ODDLY-FEATURE-IMPLEMENTATION-TRACKER.md` — ~90-row living tracker
+- `UI-UX-REDESIGN-PLAN.md` — updated (design system, IA, mobile strategy)
+- `EVALUATION-BASELINE-2026-11.md` — honest walk-forward baseline
+  (1X2 argmax 41.7% < always-home; degenerate-prediction root cause fixed
+  via 27,314-fixture backfill)
+
+**Status: AUDIT COMPLETE — implementation awaits user approval.**
