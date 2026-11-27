@@ -1,0 +1,97 @@
+{
+  "version": 1,
+  "createdAt": "2026-11-27T12:00:03.819Z",
+  "method": "post-hoc multinomial temperature+bias calibration of production 1X2 probs",
+  "stage": "fin",
+  "kind": "tempBias",
+  "theta": [
+    0.59982072,
+    0.3893604,
+    -0.15386853
+  ],
+  "trainedOn": {
+    "records": 27314,
+    "trainFrac": 0.8,
+    "tailN": 5463,
+    "dataset": "data/research-dataset.json walk-forward replay"
+  },
+  "honestValidation": {
+    "tail": {
+      "n": 5463,
+      "acc": 0.473,
+      "logloss": 0.6057,
+      "multiclassLogLoss": 1.8172,
+      "brier": 0.6252,
+      "meanP": [
+        0.4356,
+        0.2596,
+        0.3048
+      ],
+      "actual": [
+        0.4333,
+        0.2612,
+        0.3055
+      ],
+      "picks": {
+        "H": 4113,
+        "D": 0,
+        "A": 1350
+      }
+    },
+    "baselineTail": {
+      "n": 5463,
+      "acc": 0.4373,
+      "logloss": 0.621,
+      "multiclassLogLoss": 1.8629,
+      "brier": 0.6433,
+      "meanP": [
+        0.3327,
+        0.3287,
+        0.3386
+      ],
+      "actual": [
+        0.4333,
+        0.2612,
+        0.3055
+      ],
+      "picks": {
+        "H": 2033,
+        "D": 1206,
+        "A": 2224
+      }
+    },
+    "note": "Params above were fit on ALL records for deployment; 'honestValidation.tail' is the held-out estimate from params fit on the first 80% only."
+  },
+  "btts": {
+    "method": "platt",
+    "a": 0.09859936,
+    "b": 0.12978004,
+    "honestValidation": {
+      "train": {
+        "n": 21851,
+        "acc": 0.5238,
+        "ll": 0.6909,
+        "brier": 0.2489,
+        "meanYes": 0.5223,
+        "actualYes": 0.5223
+      },
+      "tail": {
+        "n": 5463,
+        "acc": 0.5433,
+        "ll": 0.6873,
+        "brier": 0.2471,
+        "meanYes": 0.5236,
+        "actualYes": 0.5415
+      },
+      "baselineTail": {
+        "n": 5463,
+        "acc": 0.5191,
+        "ll": 0.8068,
+        "brier": 0.2906,
+        "meanYes": 0.4458,
+        "actualYes": 0.5415
+      }
+    },
+    "trainedOnAll": true
+  }
+}

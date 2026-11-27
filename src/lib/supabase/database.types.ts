@@ -638,6 +638,7 @@ export interface Database {
           updated_at: string;
           referee_name: string;
           referee_id: string;
+          provider: string;
         };
         Insert: {
           id?: string;
@@ -654,6 +655,7 @@ export interface Database {
           updated_at?: string | null;
           referee_name?: string | null;
           referee_id?: string | null;
+          provider?: string | null;
         };
         Update: {
           id?: string;
@@ -670,6 +672,7 @@ export interface Database {
           updated_at?: string | null;
           referee_name?: string | null;
           referee_id?: string | null;
+          provider?: string | null;
         };
         Relationships: [{foreignKeyName:"fixtures_home_team_id_fkey",columns:["home_team_id"],isOneToOne:false,referencedRelation:"teams",referencedColumns:["id"]},{foreignKeyName:"fixtures_away_team_id_fkey",columns:["away_team_id"],isOneToOne:false,referencedRelation:"teams",referencedColumns:["id"]},{foreignKeyName:"fixtures_league_id_fkey",columns:["league_id"],isOneToOne:false,referencedRelation:"leagues",referencedColumns:["id"]}];
       };
@@ -915,6 +918,27 @@ export interface Database {
           created_at?: string | null;
         };
         Relationships: [{foreignKeyName:"league_draw_calibration_league_id_fkey",columns:["league_id"],isOneToOne:false,referencedRelation:"leagues",referencedColumns:["id"]}];
+      };
+      league_external_ids: {
+        Row: {
+          league_id: string;
+          provider: string;
+          external_id: string;
+          created_at: string;
+        };
+        Insert: {
+          league_id: string;
+          provider: string;
+          external_id: string;
+          created_at?: string;
+        };
+        Update: {
+          league_id?: string;
+          provider?: string;
+          external_id?: string;
+          created_at?: string;
+        };
+        Relationships: [{foreignKeyName:"league_external_ids_league_id_fkey",columns:["league_id"],isOneToOne:false,referencedRelation:"leagues",referencedColumns:["id"]}];
       };
       league_model_params: {
         Row: {
@@ -2896,61 +2920,19 @@ export interface Database {
         };
         Relationships: [{foreignKeyName:"scoring_config_updated_by_fkey",columns:["updated_by"],isOneToOne:false,referencedRelation:"profiles",referencedColumns:["id"]}];
       };
-      settlement_feed: {
-        Row: {
-          id: string;
-          prediction_id: string | null;
-          fixture_id: string;
-          market: string;
-          selection: string;
-          model_probability: number;
-          model_version: string;
-          result: string;
-          match_name: string;
-          settled_at: string;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          prediction_id?: string | null;
-          fixture_id: string;
-          market: string;
-          selection: string;
-          model_probability: number;
-          model_version: string;
-          result: string;
-          match_name?: string | null;
-          settled_at?: string;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          prediction_id?: string | null;
-          fixture_id?: string;
-          market?: string;
-          selection?: string;
-          model_probability?: number;
-          model_version?: string;
-          result?: string;
-          match_name?: string | null;
-          settled_at?: string;
-          created_at?: string;
-        };
-        Relationships: [];
-      };
       settlement_events: {
         Row: {
           id: string;
-          prediction_id: string | null;
-          fixture_id: string | null;
-          market: string | null;
-          selection: string | null;
-          previous_result: string | null;
+          prediction_id: string;
+          fixture_id: string;
+          market: string;
+          selection: string;
+          previous_result: string;
           new_result: string;
           settled_at: string;
           source: string;
-          raw_score: Json | null;
-          notes: string | null;
+          raw_score: Json;
+          notes: string;
           created_at: string;
         };
         Insert: {
@@ -2981,7 +2963,118 @@ export interface Database {
           notes?: string | null;
           created_at?: string;
         };
-        Relationships: [];
+        Relationships: [{foreignKeyName:"settlement_events_prediction_id_fkey",columns:["prediction_id"],isOneToOne:false,referencedRelation:"predictions",referencedColumns:["id"]},{foreignKeyName:"settlement_events_fixture_id_fkey",columns:["fixture_id"],isOneToOne:false,referencedRelation:"fixtures",referencedColumns:["id"]}];
+      };
+      settlement_feed: {
+        Row: {
+          id: string;
+          fixture_id: string;
+          market: string;
+          selection: string;
+          model_probability: number;
+          model_version: string;
+          result: string;
+          match_name: string;
+          settled_at: string;
+          created_at: string;
+          prediction_id: string;
+        };
+        Insert: {
+          id?: string;
+          fixture_id: string;
+          market: string;
+          selection: string;
+          model_probability: number;
+          model_version: string;
+          result: string;
+          match_name?: string | null;
+          settled_at?: string;
+          created_at?: string;
+          prediction_id?: string | null;
+        };
+        Update: {
+          id?: string;
+          fixture_id?: string;
+          market?: string;
+          selection?: string;
+          model_probability?: number;
+          model_version?: string;
+          result?: string;
+          match_name?: string | null;
+          settled_at?: string;
+          created_at?: string;
+          prediction_id?: string | null;
+        };
+        Relationships: [{foreignKeyName:"settlement_feed_prediction_id_fkey",columns:["prediction_id"],isOneToOne:false,referencedRelation:"predictions",referencedColumns:["id"]}];
+      };
+      subscription_events: {
+        Row: {
+          id: string;
+          subscription_id: string;
+          stripe_event_id: string;
+          type: string;
+          payload: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          subscription_id: string;
+          stripe_event_id: string;
+          type: string;
+          payload?: Json | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          subscription_id?: string;
+          stripe_event_id?: string;
+          type?: string;
+          payload?: Json | null;
+          created_at?: string;
+        };
+        Relationships: [{foreignKeyName:"subscription_events_subscription_id_fkey",columns:["subscription_id"],isOneToOne:false,referencedRelation:"subscriptions",referencedColumns:["id"]}];
+      };
+      subscriptions: {
+        Row: {
+          id: string;
+          user_id: string;
+          stripe_customer_id: string;
+          stripe_subscription_id: string;
+          tier: "free" | "premium" | "elite";
+          status: "active" | "canceled" | "past_due" | "trialing" | "incomplete";
+          current_period_start: string;
+          current_period_end: string;
+          cancel_at_period_end: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          stripe_customer_id?: string | null;
+          stripe_subscription_id?: string | null;
+          tier?: "free" | "premium" | "elite";
+          status?: "active" | "canceled" | "past_due" | "trialing" | "incomplete";
+          current_period_start?: string | null;
+          current_period_end?: string | null;
+          cancel_at_period_end?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          stripe_customer_id?: string | null;
+          stripe_subscription_id?: string | null;
+          tier?: "free" | "premium" | "elite";
+          status?: "active" | "canceled" | "past_due" | "trialing" | "incomplete";
+          current_period_start?: string | null;
+          current_period_end?: string | null;
+          cancel_at_period_end?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [{foreignKeyName:"subscriptions_user_id_fkey",columns:["user_id"],isOneToOne:false,referencedRelation:"profiles",referencedColumns:["id"]}];
       };
       team_aliases: {
         Row: {

@@ -8,17 +8,26 @@
  *      (probability, EV, model disagreement, data quality, market allow-list).
  *   2. BUILDS combinations of 1..maxLegs selections whose combined decimal
  *      odds land inside the target band (~2.00).
- *   3. Scores tickets by combined probability × edge and returns the best.
+ *   3. Scores tickets by correlation-adjusted probability × edge and
+ *      returns the best.
  *
  * Honesty rule: if nothing qualifies we return an empty result with a
  * machine-readable reason. We NEVER force a ~2.00 ticket.
  *
  * Correlation rule: by default two legs may never come from the same fixture
  * (same-match legs are not independent — e.g. "over 2.5" and "BTTS yes"
- * share outcomes). Cross-fixture legs are treated as independent, which is
- * the standard accumulator assumption and is documented as optimistic.
+ * share outcomes). When same-fixture legs ARE allowed (excludeSameFixture:
+ * false) or legs share a league, the combined probability is shaded
+ * toward the Fréchet lower bound by a configurable correlation weight
+ * (see adjustedJointProbability) — a conservative stand-in until
+ * empirical joint frequencies exist.
  *
- * See docs/ROLLOVER-STRATEGY-PLAN.md.
+ * Decision rule (spec §4): every run ends in an explicit daily decision —
+ * "qualified" (tickets exist), "wait" (promising candidates blocked by
+ * missing/stale data or odds that a rescan may fix), or "skip" (nothing
+ * meets the minimums; skipped days are not failures).
+ *
+ * See docs/ODDLY-ROLLOVER-ENGINE-SPEC.md and docs/ROLLOVER-STRATEGY-PLAN.md.
  */
 
 // ─── Types ─────────────────────────────────────────────────────────────
@@ -80,19 +89,48 @@ export interface RolloverTicket {
   legs: QualifiedLeg[];
   legCount: number;
   combinedOdds: number;
-  /** Π pᵢ — combined model probability (independence assumption). */
-  combinedProbability: number;
-  /** Π pᵢ × Π oᵢ - 1 — combined expected value. */
-  combinedEv: number;
   /**
-   * Ranking score = combinedEv × combinedProbability.
+   * Π pᵢ — combined model probability under the INDEPENDENCE assumption.
+   * Kept for transparency/back-compat; NOT used for gating, EV or score.
+   */
+  combinedProbability: number;
+  /**
+   * Correlation-aware joint probability (spec §2): the independence
+   * product blended toward the Fréchet lower bound by the correlated
+   * pair weights. THIS is the value used for the
+   * minCombinedProbability floor, combined EV and ranking score.
+   */
+  adjustedProbability: number;
+  /**
+   * Fractional haircut applied to the independence product:
+   * adjustedProbability / combinedProbability (1 = no correlated pairs).
+   */
+  correlationFactor: number;
+  /** Π pᵢ × Π oᵢ - 1 — EV under the independence assumption (legacy field). */
+  combinedEv: number;
+  /** adjustedProbability × combinedOdds - 1 — correlation-aware EV. */
+  adjustedEv: number;
+  /**
+   * Ranking score = adjustedEv × adjustedProbability.
    * Rewards both edge and confidence; a high-EV low-probability ticket
-   * ranks below a slightly lower-EV high-probability ticket.
+   * ranks below a slightly lower-EV high-probability ticket. Correlated
+   * tickets score strictly lower than identical independent ones.
    */
   score: number;
   /** Human/machine-readable explanation of why this ticket qualified. */
   rationale: string[];
 }
+
+/**
+ * Daily decision (spec §4):
+ *   "qualified" — at least one ticket was built
+ *   "wait"      — candidates exist but the run is blocked by missing or
+ *                 stale data / odds that a rescan (new fixtures, odds
+ *                 updates, lineup confirmations) may resolve
+ *   "skip"      — nothing meets the minimums. Skipped days are NOT
+ *                 failures; the honest default when in doubt.
+ */
+export type RolloverDecision = "qualified" | "wait" | "skip";
 
 export interface RolloverEngineResult {
   tickets: RolloverTicket[];
@@ -109,6 +147,8 @@ export interface RolloverEngineResult {
    *                            below minCombinedProbability)
    */
   reason: "ok" | "no_candidates" | "no_qualified_candidates" | "no_combinations_in_band";
+  /** Explicit daily decision derived from reason + rejection signals. */
+  decision: RolloverDecision;
   message: string;
   /** Per-candidate rejection reasons, for UI/debug transparency. */
   rejected: RejectedCandidate[];
@@ -150,11 +190,35 @@ export interface RolloverEngineConfig {
   topTickets: number;
   /**
    * Same-fixture legs are never allowed (perfect correlation on shared
-   * outcomes). Same-league same-day legs are a SOFT correlation — capped
-   * by maxLegsPerLeague when set (null = uncapped).
+   * outcomes) unless excludeSameFixture is false. Same-league same-day
+   * legs are a SOFT correlation — capped by maxLegsPerLeague when set
+   * (null = uncapped) and always discounted by the pairwise factors
+   * below.
    */
   excludeSameFixture: boolean;
   maxLegsPerLeague: number | null;
+  /**
+   * Correlation-aware probability discount (spec §2). When true, the
+   * combined probability used for gating / EV / score is blended toward
+   * the Fréchet lower bound by sameFixtureCorrelationWeight /
+   * sameLeagueCorrelationWeight. The raw product is still reported as
+   * `combinedProbability`.
+   */
+  correlationDiscountEnabled: boolean;
+  /**
+   * Correlation weight contributed by each leg pair sharing a fixtureId.
+   * Only reachable when excludeSameFixture is false. Range 0..1; 1 means
+   * a same-fixture pair is priced at the full worst-case (Fréchet lower
+   * bound) joint probability. Default 1.0 — same-match legs are the most
+   * correlated thing the engine can see.
+   */
+  sameFixtureCorrelationWeight: number;
+  /**
+   * Correlation weight contributed by each leg pair sharing a leagueId
+   * (different fixtures). Milder than same-fixture. Range 0..1.
+   * Default 0.4.
+   */
+  sameLeagueCorrelationWeight: number;
 }
 
 /**
@@ -191,6 +255,9 @@ export const DEFAULT_ROLLOVER_CONFIG: RolloverEngineConfig = {
   topTickets: 5,
   excludeSameFixture: true,
   maxLegsPerLeague: null,
+  correlationDiscountEnabled: true,
+  sameFixtureCorrelationWeight: 1.0,
+  sameLeagueCorrelationWeight: 0.4,
 };
 
 // ─── Helpers ───────────────────────────────────────────────────────────
@@ -228,6 +295,132 @@ export function expectedValue(probability: number, odds: number): number {
 /** Probability edge over the market: p - 1/o. */
 export function probabilityEdge(probability: number, odds: number): number {
   return probability - impliedProbability(odds);
+}
+
+// ─── Correlation-aware combined probability (spec §2) ──────────────────
+
+/**
+ * Correlation weight between two legs (0 = treated as independent).
+ *   same fixtureId              → sameFixtureCorrelationWeight
+ *   same leagueId, diff fixture → sameLeagueCorrelationWeight
+ *   otherwise                   → 0
+ * Legs with missing leagueId are treated as independent — we never
+ * guess a league we don't know.
+ */
+export function legPairCorrelationWeight(
+  a: Pick<QualifiedLeg, "fixtureId" | "leagueId">,
+  b: Pick<QualifiedLeg, "fixtureId" | "leagueId">,
+  config: RolloverEngineConfig = DEFAULT_ROLLOVER_CONFIG
+): number {
+  if (a.fixtureId === b.fixtureId) return config.sameFixtureCorrelationWeight;
+  if (a.leagueId != null && a.leagueId === b.leagueId) {
+    return config.sameLeagueCorrelationWeight;
+  }
+  return 0;
+}
+
+/**
+ * Correlation-aware joint probability of a combination's legs winning.
+ *
+ * Method (documented assumption, pending empirical joint frequencies —
+ * spec §11 step 1):
+ *
+ *   pInd   = Π pᵢ                              (independence product)
+ *   lower  = max(0, Σ pᵢ − (n−1))              (Fréchet lower bound —
+ *             the worst-case joint probability consistent with the
+ *             marginals, i.e. maximally adverse dependence)
+ *   λ      = min(1, Σ_pairs weight(pair) / C(n,2))
+ *   adjusted = pInd − λ × (pInd − lower)
+ *
+ * The result is a convex blend between the independence estimate and
+ * the worst-case joint probability. λ measures what fraction of
+ * "possible dependence" the ticket's leg pairs actually carry: a fully
+ * same-fixture ticket approaches the lower bound, a fully cross-league
+ * ticket stays at independence. This is deliberately CONSERVATIVE —
+ * without joint outcome data we cannot estimate the sign or magnitude
+ * of dependence, so unknown correlation is treated as a risk discount
+ * on the win probability (which lowers EV and can push a ticket below
+ * the probability floor). Correlated tickets therefore always score
+ * LOWER than identical independent ones. When
+ * worker/rollover-backtest.js accumulates settled joint frequencies
+ * this should be replaced by a Gaussian-copula / empirical estimate.
+ *
+ * The result is clamped to [0, min(pInd, min pᵢ)]: never above the
+ * independence product and never above the least likely leg.
+ */
+export function adjustedJointProbability(
+  legs: Pick<QualifiedLeg, "modelProbability" | "fixtureId" | "leagueId">[],
+  config: RolloverEngineConfig = DEFAULT_ROLLOVER_CONFIG
+): number {
+  const pIndependence = legs.reduce((acc, l) => acc * l.modelProbability, 1);
+  if (!config.correlationDiscountEnabled || legs.length < 2) {
+    return pIndependence;
+  }
+
+  const n = legs.length;
+  const totalPairs = (n * (n - 1)) / 2;
+  let weightMass = 0;
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      weightMass += legPairCorrelationWeight(legs[i], legs[j], config);
+    }
+  }
+  const lambda = Math.min(1, weightMass / totalPairs);
+  if (lambda <= 0) return pIndependence;
+
+  const sumP = legs.reduce((acc, l) => acc + l.modelProbability, 0);
+  const lowerBound = Math.max(0, sumP - (n - 1));
+
+  const raw = pIndependence - lambda * (pIndependence - lowerBound);
+  const upperBound = Math.min(pIndependence, ...legs.map((l) => l.modelProbability));
+  return Math.min(Math.max(raw, 0), upperBound);
+}
+
+// ─── Daily decision (spec §4) ──────────────────────────────────────────
+
+/**
+ * Rejection reason codes that indicate missing/unverifiable DATA rather
+ * than a genuine quality failure — a rescan (new fixtures, odds updates,
+ * lineup confirmations) may resolve them, so they map to WAIT.
+ */
+function isMissingDataReason(reason: string): boolean {
+  const code = reason.split(":")[0];
+  return (
+    code.endsWith("_missing") ||
+    code === "invalid_odds" ||
+    code === "invalid_probability" ||
+    code === "missing_fixture_id"
+  );
+}
+
+/**
+ * Derive the explicit daily decision (QUALIFIED / WAIT / SKIP).
+ *
+ *   tickets exist                          → "qualified"
+ *   no candidates supplied                 → "skip"  (nothing evaluated)
+ *   all candidates rejected on merit       → "skip"  (evaluated; nothing
+ *                                                  meets minimums)
+ *   rejections include missing-data gates  → "wait"  (promising but
+ *                                                  unverifiable today)
+ *   qualified legs exist but no ~2.00 combo→ "wait"  (qualified selections
+ *                                                  exist; the blocker is
+ *                                                  odds-band/prob-floor —
+ *                                                  rescan triggers apply)
+ */
+export function deriveRolloverDecision(
+  result: Pick<RolloverEngineResult, "reason" | "qualifiedCount" | "tickets" | "rejected">
+): RolloverDecision {
+  if (result.tickets.length > 0) return "qualified";
+  if (result.reason === "no_candidates") return "skip";
+  if (result.reason === "no_qualified_candidates") {
+    const hasMissingData = result.rejected.some((r) =>
+      r.reasons.some(isMissingDataReason)
+    );
+    return hasMissingData ? "wait" : "skip";
+  }
+  // no_combinations_in_band: qualified legs exist — the day is blocked on
+  // price formation / probability floor, not on absent candidates.
+  return result.qualifiedCount > 0 ? "wait" : "skip";
 }
 
 function round(v: number, dp = 6): number {
@@ -359,8 +552,12 @@ function ticketId(legs: QualifiedLeg[]): string {
 function buildTicket(legs: QualifiedLeg[], config: RolloverEngineConfig): RolloverTicket {
   const combinedOdds = legs.reduce((acc, l) => acc * l.odds, 1);
   const combinedProbability = legs.reduce((acc, l) => acc * l.modelProbability, 1);
+  const adjustedProbability = adjustedJointProbability(legs, config);
+  const correlationFactor =
+    combinedProbability > 0 ? adjustedProbability / combinedProbability : 1;
   const combinedEv = combinedProbability * combinedOdds - 1;
-  const score = combinedEv * combinedProbability;
+  const adjustedEv = adjustedProbability * combinedOdds - 1;
+  const score = adjustedEv * adjustedProbability;
 
   const rationale: string[] = [];
   for (const l of legs) {
@@ -372,7 +569,11 @@ function buildTicket(legs: QualifiedLeg[], config: RolloverEngineConfig): Rollov
   }
   rationale.push(
     `Combined: ${legs.length} legs, odds ${combinedOdds.toFixed(2)}, ` +
-    `prob ${(combinedProbability * 100).toFixed(1)}%, EV ${(combinedEv * 100).toFixed(1)}%`
+    `prob ${(adjustedProbability * 100).toFixed(1)}%` +
+    (correlationFactor < 0.999
+      ? ` (correlation-adjusted from ${(combinedProbability * 100).toFixed(1)}%)`
+      : "") +
+    `, EV ${(adjustedEv * 100).toFixed(1)}%`
   );
 
   return {
@@ -381,7 +582,10 @@ function buildTicket(legs: QualifiedLeg[], config: RolloverEngineConfig): Rollov
     legCount: legs.length,
     combinedOdds: round(combinedOdds, 4),
     combinedProbability: round(combinedProbability, 6),
+    adjustedProbability: round(adjustedProbability, 6),
+    correlationFactor: round(correlationFactor, 6),
     combinedEv: round(combinedEv, 6),
+    adjustedEv: round(adjustedEv, 6),
     score: round(score, 8),
     rationale,
   };
@@ -408,6 +612,7 @@ export function buildRolloverTickets(
     return {
       tickets: [], qualifiedCount: 0, combinationsEvaluated: 0,
       reason: "no_candidates",
+      decision: "skip",
       message: "No candidate selections supplied — nothing to build a ticket from.",
       rejected: [],
     };
@@ -415,10 +620,20 @@ export function buildRolloverTickets(
 
   const { qualified, rejected } = qualifyCandidates(candidates, config);
   if (qualified.length === 0) {
+    const decision = deriveRolloverDecision({
+      reason: "no_qualified_candidates",
+      qualifiedCount: 0,
+      tickets: [],
+      rejected,
+    });
     return {
       tickets: [], qualifiedCount: 0, combinationsEvaluated: 0,
       reason: "no_qualified_candidates",
-      message: `All ${candidates.length} candidates failed qualification — no ticket today.`,
+      decision,
+      message: `All ${candidates.length} candidates failed qualification — ` +
+        (decision === "wait"
+          ? "missing or unverifiable data; re-scan when lineups/odds update."
+          : "no ticket today."),
       rejected,
     };
   }
@@ -450,7 +665,9 @@ export function buildRolloverTickets(
         accum.combinedOdds <= config.maxCombinedOdds
       ) {
         inBand++;
-        if (accum.combinedProbability >= config.minCombinedProbability) {
+        // Gate on the CORRELATION-ADJUSTED probability (spec §2) — the
+        // independence product alone is not honest for correlated legs.
+        if (adjustedJointProbability(accum.legs, config) >= config.minCombinedProbability) {
           tickets.push(buildTicket(accum.legs, config));
         } else {
           belowProbFloor++;
@@ -532,16 +749,22 @@ export function buildRolloverTickets(
   } else {
     reason = "no_combinations_in_band";
     message =
-      `${inBand} combination(s) hit the odds band but all had combined ` +
-      `probability below the ${config.minCombinedProbability} floor ` +
+      `${inBand} combination(s) hit the odds band but all had correlation-` +
+      `adjusted probability below the ${config.minCombinedProbability} floor ` +
       `(${belowProbFloor} rejected). Honest result: no ticket today.`;
   }
+
+  const partial: Pick<
+    RolloverEngineResult,
+    "reason" | "qualifiedCount" | "tickets" | "rejected"
+  > = { reason, qualifiedCount: qualified.length, tickets: top, rejected };
 
   return {
     tickets: top,
     qualifiedCount: qualified.length,
     combinationsEvaluated: evaluated,
     reason,
+    decision: deriveRolloverDecision(partial),
     message,
     rejected,
   };

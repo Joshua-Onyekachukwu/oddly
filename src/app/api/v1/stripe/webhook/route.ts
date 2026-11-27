@@ -2,17 +2,30 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getStripe, handleWebhook } from "@/lib/stripe/server";
 import type Stripe from "stripe";
-import type { Database } from "@/lib/supabase/database.types";
+import type { Database, Json } from "@/lib/supabase/database.types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 // Use Database generic so Supabase knows all table columns
 type SupabaseAdmin = SupabaseClient<Database>;
+
+type SubscriptionStatus =
+  | "active"
+  | "canceled"
+  | "past_due"
+  | "trialing"
+  | "incomplete";
+type SubscriptionTier = "free" | "premium" | "elite";
 
 /**
  * POST /api/v1/stripe/webhook
  *
  * Handles Stripe webhook events for subscription lifecycle.
  * Configure this URL in Stripe Dashboard → Webhooks.
+ *
+ * Mirrors Stripe state into `subscriptions` and appends every handled
+ * event to `subscription_events` (idempotent on stripe_event_id).
+ * profiles.subscription_tier / subscription_expires_at remain the
+ * denormalized cache the app reads.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -39,31 +52,32 @@ export async function POST(request: NextRequest) {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
-        await handleCheckoutComplete(supabase, session);
+        await handleCheckoutComplete(supabase, session, event);
         break;
       }
 
+      case "customer.subscription.created":
       case "customer.subscription.updated": {
         const subscription = event.data.object as Stripe.Subscription;
-        await handleSubscriptionUpdated(supabase, subscription);
+        await handleSubscriptionUpdated(supabase, subscription, event);
         break;
       }
 
       case "customer.subscription.deleted": {
         const subscription = event.data.object as Stripe.Subscription;
-        await handleSubscriptionDeleted(supabase, subscription);
+        await handleSubscriptionDeleted(supabase, subscription, event);
         break;
       }
 
       case "invoice.payment_succeeded": {
         const invoice = event.data.object as Stripe.Invoice;
-        await handlePaymentSucceeded(supabase, invoice);
+        await handlePaymentSucceeded(supabase, invoice, event);
         break;
       }
 
       case "invoice.payment_failed": {
         const invoice = event.data.object as Stripe.Invoice;
-        await handlePaymentFailed(supabase, invoice);
+        await handlePaymentFailed(supabase, invoice, event);
         break;
       }
 
@@ -103,11 +117,140 @@ function getPeriodEnd(subscription: Stripe.Subscription): number {
 }
 
 /**
+ * Get the current_period_start from a subscription as a unix timestamp.
+ */
+function getPeriodStart(subscription: Stripe.Subscription): number | null {
+  const sub = subscription as unknown as { current_period_start?: number; items?: { data?: Array<{ current_period_start?: number }> } };
+  if (sub.current_period_start) return sub.current_period_start;
+  if (sub.items?.data?.[0]?.current_period_start) return sub.items.data[0].current_period_start!;
+  return null;
+}
+
+/**
+ * Map a Stripe subscription status onto the subscriptions.status enum.
+ */
+function mapStripeStatus(status: Stripe.Subscription.Status): SubscriptionStatus {
+  switch (status) {
+    case "active":
+      return "active";
+    case "trialing":
+      return "trialing";
+    case "past_due":
+      return "past_due";
+    case "incomplete":
+      return "incomplete";
+    case "incomplete_expired":
+    case "unpaid":
+    case "paused":
+    case "canceled":
+    default:
+      return "canceled";
+  }
+}
+
+/**
+ * Resolve the app user for a Stripe subscription: prefer the metadata we
+ * set at checkout, fall back to an existing subscriptions row.
+ */
+async function resolveUserId(
+  supabase: SupabaseAdmin,
+  subscription: Stripe.Subscription
+): Promise<string | null> {
+  const metaUserId = subscription.metadata?.supabase_user_id;
+  if (metaUserId) return metaUserId;
+
+  const { data } = await supabase
+    .from("subscriptions")
+    .select("user_id")
+    .eq("stripe_subscription_id", subscription.id)
+    .maybeSingle();
+
+  return data?.user_id ?? null;
+}
+
+/**
+ * Upsert the subscriptions row for a Stripe subscription.
+ * Returns the subscriptions.id (for the event ledger) or null on failure.
+ */
+async function upsertSubscriptionRow(
+  supabase: SupabaseAdmin,
+  params: {
+    userId: string;
+    stripeSubscriptionId: string;
+    stripeCustomerId?: string | null;
+    tier: SubscriptionTier;
+    status: SubscriptionStatus;
+    subscription: Stripe.Subscription;
+  }
+): Promise<string | null> {
+  const periodStart = getPeriodStart(params.subscription);
+  const periodEnd = getPeriodEnd(params.subscription);
+
+  const { data, error } = await supabase
+    .from("subscriptions")
+    .upsert(
+      {
+        user_id: params.userId,
+        stripe_customer_id: params.stripeCustomerId ?? null,
+        stripe_subscription_id: params.stripeSubscriptionId,
+        tier: params.tier,
+        status: params.status,
+        current_period_start: periodStart
+          ? new Date(periodStart * 1000).toISOString()
+          : null,
+        current_period_end: new Date(periodEnd * 1000).toISOString(),
+        cancel_at_period_end: params.subscription.cancel_at_period_end ?? false,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "stripe_subscription_id" }
+    )
+    .select("id")
+    .single();
+
+  if (error || !data) {
+    console.error(
+      `Failed to upsert subscription ${params.stripeSubscriptionId}:`,
+      error?.message
+    );
+    return null;
+  }
+
+  return data.id;
+}
+
+/**
+ * Append a Stripe event to the subscription_events ledger.
+ * Idempotent: duplicate stripe_event_id (23505) is ignored.
+ */
+async function recordSubscriptionEvent(
+  supabase: SupabaseAdmin,
+  subscriptionId: string | null,
+  event: Stripe.Event
+) {
+  if (!subscriptionId) return;
+
+  const { error } = await supabase.from("subscription_events").insert({
+    subscription_id: subscriptionId,
+    stripe_event_id: event.id,
+    type: event.type,
+    payload: event.data.object as unknown as Json,
+  });
+
+  if (error && error.code !== "23505") {
+    console.error(
+      `Failed to record subscription event ${event.id}:`,
+      error.message
+    );
+  }
+}
+
+/**
  * Checkout completed — activate the subscription
  */
 async function handleCheckoutComplete(
   supabase: SupabaseAdmin,
-  session: Stripe.Checkout.Session
+  session: Stripe.Checkout.Session,
+  event: Stripe.Event
 ) {
   const userId = session.metadata?.supabase_user_id;
   if (!userId) {
@@ -123,6 +266,17 @@ async function handleCheckoutComplete(
 
     const priceId = subscription.items.data[0]?.price.id || "";
     const tier = getTierFromPrice(priceId);
+
+    // Mirror into subscriptions + ledger regardless of price mapping
+    const subscriptionRowId = await upsertSubscriptionRow(supabase, {
+      userId,
+      stripeSubscriptionId: subscription.id,
+      stripeCustomerId: (session.customer as string) ?? subscription.customer as string,
+      tier: tier ?? "free",
+      status: mapStripeStatus(subscription.status),
+      subscription,
+    });
+    await recordSubscriptionEvent(supabase, subscriptionRowId, event);
 
     if (tier) {
       const expiresAt = new Date(getPeriodEnd(subscription) * 1000).toISOString();
@@ -161,13 +315,14 @@ async function handleCheckoutComplete(
 }
 
 /**
- * Subscription updated — sync tier and expiry
+ * Subscription created/updated — sync tier, expiry and subscriptions row
  */
 async function handleSubscriptionUpdated(
   supabase: SupabaseAdmin,
-  subscription: Stripe.Subscription
+  subscription: Stripe.Subscription,
+  event: Stripe.Event
 ) {
-  const userId = subscription.metadata?.supabase_user_id;
+  const userId = await resolveUserId(supabase, subscription);
   if (!userId) return;
 
   const priceId = subscription.items.data[0]?.price.id || "";
@@ -181,6 +336,16 @@ async function handleSubscriptionUpdated(
 
   const expiresAt = new Date(getPeriodEnd(subscription) * 1000).toISOString();
 
+  const subscriptionRowId = await upsertSubscriptionRow(supabase, {
+    userId,
+    stripeSubscriptionId: subscription.id,
+    stripeCustomerId: subscription.customer as string,
+    tier: tier ?? effectiveTier,
+    status: mapStripeStatus(status),
+    subscription,
+  });
+  await recordSubscriptionEvent(supabase, subscriptionRowId, event);
+
   await supabase
     .from("profiles")
     .update({
@@ -193,14 +358,28 @@ async function handleSubscriptionUpdated(
 }
 
 /**
- * Subscription deleted — downgrade to free
+ * Subscription deleted — mark canceled in ledger, downgrade profile to free
  */
 async function handleSubscriptionDeleted(
   supabase: SupabaseAdmin,
-  subscription: Stripe.Subscription
+  subscription: Stripe.Subscription,
+  event: Stripe.Event
 ) {
-  const userId = subscription.metadata?.supabase_user_id;
+  const userId = await resolveUserId(supabase, subscription);
   if (!userId) return;
+
+  const priceId = subscription.items.data[0]?.price.id || "";
+  const tier = getTierFromPrice(priceId);
+
+  const subscriptionRowId = await upsertSubscriptionRow(supabase, {
+    userId,
+    stripeSubscriptionId: subscription.id,
+    stripeCustomerId: subscription.customer as string,
+    tier: tier ?? "free",
+    status: "canceled",
+    subscription,
+  });
+  await recordSubscriptionEvent(supabase, subscriptionRowId, event);
 
   await supabase
     .from("profiles")
@@ -226,7 +405,8 @@ async function handleSubscriptionDeleted(
  */
 async function handlePaymentSucceeded(
   supabase: SupabaseAdmin,
-  invoice: Stripe.Invoice
+  invoice: Stripe.Invoice,
+  event: Stripe.Event
 ) {
   // Invoice may or may not have subscription depending on API version
   const invoiceObj = invoice as unknown as { subscription?: string | { id: string } | null };
@@ -237,12 +417,22 @@ async function handlePaymentSucceeded(
 
   const stripeClient = getStripe();
   const subscription = await stripeClient.subscriptions.retrieve(subscriptionId);
-  const userId = subscription.metadata?.supabase_user_id;
+  const userId = await resolveUserId(supabase, subscription);
   if (!userId) return;
 
   const priceId = subscription.items.data[0]?.price.id || "";
   const tier = getTierFromPrice(priceId);
   const expiresAt = new Date(getPeriodEnd(subscription) * 1000).toISOString();
+
+  const subscriptionRowId = await upsertSubscriptionRow(supabase, {
+    userId,
+    stripeSubscriptionId: subscription.id,
+    stripeCustomerId: subscription.customer as string,
+    tier: tier ?? "free",
+    status: mapStripeStatus(subscription.status),
+    subscription,
+  });
+  await recordSubscriptionEvent(supabase, subscriptionRowId, event);
 
   if (tier) {
     await supabase
@@ -258,11 +448,12 @@ async function handlePaymentSucceeded(
 }
 
 /**
- * Payment failed — notify user
+ * Payment failed — mark past_due, notify user
  */
 async function handlePaymentFailed(
   supabase: SupabaseAdmin,
-  invoice: Stripe.Invoice
+  invoice: Stripe.Invoice,
+  event: Stripe.Event
 ) {
   const invoiceObj = invoice as unknown as { subscription?: string | { id: string } | null };
   const subscriptionId = typeof invoiceObj.subscription === "string"
@@ -272,8 +463,21 @@ async function handlePaymentFailed(
 
   const stripeClient2 = getStripe();
   const subscription = await stripeClient2.subscriptions.retrieve(subscriptionId);
-  const userId = subscription.metadata?.supabase_user_id;
+  const userId = await resolveUserId(supabase, subscription);
   if (!userId) return;
+
+  const priceId = subscription.items.data[0]?.price.id || "";
+  const tier = getTierFromPrice(priceId);
+
+  const subscriptionRowId = await upsertSubscriptionRow(supabase, {
+    userId,
+    stripeSubscriptionId: subscription.id,
+    stripeCustomerId: subscription.customer as string,
+    tier: tier ?? "free",
+    status: "past_due",
+    subscription,
+  });
+  await recordSubscriptionEvent(supabase, subscriptionRowId, event);
 
   await supabase.from("notifications").insert({
     user_id: userId,

@@ -50,13 +50,45 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Normalize + validate the requested tier via entitlements
+    const { normalizeTier } = await import("@/lib/subscription/entitlements");
+    const { STRIPE_PLANS } = await import("@/lib/stripe/config");
+    const normalizedTier = normalizeTier(tier);
+
+    if (normalizedTier === "free") {
+      return NextResponse.json(
+        { error: "Invalid tier", message: "Tier must be 'premium' or 'elite'" },
+        { status: 400 }
+      );
+    }
+
+    // Fail gracefully when the plan's Stripe price ID isn't configured
+    const expectedPriceId = STRIPE_PLANS[normalizedTier].priceId;
+    if (!expectedPriceId) {
+      return NextResponse.json(
+        {
+          error: "Plan not configured",
+          message: `Stripe price ID for the ${normalizedTier} plan is not set.`,
+        },
+        { status: 503 }
+      );
+    }
+
+    // Only allow checkout against the configured price for the tier
+    if (priceId !== expectedPriceId) {
+      return NextResponse.json(
+        { error: "Price does not match tier" },
+        { status: 400 }
+      );
+    }
+
     // Lazy import so build doesn't fail without Stripe
     const stripe = await import("@/lib/stripe/server");
     const result = await stripe.createCheckoutSession({
       userId: user.id,
       email: user.email || "",
-      priceId,
-      tier,
+      priceId: expectedPriceId,
+      tier: normalizedTier,
       successUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/settings?upgraded=true`,
       cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/pricing`,
     });

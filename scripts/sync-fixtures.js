@@ -12,6 +12,23 @@
 const { createClient } = require("@supabase/supabase-js");
 const fs = require("fs");
 const path = require("path");
+const ts = require("typescript");
+
+// Load the shared team normalizer (same keys prod uses for Elo lookups)
+function loadTeamNormalizer() {
+  const src = fs.readFileSync(
+    path.join(__dirname, "..", "src", "lib", "football", "team-normalizer.ts"),
+    "utf8"
+  );
+  const js = ts.transpileModule(src, {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
+  }).outputText;
+  const m = new module.constructor();
+  m.paths = module.paths;
+  m._compile(js, path.join(__dirname, "..", "src", "lib", "football", "team-normalizer.js"));
+  return m.exports.normalizeTeamName;
+}
+const normalizeTeamKey = loadTeamNormalizer();
 
 // Load .env.local
 function loadEnv() {
@@ -115,14 +132,53 @@ function normalizeTeamName(name) {
     .trim();
 }
 
-async function getOrCreateLeague(name, country) {
+// Confidence score (0..1) between normalized team keys — alias-aware.
+function teamKeyScore(a, b) {
+  const ka = normalizeTeamKey(a) || a;
+  const kb = normalizeTeamKey(b) || b;
+  if (ka === kb) return 1;
+  const at = new Set(ka.split(" ").filter(Boolean));
+  const bt = new Set(kb.split(" ").filter(Boolean));
+  let inter = 0;
+  for (const t of at) if (bt.has(t)) inter++;
+  const union = at.size + bt.size - inter;
+  const jaccard = union ? inter / union : 0;
+  const containment = ka.includes(kb) || kb.includes(ka) ? 0.4 : 0;
+  return Math.min(1, jaccard + containment);
+}
+const FUZZY_THRESHOLD = 0.6;
+const MATCH_WINDOW_MS = 3 * 60 * 60 * 1000; // ±3h kickoff window
+
+async function getOrCreateLeague(name, country, sportKey) {
+  // 1. Provider external id mapping (league_external_ids)
+  if (sportKey) {
+    const { data: mapped } = await supabase
+      .from("league_external_ids")
+      .select("league_id")
+      .eq("provider", "the-odds-api")
+      .eq("external_id", sportKey)
+      .limit(1)
+      .maybeSingle();
+    if (mapped?.league_id) return mapped.league_id;
+  }
+
+  // 2. Name match (case-insensitive)
   const { data: existing } = await supabase
     .from("leagues")
     .select("id")
-    .eq("name", name)
-    .single();
+    .ilike("name", name)
+    .limit(1)
+    .maybeSingle();
 
-  if (existing) return existing.id;
+  if (existing) {
+    if (sportKey) {
+      await supabase.from("league_external_ids").upsert(
+        { league_id: existing.id, provider: "the-odds-api", external_id: sportKey },
+        { onConflict: "provider,external_id" }
+      );
+    }
+    return existing.id;
+  }
 
   const { data: newLeague, error } = await supabase
     .from("leagues")
@@ -131,6 +187,13 @@ async function getOrCreateLeague(name, country) {
     .single();
 
   if (error) throw error;
+
+  if (sportKey) {
+    await supabase.from("league_external_ids").upsert(
+      { league_id: newLeague.id, provider: "the-odds-api", external_id: sportKey },
+      { onConflict: "provider,external_id" }
+    );
+  }
   return newLeague.id;
 }
 
@@ -144,37 +207,47 @@ async function getOrCreateTeam(name, leagueId, country) {
     .eq("alias", normalized)
     .single();
 
-  if (alias) {
+  if (alias?.canonical_name) {
+    // Resolve alias target to a team UUID (canonical_name is a name, not id)
     const { data: team } = await supabase
       .from("teams")
       .select("id")
-      .eq("canonical_name", alias.canonical_name)
-      .single();
+      .ilike("canonical_name", alias.canonical_name)
+      .limit(1)
+      .maybeSingle();
     if (team) return team.id;
   }
 
-  // Check existing
+  // Check existing (case-insensitive)
   const { data: existing } = await supabase
     .from("teams")
     .select("id")
-    .eq("canonical_name", normalized)
-    .single();
+    .ilike("canonical_name", normalized)
+    .limit(1)
+    .maybeSingle();
 
   if (existing) return existing.id;
 
-  // Fuzzy match
+  // Scored fuzzy match — only accept candidates above the threshold
   const { data: fuzzy } = await supabase
     .from("teams")
     .select("id, canonical_name")
     .ilike("canonical_name", `%${normalized.substring(0, 6)}%`)
-    .limit(1);
+    .limit(10);
 
   if (fuzzy?.length) {
-    await supabase.from("team_aliases").upsert(
-      { canonical_name: fuzzy[0].canonical_name, alias: normalized, source: "odds-sync" },
-      { onConflict: "alias" }
-    );
-    return fuzzy[0].id;
+    let best = null;
+    for (const t of fuzzy) {
+      const score = teamKeyScore(normalized, t.canonical_name || "");
+      if (!best || score > best.score) best = { ...t, score };
+    }
+    if (best && best.score >= FUZZY_THRESHOLD) {
+      await supabase.from("team_aliases").upsert(
+        { canonical_name: best.canonical_name, alias: normalized, source: "odds-sync" },
+        { onConflict: "alias" }
+      );
+      return best.id;
+    }
   }
 
   // Create new
@@ -194,9 +267,11 @@ async function getOrCreateTeam(name, leagueId, country) {
   return newTeam.id;
 }
 
-async function matchFixture(homeTeam, awayTeam) {
+async function matchFixture(homeTeam, awayTeam, commenceTime, leagueId) {
   const homeNorm = normalizeTeamName(homeTeam);
   const awayNorm = normalizeTeamName(awayTeam);
+  const kickoff = new Date(commenceTime);
+  if (isNaN(kickoff.getTime())) return null;
 
   const { data: homeAlias } = await supabase
     .from("team_aliases")
@@ -213,33 +288,52 @@ async function matchFixture(homeTeam, awayTeam) {
   const homeName = homeAlias?.canonical_name || homeNorm;
   const awayName = awayAlias?.canonical_name || awayNorm;
 
-  const { data: fixtures } = await supabase
+  // Candidates: scheduled fixtures within ±3h of kickoff, same league when known
+  const windowStart = new Date(kickoff.getTime() - MATCH_WINDOW_MS).toISOString();
+  const windowEnd = new Date(kickoff.getTime() + MATCH_WINDOW_MS).toISOString();
+
+  let query = supabase
     .from("fixtures")
     .select(`
       id,
+      kickoff_time,
       home_team:teams!fixtures_home_team_id_fkey(canonical_name),
       away_team:teams!fixtures_away_team_id_fkey(canonical_name)
     `)
     .eq("status", "scheduled")
-    .gte("kickoff_time", new Date().toISOString())
-    .limit(200);
+    .gte("kickoff_time", windowStart)
+    .lte("kickoff_time", windowEnd)
+    .order("kickoff_time", { ascending: true })
+    .limit(100);
 
-  if (!fixtures) return null;
+  if (leagueId) query = query.eq("league_id", leagueId);
 
+  const { data: fixtures } = await query;
+
+  if (!fixtures?.length) return null;
+
+  // Exact name matches beat fuzzy; closest kickoff breaks ties
+  let best = null;
   for (const f of fixtures) {
     const dbHome = f.home_team?.canonical_name;
     const dbAway = f.away_team?.canonical_name;
 
-    if (dbHome === homeName && dbAway === awayName) return f.id;
-    if (
-      (dbHome?.includes(homeName) || homeName?.includes(dbHome)) &&
-      (dbAway?.includes(awayName) || awayName?.includes(dbAway))
-    ) {
-      return f.id;
-    }
+    const exact = dbHome === homeName && dbAway === awayName;
+    const fuzzy =
+      !exact &&
+      !!dbHome && !!dbAway &&
+      ((dbHome.includes(homeName) || homeName.includes(dbHome)) &&
+        (dbAway.includes(awayName) || awayName.includes(dbAway)));
+    if (!exact && !fuzzy) continue;
+
+    const delta = Math.abs(new Date(f.kickoff_time).getTime() - kickoff.getTime());
+    const cand = { id: f.id, delta, fuzzy };
+    if (!best) best = cand;
+    else if (exact && best.fuzzy) best = cand;
+    else if (exact === best.fuzzy && delta < best.delta) best = cand;
   }
 
-  return null;
+  return best?.id ?? null;
 }
 
 async function createFixture(apiFixture, leagueId, country) {
@@ -249,6 +343,7 @@ async function createFixture(apiFixture, leagueId, country) {
   const { data, error } = await supabase
     .from("fixtures")
     .insert({
+      provider: "the-odds-api",
       external_id: apiFixture.id,
       home_team_id: homeTeamId,
       away_team_id: awayTeamId,
@@ -325,7 +420,7 @@ async function syncSport(sport) {
   }
 
   const fixtures = await response.json();
-  const leagueId = await getOrCreateLeague(sport.league, sport.country);
+  const leagueId = await getOrCreateLeague(sport.league, sport.country, sport.key);
 
   let created = 0;
   let matched = 0;
@@ -333,7 +428,12 @@ async function syncSport(sport) {
 
   for (const fixture of fixtures) {
     try {
-      let fixtureId = await matchFixture(fixture.home_team, fixture.away_team);
+      let fixtureId = await matchFixture(
+        fixture.home_team,
+        fixture.away_team,
+        fixture.commence_time,
+        leagueId
+      );
 
       if (!fixtureId) {
         fixtureId = await createFixture(fixture, leagueId, sport.country);

@@ -28,6 +28,7 @@ import {
   announcementCreateSchema,
   validateBody,
 } from "@/lib/api/validation";
+import { logAdminAction } from "@/lib/admin/audit";
 
 const supabaseAdmin = createClient<Database>(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -97,6 +98,11 @@ export async function POST(request: NextRequest) {
     if (error || !data) {
       return internalError(`Failed to create announcement: ${error?.message || "unknown error"}`);
     }
+
+    await logAdminAction(user.id, "announcement.create", "announcement", data.id, {
+      title: data.title,
+      target: data.target,
+    });
 
     const response = createdResponse(data);
     addRateLimitHeaders(response, rl.remaining, rl.resetAt);

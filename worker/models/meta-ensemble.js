@@ -24,6 +24,70 @@ const modelDraw = require("./market-draw");
 const crossSignals = require("./cross-model-signals");
 
 /**
+ * Walk-forward recalibration (2026-11).
+ *
+ * Post-hoc calibration fitted on the 27,314-match research dataset using the
+ * strict walk-forward replay harness (scripts/eval-walk-forward-replay.js +
+ * scripts/eval-dump-1x2-records.js + scripts/fit-1x2-recal.js). Parameters are
+ * stored in model_weight_config.recalibration (JSONB, config production_v5)
+ * with a file fallback at data/calibration/1x2-recal.json.
+ *
+ * Honest held-out-tail (last 20%, n=5,463) results vs uncalibrated baseline:
+ *   1X2 argmax acc 47.3% vs 43.7% (always-Home base rate ≈ 43.5%)
+ *   1X2 multiclass log-loss 1.817 vs 1.863
+ *   BTTS log-loss 0.687 vs 0.807, Brier 0.247 vs 0.291
+ * See data/calibration/1x2-recal.json for full metrics.
+ *
+ * Applied to FINAL probabilities (after cross-model refine + league adjust),
+ * i.e. stage "fin" — matching how theta was fitted.
+ */
+let _fileRecal;
+function loadRecalibration(storeData) {
+  const db = storeData && storeData.weightConfig && storeData.weightConfig.recalibration;
+  if (db && db.theta) return db;
+  if (_fileRecal === undefined) {
+    _fileRecal = null;
+    try {
+      const fs = require("fs");
+      const path = require("path");
+      const p = path.join(__dirname, "..", "..", "data", "calibration", "1x2-recal.json");
+      if (fs.existsSync(p)) _fileRecal = JSON.parse(fs.readFileSync(p, "utf8"));
+    } catch (_) { /* no file → no recalibration */ }
+  }
+  return _fileRecal;
+}
+
+function applyRecalibration(refined, recal) {
+  if (!recal) return;
+  // 1X2: q_k ∝ p_k^alpha * exp(b_k), k = Home/Draw/Away; biasAway fixed 0.
+  if (Array.isArray(recal.theta) && recal.theta.length >= 3) {
+    const [alpha, bH, bD] = recal.theta;
+    const o = refined.oneXtwo;
+    const p = [o.home, o.draw, o.away];
+    const s = [
+      alpha * Math.log(Math.max(p[0], 1e-6)) + bH,
+      alpha * Math.log(Math.max(p[1], 1e-6)) + bD,
+      alpha * Math.log(Math.max(p[2], 1e-6)),
+    ];
+    const mx = Math.max(s[0], s[1], s[2]);
+    const e0 = Math.exp(s[0] - mx), e1 = Math.exp(s[1] - mx), e2 = Math.exp(s[2] - mx);
+    const t = e0 + e1 + e2;
+    o.home = e0 / t;
+    o.draw = e1 / t;
+    o.away = e2 / t;
+  }
+  // BTTS: Platt scaling q = sigmoid(a*logit(p)+b)
+  const bp = recal.btts;
+  if (bp && typeof bp.a === "number" && typeof bp.b === "number" && refined.btts) {
+    const p = Math.min(Math.max(refined.btts.bttsYes, 1e-6), 1 - 1e-6);
+    const logit = Math.log(p / (1 - p));
+    const q = 1 / (1 + Math.exp(-(bp.a * logit + bp.b)));
+    refined.btts.bttsYes = q;
+    refined.btts.bttsNo = 1 - q;
+  }
+}
+
+/**
  * Run all models for a single match and return comprehensive predictions.
  *
  * @param {Object} features - Pre-computed match features (from tracker + feature store)
@@ -92,6 +156,10 @@ function predictMatch(features, storeData = {}) {
       }
     }
   }
+
+  // ═══ WALK-FORWARD RECALIBRATION (post-hoc, fitted on research set) ═══
+  // Applied to final probabilities — see loadRecalibration() for provenance.
+  applyRecalibration(refined, loadRecalibration(storeData));
 
   // ═══ ASSEMBLE FINAL OUTPUT ═══
 

@@ -24,6 +24,7 @@ import {
   checkRateLimit,
 } from "@/lib/api/utils";
 import { adminUserUpdateSchema, validateBody } from "@/lib/api/validation";
+import { logAdminAction } from "@/lib/admin/audit";
 
 const supabaseAdmin = createClient<Database>(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -87,6 +88,10 @@ export async function PATCH(
       }
       return internalError(`Failed to update user: ${error?.message || "unknown error"}`);
     }
+
+    await logAdminAction(user.id, "user.update", "user", id, {
+      updates,
+    });
 
     const response = successResponse(data);
     addRateLimitHeaders(response, rl.remaining, rl.resetAt);

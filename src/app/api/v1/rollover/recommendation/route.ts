@@ -18,6 +18,7 @@
  *   window: { from: string, to: string },
  *   tickets: RolloverTicket[],          // see engine.ts; empty when none qualify
  *   reason: "ok" | "no_candidates" | "no_qualified_candidates" | "no_combinations_in_band",
+ *   decision: "qualified" | "wait" | "skip",  // spec §4 daily decision
  *   message: string,
  *   stats: {
  *     fixturesConsidered: number,
@@ -194,6 +195,7 @@ export async function GET(request: NextRequest) {
         window: { from: windowFrom.toISOString(), to: windowTo.toISOString() },
         tickets: [],
         reason: "no_candidates",
+        decision: "skip",
         message: "No upcoming fixtures in the requested window.",
         stats: {
           fixturesConsidered: 0, predictionsConsidered: 0, candidatesWithOdds: 0,
@@ -328,11 +330,57 @@ export async function GET(request: NextRequest) {
 
     const result = buildRolloverTickets(candidates, config);
 
+    // Daily decision (spec §4). The engine derives it from its own inputs;
+    // the route refines one case it alone can see: predictions existed but
+    // NONE had usable odds → "wait" (promising picks, missing reliable
+    // odds — a rescan on odds updates may qualify them).
+    const decision =
+      result.decision === "skip" &&
+      (latestPreds?.length ?? 0) > 0 &&
+      withOdds === 0
+        ? "wait"
+        : result.decision;
+
+    // 7. Rejected-opportunity audit log (spec §6) — bounded to the top 50
+    //    rejected candidates per run. Service-role insert; failures are
+    //    logged but must NEVER break the recommendation.
+    const rejectionRows = result.rejected.slice(0, 50).map((r) => ({
+      fixture_id: r.candidate.fixtureId,
+      market: canonicalMarket(r.candidate.market),
+      selection: r.candidate.selection,
+      model_probability: r.candidate.modelProbability,
+      reason_code: (r.reasons[0] ?? "unknown").split(":")[0],
+      detail: {
+        reasons: r.reasons,
+        odds: r.candidate.odds,
+        bookmaker: r.candidate.bookmaker ?? null,
+        fixtureLabel: r.candidate.fixtureLabel ?? null,
+        leagueId: r.candidate.leagueId ?? null,
+        evaluated_for: dateParam || new Date().toISOString().slice(0, 10),
+      },
+      evaluated_at: new Date().toISOString(),
+    }));
+    if (rejectionRows.length > 0) {
+      try {
+        // rollover_rejections is not yet in generated Database types —
+        // cast the client for this audit-table write only.
+        const { error: rejErr } = await (supabaseAdmin as any)
+          .from("rollover_rejections")
+          .insert(rejectionRows);
+        if (rejErr) {
+          console.error("[ROLLOVER] rejection log insert failed:", rejErr.message);
+        }
+      } catch (rejEx) {
+        console.error("[ROLLOVER] rejection log insert threw:", rejEx);
+      }
+    }
+
     return successResponse({
       date: dateParam || new Date().toISOString().slice(0, 10),
       window: { from: windowFrom.toISOString(), to: windowTo.toISOString() },
       tickets: result.tickets,
       reason: result.reason,
+      decision,
       message: result.message,
       stats: {
         fixturesConsidered: fixtures.length,

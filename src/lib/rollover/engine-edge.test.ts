@@ -12,8 +12,8 @@ import {
 // Edge-case coverage complementing engine.test.ts:
 // league soft-correlation cap, excludeSameFixture toggle, combination
 // budget abort, data-quality gate, allowedMarkets=null, band boundaries,
-// and confirmation that there is NO probability correlation discount
-// (combinedProbability is a plain product — documented assumption).
+// and confirmation that combinedProbability remains the independence
+// product while adjustedProbability carries the spec §2 discount.
 
 function cand(over: Partial<RolloverCandidate>): RolloverCandidate {
   return {
@@ -188,10 +188,10 @@ describe("buildRolloverTickets — edge cases", () => {
     ).toBe(true);
   });
 
-  test("NO correlation discount: combinedProbability is a plain product", () => {
-    // Even for same-league legs the engine assumes independence —
-    // combinedProbability = Π pᵢ with no shrinkage. This is the documented
-    // "optimistic" accumulator assumption; assert it explicitly.
+  test("combinedProbability stays the plain product; adjustedProbability carries the discount", () => {
+    // combinedProbability remains the independence product for
+    // transparency; the correlation-aware value lives in
+    // adjustedProbability (spec §2) and is what gates/EV/score use.
     const res = buildRolloverTickets(
       [
         cand({ fixtureId: "f1", leagueId: "L1", modelProbability: 0.73, odds: 1.42 }),
@@ -202,6 +202,10 @@ describe("buildRolloverTickets — edge cases", () => {
     const t = res.tickets.find((x) => x.legCount === 2);
     expect(t).toBeTruthy();
     expect(t!.combinedProbability).toBeCloseTo(0.73 * 0.73, 6);
+    // same-league pair → adjusted below product but still above the
+    // default 0.45 floor, so the ticket still qualifies.
+    expect(t!.adjustedProbability!).toBeLessThan(t!.combinedProbability);
+    expect(t!.adjustedProbability!).toBeGreaterThanOrEqual(0.45);
   });
 
   test("maxCombinationsEvaluated aborts the search safely", () => {

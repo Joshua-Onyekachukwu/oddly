@@ -26,6 +26,7 @@ import {
   announcementUpdateSchema,
   validateBody,
 } from "@/lib/api/validation";
+import { logAdminAction } from "@/lib/admin/audit";
 
 const supabaseAdmin = createClient<Database>(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -68,6 +69,10 @@ export async function PATCH(
       return internalError(`Failed to update announcement: ${error?.message || "unknown error"}`);
     }
 
+    await logAdminAction(user.id, "announcement.update", "announcement", data.id, {
+      updates: validation.data,
+    });
+
     const response = successResponse(data);
     addRateLimitHeaders(response, rl.remaining, rl.resetAt);
     return response;
@@ -106,6 +111,8 @@ export async function DELETE(
     if (error) {
       return internalError(`Failed to delete announcement: ${error.message}`);
     }
+
+    await logAdminAction(user.id, "announcement.delete", "announcement", id);
 
     const response = noContentResponse();
     addRateLimitHeaders(response, rl.remaining, rl.resetAt);

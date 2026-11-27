@@ -25,6 +25,7 @@ import {
   checkRateLimit,
 } from "@/lib/api/utils";
 import { leagueCreateSchema, validateBody } from "@/lib/api/validation";
+import { logAdminAction } from "@/lib/admin/audit";
 
 export async function GET(request: NextRequest) {
   try {
@@ -111,6 +112,12 @@ export async function POST(request: NextRequest) {
     if (error) {
       return internalError(`Failed to save league: ${error.message}`);
     }
+
+    await logAdminAction(user.id, "league.create", "league", data.id, {
+      name,
+      country: country || null,
+      active,
+    });
 
     return createdResponse(data);
   } catch (error: unknown) {

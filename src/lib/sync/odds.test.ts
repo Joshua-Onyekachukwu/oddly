@@ -100,6 +100,10 @@ function makeQuery(table: string) {
       terminalKind = "one";
       return Promise.resolve(resolve());
     },
+    maybeSingle() {
+      terminalKind = "one";
+      return Promise.resolve(resolve());
+    },
     then(onFulfilled: any, onRejected: any) {
       terminalKind = terminalKind || "many";
       return Promise.resolve(resolve()).then(onFulfilled, onRejected);

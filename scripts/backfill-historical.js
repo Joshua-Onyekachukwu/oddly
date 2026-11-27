@@ -143,6 +143,7 @@ async function storeMatch(match, leagueName, leagueId) {
       home_score: hg,
       away_score: ag,
       external_id: String(match.id),
+      provider: "football-data-org",
     })
     .select("id")
     .single();

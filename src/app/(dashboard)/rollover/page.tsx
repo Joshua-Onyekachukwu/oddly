@@ -86,7 +86,11 @@ interface EngineTicket {
   legCount: number;
   combinedOdds: number;
   combinedProbability: number;
+  /** correlation-aware joint probability (spec §2) — preferred for display */
+  adjustedProbability?: number;
+  correlationFactor?: number;
   combinedEv: number;
+  adjustedEv?: number;
   score: number;
   rationale: string[];
 }
@@ -96,6 +100,8 @@ interface RolloverRecommendation {
   window: { from: string; to: string };
   tickets: EngineTicket[];
   reason: "ok" | "no_candidates" | "no_qualified_candidates" | "no_combinations_in_band" | string;
+  /** spec §4 daily decision: qualified | wait | skip */
+  decision?: "qualified" | "wait" | "skip" | string;
   message: string;
   stats: {
     fixturesConsidered: number;
@@ -114,6 +120,62 @@ interface RolloverRecommendation {
 }
 
 // Map canonical engine market keys → BettingTooltip glossary keys
+// Mirrors GET /api/v1/rollover/stats (src/lib/rollover/stats.ts)
+interface RolloverStats {
+  basis: "paper";
+  month: string;
+  chains: {
+    total: number;
+    active: number;
+    completed: number;
+    broken: number;
+    startedThisMonth: number;
+    completedThisMonth: number;
+  };
+  picks: {
+    total: number;
+    won: number;
+    lost: number;
+    skipped: number;
+    settled: number;
+    winRatePct: number | null;
+  };
+  bankroll: {
+    totalCurrentBalance: number;
+    totalBanked: number;
+    activeChains: number;
+  };
+  streaks: {
+    currentWinStreak: number;
+    currentLossStreak: number;
+    maxWinStreak: number;
+    maxLossStreak: number;
+  };
+  drawdown: {
+    maxDrawdownAmount: number;
+    maxDrawdownPct: number;
+  };
+  averages: {
+    avgOdds: number | null;
+    avgModelProbability: number | null;
+  };
+  monthly: {
+    rolloverWins: number;
+    rolloverLosses: number;
+    skippedDays: number;
+    chainsCompleted: number;
+    target: number;
+    stretchTarget: number;
+    progressPct: number;
+  };
+}
+
+const DECISION_BADGE: Record<string, { variant: "success" | "warning" | "default"; label: string }> = {
+  qualified: { variant: "success", label: "QUALIFIED" },
+  wait: { variant: "warning", label: "WAIT" },
+  skip: { variant: "default", label: "SKIP" },
+};
+
 const ENGINE_MARKET_TERMS: Record<string, string> = {
   "1x2": "1X2", h2h: "1X2",
   ou: "OU", over_under: "OU", totals: "OU", total_goals: "OU",
@@ -189,6 +251,9 @@ export default function RolloverPage() {
   const [engineLoading, setEngineLoading] = useState(true);
   const [engineError, setEngineError] = useState<string | null>(null);
 
+  // Monthly tracker stats (spec §5) — paper/simulated figures only
+  const [rolloverStats, setRolloverStats] = useState<RolloverStats | null>(null);
+
   // Create form
   const [chainName, setChainName] = useState("");
   const [startingStake, setStartingStake] = useState(10);
@@ -258,6 +323,26 @@ export default function RolloverPage() {
   useEffect(() => {
     fetchEngineRecommendation();
   }, [fetchEngineRecommendation]);
+
+  // Fetch monthly tracker stats from /api/v1/rollover/stats
+  const fetchRolloverStats = useCallback(async () => {
+    if (!session?.access_token) return;
+    try {
+      const res = await fetch("/api/v1/rollover/stats", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      const json = await res.json();
+      if (res.ok && json?.success) {
+        setRolloverStats(json.data as RolloverStats);
+      }
+    } catch (err) {
+      console.error("Failed to load rollover stats:", err);
+    }
+  }, [session?.access_token]);
+
+  useEffect(() => {
+    fetchRolloverStats();
+  }, [fetchRolloverStats]);
 
   // Map a single-leg engine ticket onto the existing rollover_picks flow.
   // Multi-leg accumulators don't fit the one-pick-per-day schema — those are
@@ -514,9 +599,19 @@ export default function RolloverPage() {
       <Card className="mb-[20px]">
         <div className="flex items-center justify-between mb-[4px]">
           <div>
-            <h2 className="text-[14px] font-display font-bold text-[#0A0F1C]">
-              Today&apos;s Recommendation
-            </h2>
+            <div className="flex items-center gap-[8px]">
+              <h2 className="text-[14px] font-display font-bold text-[#0A0F1C]">
+                Today&apos;s Recommendation
+              </h2>
+              {engineRec?.decision && DECISION_BADGE[engineRec.decision] && (
+                <Badge
+                  variant={DECISION_BADGE[engineRec.decision].variant}
+                  size="sm"
+                >
+                  {DECISION_BADGE[engineRec.decision].label}
+                </Badge>
+              )}
+            </div>
             <p className="text-[11px] text-gray-400">
               {engineRec?.config
                 ? `Auto-built ~${engineRec.config.minCombinedOdds}–${engineRec.config.maxCombinedOdds} accumulator from model picks with bookmaker odds`
@@ -590,11 +685,16 @@ export default function RolloverPage() {
                     </div>
                     <div className="text-right text-[10px] text-gray-400">
                       <span className="font-mono-data text-green-600 font-medium">
-                        {(ticket.combinedProbability * 100).toFixed(1)}% win prob
+                        {(((ticket.adjustedProbability ?? ticket.combinedProbability)) * 100).toFixed(1)}% win prob
+                        {(ticket.correlationFactor ?? 1) < 0.999 && (
+                          <span className="text-gray-300" title="Correlation-adjusted probability">
+                            {" "}(adj)
+                          </span>
+                        )}
                       </span>
                       <span className="mx-[4px]">·</span>
                       <span className="font-mono-data">
-                        EV {(ticket.combinedEv * 100).toFixed(1)}%
+                        EV {(((ticket.adjustedEv ?? ticket.combinedEv)) * 100).toFixed(1)}%
                       </span>
                     </div>
                   </div>
@@ -689,6 +789,63 @@ export default function RolloverPage() {
           </p>
         )}
       </Card>
+
+      {/* Monthly Tracker — paper/simulated stats (spec §5) */}
+      {rolloverStats && rolloverStats.chains.total > 0 && (
+        <Card className="mb-[20px]">
+          <div className="flex items-center justify-between mb-[10px]">
+            <div>
+              <h2 className="text-[14px] font-display font-bold text-[#0A0F1C]">
+                Monthly Tracker
+              </h2>
+              <p className="text-[11px] text-gray-400">
+                {rolloverStats.month} · paper tracking — manually marked picks, not verified real-money results
+              </p>
+            </div>
+            <Badge variant="default" size="sm">PAPER</Badge>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-[10px]">
+            {[
+              {
+                label: "Rollovers this month",
+                value: `${rolloverStats.monthly.rolloverWins}W / ${rolloverStats.monthly.rolloverLosses}L`,
+                sub: `target ${rolloverStats.monthly.target} · stretch ${rolloverStats.monthly.stretchTarget} (${rolloverStats.monthly.progressPct}%)`,
+              },
+              {
+                label: "Win streak",
+                value: `${rolloverStats.streaks.currentWinStreak}`,
+                sub: `best ${rolloverStats.streaks.maxWinStreak} · settled ${rolloverStats.picks.settled} (${rolloverStats.picks.winRatePct ?? "—"}%)`,
+              },
+              {
+                label: "Max drawdown",
+                value: rolloverStats.drawdown.maxDrawdownAmount > 0
+                  ? `-${rolloverStats.drawdown.maxDrawdownAmount.toFixed(2)}`
+                  : "—",
+                sub: rolloverStats.drawdown.maxDrawdownPct > 0
+                  ? `${rolloverStats.drawdown.maxDrawdownPct.toFixed(1)}% of peak`
+                  : "no losing sequence yet",
+              },
+              {
+                label: "Avg odds / prob",
+                value: rolloverStats.averages.avgOdds != null
+                  ? `@${rolloverStats.averages.avgOdds.toFixed(2)}`
+                  : "—",
+                sub: rolloverStats.averages.avgModelProbability != null
+                  ? `${(rolloverStats.averages.avgModelProbability * 100).toFixed(0)}% model prob`
+                  : `${rolloverStats.chains.completed} chains completed`,
+              },
+            ].map((stat) => (
+              <div key={stat.label} className="p-[12px] bg-gray-50 rounded-[8px]">
+                <span className="block text-[10px] text-gray-400 mb-[2px]">{stat.label}</span>
+                <span className="text-[15px] font-mono-data font-bold text-[#0A0F1C]">
+                  {stat.value}
+                </span>
+                <span className="block text-[10px] text-gray-400 mt-[2px]">{stat.sub}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {/* Active Chain */}
       {activeChain && (

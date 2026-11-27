@@ -51,15 +51,21 @@ const normalizeTeamName = loadNormalizer();
 const LEAGUE_MAP = {
   E0: "Premier League",
   E1: "Championship",
+  E2: "League One",
+  E3: "League Two",
   SC0: "Scottish Premiership",
   D1: "Bundesliga",
+  D2: "2. Bundesliga",
   I1: "Serie A",
+  I2: "Serie B",
   SP1: "La Liga",
+  SP2: "LaLiga2",
   F1: "Ligue 1",
+  F2: "Ligue 2",
   N1: "Eredivisie",
   P1: "Primeira Liga",
   T1: "Super Lig",
-  // No DB league: E2, E3 (English L1/L2), D2 (2.Bundesliga), SP2, I2, F2, B1 (Belgium)
+  B1: "Belgian Pro League",
 };
 
 // ── Supplemental aliases: football-data.co.uk short names → DB canonical_name.
@@ -294,6 +300,7 @@ async function main() {
       const lid = lname ? leagueIdByName[lname.toLowerCase()] : null;
       rows.push({
         external_id: `rd:${idx}`,
+        provider: "backfill",
         home_team_id: hid,
         away_team_id: aid,
         league_id: lid || null,
@@ -306,10 +313,11 @@ async function main() {
     }
     if (!rows.length) continue;
     // multi-row insert via unnest with explicit type casts
-    const sql2 = `insert into fixtures (external_id, home_team_id, away_team_id, league_id, kickoff_time, status, home_score, away_score, is_featured)
-      select * from unnest($1::text[], $2::uuid[], $3::uuid[], $4::uuid[], $5::timestamptz[], $6::text[], $7::int[], $8::int[], $9::boolean[])`;
+    const sql2 = `insert into fixtures (external_id, provider, home_team_id, away_team_id, league_id, kickoff_time, status, home_score, away_score, is_featured)
+      select * from unnest($1::text[], $2::text[], $3::uuid[], $4::uuid[], $5::uuid[], $6::timestamptz[], $7::text[], $8::int[], $9::int[], $10::boolean[])`;
     await client.query(sql2, [
       rows.map((r) => r.external_id),
+      rows.map((r) => r.provider),
       rows.map((r) => r.home_team_id),
       rows.map((r) => r.away_team_id),
       rows.map((r) => r.league_id),

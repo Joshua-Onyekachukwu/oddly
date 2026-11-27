@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { BOOKMAKERS, type OddsFixture } from "@/lib/api/odds";
+import { normalizeTeamName as normalizeTeamKey } from "@/lib/football/team-normalizer";
 
 const supabaseAdmin = createClient<Database>(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -8,6 +9,12 @@ const supabaseAdmin = createClient<Database>(
 );
 
 const THE_ODDS_API_KEY = process.env.THE_ODDS_API_KEY || "";
+
+/** Provider tag written to fixtures.provider for The Odds API rows. */
+const PROVIDER = "the-odds-api";
+
+/** Max kickoff-time drift allowed when matching an odds fixture to a DB fixture. */
+const MATCH_WINDOW_MS = 3 * 60 * 60 * 1000; // ±3h
 
 // Sports to fetch odds for
 const ODDS_SPORTS = [
@@ -36,17 +43,62 @@ function normalizeTeamName(name: string): string {
 }
 
 /**
- * Get or create a league by name.
+ * Confidence score (0..1) between two already-normalized team keys.
+ * Uses the alias-aware normalizer so "Man City" == "Manchester City".
  */
-async function getOrCreateLeague(name: string, country: string): Promise<string> {
+function teamKeyScore(a: string, b: string): number {
+  const ka = normalizeTeamKey(a) || a;
+  const kb = normalizeTeamKey(b) || b;
+  if (ka === kb) return 1;
+  const at = new Set(ka.split(" ").filter(Boolean));
+  const bt = new Set(kb.split(" ").filter(Boolean));
+  let inter = 0;
+  for (const t of at) if (bt.has(t)) inter++;
+  const union = at.size + bt.size - inter;
+  const jaccard = union ? inter / union : 0;
+  const containment = ka.includes(kb) || kb.includes(ka) ? 0.4 : 0;
+  return Math.min(1, jaccard + containment);
+}
+
+/** Minimum score for accepting a fuzzy ilike candidate. */
+const FUZZY_THRESHOLD = 0.6;
+
+/**
+ * Get or create a league by provider external id, falling back to name.
+ */
+async function getOrCreateLeague(
+  sportKey: string,
+  name: string,
+  country: string
+): Promise<string> {
+  // 1. Provider external id mapping (league_external_ids)
+  const { data: mapped } = await supabaseAdmin
+    .from("league_external_ids")
+    .select("league_id")
+    .eq("provider", PROVIDER)
+    .eq("external_id", sportKey)
+    .limit(1)
+    .maybeSingle();
+
+  if (mapped?.league_id) return mapped.league_id;
+
+  // 2. Check by name (case-insensitive)
   const { data: existing } = await supabaseAdmin
     .from("leagues")
     .select("id")
-    .eq("name", name)
-    .single();
+    .ilike("name", name)
+    .limit(1)
+    .maybeSingle();
 
-  if (existing) return existing.id;
+  if (existing) {
+    await supabaseAdmin.from("league_external_ids").upsert(
+      { league_id: existing.id, provider: PROVIDER, external_id: sportKey },
+      { onConflict: "provider,external_id" }
+    );
+    return existing.id;
+  }
 
+  // 3. Create
   const { data: newLeague, error } = await supabaseAdmin
     .from("leagues")
     .insert({
@@ -60,6 +112,12 @@ async function getOrCreateLeague(name: string, country: string): Promise<string>
     .single();
 
   if (error) throw error;
+
+  await supabaseAdmin.from("league_external_ids").upsert(
+    { league_id: newLeague.id, provider: PROVIDER, external_id: sportKey },
+    { onConflict: "provider,external_id" }
+  );
+
   return newLeague.id;
 }
 
@@ -80,42 +138,54 @@ async function getOrCreateTeam(
     .eq("alias", normalized)
     .single();
 
-  if (alias) {
-    // Get the actual team ID
+  if (alias?.canonical_name) {
+    // Resolve the alias target to a team UUID (canonical_name is a name).
     const { data: team } = await supabaseAdmin
       .from("teams")
       .select("id")
-      .eq("canonical_name", alias.canonical_name)
-      .single();
+      .ilike("canonical_name", alias.canonical_name)
+      .limit(1)
+      .maybeSingle();
     if (team) return team.id;
   }
 
-  // 2. Check existing teams by canonical_name
+  // 2. Check existing teams by canonical_name (case-insensitive exact)
   const { data: existing } = await supabaseAdmin
     .from("teams")
     .select("id")
-    .eq("canonical_name", normalized)
-    .single();
+    .ilike("canonical_name", normalized)
+    .limit(1)
+    .maybeSingle();
 
   if (existing) return existing.id;
 
-  // 3. Fuzzy match
+  // 3. Scored fuzzy match — only accept candidates above the threshold.
   const { data: fuzzyTeams } = await supabaseAdmin
     .from("teams")
     .select("id, canonical_name")
     .ilike("canonical_name", `%${normalized.substring(0, 6)}%`)
-    .limit(1);
+    .limit(10);
 
   if (fuzzyTeams?.length) {
-    await supabaseAdmin.from("team_aliases").upsert(
-      {
-        canonical_name: fuzzyTeams[0].canonical_name,
-        alias: normalized,
-        source: "odds-api-sync",
-      },
-      { onConflict: "alias" }
-    );
-    return fuzzyTeams[0].id;
+    let best: { id: string; canonical_name: string; score: number } | null = null;
+    for (const t of fuzzyTeams) {
+      const score = teamKeyScore(normalized, t.canonical_name || "");
+      if (!best || score > best.score) {
+        best = { id: t.id, canonical_name: t.canonical_name, score };
+      }
+    }
+
+    if (best && best.score >= FUZZY_THRESHOLD) {
+      await supabaseAdmin.from("team_aliases").upsert(
+        {
+          canonical_name: best.canonical_name,
+          alias: normalized,
+          source: "odds-api-sync",
+        },
+        { onConflict: "alias" }
+      );
+      return best.id;
+    }
   }
 
   // 4. Create new team
@@ -145,15 +215,21 @@ async function getOrCreateTeam(
 }
 
 /**
- * Match an Odds API fixture to a Supabase fixture by team names.
+ * Match an Odds API fixture to a Supabase fixture by team names,
+ * constrained to the same league and a ±3h kickoff window so that
+ * same-named fixtures in different competitions/dates can't mislink.
  * Returns fixture ID if found, null otherwise.
  */
 async function matchFixture(
   homeTeam: string,
-  awayTeam: string
+  awayTeam: string,
+  commenceTime: string,
+  leagueId: string | null
 ): Promise<string | null> {
   const homeNormalized = normalizeTeamName(homeTeam);
   const awayNormalized = normalizeTeamName(awayTeam);
+  const kickoff = new Date(commenceTime);
+  if (isNaN(kickoff.getTime())) return null;
 
   // Check team aliases
   const { data: homeAlias } = await supabaseAdmin
@@ -171,38 +247,62 @@ async function matchFixture(
   const homeName = homeAlias?.canonical_name || homeNormalized;
   const awayName = awayAlias?.canonical_name || awayNormalized;
 
-  // Find fixture by team canonical names
-  const { data: fixtures } = await supabaseAdmin
+  // Find candidate fixtures within the kickoff window (and league when known)
+  const windowStart = new Date(kickoff.getTime() - MATCH_WINDOW_MS).toISOString();
+  const windowEnd = new Date(kickoff.getTime() + MATCH_WINDOW_MS).toISOString();
+
+  let query = supabaseAdmin
     .from("fixtures")
     .select(`
       id,
+      kickoff_time,
       home_team:teams!fixtures_home_team_id_fkey(canonical_name),
       away_team:teams!fixtures_away_team_id_fkey(canonical_name)
     `)
     .eq("status", "scheduled")
-    .gte("kickoff_time", new Date().toISOString())
+    .gte("kickoff_time", windowStart)
+    .lte("kickoff_time", windowEnd)
+    .order("kickoff_time", { ascending: true })
     .limit(100);
 
-  if (!fixtures) return null;
+  if (leagueId) {
+    query = query.eq("league_id", leagueId);
+  }
+
+  const { data: fixtures } = await query;
+
+  if (!fixtures?.length) return null;
+
+  // Score candidates: exact name match wins; closest kickoff breaks ties.
+  let best: { id: string; delta: number; fuzzy: boolean } | null = null;
 
   for (const f of fixtures) {
     const dbHome = (f.home_team as unknown as { canonical_name: string })?.canonical_name;
     const dbAway = (f.away_team as unknown as { canonical_name: string })?.canonical_name;
 
-    if (dbHome === homeName && dbAway === awayName) {
-      return f.id;
-    }
+    const exact = dbHome === homeName && dbAway === awayName;
+    const fuzzy =
+      !exact &&
+      !!dbHome &&
+      !!dbAway &&
+      ((dbHome.includes(homeName) || homeName.includes(dbHome)) &&
+        (dbAway.includes(awayName) || awayName.includes(dbAway)));
 
-    // Fuzzy match
-    if (
-      (dbHome?.includes(homeName) || homeName?.includes(dbHome)) &&
-      (dbAway?.includes(awayName) || awayName?.includes(dbAway))
-    ) {
-      return f.id;
+    if (!exact && !fuzzy) continue;
+
+    const delta = Math.abs(new Date(f.kickoff_time).getTime() - kickoff.getTime());
+    const cand = { id: f.id, delta, fuzzy };
+
+    if (!best) {
+      best = cand;
+    } else if (exact && best.fuzzy) {
+      best = cand; // exact beats fuzzy
+    } else if (exact === best.fuzzy && delta < best.delta) {
+      best = cand; // same match quality → closest kickoff
     }
   }
 
-  return null;
+  return best?.id ?? null;
 }
 
 /**
@@ -219,6 +319,7 @@ async function createFixtureFromOdds(
   const { data, error } = await supabaseAdmin
     .from("fixtures")
     .insert({
+      provider: PROVIDER,
       external_id: fixture.id,
       home_team_id: homeTeamId,
       away_team_id: awayTeamId,
@@ -376,10 +477,10 @@ export async function syncAllOdds(): Promise<{
       const fixtures = await fetchOddsForSport(sport.key);
       sportsProcessed++;
 
-      // Get or create league
+      // Get or create league (resolved via league_external_ids first)
       let leagueId: string;
       try {
-        leagueId = await getOrCreateLeague(sport.league, sport.country);
+        leagueId = await getOrCreateLeague(sport.key, sport.league, sport.country);
       } catch (err) {
         errors.push(`${sport.league}: Failed to create league - ${err}`);
         continue;
@@ -387,10 +488,13 @@ export async function syncAllOdds(): Promise<{
 
       for (const fixture of fixtures) {
         try {
-          // Try to match existing fixture
+          // Try to match existing fixture — constrained to same league and
+          // a ±3h kickoff window to avoid mislinking same-named fixtures.
           let supabaseFixtureId = await matchFixture(
             fixture.home_team,
-            fixture.away_team
+            fixture.away_team,
+            fixture.commence_time,
+            leagueId
           );
 
           // If no match, create fixture from Odds API data

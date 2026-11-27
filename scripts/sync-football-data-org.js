@@ -207,14 +207,17 @@ async function syncFixtures(code, comp) {
 
     if (!homeTeamId || !awayTeamId) continue;
 
-    // Check if fixture exists
+    // Check if fixture exists (namespaced by provider)
     const { data: existing } = await supabase
       .from("fixtures")
       .select("id, status, home_score, away_score")
+      .eq("provider", "football-data-org")
       .eq("external_id", externalId)
-      .single();
+      .limit(1)
+      .maybeSingle();
 
     const fixtureRecord = {
+      provider: "football-data-org",
       external_id: externalId,
       league_id: league.id,
       home_team_id: homeTeamId,
