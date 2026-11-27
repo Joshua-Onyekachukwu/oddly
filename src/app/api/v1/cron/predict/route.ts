@@ -11,6 +11,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { predictMatchEnsemble, resetBatchCaches } from "@/lib/models/ensemble";
+import { getInjuryFeaturesForPrediction } from "@/lib/injury/feature-engineering";
 import { withLock } from "@/lib/cron/lock";
 import { startRun, completeRun, type CronRunResult } from "@/lib/cron/logger";
 
@@ -149,6 +150,21 @@ async function runPredictionPipeline(): Promise<{
       if (!result) { ensembleMisses++; continue; }
 
       ensembleHits++;
+      // Rich injury features (point-in-time safe: only snapshots at/before now)
+      let injuryFeatures: unknown = null;
+      try {
+        injuryFeatures = await getInjuryFeaturesForPrediction(fixture.id, now);
+      } catch {}
+      const injurySnapshot = injuryFeatures
+        ? {
+            home_impact: (injuryFeatures as any).home_features?.injury_impact_score ?? null,
+            away_impact: (injuryFeatures as any).away_features?.injury_impact_score ?? null,
+            home_missing_key: (injuryFeatures as any).home_features?.missing_key_players ?? null,
+            away_missing_key: (injuryFeatures as any).away_features?.missing_key_players ?? null,
+            home_availability_pct: (injuryFeatures as any).home_features?.availability_pct ?? null,
+            away_availability_pct: (injuryFeatures as any).away_features?.availability_pct ?? null,
+          }
+        : null;
       // Immutable input snapshot — what the model saw at prediction time
       const inputSnapshot = {
         kickoff_time: fixture.kickoff_time,
@@ -157,6 +173,7 @@ async function runPredictionPipeline(): Promise<{
         away_elo: Math.round(eloMap[away] ?? 1500),
         home_form: (formMap[home] || []).slice(-5),
         away_form: (formMap[away] || []).slice(-5),
+        injury: injurySnapshot,
         captured_at: now.toISOString(),
       };
       for (const [market, prob] of Object.entries(result.markets)) {
@@ -169,6 +186,8 @@ async function runPredictionPipeline(): Promise<{
           model_version: result.modelVersion,
           input_snapshot: inputSnapshot,
           feature_version: "ensemble-v1",
+          injury_features_used: injuryFeatures,
+          injury_snapshot_date: injuryFeatures ? now.toISOString() : null,
         });
       }
     } catch (err: any) {

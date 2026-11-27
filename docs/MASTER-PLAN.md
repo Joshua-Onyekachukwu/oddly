@@ -104,3 +104,13 @@ confidence claim now lives in `docs/` as ten deliverables:
 These findings **amend** the roadmap above: Phase A/B priorities are confirmed
 (backfill + eval + odds retention are now P1), and the high-confidence strategy
 requires the calibration layer before any user-facing confidence tier ships.
+
+## Strategic assessment (added 2026-10-02, second audit round)
+
+`ODDLY-STRATEGIC-ASSESSMENT.md` covers nine additional requirements:
+market-intelligence edge proof, per-competition gating, T1/T2/T3 prediction
+timing snapshots, data trust/verification engine, model-drift protocol,
+rollover portfolio risk engine, statistical-significance claims policy,
+operational failure modes, and the final strategic verdict (advantage =
+timing + coverage + rollover structure + data moat; 2.00 rollover is
+conditioned, not guaranteed).

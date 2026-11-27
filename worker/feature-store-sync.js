@@ -371,6 +371,26 @@ async function syncInjuryData() {
 
   const count = await upsertBatch("player_injury_data", records, 200, null);
   console.log(`  ✅ ${count} injury records synced`);
+
+  // Mirror into player_availability — the richer injury pipeline
+  // (feature-engineering.ts) reads this table, not player_injury_data.
+  const avail = records
+    .filter((r) => r.team_name && r.player_name)
+    .map((r) => ({
+      player_name: r.player_name,
+      team_name: r.team_name,
+      status: r.status || "injured",
+      injury_type: r.injury_type || null,
+      reason: r.injury_type || null,
+      expected_return: r.expected_return || null,
+      is_key_player: (r.player_importance || 5) >= 7,
+      source: r.source,
+      updated_at: new Date().toISOString(),
+    }));
+  if (avail.length) {
+    const availCount = await upsertBatch("player_availability", avail, 200, "player_name,team_name");
+    console.log(`  ✅ ${availCount} player_availability records synced`);
+  }
   return count;
 }
 

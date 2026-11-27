@@ -141,25 +141,26 @@ async function syncFixtures(code, comp) {
   const matches = data.matches || [];
   console.log(`  📊 Found ${matches.length} matches (scheduled + live + finished)`);
 
-  // Get our league ID
-  const { data: league } = await supabase
+  // Get our league ID — case-insensitive, tolerate duplicates gracefully
+  const { data: leagueRows } = await supabase
     .from("leagues")
     .select("id")
-    .eq("name", comp.name)
-    .single();
+    .ilike("name", comp.name);
+
+  let league = leagueRows?.[0] || null;
 
   if (!league) {
     console.log(`  ⚠️ League "${comp.name}" not found in database, creating...`);
-    const { data: newLeague } = await supabase
+    const { data: newLeague, error: lgErr } = await supabase
       .from("leagues")
       .insert({ name: comp.name, country: comp.country, sport: "football", is_active: true })
       .select("id")
       .single();
-    if (!newLeague) {
-      console.log(`  ❌ Failed to create league`);
+    if (lgErr || !newLeague) {
+      console.log(`  ❌ Failed to create league: ${lgErr?.message || "unknown"}`);
       return [];
     }
-    return syncFixtures(code, comp);
+    league = newLeague;
   }
 
   let created = 0;

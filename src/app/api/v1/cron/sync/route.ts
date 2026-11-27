@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { syncTodayFixtures } from "@/lib/sync/fixtures";
+import { processAllFixtures as processInjuryFeatures } from "@/lib/injury/feature-engineering";
 import { syncAllOdds, getOddsApiUsage } from "@/lib/sync/odds";
 import { notifyValueBets, notifyCrownJewel } from "@/lib/notifications";
 import { createClient } from "@supabase/supabase-js";
@@ -54,6 +55,19 @@ async function runSync(type: string = "all") {
       // Silently handle — API-Football free plan may not have current season
       results.fixtures = {
         note: "API-Football free plan limited to 2022-2024 seasons. The Odds API is primary source.",
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  }
+
+  // Compute injury features for upcoming fixtures (feeds predict cron via
+  // team_injury_features / fixture_injury_features / injury_snapshots).
+  if (type === "all" || type === "injuries") {
+    try {
+      const injuryResult = await processInjuryFeatures();
+      results.injuryFeatures = injuryResult;
+    } catch (error) {
+      results.injuryFeatures = {
         error: error instanceof Error ? error.message : "Unknown error",
       };
     }
