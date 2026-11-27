@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/providers/AuthProvider";
 import { createClient } from "@/lib/supabase/client";
 import { PageHeader, Card, EmptyState, Button, Badge } from "@/components/ui";
+import { BettingTooltip, getMarketLabel, getSelectionLabel } from "@/components/ui/BettingTooltip";
 
 interface RolloverChain {
   id: string;
@@ -60,8 +61,120 @@ interface Recommendation {
   risk_tier: string;
 }
 
+// ─── Rollover engine recommendation API types ──────────────────────────
+// Mirrors GET /api/v1/rollover/recommendation (src/lib/rollover/engine.ts)
+
+interface EngineLeg {
+  fixtureId: string;
+  fixtureLabel?: string;
+  kickoffTime?: string;
+  market: string;
+  selection: string;
+  modelProbability: number;
+  odds: number;
+  impliedProbability: number;
+  edge: number;
+  expectedValue: number;
+  bookmaker?: string | null;
+  sourceId?: string | null;
+  leagueId?: string | null;
+}
+
+interface EngineTicket {
+  id: string;
+  legs: EngineLeg[];
+  legCount: number;
+  combinedOdds: number;
+  combinedProbability: number;
+  combinedEv: number;
+  score: number;
+  rationale: string[];
+}
+
+interface RolloverRecommendation {
+  date: string;
+  window: { from: string; to: string };
+  tickets: EngineTicket[];
+  reason: "ok" | "no_candidates" | "no_qualified_candidates" | "no_combinations_in_band" | string;
+  message: string;
+  stats: {
+    fixturesConsidered: number;
+    predictionsConsidered: number;
+    candidatesWithOdds: number;
+    qualifiedCount: number;
+    combinationsEvaluated: number;
+    rejectedCount: number;
+  };
+  config: {
+    minCombinedOdds: number;
+    maxCombinedOdds: number;
+    [key: string]: unknown;
+  };
+  generatedAt: string;
+}
+
+// Map canonical engine market keys → BettingTooltip glossary keys
+const ENGINE_MARKET_TERMS: Record<string, string> = {
+  "1x2": "1X2", h2h: "1X2",
+  ou: "OU", over_under: "OU", totals: "OU", total_goals: "OU",
+  btts: "BTTS", both_teams_to_score: "BTTS",
+  dc: "DC", double_chance: "DC",
+  dnb: "DNB", draw_no_bet: "DNB",
+  homegoals: "HomeGoals", home_goals: "HomeGoals",
+  awaygoals: "AwayGoals", away_goals: "AwayGoals",
+};
+
+const ENGINE_SELECTION_TERMS: Record<string, string> = {
+  home: "Home", away: "Away", draw: "Draw",
+  "1x": "1X", x2: "X2", "12": "12",
+  yes: "Yes", no: "No",
+  home_dnb: "Home_DNB", away_dnb: "Away_DNB",
+};
+
+/** Resolve an engine market key to a BettingTooltip term + display label. */
+function engineMarketDisplay(market: string): { term: string; label: string } {
+  const key = (market || "").toLowerCase();
+  const term = ENGINE_MARKET_TERMS[key] ?? market;
+  return { term, label: getMarketLabel(term) };
+}
+
+/** Resolve an engine selection key to a BettingTooltip term + display label. */
+function engineSelectionDisplay(selection: string): { term: string; label: string } {
+  const s = (selection || "").trim();
+  const lower = s.toLowerCase();
+  let term = ENGINE_SELECTION_TERMS[lower];
+  if (!term) {
+    // Title-case each underscore segment ("over_2.5" → "Over_2.5")
+    term = s
+      .split("_")
+      .map((seg) => (/^[a-z]+$/.test(seg) ? seg[0].toUpperCase() + seg.slice(1) : seg))
+      .join("_");
+  }
+  return { term, label: getSelectionLabel(term) };
+}
+
+function formatKickoff(iso?: string): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+const EMPTY_REASON_HINTS: Record<string, string> = {
+  no_candidates: "No upcoming fixtures were found in the next 24 hours.",
+  no_qualified_candidates:
+    "No selections met the engine's probability and value thresholds today.",
+  no_combinations_in_band:
+    "Qualified picks exist, but no combination landed inside the ~2.00 odds band.",
+};
+
 export default function RolloverPage() {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [chains, setChains] = useState<RolloverChain[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -70,6 +183,11 @@ export default function RolloverPage() {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [loadingRecs, setLoadingRecs] = useState(false);
   const [addingPick, setAddingPick] = useState<string | null>(null);
+
+  // Engine recommendation state
+  const [engineRec, setEngineRec] = useState<RolloverRecommendation | null>(null);
+  const [engineLoading, setEngineLoading] = useState(true);
+  const [engineError, setEngineError] = useState<string | null>(null);
 
   // Create form
   const [chainName, setChainName] = useState("");
@@ -106,6 +224,59 @@ export default function RolloverPage() {
   useEffect(() => {
     fetchChains();
   }, [fetchChains]);
+
+  // Fetch today's rollover recommendation from the engine API.
+  // Requires the Supabase access token (route uses requireAuth).
+  const fetchEngineRecommendation = useCallback(async () => {
+    if (!session?.access_token) {
+      setEngineLoading(false);
+      return;
+    }
+    setEngineLoading(true);
+    setEngineError(null);
+    try {
+      const res = await fetch("/api/v1/rollover/recommendation?hours=24&limit=3", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      const json = await res.json();
+      if (!res.ok || !json?.success) {
+        const msg =
+          (typeof json?.error === "string" ? json.error : json?.error?.message) ||
+          `Request failed (${res.status})`;
+        throw new Error(msg);
+      }
+      setEngineRec(json.data as RolloverRecommendation);
+    } catch (err) {
+      console.error("Failed to load rollover recommendation:", err);
+      setEngineError(err instanceof Error ? err.message : "Failed to load recommendation");
+      setEngineRec(null);
+    } finally {
+      setEngineLoading(false);
+    }
+  }, [session?.access_token]);
+
+  useEffect(() => {
+    fetchEngineRecommendation();
+  }, [fetchEngineRecommendation]);
+
+  // Map a single-leg engine ticket onto the existing rollover_picks flow.
+  // Multi-leg accumulators don't fit the one-pick-per-day schema — those are
+  // shown read-only with a hint to add legs manually.
+  const handleUseEnginePick = (ticket: EngineTicket) => {
+    if (ticket.legCount !== 1 || ticket.legs.length !== 1) return;
+    const leg = ticket.legs[0];
+    handleAddPick({
+      id: `engine-${ticket.id}`,
+      fixture_id: leg.fixtureId,
+      prediction_id: leg.sourceId ?? null,
+      market: leg.market,
+      selection: leg.selection,
+      bookmaker_odds: leg.odds,
+      model_probability: leg.modelProbability,
+      edge: leg.edge,
+      risk_tier: "engine",
+    });
+  };
 
   const fetchRecommendations = useCallback(async () => {
     setLoadingRecs(true);
@@ -338,6 +509,186 @@ export default function RolloverPage() {
           </div>
         </div>
       )}
+
+      {/* Today's Recommendation — rollover engine */}
+      <Card className="mb-[20px]">
+        <div className="flex items-center justify-between mb-[4px]">
+          <div>
+            <h2 className="text-[14px] font-display font-bold text-[#0A0F1C]">
+              Today&apos;s Recommendation
+            </h2>
+            <p className="text-[11px] text-gray-400">
+              {engineRec?.config
+                ? `Auto-built ~${engineRec.config.minCombinedOdds}–${engineRec.config.maxCombinedOdds} accumulator from model picks with bookmaker odds`
+                : "Auto-built ~2.00 accumulator from model picks with bookmaker odds"}
+            </p>
+          </div>
+          <button
+            onClick={fetchEngineRecommendation}
+            disabled={engineLoading}
+            aria-label="Refresh recommendation"
+            className="flex items-center gap-[4px] px-[10px] py-[5px] text-[11px] font-medium text-gray-500 bg-gray-50 hover:bg-gray-100 rounded-[6px] transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
+          >
+            <i className={`ri-refresh-line text-[13px] ${engineLoading ? "animate-spin" : ""}`} />
+            Refresh
+          </button>
+        </div>
+
+        {engineLoading ? (
+          <div className="space-y-[8px] mt-[12px]">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <div key={i} className="h-[72px] bg-gray-50 rounded-[10px] animate-pulse" />
+            ))}
+          </div>
+        ) : engineError ? (
+          <div className="mt-[12px] flex items-center justify-between gap-[12px] p-[12px] bg-red-50 border border-red-100 rounded-[10px]">
+            <div className="flex items-center gap-[8px]">
+              <i className="ri-error-warning-line text-[16px] text-red-400" />
+              <span className="text-[12px] text-red-600">{engineError}</span>
+            </div>
+            <button
+              onClick={fetchEngineRecommendation}
+              className="flex-none text-[11px] font-semibold text-red-600 bg-white border border-red-200 px-[10px] py-[4px] rounded-[6px] hover:bg-red-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
+            >
+              Retry
+            </button>
+          </div>
+        ) : !engineRec || engineRec.tickets.length === 0 ? (
+          <div className="mt-[12px] p-[16px] bg-gray-50 rounded-[10px] text-center">
+            <i className="ri-calendar-close-line text-[22px] text-gray-300 block mb-[4px]" />
+            <p className="text-[13px] font-semibold text-[#0A0F1C] mb-[2px]">
+              No qualifying rollover ticket today
+            </p>
+            <p className="text-[11px] text-gray-400">
+              {engineRec
+                ? (EMPTY_REASON_HINTS[engineRec.reason] ?? "") || engineRec.message
+                : "Check back closer to kickoff when more fixtures and odds are available."}
+            </p>
+            {engineRec?.message && (
+              <p className="text-[10px] text-gray-300 mt-[4px]">{engineRec.message}</p>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-[10px] mt-[12px]">
+            {engineRec.tickets.map((ticket) => {
+              const singleLeg = ticket.legCount === 1 && ticket.legs.length === 1;
+              const pickId = `engine-${ticket.id}`;
+              return (
+                <div
+                  key={ticket.id}
+                  className="p-[12px] bg-gray-50 rounded-[10px] border border-gray-100"
+                >
+                  {/* Ticket summary */}
+                  <div className="flex items-center justify-between mb-[8px]">
+                    <div className="flex items-center gap-[8px]">
+                      <Badge variant="success" size="sm">
+                        {ticket.legCount} leg{ticket.legCount === 1 ? "" : "s"}
+                      </Badge>
+                      <span className="text-[15px] font-mono-data font-bold text-[#0A0F1C]">
+                        @{ticket.combinedOdds.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="text-right text-[10px] text-gray-400">
+                      <span className="font-mono-data text-green-600 font-medium">
+                        {(ticket.combinedProbability * 100).toFixed(1)}% win prob
+                      </span>
+                      <span className="mx-[4px]">·</span>
+                      <span className="font-mono-data">
+                        EV {(ticket.combinedEv * 100).toFixed(1)}%
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Legs */}
+                  <div className="divide-y divide-gray-100">
+                    {ticket.legs.map((leg, idx) => {
+                      const market = engineMarketDisplay(leg.market);
+                      const selection = engineSelectionDisplay(leg.selection);
+                      const kickoff = formatKickoff(leg.kickoffTime);
+                      return (
+                        <div
+                          key={`${leg.fixtureId}-${leg.market}-${leg.selection}-${idx}`}
+                          className="flex items-center justify-between gap-[10px] py-[7px]"
+                        >
+                          <div className="min-w-0">
+                            <div className="text-[12px] font-medium text-[#0A0F1C] truncate">
+                              {leg.fixtureLabel ?? leg.fixtureId}
+                            </div>
+                            <div className="text-[10px] text-gray-400 mt-[1px]">
+                              {kickoff && <span>{kickoff} · </span>}
+                              <BettingTooltip term={market.term}>{market.label}</BettingTooltip>
+                              {" · "}
+                              <BettingTooltip term={selection.term}>
+                                {selection.label}
+                              </BettingTooltip>
+                              {leg.bookmaker && <span> · {leg.bookmaker}</span>}
+                            </div>
+                          </div>
+                          <div className="flex-none text-right">
+                            <span className="text-[12px] font-mono-data font-semibold text-[#0A0F1C]">
+                              @{leg.odds.toFixed(2)}
+                            </span>
+                            <span className="block text-[10px] text-gray-400 font-mono-data">
+                              {(leg.modelProbability * 100).toFixed(0)}% model
+                              {leg.expectedValue > 0 && (
+                                <span className="text-green-600">
+                                  {" "}· +{(leg.expectedValue * 100).toFixed(1)}% EV
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Action */}
+                  <div className="flex items-center justify-between mt-[8px] pt-[8px] border-t border-gray-100">
+                    {singleLeg ? (
+                      activeChain && activeChain.current_balance > 0 ? (
+                        <button
+                          onClick={() => handleUseEnginePick(ticket)}
+                          disabled={addingPick === pickId}
+                          className="px-[12px] py-[6px] bg-[#1B2A4A] text-white text-[11px] font-medium rounded-[6px] hover:bg-[#243B53] transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
+                        >
+                          {addingPick === pickId ? "Adding..." : "Use this pick"}
+                        </button>
+                      ) : (
+                        <span className="text-[10px] text-gray-400">
+                          Start a chain to add this pick to your rollover.
+                        </span>
+                      )
+                    ) : (
+                      <span className="text-[10px] text-gray-400">
+                        Multi-leg accumulator — your chain tracks one pick per day, so add legs
+                        manually via &quot;Add Today&apos;s Pick&quot; if you want to follow it.
+                      </span>
+                    )}
+                    <span className="text-[10px] text-gray-300 font-mono-data">
+                      #{ticket.id.slice(0, 24)}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Engine stats — transparency */}
+        {engineRec && !engineLoading && !engineError && (
+          <p className="text-[10px] text-gray-300 mt-[10px]">
+            Engine scan: {engineRec.stats.fixturesConsidered} fixtures ·{" "}
+            {engineRec.stats.predictionsConsidered} predictions ·{" "}
+            {engineRec.stats.candidatesWithOdds} with odds ·{" "}
+            {engineRec.stats.qualifiedCount} qualified ·{" "}
+            {engineRec.stats.combinationsEvaluated} combinations evaluated
+            {engineRec.stats.rejectedCount > 0 &&
+              ` · ${engineRec.stats.rejectedCount} rejected`}
+            {engineRec.generatedAt &&
+              ` · updated ${new Date(engineRec.generatedAt).toLocaleTimeString()}`}
+          </p>
+        )}
+      </Card>
 
       {/* Active Chain */}
       {activeChain && (

@@ -34,6 +34,8 @@ export default function AdminUsersPage() {
   const [roleFilter, setRoleFilter] = useState<"all" | "user" | "admin">("all");
   const [tierFilter, setTierFilter] = useState<"all" | "free" | "premium" | "elite">("all");
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
+  const [updatingUser, setUpdatingUser] = useState(false);
+  const [userUpdateError, setUserUpdateError] = useState<string | null>(null);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -95,6 +97,10 @@ export default function AdminUsersPage() {
 
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
+  useEffect(() => {
+    setUserUpdateError(null);
+  }, [selectedUser?.id]);
+
   const filtered = users.filter((u) => {
     if (!search) return true;
     const s = search.toLowerCase();
@@ -103,6 +109,41 @@ export default function AdminUsersPage() {
       u.id.toLowerCase().includes(s)
     );
   });
+
+  const updateUser = async (field: "role" | "subscription_tier", value: string) => {
+    if (!selectedUser) return;
+    setUpdatingUser(true);
+    setUserUpdateError(null);
+    try {
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error("Not authenticated — please sign in again.");
+      }
+
+      const res = await fetch(`/api/v1/admin/users/${selectedUser.id}`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ [field]: value }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || json.error || json.success === false) {
+        throw new Error(json?.error?.message || `Failed to update user (${res.status})`);
+      }
+
+      const updated = json.data as UserProfile;
+      setSelectedUser(updated);
+      setUsers((prev) => prev.map((u) => (u.id === updated.id ? { ...u, ...updated } : u)));
+    } catch (e: any) {
+      setUserUpdateError(e?.message || "Failed to update user");
+    }
+    setUpdatingUser(false);
+  };
 
   const formatDate = (d: string) => new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   const formatTime = (d: string) => new Date(d).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
@@ -340,34 +381,42 @@ export default function AdminUsersPage() {
                 <div className="grid grid-cols-2 gap-[8px]">
                   <div className="bg-gray-50 rounded-[10px] p-[12px]">
                     <span className="text-[10px] text-gray-400 block mb-[4px]">Role</span>
-                    <Badge variant={selectedUser.role === "admin" ? "danger" : "default"} size="sm">
-                      {selectedUser.role === "admin" ? "Admin" : "User"}
-                    </Badge>
+                    <select
+                      value={selectedUser.role}
+                      disabled={updatingUser}
+                      onChange={(e) => updateUser("role", e.target.value)}
+                      aria-label="User role"
+                      className="w-full h-[30px] rounded-[8px] border border-gray-200 bg-white px-[8px] text-[12px] font-medium text-[#0A0F1C] focus:outline-none focus:ring-2 focus:ring-[#1B2A4A]/20 disabled:opacity-50 transition-all"
+                    >
+                      <option value="user">User</option>
+                      <option value="admin">Admin</option>
+                    </select>
                   </div>
                   <div className="bg-gray-50 rounded-[10px] p-[12px]">
                     <span className="text-[10px] text-gray-400 block mb-[4px]">Plan</span>
-                    <Badge
-                      variant={
-                        selectedUser.subscription_tier === "elite"
-                          ? "warning"
-                          : selectedUser.subscription_tier === "premium"
-                            ? "info"
-                            : "default"
-                      }
-                      size="sm"
+                    <select
+                      value={selectedUser.subscription_tier}
+                      disabled={updatingUser}
+                      onChange={(e) => updateUser("subscription_tier", e.target.value)}
+                      aria-label="Subscription plan"
+                      className="w-full h-[30px] rounded-[8px] border border-gray-200 bg-white px-[8px] text-[12px] font-medium text-[#0A0F1C] focus:outline-none focus:ring-2 focus:ring-[#1B2A4A]/20 disabled:opacity-50 transition-all"
                     >
-                      {selectedUser.subscription_tier === "elite"
-                        ? "Elite"
-                        : selectedUser.subscription_tier === "premium"
-                          ? "Premium"
-                          : "Free"}
-                    </Badge>
+                      <option value="free">Free</option>
+                      <option value="premium">Premium</option>
+                      <option value="elite">Elite</option>
+                    </select>
                   </div>
                 </div>
-                <p className="text-[10px] text-gray-400 mt-[8px]">
-                  Role and plan changes require database/service-role access — they cannot be
-                  modified from this dashboard.
-                </p>
+                {updatingUser && (
+                  <p className="text-[10px] text-gray-400 mt-[8px] flex items-center gap-[6px]">
+                    <i className="ri-loader-4-line animate-spin" /> Saving changes…
+                  </p>
+                )}
+                {userUpdateError && (
+                  <p className="text-[10px] text-red-600 mt-[8px] flex items-center gap-[6px]">
+                    <i className="ri-error-warning-line" /> {userUpdateError}
+                  </p>
+                )}
               </div>
 
               {/* Bankroll */}

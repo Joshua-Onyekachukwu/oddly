@@ -168,12 +168,36 @@ export const adminUserQuerySchema = paginationSchema.merge(sortSchema).extend({
   tier: z.enum(["free", "premium", "elite"]).optional(),
 });
 
+export const adminUserUpdateSchema = z
+  .object({
+    role: z.enum(["user", "admin"]).optional(),
+    subscription_tier: z.enum(["free", "premium", "elite"]).optional(),
+  })
+  .refine((data) => data.role !== undefined || data.subscription_tier !== undefined, {
+    message: "At least one field (role or subscription_tier) must be provided",
+  });
+
 export const announcementCreateSchema = z.object({
   title: z.string().min(1).max(200).trim(),
   body: z.string().min(1).max(2000).trim(),
-  type: z.enum(["info", "warning", "update", "maintenance"]).default("info"),
+  target: z.enum(["all", "free", "premium", "elite"]).default("all"),
   is_active: z.boolean().default(true),
+  scheduled_at: z.string().datetime({ offset: true }).nullable().optional(),
+  expires_at: z.string().datetime({ offset: true }).nullable().optional(),
 });
+
+export const announcementUpdateSchema = z
+  .object({
+    title: z.string().min(1).max(200).trim().optional(),
+    body: z.string().min(1).max(2000).trim().optional(),
+    target: z.enum(["all", "free", "premium", "elite"]).optional(),
+    is_active: z.boolean().optional(),
+    scheduled_at: z.string().datetime({ offset: true }).nullable().optional(),
+    expires_at: z.string().datetime({ offset: true }).nullable().optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "At least one field must be provided",
+  });
 
 export const leagueCreateSchema = z.object({
   name: z.string().min(1).max(100).trim(),

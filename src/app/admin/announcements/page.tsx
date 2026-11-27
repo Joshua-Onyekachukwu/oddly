@@ -33,21 +33,32 @@ export default function AdminAnnouncementsPage() {
   const [formTarget, setFormTarget] = useState<"all" | "free" | "premium" | "elite">("all");
   const [error, setError] = useState<string | null>(null);
 
+  const getAuthHeaders = useCallback(async () => {
+    const supabase = createClient();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      throw new Error("Not authenticated — please sign in again.");
+    }
+    return { Authorization: `Bearer ${session.access_token}` };
+  }, []);
+
   const fetchAnnouncements = useCallback(async () => {
     setError(null);
-    const supabase = createClient();
-    const { data, error: fetchError } = await supabase
-      .from("announcements")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (fetchError) {
-      setError(fetchError.message);
-    } else if (data) {
-      setAnnouncements(data);
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch("/api/v1/admin/announcements", { headers });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || json.error || json.success === false) {
+        throw new Error(json?.error?.message || `Failed to load announcements (${res.status})`);
+      }
+      setAnnouncements(json.data || []);
+    } catch (e: any) {
+      setError(e?.message || "Failed to load announcements");
     }
     setLoading(false);
-  }, []);
+  }, [getAuthHeaders]);
 
   useEffect(() => {
     fetchAnnouncements();
@@ -56,61 +67,81 @@ export default function AdminAnnouncementsPage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+    setError(null);
 
-    const supabase = createClient();
-    const payload = {
-      title: formTitle,
-      body: formBody,
-      target: formTarget,
-      is_active: true,
-    };
+    try {
+      const headers = await getAuthHeaders();
+      const payload = editingId
+        ? { title: formTitle, body: formBody, target: formTarget }
+        : { title: formTitle, body: formBody, target: formTarget, is_active: true };
 
-    const { error: saveError } = editingId
-      ? await supabase.from("announcements").update(payload).eq("id", editingId)
-      : await supabase.from("announcements").insert(payload);
+      const res = await fetch(
+        editingId ? `/api/v1/admin/announcements/${editingId}` : "/api/v1/admin/announcements",
+        {
+          method: editingId ? "PATCH" : "POST",
+          headers: { ...headers, "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || json.error || json.success === false) {
+        throw new Error(json?.error?.message || `Failed to save announcement (${res.status})`);
+      }
 
-    if (saveError) {
-      setError(saveError.message.includes("row-level security") || saveError.code === "42501"
-        ? "Announcement changes are blocked by database permissions (service-role only). Contact the backend team to enable admin writes."
-        : saveError.message);
-      setSaving(false);
-      return;
+      setShowForm(false);
+      setEditingId(null);
+      setFormTitle("");
+      setFormBody("");
+      setFormTarget("all");
+      fetchAnnouncements();
+    } catch (e: any) {
+      setError(e?.message || "Failed to save announcement");
     }
-
-    setShowForm(false);
-    setEditingId(null);
-    setFormTitle("");
-    setFormBody("");
-    setFormTarget("all");
-    fetchAnnouncements();
     setSaving(false);
   };
 
   const toggleActive = async (id: string, current: boolean) => {
-    const supabase = createClient();
-    const { error: toggleError } = await supabase.from("announcements").update({ is_active: !current }).eq("id", id);
-    if (toggleError) {
-      setError("Could not update announcement — database permissions may block admin writes.");
-      return;
+    setError(null);
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch(`/api/v1/admin/announcements/${id}`, {
+        method: "PATCH",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({ is_active: !current }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || json.error || json.success === false) {
+        throw new Error(json?.error?.message || "Could not update announcement");
+      }
+      fetchAnnouncements();
+    } catch (e: any) {
+      setError(e?.message || "Could not update announcement");
     }
-    fetchAnnouncements();
   };
 
   const deleteAnnouncement = async (id: string) => {
-    const supabase = createClient();
-    const { error: deleteError } = await supabase.from("announcements").delete().eq("id", id);
-    if (deleteError) {
-      setError("Could not delete announcement — database permissions may block admin writes.");
-      return;
+    setError(null);
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch(`/api/v1/admin/announcements/${id}`, {
+        method: "DELETE",
+        headers,
+      });
+      if (!res.ok && res.status !== 204) {
+        const json = await res.json().catch(() => ({}));
+        throw new Error(json?.error?.message || "Could not delete announcement");
+      }
+      fetchAnnouncements();
+    } catch (e: any) {
+      setError(e?.message || "Could not delete announcement");
     }
-    fetchAnnouncements();
   };
 
   return (
     <div>
       <PageHeader
         title="Announcements"
-        description="Create and manage platform-wide announcements. Only active announcements are listed; writes require service-role access."
+        description="Create and manage platform-wide announcements. All announcements are listed, including inactive ones."
         action={
           <Button
             onClick={() => {
