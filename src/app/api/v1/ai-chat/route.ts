@@ -62,15 +62,33 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Rate limit check
+    // Rate limit check — applies to ALL requests, including anonymous.
+    // Anonymous callers get a strict per-IP limit; authenticated users get
+    // a daily limit scaled by subscription tier.
     const dailyLimit = (RATE_LIMITS.aiChat as Record<string, number>)[userTier] ?? RATE_LIMITS.aiChat.free;
-    if (userId && dailyLimit !== -1) {
-      const rlKey = `user:${userId}:ai-chat-daily`;
-      const rl = checkRateLimit(rlKey, request, dailyLimit, RATE_LIMITS.aiChat.windowMs);
+    if (userId) {
+      if (dailyLimit !== -1) {
+        const rlKey = `user:${userId}:ai-chat-daily`;
+        const rl = checkRateLimit(rlKey, request, dailyLimit, RATE_LIMITS.aiChat.windowMs);
+        if (!rl.allowed) {
+          return addRateLimitHeaders(
+            NextResponse.json(
+              { error: `Daily limit reached (${dailyLimit} questions/day for ${userTier} tier). Upgrade for unlimited.` },
+              { status: 429 }
+            ),
+            rl.remaining,
+            rl.resetAt
+          );
+        }
+      }
+    } else {
+      // Anonymous: strict per-IP limit (10 requests/hour) to prevent abuse
+      // of the unauthenticated AI endpoint.
+      const rl = checkRateLimit("ai-chat:anonymous", request, 10, 60 * 60 * 1000);
       if (!rl.allowed) {
         return addRateLimitHeaders(
           NextResponse.json(
-            { error: `Daily limit reached (${dailyLimit} questions/day for ${userTier} tier). Upgrade for unlimited.` },
+            { error: "Rate limit exceeded. Sign in for higher limits." },
             { status: 429 }
           ),
           rl.remaining,

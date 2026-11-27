@@ -371,7 +371,7 @@ async function createSnapshotsForUpcomingFixtures(injuries) {
 
 async function collectFromAPIFootball() {
   const source = "api-football";
-  const apiKey = "***REMOVED-SECRET***";
+  const apiKey = process.env.API_FOOTBALL_KEY;
   
   log("info", `Collecting from ${source}`);
   

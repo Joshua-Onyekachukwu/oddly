@@ -12,8 +12,10 @@ import { createClient } from "@supabase/supabase-js";
 export async function POST(req: NextRequest) {
   try {
     const auth = req.headers.get("authorization");
-    const secret = process.env.CRON_SECRET || process.env.VERCEL_CRON_SECRET;
-    if (!auth || auth !== `Bearer ${secret}`) {
+    const secrets = [process.env.CRON_SECRET, process.env.VERCEL_CRON_SECRET].filter(Boolean);
+    // Reject when neither secret is configured — otherwise "Bearer undefined"
+    // would match and bypass auth entirely.
+    if (secrets.length === 0 || !auth || !secrets.some((s) => auth === `Bearer ${s}`)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

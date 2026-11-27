@@ -12,6 +12,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { requireAdmin } from "@/lib/api/utils";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || "",
@@ -200,6 +201,14 @@ async function getCalibration() {
 
 // ── Main handler ───────────────────────────────────────────────
 export async function GET(request: NextRequest) {
+  // SECURITY: Draw analytics expose internal model performance — admin only.
+  try {
+    await requireAdmin(request);
+  } catch (err: any) {
+    const status = err?.code === "FORBIDDEN" ? 403 : 401;
+    return NextResponse.json({ error: err?.message || "Unauthorized" }, { status });
+  }
+
   const url = new URL(request.url);
   const type = url.searchParams.get("type") || "summary";
   const days = parseInt(url.searchParams.get("days") || "90");
@@ -248,8 +257,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const auth = request.headers.get("authorization");
-    const secret = process.env.CRON_SECRET || process.env.VERCEL_CRON_SECRET;
-    if (!auth || auth !== `Bearer ${secret}`) {
+    const secrets = [process.env.CRON_SECRET, process.env.VERCEL_CRON_SECRET].filter(Boolean);
+    if (secrets.length === 0 || !auth || !secrets.some((s) => auth === `Bearer ${s}`)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

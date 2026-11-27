@@ -36,10 +36,13 @@ async function callInternal(
       headers["Authorization"] = `Bearer ${cronSecret}`;
     }
 
+    // Cron job endpoints authenticate GET via VERCEL_CRON_SECRET and POST
+    // via admin JWT. Since this orchestrator only holds the cron secret,
+    // call the GET handlers (which run the same jobs).
     const res = await fetch(`${origin}${path}`, {
       method,
       headers,
-      body: body ? JSON.stringify(body) : undefined,
+      body: method !== "GET" && body ? JSON.stringify(body) : undefined,
     });
 
     const data = await res.json();
@@ -76,28 +79,28 @@ export async function GET(request: NextRequest) {
 
     // Step 1: Sync fixtures and odds
     console.log("[DAILY CRON] Step 1/5: Syncing fixtures and odds...");
-    const syncResult = await callInternal("/api/v1/cron/sync", "POST", { type: "all" });
+    const syncResult = await callInternal("/api/v1/cron/sync", "GET");
     results.sync = syncResult;
     console.log(`[DAILY CRON] Sync completed in ${syncResult.duration}`);
 
     // Step 2: Generate predictions
     console.log("[DAILY CRON] Step 2/5: Generating predictions...");
     await new Promise((resolve) => setTimeout(resolve, 5000));
-    const predictResult = await callInternal("/api/v1/cron/predict", "POST");
+    const predictResult = await callInternal("/api/v1/cron/predict", "GET");
     results.predict = predictResult;
     console.log(`[DAILY CRON] Predict completed in ${predictResult.duration}`);
 
     // Step 3: Settle finished matches
     console.log("[DAILY CRON] Step 3/5: Settling finished matches...");
     await new Promise((resolve) => setTimeout(resolve, 5000));
-    const settleResult = await callInternal("/api/v1/cron/settle", "POST");
+    const settleResult = await callInternal("/api/v1/cron/settle", "GET");
     results.settle = settleResult;
     console.log(`[DAILY CRON] Settle completed in ${settleResult.duration}`);
 
     // Step 4: Learn from results
     console.log("[DAILY CRON] Step 4/5: Learning from results...");
     await new Promise((resolve) => setTimeout(resolve, 5000));
-    const learnResult = await callInternal("/api/v1/cron/learn", "POST");
+    const learnResult = await callInternal("/api/v1/cron/learn", "GET");
     results.learn = learnResult;
     console.log(`[DAILY CRON] Learn completed in ${learnResult.duration}`);
 
@@ -122,7 +125,7 @@ export async function GET(request: NextRequest) {
     // Step 6: Cleanup old data
     console.log("[DAILY CRON] Step 6/6: Cleaning up old data...");
     await new Promise((resolve) => setTimeout(resolve, 5000));
-    const cleanupResult = await callInternal("/api/v1/cron/cleanup", "POST");
+    const cleanupResult = await callInternal("/api/v1/cron/cleanup", "GET");
     results.cleanup = cleanupResult;
     console.log(`[DAILY CRON] Cleanup completed in ${cleanupResult.duration}`);
 
@@ -160,19 +163,19 @@ export async function POST(request: NextRequest) {
 
     // Step 1: Sync
     console.log("[MANUAL] Step 1/3: Syncing...");
-    const syncResult = await callInternal("/api/v1/cron/sync", "POST", { type: "all" });
+    const syncResult = await callInternal("/api/v1/cron/sync", "GET");
     results.sync = syncResult;
 
     // Step 2: Predict
     console.log("[MANUAL] Step 2/3: Predicting...");
     await new Promise((resolve) => setTimeout(resolve, 3000));
-    const predictResult = await callInternal("/api/v1/cron/predict", "POST");
+    const predictResult = await callInternal("/api/v1/cron/predict", "GET");
     results.predict = predictResult;
 
     // Step 3: Cleanup
     console.log("[MANUAL] Step 3/3: Cleaning up...");
     await new Promise((resolve) => setTimeout(resolve, 3000));
-    const cleanupResult = await callInternal("/api/v1/cron/cleanup", "POST");
+    const cleanupResult = await callInternal("/api/v1/cron/cleanup", "GET");
     results.cleanup = cleanupResult;
 
     const totalDuration = `${Date.now() - startTime}ms`;

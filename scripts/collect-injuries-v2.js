@@ -39,7 +39,7 @@ const env = loadEnv();
 const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
 const FD_KEY = "***REMOVED-SECRET***";
-const AF_KEY = "***REMOVED-SECRET***";
+const AF_KEY = process.env.API_FOOTBALL_KEY;
 
 function fetchJSON(url, headers = {}) {
   return new Promise((resolve, reject) => {

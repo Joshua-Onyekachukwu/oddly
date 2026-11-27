@@ -42,10 +42,11 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
-      // Check if this is a password reset — redirect to settings
+      // Check if this is a password reset — send to the reset-password page
+      // (which calls supabase.auth.updateUser with the recovery session)
       const isPasswordReset = searchParams.get("type") === "recovery";
       if (isPasswordReset) {
-        return NextResponse.redirect(`${origin}/settings`);
+        return NextResponse.redirect(`${origin}/reset-password`);
       }
 
       // Otherwise redirect to the intended destination

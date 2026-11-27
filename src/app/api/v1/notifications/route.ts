@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth, checkRateLimit, addRateLimitHeaders } from "@/lib/api/utils";
+import { getUserNotifications } from "@/lib/notifications/service";
 import { z } from "zod";
 import { validateBody } from "@/lib/api/validation";
 
@@ -145,24 +146,32 @@ export async function POST(request: NextRequest) {
 // ── GET ────────────────────────────────────────────────────────────
 
 export async function GET(request: NextRequest) {
+  let userId: string;
   try {
-    await requireAuth(request);
+    const { user } = await requireAuth(request);
+    userId = user.id;
   } catch {
     return NextResponse.json({ error: "Authentication required" }, { status: 401 });
   }
 
   const rl = checkRateLimit("notifications:get", request, 60, 60000);
 
-  const notifications = JSON.parse(
-    typeof globalThis !== "undefined"
-      ? (globalThis as any).__notifications || "[]"
-      : "[]"
+  const { searchParams } = new URL(request.url);
+  const limit = Math.min(
+    100,
+    Math.max(1, parseInt(searchParams.get("limit") || "20", 10) || 20)
+  );
+  const unreadOnly = searchParams.get("unreadOnly") === "true";
+
+  const { notifications, unreadCount, total } = await getUserNotifications(
+    userId,
+    { limit, unreadOnly }
   );
 
   const response = NextResponse.json({
-    notifications: notifications.slice(-20),
-    total: notifications.length,
-    subscribers: subscriptions.size,
+    notifications,
+    unreadCount,
+    total,
   });
   addRateLimitHeaders(response, rl.remaining, rl.resetAt);
   return response;

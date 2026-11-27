@@ -16,6 +16,7 @@ import {
   successResponse,
   badRequest,
   internalError,
+  tooManyRequests,
   addRateLimitHeaders,
   checkRateLimit,
 } from "@/lib/api/utils";
@@ -28,6 +29,9 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 export async function GET(request: NextRequest) {
   const rl = checkRateLimit("odds", request, 30, 60000); // 30 req/min (external API has its own limits)
+  if (!rl.allowed) {
+    return addRateLimitHeaders(tooManyRequests(), rl.remaining, rl.resetAt);
+  }
 
   const { searchParams } = new URL(request.url);
   const sport = searchParams.get("sport") || "soccer_epl";

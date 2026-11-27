@@ -24,7 +24,7 @@ try {
 const PROJECT_REF = process.env.SUPABASE_PROJECT_REF || "xruhvekcowdwocydqnmp";
 const REGION = process.env.SUPABASE_DB_REGION || "eu-west-1";
 const DB_PASSWORD =
-  process.env.SUPABASE_DB_PASSWORD || "***REMOVED-SECRET***";
+  process.env.SUPABASE_DB_PASSWORD;
 
 const MIGRATIONS_DIR = path.join(__dirname, "..", "supabase", "migrations");
 const dryRun = process.argv.includes("--dry-run");

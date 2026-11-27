@@ -25,7 +25,7 @@ fs.readFileSync(path.join(__dirname, "..", ".env.local"), "utf8").split("\n").fo
 });
 
 const sb = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
-const AF_KEY = env.API_FOOTBALL_KEY || "***REMOVED-SECRET***";
+const AF_KEY = env.API_FOOTBALL_KEY;
 
 function fetchJSON(url, retries = 2) {
   return new Promise((resolve, reject) => {

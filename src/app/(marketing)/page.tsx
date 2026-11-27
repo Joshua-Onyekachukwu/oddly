@@ -3,6 +3,7 @@ import Partners from "@/components/landing/Partners";
 import About from "@/components/landing/About";
 import Features from "@/components/landing/Features";
 import DashboardShowcase from "@/components/landing/DashboardShowcase";
+import LiveMatches from "@/components/landing/LiveMatches";
 import UseCases from "@/components/landing/UseCases";
 import Pricing from "@/components/landing/Pricing";
 import FAQ from "@/components/landing/FAQ";
@@ -25,6 +26,11 @@ export default async function Home() {
       <Features />
 
       <DashboardShowcase stats={data.stats} />
+
+      <LiveMatches
+        fixtures={data.upcomingFixtures}
+        valueBets={data.topValueBets}
+      />
 
       <UseCases stats={data.stats} />
 

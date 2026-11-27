@@ -124,6 +124,43 @@ export async function GET(request: NextRequest) {
   try {
     const rl = checkRateLimit("injuries:collect:get", request, 30, 60000);
 
+    // SECURITY: Collection logs and injury stats are internal ops data —
+    // admin JWT or internal API key required (same check as POST).
+    const authHeader = request.headers.get("authorization");
+    const apiKey = request.headers.get("x-api-key");
+
+    if (!authHeader && !apiKey) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    let isAdmin = false;
+
+    if (authHeader?.startsWith("Bearer ")) {
+      const token = authHeader.slice(7);
+      const { data: { user } } = await supabaseAdmin.auth.getUser(token);
+
+      if (user) {
+        const { data: profile } = await supabaseAdmin
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .single();
+
+        isAdmin = profile?.role === "admin";
+      }
+    }
+
+    if (apiKey && apiKey === process.env.INTERNAL_API_KEY) {
+      isAdmin = true;
+    }
+
+    if (!isAdmin) {
+      return NextResponse.json(
+        { error: "Admin access required" },
+        { status: 403 }
+      );
+    }
+
     // Get recent collection logs
     const { data: logs, error: logsError } = await supabaseAdmin
       .from("injury_collection_log" as any)

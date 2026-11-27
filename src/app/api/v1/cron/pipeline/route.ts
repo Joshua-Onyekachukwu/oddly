@@ -11,12 +11,11 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import * as fs from "fs";
-import * as path from "path";
 import { predictMatchEnsemble, checkPrediction, resetBatchCaches } from "@/lib/models/ensemble";
 import { normalizeTeamName } from "@/lib/football/team-normalizer";
 import { withLock } from "@/lib/cron/lock";
 import { startRun, completeRun, type CronRunResult } from "@/lib/cron/logger";
+import { getState, setState, STATE_KEYS } from "@/lib/state/store";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || "",
@@ -43,49 +42,36 @@ function isAuthorizedCron(request: NextRequest): boolean {
 
 /* ── Helpers ──────────────────────────────────────────────── */
 
-function loadPipelineState(): Record<string, any> {
-  try {
-    const p = path.join(process.cwd(), "data", "pipeline-state.json");
-    if (fs.existsSync(p)) return JSON.parse(fs.readFileSync(p, "utf8"));
-  } catch {}
-  return { phases: {}, picks: [], lastRun: null };
+// Durable state lives in the `app_state` table — the filesystem is
+// read-only on Vercel serverless, so data/*.json is no longer used.
+
+function loadPipelineState(): Promise<Record<string, any>> {
+  return getState(STATE_KEYS.PIPELINE_STATE, { phases: {}, picks: [], lastRun: null });
 }
 
-function savePipelineState(state: Record<string, any>) {
-  try {
-    const p = path.join(process.cwd(), "data", "pipeline-state.json");
-    fs.writeFileSync(p, JSON.stringify(state, null, 2));
-  } catch {}
+function savePipelineState(state: Record<string, any>): Promise<boolean> {
+  return setState(STATE_KEYS.PIPELINE_STATE, state);
 }
 
-function loadCLVFeatures(): Record<string, any> {
-  try {
-    const p = path.join(process.cwd(), "data", "clv-features.json");
-    if (fs.existsSync(p)) return JSON.parse(fs.readFileSync(p, "utf8")).features || {};
-  } catch {}
-  return {};
+async function loadCLVFeatures(): Promise<Record<string, any>> {
+  const data = await getState(STATE_KEYS.CLV_FEATURES, { features: {} });
+  return data?.features || {};
 }
 
-function loadCLVSnapshots(): Record<string, any> {
-  try {
-    const p = path.join(process.cwd(), "data", "clv-snapshots.json");
-    if (fs.existsSync(p)) return JSON.parse(fs.readFileSync(p, "utf8"));
-  } catch {}
-  return { snapshots: {}, meta: {} };
+function loadCLVSnapshots(): Promise<Record<string, any>> {
+  return getState(STATE_KEYS.CLV_SNAPSHOTS, { snapshots: {}, meta: {} });
 }
 
-function saveCLVSnapshots(data: Record<string, any>) {
-  try {
-    const p = path.join(process.cwd(), "data", "clv-snapshots.json");
-    fs.writeFileSync(p, JSON.stringify(data, null, 2));
-  } catch {}
+function saveCLVSnapshots(data: Record<string, any>): Promise<boolean> {
+  return setState(STATE_KEYS.CLV_SNAPSHOTS, data);
 }
 
-function saveCLVFeatures(features: Record<string, any>, count: number) {
-  try {
-    const p = path.join(process.cwd(), "data", "clv-features.json");
-    fs.writeFileSync(p, JSON.stringify({ computed_at: new Date().toISOString(), count, features }, null, 2));
-  } catch {}
+function saveCLVFeatures(features: Record<string, any>, count: number): Promise<boolean> {
+  return setState(STATE_KEYS.CLV_FEATURES, {
+    computed_at: new Date().toISOString(),
+    count,
+    features,
+  });
 }
 
 /* ── Time-of-day awareness ──────────────────────────────── */
@@ -299,7 +285,7 @@ async function phaseCLVSnapshot(now: Date): Promise<PhaseResult> {
     const teamMap: Record<string, string> = {};
     for (const t of teams || []) teamMap[t.id] = normalizeTeamName(t.canonical_name);
 
-    const clvData = loadCLVSnapshots();
+    const clvData = await loadCLVSnapshots();
     let snapshotCount = 0;
 
     for (const fixture of fixtures) {
@@ -370,7 +356,7 @@ async function phaseCLVSnapshot(now: Date): Promise<PhaseResult> {
     }
 
     clvData.meta = { lastSnapshot: now.toISOString(), snapshotCount, fixturesTracked: Object.keys(clvData.snapshots).length };
-    saveCLVSnapshots(clvData);
+    await saveCLVSnapshots(clvData);
 
     return {
       success: true,
@@ -387,7 +373,7 @@ async function phaseCLVSnapshot(now: Date): Promise<PhaseResult> {
 async function phaseCLVCompute(): Promise<PhaseResult> {
   const start = Date.now();
   try {
-    const data = loadCLVSnapshots();
+    const data = await loadCLVSnapshots();
     const features: Record<string, any> = {};
     let computed = 0;
 
@@ -425,7 +411,7 @@ async function phaseCLVCompute(): Promise<PhaseResult> {
       computed++;
     }
 
-    saveCLVFeatures(features, computed);
+    await saveCLVFeatures(features, computed);
     return { success: true, count: computed, details: `${computed} CLV features computed`, duration: `${Date.now() - start}ms` };
   } catch (e) {
     return { success: false, details: e instanceof Error ? e.message : "Unknown", duration: `${Date.now() - start}ms` };
@@ -456,7 +442,7 @@ async function phasePreMatchUpdate(now: Date): Promise<PhaseResult> {
     const teamMap: Record<string, string> = {};
     for (const t of teams || []) teamMap[t.id] = normalizeTeamName(t.canonical_name);
 
-    const clvFeatures = loadCLVFeatures();
+    const clvFeatures = await loadCLVFeatures();
     let updated = 0;
 
     for (const fixture of fixtures) {
@@ -522,7 +508,7 @@ async function phaseFinalPick(now: Date): Promise<PhaseResult> {
     const teamMap: Record<string, string> = {};
     for (const t of teams || []) teamMap[t.id] = normalizeTeamName(t.canonical_name);
 
-    const clvFeatures = loadCLVFeatures();
+    const clvFeatures = await loadCLVFeatures();
     const candidates: any[] = [];
 
     for (const fixture of fixtures) {
@@ -595,13 +581,13 @@ async function phaseFinalPick(now: Date): Promise<PhaseResult> {
     const thePick = candidates[0];
     const decision = thePick.odds.edge > 0.02 && thePick.confidenceTier !== "MEDIUM" ? "BET" : "WATCH";
 
-    const state = loadPipelineState();
+    const state = await loadPipelineState();
     state.picks.push({ ...thePick, decided_at: now.toISOString(), decision, all_candidates: candidates });
     state.lastRun = now.toISOString();
     state.phases[`phase3_${now.toISOString().slice(0, 10)}`] = {
       updated_at: now.toISOString(), candidates: candidates.length, pick: thePick.match, decision,
     };
-    savePipelineState(state);
+    await savePipelineState(state);
 
     return {
       success: true, count: 1,

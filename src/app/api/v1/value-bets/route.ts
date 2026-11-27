@@ -20,6 +20,7 @@ import {
   parsePagination,
   buildPaginationMeta,
   internalError,
+  tooManyRequests,
   addRateLimitHeaders,
   checkRateLimit,
 } from "@/lib/api/utils";
@@ -37,6 +38,9 @@ const valueBetsQuerySchema = z.object({
 
 export async function GET(request: NextRequest) {
   const rl = checkRateLimit("value-bets", request, 60, 60000);
+  if (!rl.allowed) {
+    return addRateLimitHeaders(tooManyRequests(), rl.remaining, rl.resetAt);
+  }
   const { searchParams } = new URL(request.url);
 
   const validation = validateQuery(valueBetsQuerySchema, searchParams);

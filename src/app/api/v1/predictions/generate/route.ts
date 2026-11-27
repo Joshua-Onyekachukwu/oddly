@@ -12,6 +12,43 @@ const supabaseAdmin = createClient<Database>(
 );
 
 /**
+ * Verify the caller is an admin (Supabase JWT) or holds the internal
+ * API key. Returns true when authorized.
+ */
+async function isAuthorized(request: NextRequest): Promise<boolean> {
+  const authHeader = request.headers.get("authorization");
+  const apiKey = request.headers.get("x-api-key");
+
+  if (!authHeader && !apiKey) {
+    return false;
+  }
+
+  if (authHeader?.startsWith("Bearer ")) {
+    const token = authHeader.slice(7);
+    const { data: { user } } = await supabaseAdmin.auth.getUser(token);
+
+    if (user) {
+      const { data: profile } = await supabaseAdmin
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+      if (profile?.role === "admin") {
+        return true;
+      }
+    }
+  }
+
+  // Allow internal API key
+  if (apiKey && apiKey === process.env.INTERNAL_API_KEY) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
  * POST /api/v1/predictions/generate
  * 
  * Generate predictions for a fixture or all today's fixtures.
@@ -23,40 +60,13 @@ const supabaseAdmin = createClient<Database>(
  */
 export async function POST(request: NextRequest) {
   try {
-    // Authenticate — check for admin or API key
-    const authHeader = request.headers.get("authorization");
-    const apiKey = request.headers.get("x-api-key");
-
-    if (!authHeader && !apiKey) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    let isAdmin = false;
-
-    if (authHeader?.startsWith("Bearer ")) {
-      const token = authHeader.slice(7);
-      const { data: { user } } = await supabaseAdmin.auth.getUser(token);
-
-      if (user) {
-        const { data: profile } = await supabaseAdmin
-          .from("profiles")
-          .select("role")
-          .eq("id", user.id)
-          .single();
-
-        isAdmin = profile?.role === "admin";
-      }
-    }
-
-    // Allow internal API key
-    if (apiKey === process.env.INTERNAL_API_KEY) {
-      isAdmin = true;
-    }
-
-    if (!isAdmin) {
+    // Authenticate — admin JWT or internal API key
+    if (!(await isAuthorized(request))) {
+      const hasCreds =
+        request.headers.get("authorization") || request.headers.get("x-api-key");
       return NextResponse.json(
-        { error: "Admin access required" },
-        { status: 403 }
+        { error: hasCreds ? "Admin access required" : "Unauthorized" },
+        { status: hasCreds ? 403 : 401 }
       );
     }
 
@@ -113,8 +123,18 @@ export async function POST(request: NextRequest) {
  * 
  * Get prediction generation status and today's stats.
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    // SECURITY: Generation stats are internal ops data — admin only.
+    if (!(await isAuthorized(request))) {
+      const hasCreds =
+        request.headers.get("authorization") || request.headers.get("x-api-key");
+      return NextResponse.json(
+        { error: hasCreds ? "Admin access required" : "Unauthorized" },
+        { status: hasCreds ? 403 : 401 }
+      );
+    }
+
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 

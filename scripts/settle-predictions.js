@@ -7,10 +7,19 @@
 
 const { createClient } = require("@supabase/supabase-js");
 
+try {
+  require("dotenv").config({ path: require("path").join(__dirname, "..", ".env.local") });
+} catch {}
+
 const s = createClient(
-  "https://ulelicrbgicgnhmuulup.supabase.co",
-  "***REMOVED-SECRET-JWT***"
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 );
+
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  console.error("Missing NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY in .env.local");
+  process.exit(1);
+}
 
 function isCorrect(market, selection, homeScore, awayScore) {
   const total = homeScore + awayScore;

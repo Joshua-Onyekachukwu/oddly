@@ -33,7 +33,7 @@ const supabase = createClient(
 );
 
 const FOOTBALL_DATA_KEY = "***REMOVED-SECRET***";
-const API_FOOTBALL_KEY = "***REMOVED-SECRET***";
+const API_FOOTBALL_KEY = process.env.API_FOOTBALL_KEY;
 const DRY_RUN = process.argv.includes("--dry-run");
 
 function fetchJSON(url, headers = {}) {

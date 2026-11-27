@@ -56,6 +56,7 @@ import {
   buildRolloverTickets,
   canonicalMarket,
 } from "@/lib/rollover/engine";
+import { featureGateResponse } from "@/lib/subscription/entitlements";
 
 const supabaseAdmin = createClient<Database>(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -126,6 +127,18 @@ function oddsKeyVariants(market: string, selection: string): string[] {
 export async function GET(request: NextRequest) {
   try {
     const { user } = await requireAuth(request);
+
+    // Entitlement gate (Elite feature once paid launch enables enforcement —
+    // see src/lib/subscription/entitlements.ts). Currently open to all tiers.
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("subscription_tier")
+      .eq("id", user.id)
+      .maybeSingle();
+    const gate = featureGateResponse(profile?.subscription_tier, "rollover");
+    if (!gate.allowed) {
+      return NextResponse.json({ success: false, ...gate.body }, { status: gate.status });
+    }
 
     const rl = checkRateLimit(`rollover:recommendation:${user.id}`, request, 30, 60_000);
     if (!rl.allowed) {

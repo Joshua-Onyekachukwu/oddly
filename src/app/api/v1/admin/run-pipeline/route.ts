@@ -24,12 +24,21 @@ export async function POST(request: NextRequest) {
     const origin = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     const results: Record<string, any> = {};
 
+    // Cron POST endpoints require an admin JWT (requireAdmin). Forward the
+    // caller's already-validated Authorization header so the internal calls
+    // authenticate as the same admin.
+    const authHeader = request.headers.get("authorization") || "";
+    const internalHeaders: Record<string, string> = {
+      "Content-Type": "application/json",
+      Authorization: authHeader,
+    };
+
     // Step 1: Sync
     console.log("[ADMIN PIPELINE] Step 1/4: Syncing...");
     try {
       const syncRes = await fetch(`${origin}/api/v1/cron/sync`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: internalHeaders,
         body: JSON.stringify({ type: "all" }),
       });
       results.sync = await syncRes.json();
@@ -43,7 +52,7 @@ export async function POST(request: NextRequest) {
     try {
       const predictRes = await fetch(`${origin}/api/v1/cron/predict`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: internalHeaders,
       });
       results.predict = await predictRes.json();
     } catch (e) {
@@ -56,7 +65,7 @@ export async function POST(request: NextRequest) {
     try {
       const settleRes = await fetch(`${origin}/api/v1/cron/settle`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: internalHeaders,
       });
       results.settle = await settleRes.json();
     } catch (e) {
@@ -69,7 +78,7 @@ export async function POST(request: NextRequest) {
     try {
       const learnRes = await fetch(`${origin}/api/v1/cron/learn`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: internalHeaders,
       });
       results.learn = await learnRes.json();
     } catch (e) {

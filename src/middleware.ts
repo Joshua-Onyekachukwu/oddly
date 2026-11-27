@@ -36,9 +36,35 @@ export async function middleware(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
 
-  // Public routes that don't need auth
-  const publicRoutes = ["/", "/login", "/signup", "/forgot-password"];
-  const isPublicRoute = publicRoutes.some((route) => pathname === route);
+  // Public routes that don't need auth.
+  // Marketing/legal pages must be reachable by logged-out users (and by
+  // search engines / crawlers), so they are whitelisted here.
+  const publicRoutes = [
+    "/",
+    "/login",
+    "/signup",
+    "/forgot-password",
+    "/reset-password",
+    "/terms",
+    "/privacy",
+    "/cookies",
+    "/responsible-gambling",
+    "/about",
+    "/contact",
+    "/faq",
+    "/auth/callback",
+  ];
+  const isPublicRoute = publicRoutes.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
+  );
+
+  // Auth pages that logged-in users should be bounced away from.
+  // /reset-password is intentionally excluded: a user mid password-reset
+  // holds a recovery session (i.e. is "logged in") and must stay on the page.
+  const authPages = ["/login", "/signup", "/forgot-password"];
+  const isAuthPage = authPages.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
+  );
 
   // API routes — add security headers but allow individual routes to handle auth
   if (pathname.startsWith("/api/")) {
@@ -49,8 +75,17 @@ export async function middleware(request: NextRequest) {
     return supabaseResponse;
   }
 
-  // Marketing pages are public
-  if (pathname.startsWith("/features") || pathname.startsWith("/pricing")) {
+  // Marketing pages are public (prefix match for nested routes)
+  if (
+    pathname.startsWith("/features") ||
+    pathname.startsWith("/pricing")
+  ) {
+    return supabaseResponse;
+  }
+
+  // Auth callback must run its route handler (exchangeCodeForSession) for
+  // both logged-out and logged-in users — never redirect it.
+  if (pathname === "/auth/callback" || pathname.startsWith("/auth/callback/")) {
     return supabaseResponse;
   }
 
@@ -63,7 +98,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Redirect authenticated users away from auth pages
-  if (user && isPublicRoute && pathname !== "/") {
+  if (user && isAuthPage) {
     const url = request.nextUrl.clone();
     url.pathname = "/matches";
     return NextResponse.redirect(url);

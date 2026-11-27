@@ -12,12 +12,21 @@ import type { Database } from "@/lib/supabase/database.types";
 import {
   successResponse,
   requireAuth,
+  requireAdmin,
   notFound,
   badRequest,
+  forbidden,
   unprocessable,
   internalError,
 } from "@/lib/api/utils";
 import { userBetUpdateSchema, validateBody } from "@/lib/api/validation";
+
+// Service-role client for admin settlement (bypasses RLS so admins can
+// settle bets belonging to any user).
+const supabaseAdmin = createClient<Database>(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export async function GET(
   request: NextRequest,
@@ -57,7 +66,9 @@ export async function PATCH(
   const { id } = await params;
 
   try {
-    const { user, supabase } = await requireAuth(request);
+    // SECURITY: Settlement is admin-only — users must not mark their own
+    // bets won/lost and fabricate profit.
+    await requireAdmin(request);
 
     let rawBody: unknown;
     try {
@@ -83,7 +94,7 @@ export async function PATCH(
 
     // If won, calculate profit
     if (status === "won") {
-      const { data: bet } = await supabase
+      const { data: bet } = await supabaseAdmin
         .from("user_bets")
         .select("stake, odds_at_placement")
         .eq("id", id)
@@ -96,11 +107,10 @@ export async function PATCH(
       updateData.profit = 0;
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from("user_bets")
       .update(updateData as any)
       .eq("id", id)
-      .eq("user_id", user.id)
       .select()
       .single();
 
@@ -113,6 +123,7 @@ export async function PATCH(
     if (error && typeof error === "object" && "code" in error) {
       const authErr = error as { code: string; message: string; status: number };
       if (authErr.code === "UNAUTHORIZED") return unprocessable(authErr.message);
+      if (authErr.code === "FORBIDDEN") return forbidden(authErr.message);
     }
     console.error("PATCH /api/v1/user/bets/[id] error:", error);
     return internalError();

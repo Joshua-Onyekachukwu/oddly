@@ -17,19 +17,9 @@ import {
   addRateLimitHeaders,
   checkRateLimit,
 } from "@/lib/api/utils";
+import { getState, STATE_KEYS } from "@/lib/state/store";
 
 /* ── helpers ─────────────────────────────────────────────────── */
-
-function loadJSON(filePath: string): any {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const fs = require("fs");
-    if (fs.existsSync(filePath)) {
-      return JSON.parse(fs.readFileSync(filePath, "utf8"));
-    }
-  } catch {}
-  return null;
-}
 
 function getTodayISO(): string {
   return new Date().toISOString().slice(0, 10);
@@ -46,25 +36,21 @@ export async function GET(request: NextRequest) {
     const fixtureId = searchParams.get("fixtureId") || undefined;
     const limit = Math.min(parseInt(searchParams.get("limit") || "20", 10), 100);
 
-    /* ── 1. Pipeline state (for picks history) ─────────────── */
-    const path = require("path");
-    const DATA_DIR = path.join(process.cwd(), "data");
-    const pipelineState = loadJSON(path.join(DATA_DIR, "pipeline-state.json")) || {
-      picks: [],
-      phases: {},
-      lastRun: null,
-      lastResults: null,
-    };
-
-    /* ── 2. CLV snapshots & features ──────────────────────── */
-    const clvSnapshots = loadJSON(path.join(DATA_DIR, "clv-snapshots.json")) || { snapshots: {} };
-    const clvFeatures = loadJSON(path.join(DATA_DIR, "clv-features.json")) || { features: {} };
-
-    /* ── 3. Predicted lineups ─────────────────────────────── */
-    const predictedLineups = loadJSON(path.join(DATA_DIR, "predicted-lineups.json")) || { predictions: [] };
-
-    /* ── 4. Market consensus ──────────────────────────────── */
-    const marketConsensus = loadJSON(path.join(DATA_DIR, "market-consensus.json")) || { features: {} };
+    /* ── 1-4. Durable state from app_state table (filesystem is
+       read-only on Vercel serverless — no more data/*.json) ── */
+    const [pipelineState, clvSnapshots, clvFeatures, predictedLineups, marketConsensus] =
+      await Promise.all([
+        getState(STATE_KEYS.PIPELINE_STATE, {
+          picks: [],
+          phases: {},
+          lastRun: null,
+          lastResults: null,
+        }),
+        getState(STATE_KEYS.CLV_SNAPSHOTS, { snapshots: {} }),
+        getState(STATE_KEYS.CLV_FEATURES, { features: {} }),
+        getState(STATE_KEYS.PREDICTED_LINEUPS, { predictions: [] }),
+        getState(STATE_KEYS.MARKET_CONSENSUS, { features: {} }),
+      ]);
 
     /* ── 5. Get today's fixtures from Supabase ────────────── */
     const today = getTodayISO();

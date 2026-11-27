@@ -32,7 +32,7 @@ fs.readFileSync(path.join(__dirname, "..", ".env.local"), "utf8")
   });
 
 const sb = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
-const AF_KEY = env.API_FOOTBALL_KEY || "***REMOVED-SECRET***";
+const AF_KEY = env.API_FOOTBALL_KEY;
 
 // API-Football free plan: 10 requests/min, 100/day
 const LEAGUES = [
