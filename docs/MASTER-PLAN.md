@@ -114,3 +114,15 @@ rollover portfolio risk engine, statistical-significance claims policy,
 operational failure modes, and the final strategic verdict (advantage =
 timing + coverage + rollover structure + data moat; 2.00 rollover is
 conditioned, not guaranteed).
+
+## Rollover engine spec + long-term vision (added 2026-11-27)
+
+- `ODDLY-ROLLOVER-ENGINE-SPEC.md` — authoritative 11-section spec for the
+  2.00-odds rollover engine: broad opportunity discovery, correlation-aware
+  combos, 4-score qualification, QUALIFIED/WAIT/SKIP decisions, monthly
+  tracker, simulations, bankroll controls, release criteria. Includes a
+  status-vs-implementation table and ordered next steps.
+- `ODDLY-LONG-TERM-VISION.md` — product vision: full prediction lifecycle
+  independent of rollover, every prediction feeds learning, 3-month
+  foundation→intelligence→evidence programme, reinvestment discipline,
+  ₦20M/month aspiration (never in logic), permanent 6-component separation.

@@ -305,8 +305,8 @@ async function syncOptimizedWeights() {
     poisson_dc_weight: ew.poisson_dc || 0.35,
     elo_dc_weight: ew.elo_dc || 0.30,
     regression_dc_weight: ew.regression_dc || 0.35,
-    brier_score: data.optimized?.brier_score || null,
-    accuracy: data.optimized?.accuracy || null,
+    brier_score: data.optimized?.val_brier ?? data.optimized?.brier_score ?? null,
+    accuracy: data.optimized?.val_accuracy ?? data.optimized?.accuracy ?? null,
     matches_analyzed: data.matches_analyzed || null,
     trained_at: data.timestamp || null,
   };
@@ -374,12 +374,16 @@ async function syncInjuryData() {
 
   // Mirror into player_availability — the richer injury pipeline
   // (feature-engineering.ts) reads this table, not player_injury_data.
+  // player_availability.status has a CHECK constraint allowing only
+  // ('available','injured','suspended','doubtful','out') — map other
+  // statuses (e.g. 'likely', 'questionable') to 'doubtful'.
+  const PA_ALLOWED = new Set(["available", "injured", "suspended", "doubtful", "out"]);
   const avail = records
     .filter((r) => r.team_name && r.player_name)
     .map((r) => ({
       player_name: r.player_name,
       team_name: r.team_name,
-      status: r.status || "injured",
+      status: PA_ALLOWED.has(r.status) ? r.status : "doubtful",
       injury_type: r.injury_type || null,
       reason: r.injury_type || null,
       expected_return: r.expected_return || null,

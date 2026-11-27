@@ -552,26 +552,20 @@ export async function getInjuryFeaturesForPrediction(
     return null;
   }
 
-  // Get features computed BEFORE prediction time (leakage prevention)
-  const { data: homeFeature } = await supabaseAdmin
+  // Get features computed BEFORE prediction time (leakage prevention).
+  // team_name casing differs between writers (canonical_name vs fixture name),
+  // so fetch all rows for the fixture and match case-insensitively.
+  const { data: featureRows } = await supabaseAdmin
     .from("team_injury_features" as any)
     .select("*")
-    .eq("team_name", homeTeam)
     .eq("fixture_id", fixtureId)
     .lte("snapshot_date", predictionTime.toISOString())
-    .order("snapshot_date", { ascending: false })
-    .limit(1)
-    .single();
+    .order("snapshot_date", { ascending: false });
 
-  const { data: awayFeature } = await supabaseAdmin
-    .from("team_injury_features" as any)
-    .select("*")
-    .eq("team_name", awayTeam)
-    .eq("fixture_id", fixtureId)
-    .lte("snapshot_date", predictionTime.toISOString())
-    .order("snapshot_date", { ascending: false })
-    .limit(1)
-    .single();
+  const norm = (v: unknown) => String(v ?? "").trim().toLowerCase();
+  const rows = featureRows ?? [];
+  const homeFeature = rows.find((r: any) => norm(r.team_name) === norm(homeTeam));
+  const awayFeature = rows.find((r: any) => norm(r.team_name) === norm(awayTeam));
 
   if (!homeFeature || !awayFeature) {
     return null;
