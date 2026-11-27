@@ -2,12 +2,14 @@
  * GET /api/v1/fixtures/[id]
  * 
  * Get a single fixture by ID with full details including
- * predictions, odds, and head-to-head data.
+ * predictions, odds, head-to-head data, team feature profiles,
+ * injuries/availability, prediction context and odds movement.
  */
 
 import { NextRequest } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
+import { fetchMatchContext } from "@/lib/matches/match-context";
 import {
   successResponse,
   notFound,
@@ -47,13 +49,20 @@ export async function GET(
       .eq("fixture_id", id)
       .order("confidence", { ascending: false });
 
-    // Fetch odds snapshots
+    // Fetch odds snapshots (snapshot_time is the real column; the previous
+    // captured_at ordering silently returned no rows).
     const { data: odds } = await supabase
       .from("odds_snapshots")
       .select("*")
       .eq("fixture_id", id)
-      .order("captured_at", { ascending: false })
-      .limit(10);
+      .order("snapshot_time", { ascending: false })
+      .limit(50);
+
+    // Richer context sections: team profiles, H2H (with linked xG),
+    // injuries joined to importance scores, prediction context and odds
+    // movement. All honest-empty-state safe — sections are null/[] when the
+    // underlying tables have no rows for this fixture.
+    const context = await fetchMatchContext(supabase as any, fixture as any);
 
     // Surface the fixture-level data-quality assessment carried on prediction
     // rows (all rows for a fixture share the same breakdown).
@@ -67,6 +76,11 @@ export async function GET(
       predictions: predictions || [],
       odds: odds || [],
       data_quality: dataQuality,
+      team_profiles: context.team_profiles,
+      h2h: context.h2h,
+      injuries: context.injuries,
+      prediction_context: context.prediction_context,
+      odds_summary: context.odds_summary,
     });
 
     addRateLimitHeaders(response, rl.remaining, rl.resetAt);

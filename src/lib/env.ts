@@ -15,8 +15,6 @@ const optionalServerVars = [
   "VERCEL_CRON_SECRET",
   "INTERNAL_API_KEY",
   "NEXT_PUBLIC_APP_URL",
-  "NEXT_PUBLIC_CONVEX_URL",
-  "CONVEX_DEPLOY_KEY",
   ...Array.from({ length: 10 }, (_, i) => `NVIDIA_KEY_${i + 1}`),
 ] as const;
 
@@ -54,10 +52,6 @@ export function validateEnv(): EnvResult {
     warnings.push("API_FOOTBALL_KEY not configured — fixture sync will not work");
   }
 
-  if (!process.env.NEXT_PUBLIC_CONVEX_URL) {
-    warnings.push("NEXT_PUBLIC_CONVEX_URL not configured — real-time features disabled");
-  }
-
   if (missing.length > 0) {
     console.error(`[ENV] Missing required environment variables: ${missing.join(", ")}`);
     console.error("[ENV] Set these in your .env.local file or Vercel dashboard");
@@ -85,7 +79,7 @@ export function getNvidiaKeys(): string[] {
 /**
  * Check if a feature is available based on env config
  */
-export function isFeatureAvailable(feature: "ai" | "odds" | "fixtures" | "convex"): boolean {
+export function isFeatureAvailable(feature: "ai" | "odds" | "fixtures"): boolean {
   switch (feature) {
     case "ai":
       return getNvidiaKeys().length > 0;
@@ -93,7 +87,5 @@ export function isFeatureAvailable(feature: "ai" | "odds" | "fixtures" | "convex
       return !!process.env.THE_ODDS_API_KEY;
     case "fixtures":
       return !!process.env.API_FOOTBALL_KEY;
-    case "convex":
-      return !!process.env.NEXT_PUBLIC_CONVEX_URL;
   }
 }

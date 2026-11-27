@@ -27,6 +27,13 @@ import {
 import { leagueCreateSchema, validateBody } from "@/lib/api/validation";
 import { logAdminAction } from "@/lib/admin/audit";
 
+// leagues writes are service-role only under RLS ("Service role manages
+// leagues"); the user-scoped client from requireAdmin can read but not write.
+const supabaseAdmin = createClient<Database>(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
 export async function GET(request: NextRequest) {
   try {
     const { user, supabase } = await requireAdmin(request);
@@ -45,17 +52,41 @@ export async function GET(request: NextRequest) {
       return internalError(`Database query failed: ${error.message}`);
     }
 
-    // Enrich with fixture counts
-    const enriched = await Promise.all(
-      (data || []).map(async (league) => {
-        const { count: fixtureCount } = await supabase
-          .from("fixtures")
-          .select("id", { count: "exact", head: true })
-          .eq("league_id", league.id);
+    // Enrich with fixture counts (upcoming/finished) and league model params.
+    // league_model_params is keyed by league_name (text), not league_id.
+    const [{ data: fixtureRows }, { data: paramRows }] = await Promise.all([
+      supabase.from("fixtures").select("league_id, status"),
+      supabase.from("league_model_params").select("*"),
+    ]);
 
-        return { ...league, fixture_count: fixtureCount || 0 };
-      })
-    );
+    const countsByLeague = new Map<
+      string,
+      { total: number; upcoming: number; finished: number }
+    >();
+    for (const f of fixtureRows || []) {
+      if (!f.league_id) continue;
+      const c = countsByLeague.get(f.league_id) || { total: 0, upcoming: 0, finished: 0 };
+      c.total += 1;
+      if (f.status === "finished") c.finished += 1;
+      else c.upcoming += 1;
+      countsByLeague.set(f.league_id, c);
+    }
+
+    const paramsByName = new Map<string, unknown>();
+    for (const p of paramRows || []) {
+      paramsByName.set((p as { league_name: string }).league_name, p);
+    }
+
+    const enriched = (data || []).map((league) => {
+      const c = countsByLeague.get(league.id) || { total: 0, upcoming: 0, finished: 0 };
+      return {
+        ...league,
+        fixture_count: c.total,
+        upcoming_count: c.upcoming,
+        finished_count: c.finished,
+        model_params: paramsByName.get(league.name) || null,
+      };
+    });
 
     const meta = buildPaginationMeta(page, pageSize, count || 0);
     const response = successResponse(enriched, meta);
@@ -97,14 +128,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { name, country, active } = validation.data;
+    const { name, country, active, priority } = validation.data;
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from("leagues")
       .insert({
         name,
         country: country || null,
         is_active: active,
+        priority: priority ?? 0,
       })
       .select()
       .single();
@@ -117,6 +149,7 @@ export async function POST(request: NextRequest) {
       name,
       country: country || null,
       active,
+      priority: priority ?? 0,
     });
 
     return createdResponse(data);

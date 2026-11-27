@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { useAuth } from "@/providers/AuthProvider";
 import { createClient } from "@/lib/supabase/client";
 import { PageHeader, Card, EmptyState, Button, Badge } from "@/components/ui";
@@ -236,7 +237,7 @@ const EMPTY_REASON_HINTS: Record<string, string> = {
 };
 
 export default function RolloverPage() {
-  const { user, session } = useAuth();
+  const { user, session, profile } = useAuth();
   const [chains, setChains] = useState<RolloverChain[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -567,6 +568,22 @@ export default function RolloverPage() {
           )
         }
       />
+
+      {/* Elite upsell — non-blocking while entitlements are unenforced */}
+      {profile?.subscription_tier === "free" && (
+        <div className="mb-[16px] flex items-start gap-[10px] p-[12px] bg-amber-50 border border-amber-100 rounded-[10px]">
+          <i className="ri-vip-crown-line text-[16px] text-amber-500 flex-none mt-[1px]" />
+          <p className="text-[12px] text-amber-700 !leading-[1.6]">
+            The Rollover engine is an{" "}
+            <span className="font-semibold">Elite</span> feature. You&apos;re on the Free
+            plan — it works for everyone during our free testing phase,{" "}
+            <Link href="/pricing" className="font-semibold underline hover:text-amber-800">
+              upgrade to Elite
+            </Link>{" "}
+            to keep it when paid plans launch.
+          </p>
+        </div>
+      )}
 
       {/* Error banner */}
       {error && (

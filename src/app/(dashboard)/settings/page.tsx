@@ -5,7 +5,9 @@ import { useAuth } from "@/providers/AuthProvider";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { PageHeader, Card, CardHeader, Button, Badge } from "@/components/ui";
+import { PageHeader, Card, CardHeader, Button } from "@/components/ui";
+import { useSubscription } from "@/components/subscription/useSubscription";
+import { SubscriptionBadge } from "@/components/subscription/SubscriptionBadge";
 
 /** Notification preference keys managed on this page (subset of full prefs). */
 const NOTIF_KEYS = {
@@ -66,6 +68,7 @@ function ToggleSwitch({
 
 export default function SettingsPage() {
   const { user, profile, session, refreshProfile, signOut } = useAuth();
+  const subscription = useSubscription();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [saving, setSaving] = useState(false);
@@ -347,30 +350,19 @@ export default function SettingsPage() {
             <div>
               <div className="flex items-center gap-[8px]">
                 <span className="text-[13px] font-semibold text-[#0A0F1C] capitalize">
-                  {profile?.subscription_tier || "free"} Plan
+                  {subscription.tier} Plan
                 </span>
-                <Badge
-                  variant={
-                    profile?.subscription_tier === "free"
-                      ? "default"
-                      : profile?.subscription_tier === "premium"
-                      ? "info"
-                      : "accent"
-                  }
-                  size="sm"
-                >
-                  {profile?.subscription_tier || "free"}
-                </Badge>
+                <SubscriptionBadge tier={subscription.tier} size="sm" />
               </div>
               <span className="text-[11px] text-gray-400">
-                {profile?.subscription_tier === "free"
-                  ? "3 AI questions/day · 10 accumulator legs"
-                  : profile?.subscription_tier === "premium"
-                  ? "Unlimited AI · Unlimited accumulators"
-                  : "Everything + Rollover + Priority alerts"}
+                {subscription.tier === "free"
+                  ? "Core predictions, performance dashboard & notifications"
+                  : subscription.tier === "premium"
+                  ? "Advanced analytics, value bets, accumulator & betting agent"
+                  : "Everything + Rollover engine, AI Analyst, API & priority support"}
               </span>
             </div>
-            {profile?.subscription_tier === "free" ? (
+            {subscription.tier === "free" ? (
               <Button
                 onClick={() => router.push("/pricing")}
                 size="sm"
@@ -390,13 +382,17 @@ export default function SettingsPage() {
             )}
           </div>
 
-          {profile?.subscription_tier !== "free" && profile?.subscription_expires_at && (
+          {subscription.tier !== "free" && subscription.currentPeriodEnd && (
             <div className="text-[11px] text-gray-400">
-              Renews: {new Date(profile.subscription_expires_at).toLocaleDateString("en-NG", {
+              {subscription.cancelAtPeriodEnd ? "Access until" : "Renews"}:{" "}
+              {new Date(subscription.currentPeriodEnd).toLocaleDateString("en-NG", {
                 year: "numeric",
                 month: "long",
                 day: "numeric",
               })}
+              {subscription.status === "past_due" && (
+                <span className="text-amber-600"> · payment past due</span>
+              )}
             </div>
           )}
         </div>

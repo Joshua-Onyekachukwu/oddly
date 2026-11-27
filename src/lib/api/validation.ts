@@ -223,6 +223,7 @@ export const leagueCreateSchema = z.object({
   name: z.string().min(1).max(100).trim(),
   country: z.string().min(1).max(100).trim().optional(),
   active: z.boolean().default(true),
+  priority: z.number().int().min(0).max(1000).optional(),
 });
 
 export const leagueUpdateSchema = z.object({
@@ -231,6 +232,49 @@ export const leagueUpdateSchema = z.object({
   is_active: z.boolean().optional(),
   api_id: z.number().int().positive().optional(),
 });
+
+/**
+ * Editable league_model_params fields. These are the tunable model
+ * coefficients consumed by src/lib/models/ensemble.ts — everything else
+ * on the row (accuracies, data_points, last_trained) is derived by the
+ * training pipeline and must not be hand-edited.
+ */
+export const leagueModelParamsSchema = z
+  .object({
+    home_advantage: z.number().min(0).max(500).optional(),
+    goal_expectancy: z.number().min(0).max(10).optional(),
+    avg_goals: z.number().min(0).max(10).optional(),
+    home_win_pct: z.number().min(0).max(100).optional(),
+    draw_pct: z.number().min(0).max(100).optional(),
+    avg_yellow: z.number().min(0).max(20).optional(),
+    avg_corners: z.number().min(0).max(30).optional(),
+    poisson_weight: z.number().min(0).max(10).optional(),
+    elo_weight: z.number().min(0).max(10).optional(),
+    regression_weight: z.number().min(0).max(10).optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "At least one model param must be provided",
+  });
+
+export type LeagueModelParamsUpdate = z.infer<typeof leagueModelParamsSchema>;
+
+export const leagueAdminUpdateSchema = z
+  .object({
+    name: z.string().min(1).max(100).trim().optional(),
+    country: z.string().min(1).max(100).trim().nullable().optional(),
+    is_active: z.boolean().optional(),
+    priority: z.number().int().min(0).max(1000).optional(),
+    model_params: leagueModelParamsSchema.optional(),
+  })
+  .refine(
+    (data) =>
+      data.name !== undefined ||
+      data.country !== undefined ||
+      data.is_active !== undefined ||
+      data.priority !== undefined ||
+      data.model_params !== undefined,
+    { message: "At least one field must be provided" }
+  );
 
 // ── Scoring Config Schemas ──────────────────────────────────────────
 

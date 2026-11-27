@@ -43,9 +43,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { priceId, tier } = body;
 
-    if (!priceId || !tier) {
+    if (!tier) {
       return NextResponse.json(
-        { error: "Missing priceId or tier" },
+        { error: "Missing tier" },
         { status: 400 }
       );
     }
@@ -74,11 +74,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Only allow checkout against the configured price for the tier
-    if (priceId !== expectedPriceId) {
+    // Only allow checkout against the configured price for the tier.
+    // priceId is optional — the server always uses the configured price;
+    // a client-supplied priceId is accepted only as a consistency check.
+    if (priceId && priceId !== expectedPriceId) {
       return NextResponse.json(
         { error: "Price does not match tier" },
         { status: 400 }
+      );
+    }
+
+    // Block duplicate subscriptions: plan changes go through the Stripe
+    // billing portal (POST /api/v1/stripe/portal), not a second checkout.
+    const { data: existingSub } = await supabase
+      .from("subscriptions")
+      .select("tier, status")
+      .eq("user_id", user.id)
+      .in("status", ["active", "trialing", "past_due"])
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (existingSub) {
+      return NextResponse.json(
+        {
+          error: "already_subscribed",
+          message:
+            "You already have an active subscription. Use the billing portal to change plans.",
+          tier: existingSub.tier,
+          status: existingSub.status,
+        },
+        { status: 409 }
       );
     }
 
@@ -89,7 +115,7 @@ export async function POST(request: NextRequest) {
       email: user.email || "",
       priceId: expectedPriceId,
       tier: normalizedTier,
-      successUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/settings?upgraded=true`,
+      successUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/settings?upgraded=${normalizedTier}`,
       cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/pricing`,
     });
 

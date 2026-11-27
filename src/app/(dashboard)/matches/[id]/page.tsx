@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
+import { fetchMatchContext } from "@/lib/matches/match-context";
 import { MatchDetail } from "@/components/matches/MatchDetail";
 import { MatchDetailSkeleton } from "@/components/matches/MatchDetailSkeleton";
 
@@ -78,7 +79,13 @@ async function MatchContent({ id }: { id: string }) {
     .order("snapshot_time", { ascending: false })
     .limit(50);
 
-  return <MatchDetail fixture={fixture} odds={odds || []} />;
+  // Rich context sections: team feature profiles, H2H meetings (with linked
+  // xG where available), injuries joined to player_importance scores,
+  // prediction context (Elo/form/data-quality) and odds movement summary.
+  // Never throws — each section degrades to null/[] on missing data.
+  const context = await fetchMatchContext(supabase as any, rawFixture as any);
+
+  return <MatchDetail fixture={fixture} odds={odds || []} context={context} />;
 }
 
 export default async function MatchDetailPage({ params }: Props) {
