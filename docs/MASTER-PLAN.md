@@ -84,3 +84,23 @@ The system must run ~90 days unattended: daily collection → prediction → mon
 2. Answer D1 (odds provider/budget) — it gates the entire data phase.
 3. Confirm new Supabase account/project details when ready (do NOT paste keys here — use env vars/secrets).
 4. Confirm whether to begin Phase A implementation on your approval.
+
+## Prediction-data audit (added 2026-10-02)
+
+A full audit of every data source, stored-vs-consumed factor, model, and
+confidence claim now lives in `docs/` as ten deliverables:
+
+- `ODDLY-DATA-SOURCE-AUDIT.md` — every provider traced provider→feature→prediction
+- `ODDLY-DATA-INVENTORY.md` — new Supabase schema (67 tables) + local datasets; flags that the new DB is empty and needs backfill
+- `ODDLY-PREDICTION-FACTOR-AUDIT.md` — implemented / half-wired / dead / missing factors
+- `ODDLY-PLAYER-INTELLIGENCE-PLAN.md` — unify the two injury systems, importance engine, lineups
+- `ODDLY-ADDITIONAL-DATA-SOURCES.md` — provider pricing + lean ~$50/mo stack
+- `ODDLY-PREDICTION-MODEL-AUDIT.md` — verified bugs (weight-config key, injury sign, version sprawl) + honest accuracy status
+- `ODDLY-HIGH-CONFIDENCE-STRATEGY.md` — calibration-first, two-gate confidence, honest abstention
+- `ODDLY-MARKET-SPECIFIC-MODELS.md` — per-market model/metric/calibration specs
+- `ODDLY-PREDICTION-INTELLIGENCE-ARCHITECTURE.md` — target layered architecture
+- `ODDLY-PREDICTION-IMPROVEMENT-ROADMAP.md` — P1–P4 priorities; top-5 = backfill+bugfixes, restore eval, injury/lineup wiring, prod calibration, xG
+
+These findings **amend** the roadmap above: Phase A/B priorities are confirmed
+(backfill + eval + odds retention are now P1), and the high-confidence strategy
+requires the calibration layer before any user-facing confidence tier ships.
