@@ -28,10 +28,11 @@ async function runArchive(limit: number = 500): Promise<{ archived: number; tota
     process.env.SUPABASE_SERVICE_ROLE_KEY || ""
   );
 
-  // Get newly settled predictions
+  // Get newly settled predictions. NOTE: predictions has no match_name
+  // column (the previous select silently failed and archived nothing).
   const { data: settled } = await supabase
     .from("predictions")
-    .select("id, fixture_id, market, selection, model_probability, model_version, result, settled_at, match_name")
+    .select("id, fixture_id, market, selection, model_probability, model_version, result, settled_at")
     .not("result", "is", null)
     .neq("result", "pending")
     .order("settled_at", { ascending: false })
@@ -41,27 +42,31 @@ async function runArchive(limit: number = 500): Promise<{ archived: number; tota
     return { archived: 0, total: 0 };
   }
 
-  // Map to settlement_feed rows
+  // Map to settlement_feed rows. Upsert keyed on prediction_id keeps this
+  // append-only and idempotent — it is the backstop for predictions
+  // settled outside the settle cron (e.g. lib/prediction/tracking.ts).
+  // The settle cron is the primary writer; the DB trigger trims rows
+  // older than 90 days.
   const rows = settled.map((p) => ({
+    prediction_id: p.id,
     fixture_id: p.fixture_id || "",
     market: p.market,
     selection: p.selection,
     model_probability: p.model_probability || 0,
     model_version: p.model_version || "v5.1",
     result: p.result,
-    match_name: p.match_name || null,
+    match_name: null,
     settled_at: p.settled_at || new Date().toISOString(),
   }));
 
-  // Delete existing feed and insert new (keeps feed fresh)
-  await supabase.from("settlement_feed").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-
-  // Insert in batches (trigger auto-trims to 500)
+  // Upsert in batches (trigger trims rows older than 90 days)
   const BATCH = 100;
   let archived = 0;
   for (let i = 0; i < rows.length; i += BATCH) {
     const batch = rows.slice(i, i + BATCH);
-    const { error } = await supabase.from("settlement_feed").insert(batch);
+    const { error } = await supabase
+      .from("settlement_feed")
+      .upsert(batch, { onConflict: "prediction_id" });
     if (error) {
       console.error("[ARCHIVE] Batch error:", error.message);
       continue;

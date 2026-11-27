@@ -454,7 +454,20 @@ const ALIASES: Record<string, string> = {
   "fluminense": "fluminense",
   "corinthians": "corinthians",
   "palmeiras": "palmeiras",
+
+  // Common provider abbreviations
+  "ath madrid": "atletico madrid",
+  "athletic bilbao cf": "athletic bilbao",
 };
+
+// Alias keys may contain accents while inputs are accent-stripped before
+// lookup — normalize keys once so accented spellings still resolve.
+const NORMALIZED_ALIASES: Record<string, string> = Object.fromEntries(
+  Object.entries(ALIASES).map(([k, v]) => [
+    k.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim(),
+    v,
+  ])
+);
 
 /**
  * Normalize a team name to a canonical key for lookups.
@@ -468,7 +481,7 @@ export function normalizeTeamName(name: string): string {
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .trim();
-  return ALIASES[normalized] || normalized;
+  return NORMALIZED_ALIASES[normalized] || normalized;
 }
 
 /**

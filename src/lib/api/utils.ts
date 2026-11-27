@@ -150,11 +150,12 @@ const DEFAULT_PAGE_SIZE = 20;
  * Parse pagination parameters from URL search params.
  */
 export function parsePagination(searchParams: URLSearchParams): PaginationParams {
-  const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
-  const pageSize = Math.min(
-    MAX_PAGE_SIZE,
-    Math.max(1, parseInt(searchParams.get("pageSize") || String(DEFAULT_PAGE_SIZE), 10))
-  );
+  const rawPage = parseInt(searchParams.get("page") || "1", 10);
+  const rawSize = parseInt(searchParams.get("pageSize") || String(DEFAULT_PAGE_SIZE), 10);
+  const page = Number.isFinite(rawPage) ? Math.max(1, rawPage) : 1;
+  const pageSize = Number.isFinite(rawSize)
+    ? Math.min(MAX_PAGE_SIZE, Math.max(1, rawSize))
+    : DEFAULT_PAGE_SIZE;
   const offset = (page - 1) * pageSize;
 
   return { page, pageSize, offset };

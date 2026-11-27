@@ -50,7 +50,8 @@ const FEATURE_MIN_TIER: Record<FeatureKey, SubscriptionTier> = {
 };
 
 export function normalizeTier(tier: string | null | undefined): SubscriptionTier {
-  return tier === "premium" || tier === "elite" ? tier : "free";
+  const t = (tier || "").toLowerCase();
+  return t === "premium" || t === "elite" ? t : "free";
 }
 
 export function tierAtLeast(tier: SubscriptionTier, min: SubscriptionTier): boolean {

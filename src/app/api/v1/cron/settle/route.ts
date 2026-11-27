@@ -63,7 +63,7 @@ async function runSettlement(): Promise<SettleResult> {
   const fixtureIds = fixtures.map((f) => f.id);
   const { data: existingPreds } = await supabaseAdmin
     .from("predictions")
-    .select("id, fixture_id, market, selection, model_probability, result")
+    .select("id, fixture_id, market, selection, model_probability, model_version, confidence_tier, result")
     .in("fixture_id", fixtureIds);
 
   const predByFixture: Record<string, Array<any>> = {};
@@ -116,6 +116,10 @@ async function runSettlement(): Promise<SettleResult> {
   let ensembleHits = 0;
   let ensembleMisses = 0;
 
+  // Audit + feed rows collected during settlement (batch-inserted after the loop)
+  const settlementEvents: any[] = [];
+  const feedRows: any[] = [];
+
   for (const fixture of fixtures) {
     const preds = predByFixture[fixture.id] || [];
     if (preds.length === 0) continue;
@@ -158,11 +162,44 @@ async function runSettlement(): Promise<SettleResult> {
       if (isCorrect) correct++;
       else incorrect++;
 
+      const settledAt = new Date().toISOString();
+      const newResult = isCorrect ? "correct" : "wrong";
+
       // Build update payload
       const updatePayload: Record<string, any> = {
-        result: isCorrect ? "correct" : "wrong",
-        settled_at: new Date().toISOString(),
+        result: newResult,
+        settled_at: settledAt,
       };
+
+      // Audit trail: record every first settle (pending/null -> settled).
+      // This loop skips already-settled predictions, so unchanged
+      // re-settles never reach here and corrections are only logged by
+      // whichever code path actually changes `result`.
+      settlementEvents.push({
+        prediction_id: p.id,
+        fixture_id: fixture.id,
+        market: p.market,
+        selection: p.selection,
+        previous_result: p.result || "pending",
+        new_result: newResult,
+        settled_at: settledAt,
+        source: "cron/settle",
+        raw_score: { home_score: homeScore, away_score: awayScore, status: fixture.status },
+        notes: isCorrect ? null : "settled_incorrect",
+      });
+
+      // Feed row for append-only upsert keyed on prediction_id
+      feedRows.push({
+        prediction_id: p.id,
+        fixture_id: fixture.id,
+        market: p.market,
+        selection: p.selection,
+        model_probability: p.model_probability || 0,
+        model_version: p.model_version || ensemblePred?.modelVersion || "v5.1",
+        result: newResult,
+        match_name: null,
+        settled_at: settledAt,
+      });
 
       // On wrong predictions, store failure diagnostics
       if (!isCorrect && ensemblePred) {
@@ -219,42 +256,47 @@ async function runSettlement(): Promise<SettleResult> {
     }
   }
 
-  // Archive to settlement_feed (only use columns that exist on the predictions table)
-  let archived = 0;
-  if (settled > 0) {
+  // Append-only audit trail: one settlement_events row per prediction
+  // settled this run (first settles only — see loop above).
+  let eventsWritten = 0;
+  if (settlementEvents.length > 0) {
     try {
-      const { data: feedData } = await supabaseAdmin
-        .from("predictions")
-        .select("fixture_id, market, selection, model_probability, model_version, result, settled_at, confidence_tier")
-        .not("result", "is", null)
-        .neq("result", "pending")
-        .order("settled_at", { ascending: false })
-        .limit(500);
-
-      if (feedData && feedData.length > 0) {
-        await supabaseAdmin.from("settlement_feed").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-        const rows = feedData.map((p: any) => ({
-          fixture_id: p.fixture_id || "",
-          market: p.market,
-          selection: p.selection,
-          model_probability: p.model_probability || 0,
-          model_version: p.model_version || "v5.1",
-          result: p.result,
-          confidence_tier: p.confidence_tier || null,
-          settled_at: p.settled_at || new Date().toISOString(),
-        }));
-        const BATCH = 100;
-        for (let i = 0; i < rows.length; i += BATCH) {
-          const batch = rows.slice(i, i + BATCH);
-          const { error: insertErr } = await supabaseAdmin.from("settlement_feed").insert(batch);
-          if (insertErr) {
-            console.error("[SETTLE] Archive insert error:", insertErr.message);
-          } else {
-            archived += batch.length;
-          }
+      const BATCH = 200;
+      for (let i = 0; i < settlementEvents.length; i += BATCH) {
+        const { error: evErr } = await supabaseAdmin
+          .from("settlement_events")
+          .insert(settlementEvents.slice(i, i + BATCH));
+        if (evErr) {
+          console.error("[SETTLE] settlement_events insert error:", evErr.message);
+        } else {
+          eventsWritten += Math.min(BATCH, settlementEvents.length - i);
         }
-        console.log(`[SETTLE] Archived ${archived} predictions to settlement_feed`);
       }
+    } catch (evErr) {
+      console.error("[SETTLE] settlement_events warning (non-blocking):", evErr);
+    }
+  }
+
+  // Archive this run's settlements to settlement_feed via upsert on the
+  // prediction_id natural key. Append-only: history is preserved (the DB
+  // trigger trims rows older than 90 days). The archive cron remains as
+  // an idempotent backstop for predictions settled outside this route
+  // (e.g. lib/prediction/tracking.ts).
+  let archived = 0;
+  if (feedRows.length > 0) {
+    try {
+      const BATCH = 100;
+      for (let i = 0; i < feedRows.length; i += BATCH) {
+        const { error: upsertErr } = await supabaseAdmin
+          .from("settlement_feed")
+          .upsert(feedRows.slice(i, i + BATCH), { onConflict: "prediction_id" });
+        if (upsertErr) {
+          console.error("[SETTLE] settlement_feed upsert error:", upsertErr.message);
+        } else {
+          archived += Math.min(BATCH, feedRows.length - i);
+        }
+      }
+      console.log(`[SETTLE] Upserted ${archived} predictions to settlement_feed`);
     } catch (archiveErr) {
       console.error("[SETTLE] Archive warning (non-blocking):", archiveErr);
     }
@@ -274,54 +316,54 @@ async function runSettlement(): Promise<SettleResult> {
         .limit(10000);
 
       if (recentSettled && recentSettled.length > 0) {
-        // Group by market
-        const byMarket: Record<string, { total: number; correct: number; probs: number[] }> = {};
+        // Group by market; accumulate Brier inline (O(n)) — the previous
+        // version did a linear .find() per probability, which was O(n²)
+        // and could match the wrong row when probabilities collided.
+        const byMarket: Record<string, { total: number; correct: number; brierSum: number; probCount: number }> = {};
         for (const p of recentSettled) {
           const mkt = p.market || "unknown";
-          if (!byMarket[mkt]) byMarket[mkt] = { total: 0, correct: 0, probs: [] };
+          if (!byMarket[mkt]) byMarket[mkt] = { total: 0, correct: 0, brierSum: 0, probCount: 0 };
           byMarket[mkt].total++;
           if (p.result === "correct") byMarket[mkt].correct++;
-          if (p.model_probability) byMarket[mkt].probs.push(p.model_probability);
+          if (p.model_probability) {
+            const actual = p.result === "correct" ? 1 : 0;
+            byMarket[mkt].brierSum += Math.pow(p.model_probability - actual, 2);
+            byMarket[mkt].probCount++;
+          }
         }
 
+        const nowIso = new Date().toISOString();
         for (const [mkt, stats] of Object.entries(byMarket)) {
           const accuracy = stats.total > 0 ? stats.correct / stats.total : 0;
-          const brier = stats.probs.length > 0
-            ? stats.probs.reduce((sum, prob, i) => {
-                const actual = recentSettled.find(p => p.market === mkt && p.model_probability === prob)?.result === "correct" ? 1 : 0;
-                return sum + Math.pow(prob - actual, 2);
-              }, 0) / stats.probs.length
-            : 0;
+          const brier = stats.probCount > 0 ? stats.brierSum / stats.probCount : 0;
 
-          // Delete existing row for this model+market, then insert fresh
-          await supabaseAdmin
+          // Upsert on the (model_version, market, league_id) natural key
+          // instead of delete + insert — idempotent across reruns.
+          const { error: upsertErr } = await supabaseAdmin
             .from("model_performance")
-            .delete()
-            .eq("model_version", "v2.0-meta-ensemble")
-            .eq("market", mkt)
-            .is("league_id", null);
-
-          const { error: insertErr } = await supabaseAdmin
-            .from("model_performance")
-            .insert({
-              model_version: "v2.0-meta-ensemble",
-              market: mkt,
-              total_predictions: stats.total,
-              correct_predictions: stats.correct,
-              brier_score: Math.round(brier * 10000) / 10000,
-              calibration_data: {
-                source: "settle_cron",
-                accuracy_pct: Math.round(accuracy * 1000) / 10,
-                avg_brier: Math.round(brier * 10000) / 10000,
-                tracked_at: new Date().toISOString(),
-                window: "24h",
+            .upsert(
+              {
+                model_version: "v2.0-meta-ensemble",
+                market: mkt,
+                league_id: null,
+                total_predictions: stats.total,
+                correct_predictions: stats.correct,
+                brier_score: Math.round(brier * 10000) / 10000,
+                calibration_data: {
+                  source: "settle_cron",
+                  accuracy_pct: Math.round(accuracy * 1000) / 10,
+                  avg_brier: Math.round(brier * 10000) / 10000,
+                  tracked_at: nowIso,
+                  window: "24h",
+                },
+                period_start: oneDayAgo,
+                period_end: nowIso,
               },
-              period_start: oneDayAgo,
-              period_end: new Date().toISOString(),
-            });
+              { onConflict: "model_version,market,league_id" }
+            );
 
-          if (insertErr) {
-            console.error(`[SETTLE] model_performance insert error for ${mkt}:`, insertErr.message);
+          if (upsertErr) {
+            console.error(`[SETTLE] model_performance upsert error for ${mkt}:`, upsertErr.message);
           } else {
             console.log(`[SETTLE] Updated model_performance for ${mkt}: ${(accuracy * 100).toFixed(1)}% (${stats.total} predictions)`);
           }
@@ -335,7 +377,7 @@ async function runSettlement(): Promise<SettleResult> {
   const duration = Date.now() - startTime;
   console.log(
     `[SETTLE] Done: ${settled} settled, ${correct} correct, ${incorrect} incorrect ` +
-    `(${ensembleHits} ensemble, ${ensembleMisses} fallback) (${duration}ms)`
+    `(${ensembleHits} ensemble, ${ensembleMisses} fallback, ${eventsWritten} audit events) (${duration}ms)`
   );
 
   return { settled, correct, incorrect, archived, ensembleHits, ensembleMisses, fixturesProcessed: fixtures.length };

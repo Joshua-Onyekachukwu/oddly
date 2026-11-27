@@ -11,27 +11,22 @@ import { requireAdmin } from "@/lib/api/utils";
 
 export const dynamic = "force-dynamic";
 
-// Registered cron jobs with expected schedules
+// Registered cron jobs — mirrors vercel.json `crons` (scheduled jobs only).
+// `pipeline` and `daily` were removed from the Vercel schedule (they duplicated
+// the dedicated jobs); their routes remain for on-demand POST triggers.
 const REGISTERED_JOBS = [
-  {
-    name: "pipeline",
-    description: "Main orchestrator — settlement, predictions, CLV, pre-match, final pick",
-    schedule: "*/30 * * * *",
-    scheduleHuman: "Every 30 minutes",
-    owner: "pipeline",
-  },
   {
     name: "settle",
     description: "Catches finished fixtures for prediction settlement",
-    schedule: "0 * * * *",
-    scheduleHuman: "Every hour",
+    schedule: "0 */4 * * *",
+    scheduleHuman: "Every 4 hours",
     owner: "settle",
   },
   {
     name: "predict",
     description: "Generates new predictions for upcoming matches",
-    schedule: "0 */2 * * *",
-    scheduleHuman: "Every 2 hours",
+    schedule: "0 */4 * * *",
+    scheduleHuman: "Every 4 hours",
     owner: "predict",
   },
   {
@@ -42,18 +37,47 @@ const REGISTERED_JOBS = [
     owner: "sync",
   },
   {
-    name: "daily",
-    description: "Daily housekeeping and reporting",
-    schedule: "0 6 * * *",
-    scheduleHuman: "Daily at 6am",
-    owner: "daily",
+    name: "archive",
+    description: "Archives settled predictions to the settlement_feed table",
+    schedule: "30 */4 * * *",
+    scheduleHuman: "Every 4 hours at :30",
+    owner: "archive",
+  },
+  {
+    name: "cleanup",
+    description: "Purges old data and expired records",
+    schedule: "0 4 * * *",
+    scheduleHuman: "Daily at 4am",
+    owner: "cleanup",
   },
   {
     name: "learn",
-    description: "Weekly model learning + analytics view refresh",
+    description: "Weekly model learning",
     schedule: "0 3 * * 0",
     scheduleHuman: "Weekly Sunday 3am",
     owner: "learn",
+  },
+  {
+    name: "validate",
+    description: "Daily model validation and calibration checks",
+    schedule: "0 5 * * *",
+    scheduleHuman: "Daily at 5am",
+    owner: "validate",
+  },
+  // On-demand only — not in vercel.json; triggered via POST from admin UI.
+  {
+    name: "pipeline",
+    description: "Unified pipeline orchestrator (settle + predict + CLV + final pick) — manual only",
+    schedule: "manual",
+    scheduleHuman: "On-demand only",
+    owner: "pipeline",
+  },
+  {
+    name: "daily",
+    description: "Daily orchestrator (sync → predict → settle → learn → cleanup) — manual only",
+    schedule: "manual",
+    scheduleHuman: "On-demand only",
+    owner: "daily",
   },
 ];
 
@@ -109,9 +133,9 @@ export async function GET(request: NextRequest) {
         (f: any) => f.job_name === job.name
       ).length;
 
-      // Determine if job is overdue
+      // Determine if job is overdue (manual/on-demand jobs are never "overdue")
       let isOverdue = false;
-      if (latest && latest.completed_at) {
+      if (job.schedule !== "manual" && latest && latest.completed_at) {
         const lastRun = new Date(latest.completed_at).getTime();
         const now = Date.now();
         // Parse schedule to determine expected interval
@@ -119,7 +143,7 @@ export async function GET(request: NextRequest) {
         if (intervalMs && now - lastRun > intervalMs * 1.5) {
           isOverdue = true;
         }
-      } else if (!latest) {
+      } else if (job.schedule !== "manual" && !latest) {
         isOverdue = true; // Never run
       }
 

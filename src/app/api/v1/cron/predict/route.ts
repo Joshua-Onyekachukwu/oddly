@@ -11,6 +11,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { predictMatchEnsemble, resetBatchCaches } from "@/lib/models/ensemble";
+import { syncEnsembleRecommendations } from "@/lib/recommendations/ensemble";
 import { getInjuryFeaturesForPrediction } from "@/lib/injury/feature-engineering";
 import { withLock } from "@/lib/cron/lock";
 import { startRun, completeRun, type CronRunResult } from "@/lib/cron/logger";
@@ -39,6 +40,7 @@ async function runPredictionPipeline(): Promise<{
   skipped: number;
   ensembleHits: number;
   ensembleMisses: number;
+  recommendations: number;
   modelVersion: string;
 }> {
   resetBatchCaches();
@@ -60,7 +62,7 @@ async function runPredictionPipeline(): Promise<{
 
   if (fixErr) throw new Error(`Fixture query error: ${fixErr.message}`);
   if (!fixtures?.length) {
-    return { total: 0, predictions: 0, skipped: 0, ensembleHits: 0, ensembleMisses: 0, modelVersion: "meta-ensemble-v2.0" };
+    return { total: 0, predictions: 0, skipped: 0, ensembleHits: 0, ensembleMisses: 0, recommendations: 0, modelVersion: "meta-ensemble-v2.0" };
   }
 
   console.log(`[PREDICT] Found ${fixtures.length} fixtures in prediction window`);
@@ -115,15 +117,25 @@ async function runPredictionPipeline(): Promise<{
 
   console.log(`[PREDICT] Loaded ${chronological.length} historical matches for Elo/form (${Object.keys(eloMap).length} teams)`);
 
-  // IDEMPOTENCY: Check which fixtures already have pending predictions
+  // IDEMPOTENCY: Check which fixtures already have pending predictions.
+  // NOTE: PostgREST hard-caps responses at 1000 rows, and ~45 fixtures ×
+  // ~24 markets exceeds that — an unchunked `.in()` silently drops the tail
+  // fixtures, which then get re-processed every run and hit
+  // uq_prediction_fixture_market_selection on insert. Chunk the lookup.
   const fixtureIds = fixtures.map((f) => f.id);
-  const { data: existingPreds } = await supabaseAdmin
-    .from("predictions")
-    .select("fixture_id")
-    .in("fixture_id", fixtureIds)
-    .eq("result", "pending");
-
-  const existingFixtureIds = new Set((existingPreds || []).map((p) => p.fixture_id));
+  const existingFixtureIds = new Set<string>();
+  const CHUNK = 25; // 25 fixtures × ~30 markets stays well under the 1000-row cap
+  for (let i = 0; i < fixtureIds.length; i += CHUNK) {
+    const { data: existingPreds, error: predLookupErr } = await supabaseAdmin
+      .from("predictions")
+      .select("fixture_id")
+      .in("fixture_id", fixtureIds.slice(i, i + CHUNK))
+      .eq("result", "pending");
+    if (predLookupErr) {
+      console.error("[PREDICT] Existing-predictions lookup error:", predLookupErr.message);
+    }
+    for (const p of existingPreds || []) existingFixtureIds.add(p.fixture_id);
+  }
   const skipCount = existingFixtureIds.size;
   if (skipCount > 0) {
     console.log(`[PREDICT] Skipping ${skipCount} fixtures with existing pending predictions`);
@@ -133,6 +145,9 @@ async function runPredictionPipeline(): Promise<{
   const predictions: any[] = [];
   let ensembleHits = 0;
   let ensembleMisses = 0;
+  // fixture_id → model_version for fixtures that produced ensemble output,
+  // used to derive `recommendations` rows after predictions are inserted.
+  const predictedFixtures = new Map<string, string>();
 
   for (const fixture of fixtures) {
     if (existingFixtureIds.has(fixture.id)) continue;
@@ -150,6 +165,7 @@ async function runPredictionPipeline(): Promise<{
       if (!result) { ensembleMisses++; continue; }
 
       ensembleHits++;
+      predictedFixtures.set(fixture.id, result.modelVersion);
       // Rich injury features (point-in-time safe: only snapshots at/before now)
       let injuryFeatures: unknown = null;
       try {
@@ -208,9 +224,28 @@ async function runPredictionPipeline(): Promise<{
     }
   }
 
+  // Derive `recommendations` (value bets) from the ensemble predictions so
+  // /api/v1/value-bets, the accumulator page and Crown Jewel notifications
+  // are populated by the canonical pipeline — previously only the manual
+  // NVIDIA engine wrote this table.
+  let recommendationsInserted = 0;
+  if (predictedFixtures.size > 0) {
+    const byVersion = new Map<string, string[]>();
+    for (const [fixtureId, mv] of predictedFixtures) {
+      const list = byVersion.get(mv) || [];
+      list.push(fixtureId);
+      byVersion.set(mv, list);
+    }
+    for (const [mv, ids] of byVersion) {
+      const recResult = await syncEnsembleRecommendations(ids, mv);
+      recommendationsInserted += recResult.recommendations;
+    }
+  }
+
   const duration = Date.now() - startTime;
   console.log(
-    `[PREDICT] Done: ${fixtures.length} fixtures, ${inserted} predictions ` +
+    `[PREDICT] Done: ${fixtures.length} fixtures, ${inserted} predictions, ` +
+    `${recommendationsInserted} recommendations ` +
     `(${ensembleHits} ensemble, ${ensembleMisses} misses) in ${duration}ms`
   );
 
@@ -220,6 +255,7 @@ async function runPredictionPipeline(): Promise<{
     skipped: skipCount,
     ensembleHits,
     ensembleMisses,
+    recommendations: recommendationsInserted,
     modelVersion: "meta-ensemble-v2.0",
   };
 }

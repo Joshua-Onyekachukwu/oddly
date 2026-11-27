@@ -187,7 +187,7 @@ export default function SystemHealthPage() {
     });
 
     // ─── Data Freshness ───────────────────────────────────────────
-    const tables = ["fixtures", "predictions", "odds_snapshots", "teams", "leagues", "profiles"];
+    const tables = ["fixtures", "predictions", "odds_snapshots", "teams", "leagues", "profiles"] as const;
     const freshness: DataFreshness[] = [];
 
     for (const table of tables) {

@@ -170,6 +170,8 @@ export async function trackPredictionAccuracy(fixtureId?: string) {
   let totalLogLoss = 0;
   let totalBrier = 0;
   const performanceByMarket: Record<string, { correct: number; total: number; logLossSum: number; brierSum: number }> = {};
+  // Audit trail rows for settlement_events (batch-inserted below)
+  const settlementEvents: Database["public"]["Tables"]["settlement_events"]["Insert"][] = [];
 
   for (const fixture of fixtures) {
     // Get all predictions for this fixture
@@ -191,11 +193,32 @@ export async function trackPredictionAccuracy(fixtureId?: string) {
       const bs = brierScore(prediction.model_probability, outcome.actualOutcome);
       const confidenceTier = getConfidenceTier(prediction.model_probability);
 
+      const settledAt = new Date().toISOString();
+
       // Update the prediction result
       await supabase
         .from("predictions")
-        .update({ result: outcome.actualOutcome ? "correct" : "wrong" })
+        .update({ result: outcome.actualOutcome ? "correct" : "wrong", settled_at: settledAt })
         .eq("id", prediction.id);
+
+      // Audit trail: this path settles predictions with result NULL
+      // (first settle only — already-tracked rows are skipped above).
+      settlementEvents.push({
+        prediction_id: prediction.id,
+        fixture_id: fixture.id,
+        market: prediction.market,
+        selection: prediction.selection,
+        previous_result: prediction.result || "pending",
+        new_result: outcome.actualOutcome ? "correct" : "wrong",
+        settled_at: settledAt,
+        source: "lib/prediction/tracking",
+        raw_score: {
+          home_score: fixture.home_score,
+          away_score: fixture.away_score,
+          status: fixture.status,
+        },
+        notes: outcome.outcomeLabel || null,
+      });
 
       // Accumulate stats (we batch the model_performance inserts below)
       totalTracked++;
@@ -214,6 +237,24 @@ export async function trackPredictionAccuracy(fixtureId?: string) {
     }
   }
 
+  // Write settlement audit events (non-blocking)
+  if (settlementEvents.length > 0) {
+    try {
+      const BATCH = 200;
+      for (let i = 0; i < settlementEvents.length; i += BATCH) {
+        const { error: evErr } = await supabase
+          .from("settlement_events")
+          .insert(settlementEvents.slice(i, i + BATCH));
+        if (evErr) {
+          console.error("[Model Tracking] settlement_events insert error:", evErr.message);
+          break;
+        }
+      }
+    } catch (evErr) {
+      console.error("[Model Tracking] settlement_events warning (non-blocking):", evErr);
+    }
+  }
+
   const accuracy = totalTracked > 0 ? (totalCorrect / totalTracked) * 100 : 0;
   const avgLogLoss = totalTracked > 0 ? totalLogLoss / totalTracked : 0;
   const avgBrier = totalTracked > 0 ? totalBrier / totalTracked : 0;
@@ -222,6 +263,7 @@ export async function trackPredictionAccuracy(fixtureId?: string) {
   const perfRecords = Object.entries(performanceByMarket).map(([market, stats]) => ({
     model_version: "v5.1",
     market,
+    league_id: null,
     total_predictions: stats.total,
     correct_predictions: stats.correct,
     brier_score: Number((stats.brierSum / stats.total).toFixed(4)),
@@ -234,7 +276,11 @@ export async function trackPredictionAccuracy(fixtureId?: string) {
   }));
 
   if (perfRecords.length > 0) {
-    const { error: perfError } = await supabase.from("model_performance").insert(perfRecords);
+    // Upsert on the (model_version, market, league_id) natural key —
+    // idempotent across runs instead of accumulating duplicate rows.
+    const { error: perfError } = await supabase
+      .from("model_performance")
+      .upsert(perfRecords, { onConflict: "model_version,market,league_id" });
     if (perfError) {
       console.error("[Model Tracking] Failed to write model_performance:", perfError.message);
     } else {
