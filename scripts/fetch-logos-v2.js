@@ -30,7 +30,7 @@ function loadEnv() {
 
 loadEnv();
 
-const FOOTBALL_DATA_KEY = "***REMOVED-SECRET***";
+const FOOTBALL_DATA_KEY = process.env.FOOTBALL_DATA_ORG_KEY || "";
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.SUPABASE_SECRET_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY

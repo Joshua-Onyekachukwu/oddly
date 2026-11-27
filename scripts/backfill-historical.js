@@ -27,7 +27,7 @@ function loadEnv() {
 
 const env = loadEnv();
 const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
-const FD_API_KEY = "***REMOVED-SECRET***";
+const FD_API_KEY = env.FOOTBALL_DATA_ORG_KEY || "";
 
 // football-data.org league IDs
 const LEAGUES = {

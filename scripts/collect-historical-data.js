@@ -49,7 +49,7 @@ async function fetchFootballData(leagueId, season) {
   // football-data.org API (free tier)
   const url = `https://api.football-data.org/v4/competitions/${leagueId}/matches?season=${season}`;
   const response = await fetch(url, {
-    headers: { "X-Auth-Token": env.FOOTBALL_DATA_ORG_KEY || "***REMOVED-SECRET***" },
+    headers: { "X-Auth-Token": env.FOOTBALL_DATA_ORG_KEY },
   });
 
   if (!response.ok) {

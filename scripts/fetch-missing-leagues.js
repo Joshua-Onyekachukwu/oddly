@@ -22,7 +22,7 @@ const sb = createClient(
   process.env.SUPABASE_SECRET_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-const TOKEN = process.env.FOOTBALL_DATA_API_KEY || "***REMOVED-SECRET***";
+const TOKEN = process.env.FOOTBALL_DATA_ORG_KEY;
 const BASE = "https://api.football-data.org/v4";
 
 // Competition code → league name mapping

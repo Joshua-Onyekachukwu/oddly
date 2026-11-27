@@ -32,7 +32,7 @@ const supabase = createClient(
   process.env.SUPABASE_SECRET_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-const FOOTBALL_DATA_KEY = "***REMOVED-SECRET***";
+const FOOTBALL_DATA_KEY = process.env.FOOTBALL_DATA_ORG_KEY || "";
 const API_FOOTBALL_KEY = process.env.API_FOOTBALL_KEY;
 const DRY_RUN = process.argv.includes("--dry-run");
 

@@ -24,7 +24,7 @@ function loadEnv() {
 
 const env = loadEnv();
 const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
-const API_KEY = env.FOOTBALL_DATA_ORG_KEY || "***REMOVED-SECRET***";
+const API_KEY = env.FOOTBALL_DATA_ORG_KEY;
 
 const LEAGUES = [
   { code: "PL", name: "Premier League" },

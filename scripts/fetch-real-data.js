@@ -9,7 +9,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const API_KEY = "***REMOVED-SECRET***";
+const API_KEY = process.env.FOOTBALL_DATA_ORG_KEY || "";
 const BASE_URL = "https://api.football-data.org/v4";
 
 const LEAGUES = [

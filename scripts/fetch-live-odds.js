@@ -5,7 +5,24 @@
  * No Supabase needed — just displays what the sync would pull.
  */
 
-const ODDS_API_KEY = "***REMOVED-SECRET***";
+const fs = require("fs");
+const path = require("path");
+
+// Load .env.local into process.env
+try {
+  fs.readFileSync(path.join(__dirname, "..", ".env.local"), "utf8")
+    .split("\n")
+    .forEach((l) => {
+      const m = l.match(/^([^#=]+)="?(.*?)"?\s*$/);
+      if (m) process.env[m[1].trim()] = m[2].trim();
+    });
+} catch {}
+
+const ODDS_API_KEY = process.env.THE_ODDS_API_KEY;
+if (!ODDS_API_KEY) {
+  console.error("THE_ODDS_API_KEY not set in .env.local");
+  process.exit(1);
+}
 
 const LEAGUES = [
   { key: "soccer_epl", name: "Premier League" },

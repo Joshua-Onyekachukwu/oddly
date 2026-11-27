@@ -30,7 +30,7 @@ const supabase = createClient(
   env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-const FD_API = "***REMOVED-SECRET***";
+const FD_API = env.FOOTBALL_DATA_ORG_KEY || "";
 const HEADERS = { "X-Auth-Token": FD_API };
 
 // Football-Data.org competition codes → our league names
