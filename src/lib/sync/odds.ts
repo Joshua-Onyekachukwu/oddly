@@ -296,14 +296,39 @@ async function saveOddsSnapshots(
     .eq("fixture_id", fixtureId)
     .lt("snapshot_time", thirtyDaysAgo);
 
-  const { error } = await supabaseAdmin.from("odds_snapshots").insert(snapshots);
+  // Dedupe: skip rows identical to the most recent stored snapshot for the
+  // same fixture/bookmaker/market/selection. An unchanged price carries no
+  // new information — "latest snapshot at or before T" still resolves to the
+  // correct price — so this keeps history bounded to actual odds movements
+  // instead of growing by a full batch every sync.
+  const { data: recentRows } = await supabaseAdmin
+    .from("odds_snapshots")
+    .select("bookmaker, market, selection, odds")
+    .eq("fixture_id", fixtureId)
+    .order("snapshot_time", { ascending: false })
+    .limit(1000);
+
+  const latestByKey = new Map<string, number>();
+  for (const row of recentRows || []) {
+    const key = JSON.stringify([row.bookmaker, row.market, row.selection]);
+    if (!latestByKey.has(key)) latestByKey.set(key, row.odds);
+  }
+
+  const changedSnapshots = snapshots.filter((s) => {
+    const key = JSON.stringify([s.bookmaker, s.market, s.selection]);
+    return latestByKey.get(key) !== s.odds;
+  });
+
+  if (changedSnapshots.length === 0) return 0;
+
+  const { error } = await supabaseAdmin.from("odds_snapshots").insert(changedSnapshots);
 
   if (error) {
     console.error("Failed to save odds snapshots:", error);
     return 0;
   }
 
-  return snapshots.length;
+  return changedSnapshots.length;
 }
 
 /**
