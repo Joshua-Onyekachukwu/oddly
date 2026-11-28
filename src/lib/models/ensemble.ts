@@ -549,8 +549,143 @@ export async function predictMatchEnsemble(
 }
 
 /**
+ * Tri-state settlement outcome.
+ *  - "correct" / "wrong": determinable from the scoreline.
+ *  - "void": the bet pushes/refunds under real bookmaker rules
+ *    (exact-line O/U or team-total push, DNB draw). Neither win nor loss.
+ *  - "undetermined": the market/selection cannot be mapped to a rule
+ *    (unknown market, unparseable line, conflicting market vs selection
+ *    encodings). Callers should leave the prediction pending rather than guess.
+ */
+export type PredictionOutcome = "correct" | "wrong" | "void" | "undetermined";
+
+/** Parse a line like "over_2.5" / "under_3" → { side, line } or null. */
+function parseOverUnder(sel: string): { side: "over" | "under"; line: number } | null {
+  const m = sel.match(/^(over|under)[_\s]*([0-9]+(?:\.[0-9]+)?)/);
+  if (!m) return null;
+  const line = parseFloat(m[2]);
+  if (!isFinite(line) || line < 0) return null;
+  return { side: m[1] as "over" | "under", line };
+}
+
+/** Compare a goals count to an O/U-style line. Push (exact line) → "void". */
+function goalsVsLine(goals: number, ou: { side: "over" | "under"; line: number }): PredictionOutcome {
+  if (goals === ou.line) return "void";
+  const wins = ou.side === "over" ? goals > ou.line : goals < ou.line;
+  return wins ? "correct" : "wrong";
+}
+
+const DC_CODES = ["1x", "x2", "12"] as const;
+type DcCode = (typeof DC_CODES)[number];
+
+/** Normalize a double-chance encoding from market suffix or selection. */
+function dcCodeFromToken(token: string | undefined): DcCode | null {
+  if (!token) return null;
+  const t = token.toLowerCase();
+  if (t === "1x" || t === "home_draw" || t === "1x2_home_draw") return "1x";
+  if (t === "x2" || t === "draw_away") return "x2";
+  if (t === "12" || t === "home_away") return "12";
+  return null;
+}
+
+function dcOutcome(code: DcCode, homeScore: number, awayScore: number): PredictionOutcome {
+  switch (code) {
+    case "1x": return homeScore >= awayScore ? "correct" : "wrong";
+    case "x2": return homeScore <= awayScore ? "correct" : "wrong";
+    case "12": return homeScore !== awayScore ? "correct" : "wrong";
+  }
+}
+
+/**
+ * Canonical result-checking logic used by the settle cron
+ * (src/app/api/v1/cron/settle/route.ts) and smart_selection settlement.
+ * Returns a tri-state outcome; see PredictionOutcome for semantics.
+ */
+export function checkPredictionOutcome(
+  pred: Record<string, any>,
+  market: string,
+  selection: string,
+  homeScore: number,
+  awayScore: number
+): PredictionOutcome {
+  const total = homeScore + awayScore;
+  const homeWin = homeScore > awayScore;
+  const draw = homeScore === awayScore;
+  const awayWin = homeScore < awayScore;
+  const bothScore = homeScore > 0 && awayScore > 0;
+  const sel = (selection || "").toLowerCase().trim();
+  const mkt = (market || "").toLowerCase().trim();
+
+  if (mkt === "1x2" || mkt === "match_result" || mkt === "h2h") {
+    // Accept "home"/"draw"/"away" plus numeric bookmaker-style "1"/"x"/"2".
+    const s = sel === "1" ? "home" : sel === "x" ? "draw" : sel === "2" ? "away" : sel;
+    if (s === "home") return homeWin ? "correct" : "wrong";
+    if (s === "draw") return draw ? "correct" : "wrong";
+    if (s === "away") return awayWin ? "correct" : "wrong";
+    return "undetermined";
+  }
+
+  // Over/Under: market is "ou" / "over_under" / "totals", selection "over_2.5" etc.
+  if (mkt === "over_under" || mkt === "ou" || mkt === "totals") {
+    const ou = parseOverUnder(sel);
+    if (!ou) return "undetermined";
+    return goalsVsLine(total, ou);
+  }
+
+  if (mkt === "btts" || mkt.includes("btts")) {
+    // Accept "yes"/"no" and compound "btts_yes"/"btts_no".
+    const s = sel.replace(/^btts_/, "");
+    if (s === "yes") return bothScore ? "correct" : "wrong";
+    if (s === "no") return bothScore ? "wrong" : "correct";
+    return "undetermined";
+  }
+
+  // Double Chance — market may be "dc" (selection carries the code) or
+  // "dc_1x"/"dc_x2"/"dc_12" (market carries it). If both encodings exist and
+  // disagree, the bet is ambiguous → undetermined rather than a guess.
+  if (mkt === "dc" || mkt.startsWith("dc_")) {
+    const mktCode = dcCodeFromToken(mkt.startsWith("dc_") ? mkt.slice(3) : undefined);
+    const selCode = dcCodeFromToken(sel);
+    if (mktCode && selCode && mktCode !== selCode) return "undetermined";
+    const code = mktCode ?? selCode;
+    if (!code) return "undetermined";
+    return dcOutcome(code, homeScore, awayScore);
+  }
+
+  // Draw No Bet — a draw voids the bet under bookmaker rules.
+  if (mkt === "dnb" || mkt === "draw_no_bet") {
+    if (sel === "home") return draw ? "void" : homeWin ? "correct" : "wrong";
+    if (sel === "away") return draw ? "void" : awayWin ? "correct" : "wrong";
+    return "undetermined";
+  }
+
+  // Team totals — selection carries over/under + line; direction matters
+  // (previously "under_X" was scored as an over bet — fixed).
+  if (mkt === "homegoals" || mkt === "home_goals") {
+    const ou = parseOverUnder(sel);
+    if (!ou) return "undetermined";
+    return goalsVsLine(homeScore, ou);
+  }
+  if (mkt === "awaygoals" || mkt === "away_goals") {
+    const ou = parseOverUnder(sel);
+    if (!ou) return "undetermined";
+    return goalsVsLine(awayScore, ou);
+  }
+
+  if (mkt === "smart_selection") {
+    const ss = pred["smart_selection"];
+    if (!ss || !ss.market || !ss.selection) return "undetermined";
+    return checkPredictionOutcome(pred, ss.market, ss.selection, homeScore, awayScore);
+  }
+
+  return "undetermined";
+}
+
+/**
  * Check if a prediction is correct given actual scores.
- * Reuses the checkPrediction logic from the settle cron.
+ * Boolean view of checkPredictionOutcome: only "correct" returns true.
+ * "void"/"undetermined" return false — callers that care about honest
+ * settlement (the settle cron) should use checkPredictionOutcome directly.
  */
 export function checkPrediction(
   pred: Record<string, any>,
@@ -559,49 +694,5 @@ export function checkPrediction(
   homeScore: number,
   awayScore: number
 ): boolean {
-  const total = homeScore + awayScore;
-  const homeWin = homeScore > awayScore;
-  const draw = homeScore === awayScore;
-  const awayWin = homeScore < awayScore;
-  const bothScore = homeScore > 0 && awayScore > 0;
-  const sel = (selection || "").toLowerCase();
-  const mkt = (market || "").toLowerCase();
-
-  if (mkt === "1x2") {
-    return (sel === "home" && homeWin) || (sel === "draw" && draw) || (sel === "away" && awayWin);
-  }
-  // Over/Under: market is "ou" or "over_under", selection is "over_2.5" or "under_2.5"
-  if (mkt === "over_under" || mkt === "ou") {
-    const line = parseFloat(sel.split("_").pop() || "2.5");
-    if (sel.startsWith("over")) return total > line;
-    if (sel.startsWith("under")) return total < line;
-  }
-  if (mkt === "btts") return sel === "yes" ? bothScore : !bothScore;
-  // Double Chance — explicit parentheses to avoid operator-precedence bug
-  if (mkt === "dc" || mkt.startsWith("dc_")) {
-    if (sel === "1x" || mkt === "dc_1x") return homeScore >= awayScore;
-    if (sel === "x2" || mkt === "dc_x2") return homeScore <= awayScore;
-    if (sel === "12" || mkt === "dc_12") return homeScore !== awayScore;
-  }
-  // Draw No Bet
-  if (mkt === "dnb") {
-    if (sel === "home") return homeWin;
-    if (sel === "away") return awayWin;
-  }
-  // Home Goals
-  if (mkt === "homegoals") {
-    const line = parseFloat(sel.split("_").pop() || "0.5");
-    return homeScore > line;
-  }
-  // Away Goals
-  if (mkt === "awaygoals") {
-    const line = parseFloat(sel.split("_").pop() || "0.5");
-    return awayScore > line;
-  }
-  if (mkt === "smart_selection") {
-    const ss = pred["smart_selection"];
-    if (!ss) return false;
-    return checkPrediction(pred, ss.market, ss.selection, homeScore, awayScore);
-  }
-  return false;
+  return checkPredictionOutcome(pred, market, selection, homeScore, awayScore) === "correct";
 }

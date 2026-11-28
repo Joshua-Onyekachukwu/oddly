@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "createdAt": "2026-11-27T12:00:03.819Z",
+  "createdAt": "2026-11-28T00:01:47.194Z",
   "method": "post-hoc multinomial temperature+bias calibration of production 1X2 probs",
-  "stage": "fin",
+  "stage": "adj",
   "kind": "tempBias",
   "theta": [
-    0.59982072,
-    0.3893604,
-    -0.15386853
+    0.59550548,
+    0.39334427,
+    -0.17476477
   ],
   "trainedOn": {
     "records": 27314,
@@ -18,14 +18,14 @@
   "honestValidation": {
     "tail": {
       "n": 5463,
-      "acc": 0.473,
-      "logloss": 0.6057,
-      "multiclassLogLoss": 1.8172,
-      "brier": 0.6252,
+      "acc": 0.4734,
+      "logloss": 0.6056,
+      "multiclassLogLoss": 1.8167,
+      "brier": 0.6251,
       "meanP": [
-        0.4356,
-        0.2596,
-        0.3048
+        0.4355,
+        0.2598,
+        0.3047
       ],
       "actual": [
         0.4333,
@@ -33,9 +33,9 @@
         0.3055
       ],
       "picks": {
-        "H": 4113,
+        "H": 4105,
         "D": 0,
-        "A": 1350
+        "A": 1358
       }
     },
     "baselineTail": {
@@ -93,5 +93,735 @@
       }
     },
     "trainedOnAll": true
+  },
+  "league_overrides": {
+    "D2": {
+      "n": 1224,
+      "leagueName": "2. Bundesliga",
+      "bias": [
+        0.00081369,
+        0.00534102
+      ],
+      "shrinkK": 200,
+      "deployStrength": 0.8596,
+      "enabled": false,
+      "honestDeltaMcLL": 0.0004
+    },
+    "B1": {
+      "n": 1547,
+      "leagueName": "Belgian Pro League",
+      "bias": [
+        -0.0569999,
+        -0.07207716
+      ],
+      "shrinkK": 200,
+      "deployStrength": 0.8855,
+      "enabled": false,
+      "honestDeltaMcLL": 0.0021
+    },
+    "F2": {
+      "n": 1445,
+      "leagueName": "Ligue 2",
+      "bias": [
+        -0.00311319,
+        0.00043413
+      ],
+      "shrinkK": 200,
+      "deployStrength": 0.8784,
+      "enabled": false,
+      "honestDeltaMcLL": 0.0024
+    },
+    "SC0": {
+      "n": 1140,
+      "leagueName": "Scottish Premiership",
+      "bias": [
+        0.07051049,
+        -0.06056484
+      ],
+      "shrinkK": 200,
+      "deployStrength": 0.8507,
+      "enabled": true,
+      "honestDeltaMcLL": -0.0013
+    },
+    "E1": {
+      "n": 2208,
+      "leagueName": "Championship",
+      "bias": [
+        -0.00153092,
+        -0.02573609
+      ],
+      "shrinkK": 200,
+      "deployStrength": 0.9169,
+      "enabled": false,
+      "honestDeltaMcLL": 0.0012
+    },
+    "F1": {
+      "n": 1372,
+      "leagueName": "Ligue 1",
+      "bias": [
+        -0.09981104,
+        -0.12832608
+      ],
+      "shrinkK": 200,
+      "deployStrength": 0.8728,
+      "enabled": false,
+      "honestDeltaMcLL": 0.0001
+    },
+    "P1": {
+      "n": 1530,
+      "leagueName": "Primeira Liga",
+      "bias": [
+        -0.06335824,
+        -0.1009529
+      ],
+      "shrinkK": 200,
+      "deployStrength": 0.8844,
+      "enabled": false,
+      "honestDeltaMcLL": 0.0027
+    },
+    "E2": {
+      "n": 2208,
+      "leagueName": "League One",
+      "bias": [
+        -0.04944293,
+        -0.09420504
+      ],
+      "shrinkK": 200,
+      "deployStrength": 0.9169,
+      "enabled": true,
+      "honestDeltaMcLL": -0.0022
+    },
+    "E3": {
+      "n": 2208,
+      "leagueName": "League Two",
+      "bias": [
+        -0.0236228,
+        0.01828449
+      ],
+      "shrinkK": 200,
+      "deployStrength": 0.9169,
+      "enabled": false,
+      "honestDeltaMcLL": 0.0004
+    },
+    "E0": {
+      "n": 1520,
+      "leagueName": "Premier League",
+      "bias": [
+        -0.02872222,
+        -0.14744901
+      ],
+      "shrinkK": 200,
+      "deployStrength": 0.8837,
+      "enabled": true,
+      "honestDeltaMcLL": -0.0017
+    },
+    "D1": {
+      "n": 1224,
+      "leagueName": "Bundesliga",
+      "bias": [
+        0.03360725,
+        0.01021835
+      ],
+      "shrinkK": 200,
+      "deployStrength": 0.8596,
+      "enabled": false,
+      "honestDeltaMcLL": 0.0167
+    },
+    "SP1": {
+      "n": 1520,
+      "leagueName": "La Liga",
+      "bias": [
+        0.08276795,
+        0.05962808
+      ],
+      "shrinkK": 200,
+      "deployStrength": 0.8837,
+      "enabled": false,
+      "honestDeltaMcLL": 0.0031
+    },
+    "SP2": {
+      "n": 1848,
+      "leagueName": "LaLiga2",
+      "bias": [
+        0.22899892,
+        0.29785418
+      ],
+      "shrinkK": 200,
+      "deployStrength": 0.9023,
+      "enabled": true,
+      "honestDeltaMcLL": -0.0113
+    },
+    "N1": {
+      "n": 1530,
+      "leagueName": "Eredivisie",
+      "bias": [
+        0.0026731,
+        -0.05989633
+      ],
+      "shrinkK": 200,
+      "deployStrength": 0.8844,
+      "enabled": false,
+      "honestDeltaMcLL": 0.0053
+    },
+    "T1": {
+      "n": 1750,
+      "leagueName": "Super Lig",
+      "bias": [
+        0.10341829,
+        0.00896128
+      ],
+      "shrinkK": 200,
+      "deployStrength": 0.8974,
+      "enabled": true,
+      "honestDeltaMcLL": -0.0012
+    },
+    "I2": {
+      "n": 1520,
+      "leagueName": "Serie B",
+      "bias": [
+        -0.05524213,
+        0.22490778
+      ],
+      "shrinkK": 200,
+      "deployStrength": 0.8837,
+      "enabled": true,
+      "honestDeltaMcLL": -0.0054
+    },
+    "I1": {
+      "n": 1520,
+      "leagueName": "Serie A",
+      "bias": [
+        -0.12447991,
+        0.00391017
+      ],
+      "shrinkK": 200,
+      "deployStrength": 0.8837,
+      "enabled": true,
+      "honestDeltaMcLL": -0.0052
+    }
+  },
+  "league_overrides_meta": {
+    "minLeagueN": 300,
+    "shrinkK": 200,
+    "formula": "q'_k ∝ q_k * exp(strength * bias_k), strength = n/(n+shrinkK), k=H,D (A fixed 0)",
+    "honestPerLeague": [
+      {
+        "league": "D2",
+        "leagueName": "2. Bundesliga",
+        "n": 1224,
+        "deployBias": [
+          0.00081369,
+          0.00534102
+        ],
+        "honest": {
+          "tailN": 183,
+          "trainN": 1041,
+          "bias": [
+            -0.019117,
+            -0.008495
+          ],
+          "strength": 0.8388,
+          "global": {
+            "acc": 0.3934,
+            "mcLL": 1.8969,
+            "brier": 0.6614
+          },
+          "league": {
+            "acc": 0.3934,
+            "mcLL": 1.8973,
+            "brier": 0.6616
+          },
+          "deltaMcLL": 0.0004,
+          "deltaAcc": 0
+        }
+      },
+      {
+        "league": "B1",
+        "leagueName": "Belgian Pro League",
+        "n": 1547,
+        "deployBias": [
+          -0.0569999,
+          -0.07207716
+        ],
+        "honest": {
+          "tailN": 500,
+          "trainN": 1047,
+          "bias": [
+            -0.007446,
+            -0.095208
+          ],
+          "strength": 0.8396,
+          "global": {
+            "acc": 0.442,
+            "mcLL": 1.8472,
+            "brier": 0.6384
+          },
+          "league": {
+            "acc": 0.442,
+            "mcLL": 1.8493,
+            "brier": 0.6393
+          },
+          "deltaMcLL": 0.0021,
+          "deltaAcc": 0
+        }
+      },
+      {
+        "league": "F2",
+        "leagueName": "Ligue 2",
+        "n": 1445,
+        "deployBias": [
+          -0.00311319,
+          0.00043413
+        ],
+        "honest": {
+          "tailN": 181,
+          "trainN": 1264,
+          "bias": [
+            -0.024136,
+            0.017327
+          ],
+          "strength": 0.8634,
+          "global": {
+            "acc": 0.4641,
+            "mcLL": 1.8443,
+            "brier": 0.6357
+          },
+          "league": {
+            "acc": 0.4641,
+            "mcLL": 1.8467,
+            "brier": 0.6368
+          },
+          "deltaMcLL": 0.0024,
+          "deltaAcc": 0
+        }
+      },
+      {
+        "league": "SC0",
+        "leagueName": "Scottish Premiership",
+        "n": 1140,
+        "deployBias": [
+          0.07051049,
+          -0.06056484
+        ],
+        "honest": {
+          "tailN": 375,
+          "trainN": 765,
+          "bias": [
+            0.085401,
+            -0.065384
+          ],
+          "strength": 0.7927,
+          "global": {
+            "acc": 0.512,
+            "mcLL": 1.764,
+            "brier": 0.6012
+          },
+          "league": {
+            "acc": 0.5067,
+            "mcLL": 1.7627,
+            "brier": 0.6006
+          },
+          "deltaMcLL": -0.0013,
+          "deltaAcc": -0.0053
+        }
+      },
+      {
+        "league": "E1",
+        "leagueName": "Championship",
+        "n": 2208,
+        "deployBias": [
+          -0.00153092,
+          -0.02573609
+        ],
+        "honest": {
+          "tailN": 339,
+          "trainN": 1869,
+          "bias": [
+            -0.031794,
+            -0.03792
+          ],
+          "strength": 0.9033,
+          "global": {
+            "acc": 0.4749,
+            "mcLL": 1.8255,
+            "brier": 0.6287
+          },
+          "league": {
+            "acc": 0.4779,
+            "mcLL": 1.8267,
+            "brier": 0.6293
+          },
+          "deltaMcLL": 0.0012,
+          "deltaAcc": 0.003
+        }
+      },
+      {
+        "league": "F1",
+        "leagueName": "Ligue 1",
+        "n": 1372,
+        "deployBias": [
+          -0.09981104,
+          -0.12832608
+        ],
+        "honest": {
+          "tailN": 194,
+          "trainN": 1178,
+          "bias": [
+            -0.118287,
+            -0.090852
+          ],
+          "strength": 0.8549,
+          "global": {
+            "acc": 0.5155,
+            "mcLL": 1.7863,
+            "brier": 0.6112
+          },
+          "league": {
+            "acc": 0.5412,
+            "mcLL": 1.7864,
+            "brier": 0.6114
+          },
+          "deltaMcLL": 0.0001,
+          "deltaAcc": 0.0257
+        }
+      },
+      {
+        "league": "P1",
+        "leagueName": "Primeira Liga",
+        "n": 1530,
+        "deployBias": [
+          -0.06335824,
+          -0.1009529
+        ],
+        "honest": {
+          "tailN": 510,
+          "trainN": 1020,
+          "bias": [
+            -0.03022,
+            -0.155122
+          ],
+          "strength": 0.8361,
+          "global": {
+            "acc": 0.4961,
+            "mcLL": 1.7744,
+            "brier": 0.6073
+          },
+          "league": {
+            "acc": 0.4961,
+            "mcLL": 1.7771,
+            "brier": 0.6082
+          },
+          "deltaMcLL": 0.0027,
+          "deltaAcc": 0
+        }
+      },
+      {
+        "league": "E2",
+        "leagueName": "League One",
+        "n": 2208,
+        "deployBias": [
+          -0.04944293,
+          -0.09420504
+        ],
+        "honest": {
+          "tailN": 357,
+          "trainN": 1851,
+          "bias": [
+            -0.019536,
+            -0.064465
+          ],
+          "strength": 0.9025,
+          "global": {
+            "acc": 0.4706,
+            "mcLL": 1.8181,
+            "brier": 0.6269
+          },
+          "league": {
+            "acc": 0.4706,
+            "mcLL": 1.8159,
+            "brier": 0.6259
+          },
+          "deltaMcLL": -0.0022,
+          "deltaAcc": 0
+        }
+      },
+      {
+        "league": "E3",
+        "leagueName": "League Two",
+        "n": 2208,
+        "deployBias": [
+          -0.0236228,
+          0.01828449
+        ],
+        "honest": {
+          "tailN": 353,
+          "trainN": 1855,
+          "bias": [
+            -0.043334,
+            0.00023
+          ],
+          "strength": 0.9027,
+          "global": {
+            "acc": 0.4476,
+            "mcLL": 1.8573,
+            "brier": 0.6431
+          },
+          "league": {
+            "acc": 0.4476,
+            "mcLL": 1.8577,
+            "brier": 0.6433
+          },
+          "deltaMcLL": 0.0004,
+          "deltaAcc": 0
+        }
+      },
+      {
+        "league": "E0",
+        "leagueName": "Premier League",
+        "n": 1520,
+        "deployBias": [
+          -0.02872222,
+          -0.14744901
+        ],
+        "honest": {
+          "tailN": 254,
+          "trainN": 1266,
+          "bias": [
+            0.015157,
+            -0.121224
+          ],
+          "strength": 0.8636,
+          "global": {
+            "acc": 0.5157,
+            "mcLL": 1.7951,
+            "brier": 0.6147
+          },
+          "league": {
+            "acc": 0.5157,
+            "mcLL": 1.7934,
+            "brier": 0.6138
+          },
+          "deltaMcLL": -0.0017,
+          "deltaAcc": 0
+        }
+      },
+      {
+        "league": "D1",
+        "leagueName": "Bundesliga",
+        "n": 1224,
+        "deployBias": [
+          0.03360725,
+          0.01021835
+        ],
+        "honest": {
+          "tailN": 200,
+          "trainN": 1024,
+          "bias": [
+            0.132245,
+            0.065547
+          ],
+          "strength": 0.8366,
+          "global": {
+            "acc": 0.43,
+            "mcLL": 1.844,
+            "brier": 0.6375
+          },
+          "league": {
+            "acc": 0.44,
+            "mcLL": 1.8607,
+            "brier": 0.6452
+          },
+          "deltaMcLL": 0.0167,
+          "deltaAcc": 0.01
+        }
+      },
+      {
+        "league": "SP1",
+        "leagueName": "La Liga",
+        "n": 1520,
+        "deployBias": [
+          0.08276795,
+          0.05962808
+        ],
+        "honest": {
+          "tailN": 238,
+          "trainN": 1282,
+          "bias": [
+            0.108454,
+            0.084963
+          ],
+          "strength": 0.865,
+          "global": {
+            "acc": 0.5084,
+            "mcLL": 1.7881,
+            "brier": 0.6119
+          },
+          "league": {
+            "acc": 0.4958,
+            "mcLL": 1.7912,
+            "brier": 0.6134
+          },
+          "deltaMcLL": 0.0031,
+          "deltaAcc": -0.0126
+        }
+      },
+      {
+        "league": "SP2",
+        "leagueName": "LaLiga2",
+        "n": 1848,
+        "deployBias": [
+          0.22899892,
+          0.29785418
+        ],
+        "honest": {
+          "tailN": 281,
+          "trainN": 1567,
+          "bias": [
+            0.198286,
+            0.299068
+          ],
+          "strength": 0.8868,
+          "global": {
+            "acc": 0.4769,
+            "mcLL": 1.8181,
+            "brier": 0.6254
+          },
+          "league": {
+            "acc": 0.4626,
+            "mcLL": 1.8068,
+            "brier": 0.6208
+          },
+          "deltaMcLL": -0.0113,
+          "deltaAcc": -0.0143
+        }
+      },
+      {
+        "league": "N1",
+        "leagueName": "Eredivisie",
+        "n": 1530,
+        "deployBias": [
+          0.0026731,
+          -0.05989633
+        ],
+        "honest": {
+          "tailN": 491,
+          "trainN": 1039,
+          "bias": [
+            -0.053934,
+            -0.165566
+          ],
+          "strength": 0.8386,
+          "global": {
+            "acc": 0.4847,
+            "mcLL": 1.8013,
+            "brier": 0.6177
+          },
+          "league": {
+            "acc": 0.4969,
+            "mcLL": 1.8066,
+            "brier": 0.6197
+          },
+          "deltaMcLL": 0.0053,
+          "deltaAcc": 0.0122
+        }
+      },
+      {
+        "league": "T1",
+        "leagueName": "Super Lig",
+        "n": 1750,
+        "deployBias": [
+          0.10341829,
+          0.00896128
+        ],
+        "honest": {
+          "tailN": 526,
+          "trainN": 1224,
+          "bias": [
+            0.067046,
+            -0.048077
+          ],
+          "strength": 0.8596,
+          "global": {
+            "acc": 0.4905,
+            "mcLL": 1.7882,
+            "brier": 0.6125
+          },
+          "league": {
+            "acc": 0.5076,
+            "mcLL": 1.787,
+            "brier": 0.6119
+          },
+          "deltaMcLL": -0.0012,
+          "deltaAcc": 0.0171
+        }
+      },
+      {
+        "league": "I2",
+        "leagueName": "Serie B",
+        "n": 1520,
+        "deployBias": [
+          -0.05524213,
+          0.22490778
+        ],
+        "honest": {
+          "tailN": 234,
+          "trainN": 1286,
+          "bias": [
+            -0.089675,
+            0.214813
+          ],
+          "strength": 0.8654,
+          "global": {
+            "acc": 0.3889,
+            "mcLL": 1.9082,
+            "brier": 0.6661
+          },
+          "league": {
+            "acc": 0.3803,
+            "mcLL": 1.9028,
+            "brier": 0.6636
+          },
+          "deltaMcLL": -0.0054,
+          "deltaAcc": -0.0086
+        }
+      },
+      {
+        "league": "I1",
+        "leagueName": "Serie A",
+        "n": 1520,
+        "deployBias": [
+          -0.12447991,
+          0.00391017
+        ],
+        "honest": {
+          "tailN": 247,
+          "trainN": 1273,
+          "bias": [
+            -0.109322,
+            0.010237
+          ],
+          "strength": 0.8642,
+          "global": {
+            "acc": 0.4777,
+            "mcLL": 1.825,
+            "brier": 0.629
+          },
+          "league": {
+            "acc": 0.4777,
+            "mcLL": 1.8198,
+            "brier": 0.6268
+          },
+          "deltaMcLL": -0.0052,
+          "deltaAcc": 0
+        }
+      }
+    ],
+    "honestAggregate": {
+      "tailN": 5463,
+      "globalMcLL": 1.8167,
+      "leagueMcLL": 1.8171,
+      "globalBrier": 0.6251,
+      "leagueBrier": 0.6252
+    }
   }
 }

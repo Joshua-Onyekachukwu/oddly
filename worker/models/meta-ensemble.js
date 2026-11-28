@@ -58,7 +58,59 @@ function loadRecalibration(storeData) {
   return _fileRecal;
 }
 
-function applyRecalibration(refined, recal) {
+function softmax3(arr) {
+  const mx = Math.max(arr[0], arr[1], arr[2]);
+  const e = [Math.exp(arr[0] - mx), Math.exp(arr[1] - mx), Math.exp(arr[2] - mx)];
+  const t = e[0] + e[1] + e[2];
+  return [e[0] / t, e[1] / t, e[2] / t];
+}
+
+/**
+ * Find a per-league override entry for a league display name (or raw code).
+ * league_overrides is keyed by football-data code ("E0"...) with each entry
+ * carrying `leagueName`; match on either, case-insensitive.
+ */
+function findLeagueOverride(recal, leagueName) {
+  const ov = recal && recal.league_overrides;
+  if (!ov || !leagueName) return null;
+  const target = String(leagueName).toLowerCase();
+  for (const [code, e] of Object.entries(ov)) {
+    if (!e || typeof e !== "object") continue;
+    // Honest gate: overrides the fitter marked enabled===false (held-out
+    // tail got worse) are stored for provenance but never applied.
+    if (e.enabled === false) continue;
+    const nm = String(e.leagueName || code).toLowerCase();
+    if (nm === target || String(code).toLowerCase() === target) return e;
+  }
+  return null;
+}
+
+/**
+ * Apply a fitted per-league residual bias vector on top of already
+ * globally-calibrated 1X2 probs, with honest shrinkage:
+ *   strength = n / (n + shrinkK)   (shrinkK defaults to 200)
+ *   q'_k ∝ q_k * exp(strength * bias_k),  bias = [bH, bD], biasAway = 0.
+ * Small leagues are pulled toward the global calibration; large leagues
+ * approach their fitted bias. Mutates o = {home, draw, away} in place.
+ */
+function applyLeagueBias(o, override) {
+  if (!override || !Array.isArray(override.bias) || override.bias.length < 2) return;
+  const n = typeof override.n === "number" ? override.n : 0;
+  const k = typeof override.shrinkK === "number" ? override.shrinkK : 200;
+  const strength = n / (n + k);
+  if (!(strength > 0)) return;
+  const p = [o.home, o.draw, o.away];
+  const s = softmax3([
+    Math.log(Math.max(p[0], 1e-6)) + strength * override.bias[0],
+    Math.log(Math.max(p[1], 1e-6)) + strength * override.bias[1],
+    Math.log(Math.max(p[2], 1e-6)),
+  ]);
+  o.home = s[0];
+  o.draw = s[1];
+  o.away = s[2];
+}
+
+function applyRecalibration(refined, recal, leagueName) {
   if (!recal) return;
   // 1X2: q_k ∝ p_k^alpha * exp(b_k), k = Home/Draw/Away; biasAway fixed 0.
   if (Array.isArray(recal.theta) && recal.theta.length >= 3) {
@@ -70,12 +122,15 @@ function applyRecalibration(refined, recal) {
       alpha * Math.log(Math.max(p[1], 1e-6)) + bD,
       alpha * Math.log(Math.max(p[2], 1e-6)),
     ];
-    const mx = Math.max(s[0], s[1], s[2]);
-    const e0 = Math.exp(s[0] - mx), e1 = Math.exp(s[1] - mx), e2 = Math.exp(s[2] - mx);
-    const t = e0 + e1 + e2;
-    o.home = e0 / t;
-    o.draw = e1 / t;
-    o.away = e2 / t;
+    const q = softmax3(s);
+    o.home = q[0];
+    o.draw = q[1];
+    o.away = q[2];
+  }
+  // Per-league residual bias override (optional; only when league_name is known).
+  if (refined.oneXtwo) {
+    const override = findLeagueOverride(recal, leagueName);
+    if (override) applyLeagueBias(refined.oneXtwo, override);
   }
   // BTTS: Platt scaling q = sigmoid(a*logit(p)+b)
   const bp = recal.btts;
@@ -183,7 +238,12 @@ function predictMatch(features, storeData = {}) {
 
   // ═══ WALK-FORWARD RECALIBRATION (post-hoc, fitted on research set) ═══
   // Applied to final probabilities — see loadRecalibration() for provenance.
-  applyRecalibration(refined, loadRecalibration(storeData));
+  // leagueParams.league_name selects an optional per-league bias override.
+  applyRecalibration(
+    refined,
+    loadRecalibration(storeData),
+    leagueParams && leagueParams.league_name
+  );
 
   // ═══ ASSEMBLE FINAL OUTPUT ═══
 
@@ -268,4 +328,4 @@ function predictMatch(features, storeData = {}) {
   };
 }
 
-module.exports = { predictMatch, model1x2, modelGoals, modelBtts, modelDc, marketFeature, crossSignals };
+module.exports = { predictMatch, model1x2, modelGoals, modelBtts, modelDc, marketFeature, crossSignals, applyRecalibration, applyLeagueBias, findLeagueOverride };

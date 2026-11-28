@@ -11,7 +11,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { predictMatchEnsemble, checkPrediction, resetBatchCaches } from "@/lib/models/ensemble";
+import { predictMatchEnsemble, checkPredictionOutcome, resetBatchCaches } from "@/lib/models/ensemble";
 import { normalizeTeamName } from "@/lib/football/team-normalizer";
 import { withLock } from "@/lib/cron/lock";
 import { startRun, completeRun, type CronRunResult } from "@/lib/cron/logger";
@@ -116,6 +116,7 @@ async function phaseSettle(now: Date): Promise<PhaseResult> {
 
     let settled = 0;
     let correct = 0;
+    let voided = 0;
 
     for (const fixture of fixtures) {
       const predsFor = (preds || []).filter((p) => p.fixture_id === fixture.id);
@@ -124,14 +125,19 @@ async function phaseSettle(now: Date): Promise<PhaseResult> {
 
       for (const p of predsFor) {
         if (p.result && p.result !== "pending") continue;
-        const isCorrect = checkPrediction({}, p.market, p.selection, homeScore, awayScore);
+        const outcome = checkPredictionOutcome({}, p.market, p.selection, homeScore, awayScore);
 
-        if (isCorrect) correct++;
+        // Undetermined markets stay pending rather than being guessed.
+        if (outcome === "undetermined") continue;
+
+        const newResult = outcome === "correct" ? "correct" : outcome === "void" ? "void" : "wrong";
+        if (outcome === "correct") correct++;
+        else if (outcome === "void") voided++;
         settled++;
 
         await supabaseAdmin
           .from("predictions")
-          .update({ result: isCorrect ? "correct" : "wrong", settled_at: new Date().toISOString() })
+          .update({ result: newResult, settled_at: new Date().toISOString() })
           .eq("id", p.id)
           .eq("result", "pending");
       }
@@ -140,7 +146,7 @@ async function phaseSettle(now: Date): Promise<PhaseResult> {
     return {
       success: true,
       count: settled,
-      details: `${settled} settled, ${correct} correct (${settled > 0 ? ((correct / settled) * 100).toFixed(1) : 0}%)`,
+      details: `${settled} settled, ${correct} correct, ${voided} void (${settled > 0 ? ((correct / settled) * 100).toFixed(1) : 0}%)`,
       duration: `${Date.now() - start}ms`,
     };
   } catch (e) {

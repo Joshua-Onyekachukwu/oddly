@@ -389,6 +389,159 @@ if (forceStage && forceKind) {
   console.log(`[fit-all] in-sample eval (descriptive): acc=${(allEval.acc * 100).toFixed(2)}% mcLL=${allEval.multiclassLogLoss} brier=${allEval.brier}`);
 }
 
+// ═══ PER-LEAGUE BIAS OVERRIDES ═══
+// For each league with n >= MIN_LEAGUE_N replay records, fit a residual
+// bias vector [bH, bD] (biasAway fixed 0) on top of the GLOBAL calibrated
+// probs: q_k ∝ p_k * exp(s * b_k) where s = n/(n+SHRINK_K) is applied at
+// inference time (worker/models/meta-ensemble.js applyRecalibration).
+// Honest eval: biases are fit on the TRAIN split only and scored on the
+// held-out TAIL split of that league, vs the global-only baseline.
+console.log("\n═══ PER-LEAGUE bias overrides (on top of global recal) ═══");
+const MIN_LEAGUE_N = 300;
+const SHRINK_K = 200;
+// football-data.co.uk code → leagues.name (same map as scripts/map-backfill-leagues.js)
+const LEAGUE_NAME = {
+  E0: "Premier League", E1: "Championship", E2: "League One", E3: "League Two",
+  SC0: "Scottish Premiership", D1: "Bundesliga", D2: "2. Bundesliga",
+  I1: "Serie A", I2: "Serie B", SP1: "La Liga", SP2: "LaLiga2",
+  F1: "Ligue 1", F2: "Ligue 2", N1: "Eredivisie", P1: "Primeira Liga",
+  T1: "Super Lig", B1: "Belgian Pro League",
+};
+
+// Bias-only fit on arbitrary base probabilities:
+//   q_k ∝ base_k * exp(b_k), params b = [bH, bD], bA = 0 (identifiability).
+function fitBiasVector(recs, baseFn, iters = 600, lr = 0.05) {
+  const b = [0, 0];
+  const mt = [0, 0], vt = [0, 0];
+  const b1 = 0.9, b2 = 0.999, eps = 1e-8;
+  for (let it = 1; it <= iters; it++) {
+    const g = [0, 0];
+    for (const r of recs) {
+      const p = baseFn(r);
+      const y = YIDX[r.res];
+      const s = [
+        Math.log(Math.max(p[0], CLIP)) + b[0],
+        Math.log(Math.max(p[1], CLIP)) + b[1],
+        Math.log(Math.max(p[2], CLIP)),
+      ];
+      const q = softmax3(s);
+      g[0] += q[0] - (y === 0 ? 1 : 0);
+      g[1] += q[1] - (y === 1 ? 1 : 0);
+    }
+    const scale = 1 / recs.length;
+    for (let j = 0; j < 2; j++) {
+      const gj = g[j] * scale + 1e-4 * b[j];
+      mt[j] = b1 * mt[j] + (1 - b1) * gj;
+      vt[j] = b2 * vt[j] + (1 - b2) * gj * gj;
+      b[j] -= lr * (mt[j] / (1 - Math.pow(b1, it))) / (Math.sqrt(vt[j] / (1 - Math.pow(b2, it))) + eps);
+    }
+  }
+  return b;
+}
+
+// Chosen deploy stage on all splits + honest (train-fit) theta for it.
+setStage(records, artifactStage); setStage(train, artifactStage); setStage(tail, artifactStage);
+const honestTheta =
+  forceStage && forceKind
+    ? (forceKind === "biasOnly" ? fitBiasOnly(train) : fitTempBias(train))
+    : best.theta;
+
+const baseDeploy = (r) => tempBiasProbs(r._p, artifactTheta);
+const baseHonest = (r) => tempBiasProbs(r._p, honestTheta);
+
+const trainSet = new Set(train);
+const tailSet = new Set(tail);
+const leagueGroups = {};
+for (const r of records) (leagueGroups[r.lg] = leagueGroups[r.lg] || []).push(r);
+
+const leagueOverrides = {};
+const leagueHonest = [];
+for (const [lg, recsLg] of Object.entries(leagueGroups)) {
+  if (recsLg.length < MIN_LEAGUE_N) {
+    leagueHonest.push({ league: lg, n: recsLg.length, note: "skipped: n < 300" });
+    continue;
+  }
+  // Deployable bias: fit on ALL of this league's records over deploy base.
+  const bAll = fitBiasVector(recsLg, baseDeploy);
+  const strengthAll = recsLg.length / (recsLg.length + SHRINK_K);
+  leagueOverrides[lg] = {
+    n: recsLg.length,
+    leagueName: LEAGUE_NAME[lg] || lg,
+    bias: bAll.map((x) => +x.toFixed(8)), // [bH, bD]; bA = 0
+    shrinkK: SHRINK_K,
+    deployStrength: +strengthAll.toFixed(4),
+    // Honest gate: only enable leagues whose held-out tail mcLL improved.
+    // Filled in below once the honest eval for this league is computed.
+    enabled: false,
+    honestDeltaMcLL: null,
+  };
+
+  // Honest held-out eval: bias fit on this league's TRAIN records only.
+  const trL = recsLg.filter((r) => trainSet.has(r));
+  const taL = recsLg.filter((r) => tailSet.has(r));
+  let honest = null;
+  if (trL.length >= 50 && taL.length >= 20) {
+    const bTr = fitBiasVector(trL, baseHonest);
+    const sTr = trL.length / (trL.length + SHRINK_K);
+    const applyLeague = (r) => {
+      const p = baseHonest(r);
+      const sc = [
+        Math.log(Math.max(p[0], CLIP)) + sTr * bTr[0],
+        Math.log(Math.max(p[1], CLIP)) + sTr * bTr[1],
+        Math.log(Math.max(p[2], CLIP)),
+      ];
+      return softmax3(sc);
+    };
+    const eG = eval1x2(taL, baseHonest);
+    const eL = eval1x2(taL, applyLeague);
+    honest = {
+      tailN: taL.length,
+      trainN: trL.length,
+      bias: bTr.map((x) => +x.toFixed(6)),
+      strength: +sTr.toFixed(4),
+      global: { acc: eG.acc, mcLL: eG.multiclassLogLoss, brier: eG.brier },
+      league: { acc: eL.acc, mcLL: eL.multiclassLogLoss, brier: eL.brier },
+      deltaMcLL: +(eL.multiclassLogLoss - eG.multiclassLogLoss).toFixed(4), // negative = league override better
+      deltaAcc: +(eL.acc - eG.acc).toFixed(4),
+    };
+    // Enable the deployable override only if it helped on held-out tail data.
+    if (honest.deltaMcLL < 0) {
+      leagueOverrides[lg].enabled = true;
+      leagueOverrides[lg].honestDeltaMcLL = honest.deltaMcLL;
+    }
+  }
+  leagueHonest.push({ league: lg, leagueName: LEAGUE_NAME[lg] || lg, n: recsLg.length, deployBias: leagueOverrides[lg].bias, honest });
+  if (honest) {
+    console.log(
+      `  ${lg} (${LEAGUE_NAME[lg] || "?"}) n=${recsLg.length} tailN=${honest.tailN} ` +
+      `bias=[${honest.bias}] s=${honest.strength} | tail mcLL global=${honest.global.mcLL} league=${honest.league.mcLL} ` +
+      `(Δ${honest.deltaMcLL}) acc ${honest.global.acc}→${honest.league.acc}`
+    );
+  } else {
+    console.log(`  ${lg} n=${recsLg.length} — insufficient train/tail for honest eval`);
+  }
+}
+
+// Aggregate honest comparison across all leagues with enough tail data.
+const aggG = { n: 0, ll: 0, brier: 0, correct: 0 };
+const aggL = { n: 0, ll: 0, brier: 0, correct: 0 };
+for (const e of leagueHonest) {
+  if (!e.honest) continue;
+  aggG.n += e.honest.tailN; aggL.n += e.honest.tailN;
+  aggG.ll += e.honest.global.mcLL * e.honest.tailN; aggL.ll += e.honest.league.mcLL * e.honest.tailN;
+  aggG.brier += e.honest.global.brier * e.honest.tailN; aggL.brier += e.honest.league.brier * e.honest.tailN;
+}
+const leagueAgg = aggG.n
+  ? {
+      tailN: aggG.n,
+      globalMcLL: +(aggG.ll / aggG.n).toFixed(4),
+      leagueMcLL: +(aggL.ll / aggL.n).toFixed(4),
+      globalBrier: +(aggG.brier / aggG.n).toFixed(4),
+      leagueBrier: +(aggL.brier / aggL.n).toFixed(4),
+    }
+  : null;
+console.log(`  AGG tail (leagues with honest eval, n=${aggG.n}): global mcLL=${leagueAgg && leagueAgg.globalMcLL} league mcLL=${leagueAgg && leagueAgg.leagueMcLL} brier ${leagueAgg && leagueAgg.globalBrier}→${leagueAgg && leagueAgg.leagueBrier}`);
+
 // ═══ Write artifact ═══
 fs.mkdirSync(OUT_DIR, { recursive: true });
 const artifact = {
@@ -412,6 +565,17 @@ const artifact = {
     b: +plattAll.b.toFixed(8),
     honestValidation: { train: bttsPlatt.train, tail: bttsPlatt.tail, baselineTail: bttsBase.tail },
     trainedOnAll: true,
+  },
+  // Per-league residual bias overrides applied on top of the global theta.
+  // Inference: q'_k ∝ q_k * exp((n/(n+shrinkK)) * bias_k), biasAway = 0.
+  // Only leagues with n >= 300 replay records are included.
+  league_overrides: leagueOverrides,
+  league_overrides_meta: {
+    minLeagueN: MIN_LEAGUE_N,
+    shrinkK: SHRINK_K,
+    formula: "q'_k ∝ q_k * exp(strength * bias_k), strength = n/(n+shrinkK), k=H,D (A fixed 0)",
+    honestPerLeague: leagueHonest,
+    honestAggregate: leagueAgg,
   },
 };
 fs.writeFileSync(OUT_PATH, JSON.stringify(artifact, null, 2));

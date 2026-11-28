@@ -20,7 +20,10 @@
  * fixture_id = NULL and are counted/logged — never forced.
  *
  * Usage:
- *   node scripts/ingest-xg.js [--dry-run] [--no-profiles] [--file path]
+ *   node scripts/ingest-xg.js [--dry-run] [--no-profiles] [--file path] [--source name]
+ *
+ * `--source` sets xg_features.source (default "understat") and the
+ * team_feature_profiles.xg_source label (`<source>_matches`).
  */
 
 const fs = require("fs");
@@ -32,10 +35,12 @@ const ROOT = path.join(__dirname, "..");
 const DRY_RUN = process.argv.includes("--dry-run");
 const NO_PROFILES = process.argv.includes("--no-profiles");
 const fileArg = process.argv.indexOf("--file");
+const sourceArg = process.argv.indexOf("--source");
+const SOURCE = sourceArg > -1 ? process.argv[sourceArg + 1] : "understat";
 const DATA_FILE =
   fileArg > -1
     ? path.resolve(process.argv[fileArg + 1])
-    : path.join(ROOT, "data", "understat-xg.json");
+    : path.join(ROOT, "data", `${SOURCE}-xg.json`);
 
 // ── Env (.env.local) — same pattern as scripts/dbq.js ────────────────────
 for (const line of fs.readFileSync(path.join(ROOT, ".env.local"), "utf8").split(/\r?\n/)) {
@@ -141,7 +146,7 @@ async function insertRows(client, rows) {
       params.push(
         r.teamName, r.teamKey, r.opponent, r.isHome,
         r.xgFor, r.xgAgainst, r.xgDiff, r.league, r.season,
-        r.matchDate, r.externalId, "understat", r.fixtureId || null
+        r.matchDate, r.externalId, SOURCE, r.fixtureId || null
       );
     });
     if (DRY_RUN) {
@@ -229,14 +234,14 @@ async function syncTeamProfiles(client) {
       `update team_feature_profiles set
          avg_xg = $2, avg_xga = $3,
          home_xg = $4, away_xg = $5, home_xga = $6, away_xga = $7,
-         xg_last5 = $8, xg_source = 'understat_matches',
+         xg_last5 = $8, xg_source = $10,
          data_season = $9, last_updated = now()
        where id = $1`,
       [
         p.id,
         s.xgForAvg, s.xgAgainstAvg,
         s.homeXgForAvg, s.awayXgForAvg, s.homeXgAgainstAvg, s.awayXgAgainstAvg,
-        s.last5XgForAvg, prof.latestSeason,
+        s.last5XgForAvg, prof.latestSeason, `${SOURCE}_matches`,
       ]
     );
     updated++;
@@ -246,7 +251,49 @@ async function syncTeamProfiles(client) {
   }
   console.log(`  ✅ ${updated} team_feature_profiles rows updated with rolling xG`);
   console.log(`  ℹ️  ${unmatchedProfiles.length} profiles have no xG history (left unchanged)`);
-  return updated;
+
+  // Create minimal profiles for canonical teams that now have xG history
+  // but no team_feature_profiles row yet (e.g. newly covered leagues such
+  // as Eredivisie, Primeira Liga, Belgian Pro, MLS, Brasileirão). Only the
+  // xG columns are populated; other rating columns stay NULL and consumers
+  // fall back to defaults.
+  const { rows: canonTeams } = await client.query(
+    `select t.canonical_name, l.name as league
+       from teams t left join leagues l on l.id = t.league_id`
+  );
+  const canonByKey = new Map();
+  for (const t of canonTeams) {
+    const k = normalizeTeamName(t.canonical_name);
+    if (k && !canonByKey.has(k)) canonByKey.set(k, t);
+  }
+  const existingKeys = new Set(profiles.map((p) => normalizeTeamName(p.team_name)));
+  let created = 0;
+  for (const [key, prof] of profileByKey) {
+    if (existingKeys.has(key)) continue;
+    const canon = canonByKey.get(key);
+    if (!canon || !prof.season.xgForAvg) continue;
+    const s = prof.season;
+    if (DRY_RUN) {
+      created++;
+      continue;
+    }
+    await client.query(
+      `insert into team_feature_profiles
+         (team_name, league, avg_xg, avg_xga, home_xg, away_xg,
+          home_xga, away_xga, xg_last5, xg_source, data_season, last_updated)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,now())
+       on conflict (team_name) do nothing`,
+      [
+        canon.canonical_name, canon.league,
+        s.xgForAvg, s.xgAgainstAvg,
+        s.homeXgForAvg, s.awayXgForAvg, s.homeXgAgainstAvg, s.awayXgAgainstAvg,
+        s.last5XgForAvg, `${SOURCE}_matches`, prof.latestSeason,
+      ]
+    );
+    created++;
+  }
+  console.log(`  ✅ ${created} new team_feature_profiles rows created for xG-covered teams`);
+  return updated + created;
 }
 
 // ── Main ─────────────────────────────────────────────────────────────────

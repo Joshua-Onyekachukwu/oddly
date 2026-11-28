@@ -759,7 +759,12 @@ export function MatchDetail({
                 </span>
               </div>
               <p className="text-[11px] text-gray-400 mb-[14px]">
-                Top players by importance score, minus reported absences. Not an official lineup.
+                {([predictedLineups.home, predictedLineups.away].some(
+                  (lu) => lu?.lineup_basis === "appearances"
+                )
+                  ? "Ranked by recent starting appearances where available, else squad importance. "
+                  : "Top players by importance score, minus reported absences. ")}
+                Not an official lineup.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-[16px]">
                 {([
@@ -769,7 +774,15 @@ export function MatchDetail({
                   <div key={side}>
                     <span className="block text-[11px] font-semibold text-gray-500 mb-[8px]">
                       {side} — {teamName}
-                      {lu ? <span className="text-gray-300 font-normal"> · {lu.squad_size} tracked</span> : null}
+                      {lu ? (
+                        <span className="text-gray-300 font-normal">
+                          {" "}
+                          · {lu.squad_size} tracked
+                          {lu.lineup_basis === "appearances"
+                            ? ` · ${lu.appearance_matches} match${lu.appearance_matches === 1 ? "" : "es"} thru ${lu.appearance_latest_date?.slice(0, 7) || "?"}`
+                            : " · importance estimate"}
+                        </span>
+                      ) : null}
                     </span>
                     {!lu || lu.starters.length === 0 ? (
                       <p className="text-[12px] text-gray-400 pl-[4px]">No squad data for this team.</p>

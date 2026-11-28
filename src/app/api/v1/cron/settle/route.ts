@@ -9,7 +9,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { predictMatchEnsemble, checkPrediction } from "@/lib/models/ensemble";
+import { predictMatchEnsemble, checkPredictionOutcome } from "@/lib/models/ensemble";
 import { normalizeTeamName } from "@/lib/football/team-normalizer";
 import { withLock } from "@/lib/cron/lock";
 import { startRun, completeRun, type CronRunResult } from "@/lib/cron/logger";
@@ -33,6 +33,8 @@ interface SettleResult {
   settled: number;
   correct: number;
   incorrect: number;
+  voided: number;
+  undetermined: number;
   archived: number;
   ensembleHits: number;
   ensembleMisses: number;
@@ -113,6 +115,8 @@ async function runSettlement(): Promise<SettleResult> {
   let settled = 0;
   let correct = 0;
   let incorrect = 0;
+  let voided = 0;
+  let undetermined = 0;
   let ensembleHits = 0;
   let ensembleMisses = 0;
 
@@ -157,13 +161,24 @@ async function runSettlement(): Promise<SettleResult> {
 
     for (const p of preds) {
       if (p.result && p.result !== "pending") continue;
-      const isCorrect = checkPrediction(pred, p.market, p.selection, homeScore, awayScore);
+      const outcome = checkPredictionOutcome(pred, p.market, p.selection, homeScore, awayScore);
+
+      // "undetermined" = market/selection can't be mapped to a settlement
+      // rule. Leave the prediction pending rather than guess correct/wrong.
+      if (outcome === "undetermined") {
+        undetermined++;
+        continue;
+      }
+
       settled++;
+      const isCorrect = outcome === "correct";
+      const isVoid = outcome === "void";
       if (isCorrect) correct++;
+      else if (isVoid) voided++;
       else incorrect++;
 
       const settledAt = new Date().toISOString();
-      const newResult = isCorrect ? "correct" : "wrong";
+      const newResult = isCorrect ? "correct" : isVoid ? "void" : "wrong";
 
       // Build update payload
       const updatePayload: Record<string, any> = {
@@ -185,7 +200,7 @@ async function runSettlement(): Promise<SettleResult> {
         settled_at: settledAt,
         source: "cron/settle",
         raw_score: { home_score: homeScore, away_score: awayScore, status: fixture.status },
-        notes: isCorrect ? null : "settled_incorrect",
+        notes: isCorrect ? null : isVoid ? "settled_void" : "settled_incorrect",
       });
 
       // Feed row for append-only upsert keyed on prediction_id
@@ -201,8 +216,9 @@ async function runSettlement(): Promise<SettleResult> {
         settled_at: settledAt,
       });
 
-      // On wrong predictions, store failure diagnostics
-      if (!isCorrect && ensemblePred) {
+      // On wrong predictions, store failure diagnostics (voids are pushes,
+      // not failures — no diagnostics needed).
+      if (outcome === "wrong" && ensemblePred) {
         // Model disagreement: std dev of sub-model probabilities for the predicted selection
         const sel = (p.selection || "").toLowerCase();
         let disagreement = 0;
@@ -321,6 +337,7 @@ async function runSettlement(): Promise<SettleResult> {
         // and could match the wrong row when probabilities collided.
         const byMarket: Record<string, { total: number; correct: number; brierSum: number; probCount: number }> = {};
         for (const p of recentSettled) {
+          if (p.result === "void") continue; // pushes are neither hit nor miss
           const mkt = p.market || "unknown";
           if (!byMarket[mkt]) byMarket[mkt] = { total: 0, correct: 0, brierSum: 0, probCount: 0 };
           byMarket[mkt].total++;
@@ -376,11 +393,12 @@ async function runSettlement(): Promise<SettleResult> {
 
   const duration = Date.now() - startTime;
   console.log(
-    `[SETTLE] Done: ${settled} settled, ${correct} correct, ${incorrect} incorrect ` +
+    `[SETTLE] Done: ${settled} settled, ${correct} correct, ${incorrect} incorrect, ` +
+    `${voided} void, ${undetermined} undetermined ` +
     `(${ensembleHits} ensemble, ${ensembleMisses} fallback, ${eventsWritten} audit events) (${duration}ms)`
   );
 
-  return { settled, correct, incorrect, archived, ensembleHits, ensembleMisses, fixturesProcessed: fixtures.length };
+  return { settled, correct, incorrect, voided, undetermined, archived, ensembleHits, ensembleMisses, fixturesProcessed: fixtures.length };
 }
 
 export async function POST(request: NextRequest) {
@@ -417,6 +435,8 @@ export async function POST(request: NextRequest) {
       metadata: {
         correct: result.correct,
         incorrect: result.incorrect,
+        voided: result.voided,
+        undetermined: result.undetermined,
         accuracy,
         ensembleHits: result.ensembleHits,
         ensembleMisses: result.ensembleMisses,
@@ -431,6 +451,8 @@ export async function POST(request: NextRequest) {
       settled: result.settled,
       correct: result.correct,
       incorrect: result.incorrect,
+      voided: result.voided,
+      undetermined: result.undetermined,
       accuracy,
       ensembleHits: result.ensembleHits,
       ensembleMisses: result.ensembleMisses,
@@ -479,6 +501,8 @@ export async function GET(request: NextRequest) {
       metadata: {
         correct: result.correct,
         incorrect: result.incorrect,
+        voided: result.voided,
+        undetermined: result.undetermined,
         accuracy,
         ensembleHits: result.ensembleHits,
         ensembleMisses: result.ensembleMisses,
@@ -493,6 +517,8 @@ export async function GET(request: NextRequest) {
       settled: result.settled,
       correct: result.correct,
       incorrect: result.incorrect,
+      voided: result.voided,
+      undetermined: result.undetermined,
       accuracy,
       ensembleHits: result.ensembleHits,
       ensembleMisses: result.ensembleMisses,

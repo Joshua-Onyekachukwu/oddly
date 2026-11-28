@@ -68,3 +68,6 @@ data/walk-forward-report.json
 data/xgboost-results/
 data/_*.txt
 data/_*.json
+data/opta-xg.json
+data/pannadata/
+data/statsbomb-open/

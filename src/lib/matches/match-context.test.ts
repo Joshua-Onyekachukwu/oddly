@@ -288,9 +288,10 @@ describe("buildPredictedLineup", () => {
   it("ranks by score_1_10 desc and caps starters at 11", () => {
     const lu = buildPredictedLineup(squad(15), "arsenal", [])!;
     expect(lu.starters).toHaveLength(11);
-    expect(lu.bench).toHaveLength(4);
+    // 15 rows but "Jurrien/Jurriën Timber" share a personKey → 14 candidates
+    expect(lu.bench).toHaveLength(3);
     expect(lu.starters[0].player_name).toBe("Bukayo Saka");
-    expect(lu.squad_size).toBe(15);
+    expect(lu.squad_size).toBe(14);
   });
 
   it("excludes injured and suspended players into unavailable", () => {
@@ -324,5 +325,125 @@ describe("buildPredictedLineup", () => {
     ];
     const lu = buildPredictedLineup(rows, "wolves", [])!;
     expect(lu.starters.map((p) => p.player_name)).toEqual(["R. Jimenez", "T. Gomes"]);
+  });
+
+  // ── appearance-driven ranking ─────────────────────────────────────────
+
+  const app = (
+    player: string,
+    pkey: string,
+    team: string,
+    date: string,
+    starter = true
+  ) => ({
+    player_name: player,
+    player_name_normalized: pkey,
+    team_name_normalized: team,
+    is_starter: starter,
+    match_date: date,
+  });
+
+  it("prefers recent starters over higher-importance never-started players", () => {
+    // Saka has the top importance score but never started; Nwaneri started
+    // every recent match.
+    const apps = [
+      app("Ethan Nwaneri", "nwaneri|e", "arsenal", "2026-11-01"),
+      app("Ethan Nwaneri", "nwaneri|e", "arsenal", "2026-11-08"),
+      app("Ethan Nwaneri", "nwaneri|e", "arsenal", "2026-11-15"),
+    ];
+    const lu = buildPredictedLineup(squad(15), "arsenal", [], 11, 7, apps)!;
+    expect(lu.lineup_basis).toBe("appearances");
+    expect(lu.starters[0].player_name).toBe("Ethan Nwaneri");
+    expect(lu.starters[0].recent_starts).toBe(3);
+    // never-started players still fill remaining spots by importance
+    expect(lu.starters.slice(1).map((p) => p.player_name)).toContain("Bukayo Saka");
+    expect(lu.appearance_matches).toBe(3);
+  });
+
+  it("ranks by start frequency, then importance score", () => {
+    const apps = [
+      app("Kai Havertz", "havertz|k", "arsenal", "2026-11-01"),
+      app("Kai Havertz", "havertz|k", "arsenal", "2026-11-08"),
+      app("Kai Havertz", "havertz|k", "arsenal", "2026-11-15"),
+      // Timber started twice — fewer than Havertz's three
+      app("Jurriën Timber", "timber|j", "arsenal", "2026-11-01"),
+      app("Jurriën Timber", "timber|j", "arsenal", "2026-11-08"),
+    ];
+    const lu = buildPredictedLineup(squad(15), "arsenal", [], 11, 7, apps)!;
+    const names = lu.starters.map((p) => p.player_name);
+    expect(names.indexOf("Kai Havertz")).toBeLessThan(names.indexOf("Jurriën Timber"));
+    // both outrank never-started players
+    expect(names.indexOf("Jurriën Timber")).toBeLessThan(names.indexOf("Bukayo Saka"));
+  });
+
+  it("includes appearance-only players missing from player_importance", () => {
+    const apps = [
+      app("New Signing", "signing|n", "arsenal", "2026-11-01"),
+      app("New Signing", "signing|n", "arsenal", "2026-11-08"),
+    ];
+    const lu = buildPredictedLineup(squad(15), "arsenal", [], 11, 7, apps)!;
+    expect(lu.starters[0].player_name).toBe("New Signing");
+    expect(lu.starters[0].score_1_10).toBeNull();
+    expect(lu.squad_size).toBe(15); // 14 unique importance keys + 1 appearance-only
+  });
+
+  it("only counts the last 10 distinct match dates", () => {
+    // 11 matches: player A starts in the oldest only, player B in the 10 newest.
+    const apps = [app("Bukayo Saka", "saka|b", "arsenal", "2025-01-01")];
+    for (let i = 0; i < 10; i++) {
+      apps.push(app("Myles Lewis-Skelly", "skelly|m", "arsenal", `2026-10-${String(i + 1).padStart(2, "0")}`));
+    }
+    const lu = buildPredictedLineup(squad(15), "arsenal", [], 11, 7, apps)!;
+    expect(lu.appearance_matches).toBe(10);
+    expect(lu.starters[0].player_name).toBe("Myles Lewis-Skelly");
+    // Saka's single start is outside the window → importance order applies
+    expect(lu.starters[0].recent_starts).toBe(10);
+  });
+
+  it("still applies injury exclusions to appearance-driven lineups", () => {
+    const apps = [
+      app("Ethan Nwaneri", "nwaneri|e", "arsenal", "2026-11-01"),
+      app("Ethan Nwaneri", "nwaneri|e", "arsenal", "2026-11-08"),
+    ];
+    const injuries = [{ player_name: "Ethan Nwaneri", status: "injured" }];
+    const lu = buildPredictedLineup(squad(15), "arsenal", injuries as any, 11, 7, apps)!;
+    expect(lu.starters.map((p) => p.player_name)).not.toContain("Ethan Nwaneri");
+    expect(lu.unavailable.map((u) => u.player_name)).toContain("Ethan Nwaneri");
+  });
+
+  it("resolves appearance team keys through APPEARANCE_TEAM_KEY_ALIASES", () => {
+    // Our canonical "Hertha" normalizes to 'hertha', but StatsBomb rows are
+    // stored under 'hertha berlin'.
+    const rows: ImportanceRow[] = [
+      { team_name: "Hertha", player_name: "A. Player", score_1_10: 8 },
+      { team_name: "Hertha", player_name: "B. Player", score_1_10: 7 },
+    ];
+    const apps = [
+      {
+        player_name: "A. Player",
+        player_name_normalized: "player|a",
+        team_name_normalized: "hertha berlin",
+        is_starter: true,
+        match_date: "2026-11-01",
+      },
+    ];
+    const lu = buildPredictedLineup(rows, "hertha", [], 11, 7, apps)!;
+    expect(lu.lineup_basis).toBe("appearances");
+    expect(lu.starters[0].player_name).toBe("A. Player");
+    expect(lu.appearance_matches).toBe(1);
+  });
+
+  it("falls back to lineup_basis 'importance' with no usable appearances", () => {
+    const apps = [
+      // other team only
+      app("Someone", "else|s", "chelsea", "2026-11-01"),
+      // substitute appearance only (not a start)
+      app("Jurrien Timber", "timber|j", "arsenal", "2026-11-01", false),
+    ];
+    const lu = buildPredictedLineup(squad(15), "arsenal", [], 11, 7, apps)!;
+    expect(lu.lineup_basis).toBe("importance");
+    expect(lu.starters[0].player_name).toBe("Bukayo Saka");
+    // substitute-only + other-team rows yield no starter match dates
+    expect(lu.appearance_matches).toBe(0);
   });
 });

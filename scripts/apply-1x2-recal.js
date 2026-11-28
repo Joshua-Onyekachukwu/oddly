@@ -35,6 +35,17 @@ const payload = {
   // q_k ∝ p_k^alpha * exp(b_k), k=H,D,A; biasAway fixed 0 (identifiability)
   theta: ARTIFACT.theta,
   btts: { method: ARTIFACT.btts.method, a: ARTIFACT.btts.a, b: ARTIFACT.btts.b },
+  // Per-league residual bias overrides (fit on all replay records per league,
+  // n >= 300). Applied with shrinkage strength = n/(n+shrinkK) at inference.
+  league_overrides: ARTIFACT.league_overrides || {},
+  league_overrides_meta: ARTIFACT.league_overrides_meta
+    ? {
+        minLeagueN: ARTIFACT.league_overrides_meta.minLeagueN,
+        shrinkK: ARTIFACT.league_overrides_meta.shrinkK,
+        formula: ARTIFACT.league_overrides_meta.formula,
+        honestAggregate: ARTIFACT.league_overrides_meta.honestAggregate,
+      }
+    : undefined,
   honestValidation: {
     tail: ARTIFACT.honestValidation.tail,
     baselineTail: ARTIFACT.honestValidation.baselineTail,
