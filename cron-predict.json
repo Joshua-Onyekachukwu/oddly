@@ -1,0 +1,1 @@
+{"success":true,"duration":"30703ms","results":{"total":67,"predictions":432,"skipped":49,"ensembleHits":18,"ensembleMisses":0,"recommendations":30,"modelVersion":"meta-ensemble-v2.0","dataQuality":{"medium":8,"insufficient":6,"high":4}},"timestamp":"2026-11-28T09:59:09.732Z"}

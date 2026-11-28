@@ -14,6 +14,118 @@ import { normalizeTeamName } from "@/lib/football/team-normalizer";
 import { withLock } from "@/lib/cron/lock";
 import { startRun, completeRun, type CronRunResult } from "@/lib/cron/logger";
 
+/**
+ * Settle pending daily_tickets rows (ticket-of-the-day track record).
+ *
+ * Leg outcomes reuse checkPredictionOutcome — the SAME market-outcome
+ * logic the prediction settlement above uses. Ticket rule:
+ *   - any leg "wrong"            → "lost"
+ *   - every leg "void"           → "void"
+ *   - otherwise all legs correct/void with ≥1 correct → "won"
+ *     (void legs are non-losing: stake back on that leg, accumulator
+ *     continues on the rest — standard bookmaker void-leg handling)
+ *   - any leg "undetermined"     → row stays pending (retried next run)
+ * A ticket is only evaluated once EVERY leg's fixture is finished with
+ * scores. Abstained rows (no legs) are marked "void" once their
+ * ticket_date has passed — no bet was placed that day.
+ *
+ * Non-blocking by contract: callers wrap this in try/catch.
+ */
+async function settleDailyTickets(): Promise<number> {
+  // daily_tickets is not yet in generated Database types — cast client.
+  const { data: pending, error } = await (supabaseAdmin as any)
+    .from("daily_tickets")
+    .select("id, ticket_date, status, legs")
+    .eq("result", "pending")
+    .limit(100);
+  if (error) {
+    console.error("[SETTLE] daily_tickets lookup failed:", error.message);
+    return 0;
+  }
+  if (!pending || pending.length === 0) return 0;
+
+  const todayUtc = new Date().toISOString().slice(0, 10);
+  const settledAt = new Date().toISOString();
+  let settledCount = 0;
+
+  for (const row of pending) {
+    // Abstained day: nothing was bet — close it out once the day is over.
+    if (row.status === "abstained") {
+      if (row.ticket_date < todayUtc) {
+        await (supabaseAdmin as any)
+          .from("daily_tickets")
+          .update({ result: "void", settled_at: settledAt })
+          .eq("id", row.id)
+          .eq("result", "pending");
+        settledCount++;
+      }
+      continue;
+    }
+
+    const legs: Array<Record<string, any>> = Array.isArray(row.legs) ? row.legs : [];
+    if (legs.length === 0) continue;
+
+    const fixtureIds = [...new Set(legs.map((l) => l.fixtureId).filter(Boolean))] as string[];
+    if (fixtureIds.length === 0) continue;
+
+    const { data: fixRows } = await supabaseAdmin
+      .from("fixtures")
+      .select("id, home_score, away_score, status")
+      .in("id", fixtureIds);
+    const fixById = new Map((fixRows ?? []).map((f: any) => [f.id, f]));
+
+    // Every leg's fixture must be finished with scores before settling.
+    let ready = true;
+    for (const id of fixtureIds) {
+      const f = fixById.get(id);
+      if (!f || f.status !== "finished" || f.home_score == null || f.away_score == null) {
+        ready = false;
+        break;
+      }
+    }
+    if (!ready) continue;
+
+    const outcomes = legs.map((leg) => {
+      const f = fixById.get(leg.fixtureId) as any;
+      return checkPredictionOutcome(
+        {},
+        leg.market,
+        leg.selection,
+        Number(f.home_score),
+        Number(f.away_score)
+      );
+    });
+
+    let result: "won" | "lost" | "void" | null = null;
+    if (outcomes.includes("wrong")) {
+      result = "lost";
+    } else if (outcomes.every((o) => o === "void")) {
+      result = "void";
+    } else if (outcomes.every((o) => o === "correct" || o === "void")) {
+      // ≥1 non-void leg guaranteed here (all-void handled above).
+      result = "won";
+    }
+    // Any "undetermined" leg → result stays null → row remains pending.
+    if (!result) continue;
+
+    const { error: updErr } = await (supabaseAdmin as any)
+      .from("daily_tickets")
+      .update({ result, settled_at: settledAt })
+      .eq("id", row.id)
+      .eq("result", "pending");
+    if (updErr) {
+      console.error(`[SETTLE] daily_tickets update failed for ${row.id}:`, updErr.message);
+    } else {
+      settledCount++;
+    }
+  }
+
+  if (settledCount > 0) {
+    console.log(`[SETTLE] Settled ${settledCount} daily_tickets rows`);
+  }
+  return settledCount;
+}
+
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || "",
   process.env.SUPABASE_SERVICE_ROLE_KEY || ""
@@ -316,6 +428,15 @@ async function runSettlement(): Promise<SettleResult> {
     } catch (archiveErr) {
       console.error("[SETTLE] Archive warning (non-blocking):", archiveErr);
     }
+  }
+
+  // Settle daily_tickets (ticket-of-the-day) rows whose leg fixtures have
+  // finished. Non-blocking — a failure here must never break prediction
+  // settlement.
+  try {
+    await settleDailyTickets();
+  } catch (ticketErr) {
+    console.error("[SETTLE] daily_tickets settlement warning (non-blocking):", ticketErr);
   }
 
   // Update model_performance after settlement

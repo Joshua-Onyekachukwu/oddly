@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { EmptyState } from "@/components/ui";
 import { BettingTooltip, getMarketLabel, getSelectionLabel, getAbbrevLabel } from "@/components/ui/BettingTooltip";
+import TicketOfTheDayCard from "@/components/tickets/TicketOfTheDayCard";
 
 interface GoldenPick {
   fixture_id: string;
@@ -190,6 +191,9 @@ export default function PredictionsPage() {
           Model probabilities across every supported market — 1X2, goals, BTTS, double chance and draws. Hover any underlined term for details.
         </p>
       </div>
+
+      {/* Daily high-confidence accumulator (ticket-of-the-day API) */}
+      <TicketOfTheDayCard />
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-[10px] mb-[20px]">
