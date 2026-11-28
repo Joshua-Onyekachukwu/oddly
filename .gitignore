@@ -71,3 +71,5 @@ data/_*.json
 data/opta-xg.json
 data/pannadata/
 data/statsbomb-open/
+cron-*.json
+dev-server.log
